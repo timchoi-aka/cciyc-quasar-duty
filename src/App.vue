@@ -32,6 +32,7 @@
             class="flex flex-center q-px-lg q-py-sm"
             size="md"
             label="登出"
+            icon="logout"
             @click="logout"
             color="primary"
           />
@@ -42,6 +43,7 @@
         <q-route-tab to="/duty" label="更表" />
         <q-route-tab to="/activity" label="活動" />
         <q-route-tab to="/print" label="列印更表" />
+        <q-route-tab to="/al-view" label="年假表" />
       </q-tabs>
     </q-header>
 
@@ -92,6 +94,12 @@ const linksList = [
     caption: "列印更表和活動",
     icon: "print",
     link: "print",
+  },
+  {
+    title: "年假表",
+    caption: "年假結餘和放取記錄",
+    icon: "print",
+    link: "al-view",
   },
 ];
 

@@ -24,25 +24,32 @@
     </div>
     <div id="printMe" class="q-mx-xs">
       <div class="text-center text-h5">CCIYC - STAFF DUTY SCHEDULE</div>
-      <div class="q-my-none q-py-none">
+      <div class="q-my-none q-py-none flex">
+        <q-space />
         <DutyCalendar
           v-bind:renderDate="renderDate"
           :allowModify="false"
           :key="renderDate.getTime()"
         />
+        <q-space />
       </div>
-      <div class="q-my-none q-py-none">
+      <div class="q-my-none q-py-none flex">
+        <q-space />
         <ActivityCalendar
           v-bind:renderDate="renderDate"
           v-bind:printHeader="false"
           :key="renderDate.getDate()"
         />
+        <q-space />
       </div>
-      <!--
+      <div class="q-mt-none q-py-none q-mb-lg flex">
+        <q-space />
         <Footer
-        v-bind:renderDate="renderDate"
-        :key="renderDate.getTime() + renderDate.getDate()"
-      /> -->
+          v-bind:renderDate="renderDate"
+          :key="renderDate.getTime() + renderDate.getDate()"
+        />
+        <q-space />
+      </div>
     </div>
   </q-page>
 </template>
@@ -103,12 +110,13 @@ export default {
   td {
     border: 0.5px solid black;
   }
+}
 
-  @page {
-    size: A4 landscape;
-    margin: 0.3cm 0.3cm 0.3cm 0.3cm;
-    orphans: 4;
-    widows: 2;
-  }
+#printMe {
+  page: landscape;
+}
+
+.q-space {
+  display: none;
 }
 </style>

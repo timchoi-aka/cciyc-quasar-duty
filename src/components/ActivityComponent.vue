@@ -713,7 +713,9 @@ export default {
 
           var firestoreDate = [];
           this.new_activity.eventDate.forEach((d) => {
-            const dd = new Date(d);
+            const dd = new Date(
+              this.formatDate(d, "-", "YYYYMMDD") + "T00:00:00.000+00:00"
+            );
             const ddd = dd.toISOString();
             firestoreDate.push(ddd);
           });

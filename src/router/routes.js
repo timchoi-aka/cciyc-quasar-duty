@@ -20,6 +20,10 @@ const routes = [
     path: '/print',
     component: () => import('src/pages/Print.vue'), meta: {requiresAuth: true}
   },
+  {
+    path: '/al-view',
+    component: () => import('src/pages/AnnualLeaveSummary.vue'), meta: {requiresAuth: true}
+  },
     /*
     component: () => import('layouts/MainLayout.vue'),
     children: [

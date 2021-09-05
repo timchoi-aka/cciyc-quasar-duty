@@ -29,3 +29,7 @@ export function getCenterIC(state) {
 export function getDefaultSchedule(state) {
   return state.userProfile.defaultSchedule
 }
+
+export function getLeaveManage(state) {
+  return state.userProfile.privilege.leaveManage
+}

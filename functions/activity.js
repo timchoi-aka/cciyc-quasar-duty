@@ -59,13 +59,9 @@ exports.editActivityCustomName = functions.https.onCall(
       );
 
       const dateEntries = activityDoc.data().date;
-      const i = dateEntries.findIndex(
-          (element) => element.date.toMillis() == fbDate.toMillis(),
-      );
-      dateEntries[i] = {
-        date: dateEntries[i].date,
-        customName: data.customName,
-      };
+      const i = dateEntries.findIndex((element) => formatDate(fbDate.toMillis(), "-", "YYYYMMDD") == formatDate(element.date.toMillis(), "-", "YYYYMMDD"));
+
+      dateEntries[i].customName = data.customName;
 
       return activityCollection.doc(data.docid).update({
         name: data.name,

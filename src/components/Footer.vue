@@ -1,44 +1,41 @@
 <template>
-  <q-page>
-    <div>
-      <table>
-        <tbody>
-          <tr>
-            <th class="caption"></th>
-            <th class="content">
-              <div>中心服務時間：</div>
-              <div>
-                <span class="mx-3">星期一至五：2PM-10PM</span>
-                <span class="mx-3">星期六：2PM-6PM</span>
-                <span class="mx-3">星期日休息</span>
-              </div>
-            </th>
-          </tr>
-          <tr>
-            <th class="caption">備註</th>
-            <th class="content">
-              <span class="q-mx-sm">AL 年假</span>
-              <span class="q-mx-sm">M 開會</span>
-              <span class="q-mx-sm">O 外出工作</span>
-              <span class="q-mx-sm">(補) 補OT</span>
-              <span class="q-mx-sm">SL 病假</span>
-              <span class="q-mx-sm">(覆)覆診</span>
-              <span v-if="numberOfHoliday > 0">
-                <q-icon name="report_problem" size="lg" color="negative" />{{
-                  numberOfHoliday
-                }}日公眾假期返{{ numberOfWorkingSessions }}節
-              </span>
-            </th>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </q-page>
+  <table>
+    <tbody>
+      <tr>
+        <th class="caption" rowspan="2">備註</th>
+        <th class="content">
+          <div>中心服務時間：</div>
+          <div>
+            <span class="q-mx-md">星期一至五：2PM-10PM</span>
+            <span class="q-mx-md">星期六：2PM-6PM</span>
+            <span class="q-mx-md">星期日休息</span>
+          </div>
+        </th>
+      </tr>
+      <tr>
+        <th class="content">
+          <span class="q-mx-md">AL 年假</span>
+          <span class="q-mx-md">M 開會</span>
+          <span class="q-mx-md">O 外出工作</span>
+          <span class="q-mx-md">(補) 補OT</span>
+          <span class="q-mx-md">SL 病假</span>
+          <span class="q-mx-md">(覆)覆診</span>
+          <span v-if="numberOfHoliday > 0">
+            <q-icon name="report_problem" size="lg" color="negative" />{{
+              numberOfHoliday
+            }}日公眾假期返{{ numberOfWorkingSessions }}節
+          </span>
+        </th>
+      </tr>
+    </tbody>
+  </table>
 </template>
 
 <script>
 import holiday from "assets/holiday.json";
-import date from "src/lib/date.js"
+import date from "src/lib/date.js";
+import dateHeader from "src/lib/dateHeader.js";
+import { useQuasar } from "quasar";
 
 export default {
   name: "Footer",
@@ -50,65 +47,15 @@ export default {
       columns: [],
     };
   },
-  methods: {
-    generateTableColumns() {
-      // build column headers
-      // find offset to sunday
-      var diff = 0 - this.renderDate.getDay();
-
-      // set the weekStart and weekEnd date
-      const day1 = new Date(
-        this.renderDate.getFullYear(),
-        this.renderDate.getMonth(),
-        this.renderDate.getDate() + diff,
-        0,
-        0,
-        0
-      );
-      this.queryStartDate = day1;
-
-      const slot = ["slot_a", "slot_b", "slot_c"];
-
-      // fill up this week's dates
-      for (let j = 0; j < 3; j++) {
-        this.columns.push({
-          name: this.mergeDateSlot(day1, slot[j]),
-          label: this.mergeDateSlot(day1, slot[j]),
-          field: this.mergeDateSlot(day1, slot[j]),
-        });
-      }
-
-      for (let i = 1; i < 7; i++) {
-        let day = new Date(
-          day1.getFullYear(),
-          day1.getMonth(),
-          day1.getDate() + i,
-          0,
-          0,
-          0
-        );
-
-        if (i == 6) day.setTime(day.getTime() + 82800000 + 3540000 + 59000); // adjust last date to 23:59:59
-        this.queryEndDate = day;
-
-        for (let j = 0; j < 3; j++) {
-          this.columns.push({
-            name: this.mergeDateSlot(day, slot[j]),
-            label: this.mergeDateSlot(day, slot[j]),
-            field: this.mergeDateSlot(day, slot[j]),
-          })
-        }
-      }
-    },
-  },
   mounted() {
-    this.generateTableColumns()
+    this.columns.push(...this.generateTableColumns(this.renderDate, false));
   },
   created() {
-    this.daysOfWeek = date.daysOfWeek.bind(this);
     this.formatDate = date.formatDate.bind(this);
-    this.mergeDateSlot = date.mergeDateSlot.bind(this);
-    this.splitDateSlot = date.splitDateSlot.bind(this);
+    this.generateTableColumns = dateHeader.generateTableColumns.bind(this);
+  },
+  setup() {
+    const $q = useQuasar();
   },
   computed: {
     publicHoliday: function () {
@@ -125,7 +72,7 @@ export default {
       var result = 0;
       this.columns.forEach((date) => {
         let i = this.publicHoliday.findIndex(
-          (element) => element.date == this.formatDate(date, "", "YYYYMMDD")
+          (element) => element.date == this.formatDate(date.name, "", "YYYYMMDD")
         );
         if (i != -1) result++;
       });
@@ -138,52 +85,83 @@ export default {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+* {
+  margin: 0;
+  padding: 0;
+}
+
+table {
+  border: 0.5px solid black;
+  border-collapse: collapse;
+}
+
+table th,
+td {
+  font-weight: bold;
+  font-size: 1.3vw;
+  text-align: left;
+  vertical-align: top;
+}
+
 @media screen {
-  .table {
-    border: 1px solid black !important;
-  }
-  .isHoliday {
-    background-color: #e07264 !important;
-  }
-  .table-bordered {
-    border: 1px solid black;
+  table {
+    width: 97.2vw;
+    background-color: lightgray;
   }
 
-  .table-bordered th {
-    border: 1px solid black;
+  table .caption {
+    width: 9vw;
+    padding: 0 !important;
+    vertical-align: top;
+    text-align: center;
+    border: 0.5px solid black;
   }
 
-  .table-bordered td {
-    border: 1px solid black;
+  table .content {
+    padding: 5px !important;
+    width: 88.2vw;
   }
 
-  .caption {
-    width: 9% !important;
-  }
-
-  .content {
-    width: 91% !important;
+  table .content span {
+    margin-right: 2vw;
   }
 }
 
 @media print {
-  .table {
-    table-layout: fixed !important;
+  table .caption {
+    width: 9vw !important;
+    padding: 0 !important;
+    vertical-align: top;
+    text-align: center;
+    border: 0.5px solid black;
   }
 
-  .table .caption {
-    width: 42px !important;
+  table .content {
+    padding: 5px !important;
+    width: 88.2vw;
   }
 
-  .table .content {
-    width: 525px !important;
+  table .content span {
+    margin-right: 2vw;
   }
 
-  .table th {
+  table th {
     background-color: lightgray !important;
     border: 1px solid black !important;
     overflow: hidden !important;
+  }
+}
+
+@media print and (orientation: portrait) {
+  table {
+    width: 84vw;
+  }
+}
+
+@media print and (orientation: landscape) {
+  table {
+    width: 97.2vw;
   }
 }
 </style>
