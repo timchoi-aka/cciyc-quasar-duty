@@ -1,15 +1,17 @@
 <template>
-  <b-container fluid class="mt-2">
-    <b-row>
-      <b-col class="printOnly text-left caption">長洲鄉事委員會青年綜合服務中心</b-col>
-      <b-col class="text-right caption">職員：{{ reportUsername }}</b-col>
-    </b-row>
-    <b-row>
-      <b-col class="printOnly text-left caption">職員放取年假紀錄</b-col>
-      <b-col class="text-right caption"
-        >年度：{{ getReportYear }} - {{ getReportYear + 1 }}</b-col
-      >
-    </b-row>
+  <q-page>
+    <div class="row">
+      <div class="col printOnly text-left caption">長洲鄉事委員會青年綜合服務中心</div>
+      <div class="col text-right caption">職員：{{ reportUser.label }}</div>
+    </div>
+    <div class="row">
+      <div class="col printOnly text-left caption">職員放取年假紀錄</div>
+      <div class="col text-right caption">
+        年度：{{ getReportYear }} - {{ getReportYear + 1 }}
+      </div>
+    </div>
+    ALReport - {{ reportUser }} {{ renderYear }} {{ renderYearOffset }} HolidaySummary -
+    {{ holidaySummary }}
     <table class="table">
       <thead>
         <tr>
@@ -41,15 +43,20 @@
           </td>
           <td class="remarks dataField">
             <div v-if="item.leaveTotal != 0">
-              <b-collapse visible :id="'id' + DateToSerial(item.date)">
-                <b-card>
-                  <b-row cols="4">
-                    <b-col v-for="(leaveItem, key) in item.leaveRecord" v-bind:key="key">
+              <q-expansion-item expand-separator :label="item.leaveTotal">
+                <q-card>
+                  <q-card-section>
+                    <q-chip
+                      v-for="(leaveItem, key) in item.leaveRecord"
+                      v-bind:key="key"
+                      color="blue-2"
+                      class="col"
+                    >
                       {{ formatDate(leaveItem.date) }}{{ leaveItem.slot }}
-                    </b-col>
-                  </b-row>
-                </b-card>
-              </b-collapse>
+                    </q-chip>
+                  </q-card-section>
+                </q-card>
+              </q-expansion-item>
             </div>
           </td>
         </tr>
@@ -62,30 +69,30 @@
         <th>-</th>
       </tfoot>
     </table>
-    <b-row class="printOnly" style="margin-top: 1cm">
-      <b-col class="text-left"
-        >員工簽署：_________________&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;日期：_________________</b-col
-      >
-      <b-col class="text-right"
-        >主管簽署：_________________&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;日期：_________________</b-col
-      >
-    </b-row>
-  </b-container>
+    <div class="row printOnly" style="margin-top: 1cm">
+      <div class="col text-left">
+        員工簽署：_________________&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;日期：_________________
+      </div>
+      <div class="col text-right">
+        主管簽署：_________________&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;日期：_________________
+      </div>
+    </div>
+  </q-page>
 </template>
 
 <script>
 // import moment from "moment";
-import { mapState } from "vuex";
 import { useStore } from "vuex";
 import { usersCollection, leaveConfig, scheduleCollection } from "boot/firebase";
+import { computed } from "vue";
+import date from "src/lib/date.js";
 
 export default {
   name: "ALReport",
   props: {
     renderYear: Number,
     renderYearOffset: Number,
-    reportUserID: String,
-    reportUsername: String,
+    reportUser: String,
   },
   data() {
     return {
@@ -98,11 +105,16 @@ export default {
     };
   },
   computed: {
-    ...mapState(["userProfile"]),
-    ...mapState(["ALReportHistory"]),
+    // ...mapState(["ALReportHistory"]),
     getReportYear() {
       return this.renderYear + this.renderYearOffset;
     },
+  },
+  created() {
+    this.daysOfWeek = date.daysOfWeek.bind(this);
+    this.formatDate = date.formatDate.bind(this);
+    this.mergeDateSlot = date.mergeDateSlot.bind(this);
+    this.splitDateSlot = date.splitDateSlot.bind(this);
   },
   methods: {
     getMonthYear(date) {
@@ -113,41 +125,6 @@ export default {
     DateToSerial(date) {
       const d = new Date(date);
       return d.getTime();
-    },
-    formatDate(date) {
-      if (typeof date === "function") return;
-      const data = new Date(date);
-      const number = ["日", "一", "二", "三", "四", "五", "六"];
-      const year = data.getFullYear();
-      // const returnYear = number[year[0]] + number[year[1]] + number[year[2]] + number[year[3]];
-      const month = data.getMonth() + 1;
-      // const returnMonth = number[month];
-      const day = data.getDate();
-      let twoDigitDay, twoDigitMonth;
-      if (day < 10) {
-        twoDigitDay = "0" + day;
-      } else {
-        twoDigitDay = day;
-      }
-
-      if (month < 10) {
-        twoDigitMonth = "0" + month;
-      } else {
-        twoDigitMonth = month;
-      }
-      // const returnDay = number[day];
-      // const result = year + "年" + month + "月" + day + "日";
-      const result =
-        twoDigitDay +
-        "/" +
-        twoDigitMonth +
-        "/" +
-        year +
-        "(" +
-        number[data.getDay()] +
-        ")";
-      // return date.toDateString();
-      return result;
     },
     totalPerMonthGain() {
       if (this.holidaySummary.length == 0) return;
@@ -165,9 +142,11 @@ export default {
     },
     getHolidaySummaryLastYear(param) {
       // console.log("this.holidaySummaryLastYear.length:" + this.holidaySummaryLastYear.length);
+      /*
       if (this.holidaySummaryLastYear.length > 0) {
         return this.holidaySummaryLastYear[this.renderYearOffset][param];
       } else return "-";
+      */
     },
     totalAnnualLeaveDays(name) {
       let index = this.uidMap.findIndex((element) => element.uid == name);
@@ -188,37 +167,37 @@ export default {
     async renderALTable() {
       // console.log(this.renderYear + "" + this.renderYearOffset + this.reportUserID + this.reportUsername);
       // clear store data
-      store.dispatch("setALReportHistory", []);
+      // store.dispatch("setALReportHistory", []);
       this.holidaySummary = [];
       const leaveConfigDoc = await leaveConfig.get();
       const leaveConfigData = leaveConfigDoc.data();
-      const now = moment();
+      const now = new Date();
       let reportUserProfile;
       let reportUserDoc;
-
-      if (this.reportUserID == "") {
-        reportUserDoc = await usersCollection.doc(this.userProfile.uid).get();
-        return;
+      // console.log("uid: " + this.uid);
+      // console.log("reportUser: " + this.reportUser);
+      if (this.reportUser == "") {
+        reportUserDoc = await usersCollection.doc(this.uid).get();
       } else {
-        reportUserDoc = await usersCollection.doc(this.reportUserID).get();
+        reportUserDoc = await usersCollection.doc(this.reportUser).get();
       }
-
+      console.log("reportUserDoc: " + this.reportUserDoc);
       reportUserProfile = reportUserDoc.data();
       const tiers = leaveConfigData[reportUserProfile.rank];
 
       // determine yearly start (31/3 of every year)
       let thisYearStart;
-      if (now.month() >= 3) {
-        thisYearStart = moment([now.year() + this.renderYearOffset, 2, 31]).endOf(
-          "month"
-        );
+      if (now.getMonth() >= 3) {
+        thisYearStart = new Date(now.getFullYear() + this.renderYearOffset, 2, 31);
       } else {
-        thisYearStart = moment([now.year() - 1 + this.renderYearOffset, 2, 31]).endOf(
-          "month"
-        );
+        thisYearStart = new Date(now.getFullYear() - 1 + this.renderYearOffset, 2, 31);
       }
-      const thisYearEnd = moment([thisYearStart.year() + 1, 2, 31]).endOf("month");
-      const dateOfEntry = moment(reportUserProfile.dateOfEntry.toDate());
+
+      const thisYearEnd = new Date(thisYearStart.year() + 1, 2, 31);
+      const dateOfEntry = new Date(reportUserProfile.dateOfEntry);
+      console.log("dateOfEntry: " + dateOfEntry);
+      console.log("thisYearStart: " + thisYearStart);
+      console.log("thisYearStart: " + thisYearStart);
 
       const tiersConfig = [0, 5, 8, 10, 12];
 
@@ -236,7 +215,7 @@ export default {
         al_monthEnd = this.holidaySummaryLastYear[this.renderYearOffset].al_monthEnd;
       }
 
-      monthLoop.add(1, "M");
+      // monthLoop.add(1, "M");
       // get all AL record of this user
       const alScheduleDoc = await scheduleCollection
         .where("uid", "==", reportUserProfile.uid)
@@ -325,7 +304,7 @@ export default {
         leaveTotal: this.totalLeaveRecord(),
         al_monthEnd: this.holidaySummary[11].al_monthEnd,
       };
-      store.dispatch("setALReportHistory", this.holidaySummaryLastYear);
+      //store.dispatch("setALReportHistory", this.holidaySummaryLastYear);
       // console.log("lastYear:" + JSON.stringify(this.ALReportHistory));
     },
   },
@@ -388,6 +367,16 @@ export default {
     }
     */
     await this.renderALTable();
+  },
+  setup() {
+    const $store = useStore();
+
+    return {
+      uid: computed(() => $store.getters["userModule/getUID"]),
+      // isSystemAdmin: computed(() => $store.getters["userModule/getSystemAdmin"]),
+      // isScheduleModify: computed(() => $store.getters["userModule/getScheduleModify"]),
+      // isCenterIC: computed(() => $store.getters["userModule/getCenterIC"]),
+    };
   },
 };
 </script>

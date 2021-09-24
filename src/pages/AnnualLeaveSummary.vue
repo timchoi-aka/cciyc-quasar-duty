@@ -1,39 +1,50 @@
 <template>
-  <q-dialog v-model="alSummaryModalShow" title="職員放取年假紀錄">
-    <div class="row">
-      <div class="col">
-        <q-btn
-          size="lg"
-          variant="outline-primary"
-          class="light mx-2"
-          v-on:click="changeRenderYear(-1)"
-        >
-          上年
-        </q-btn>
-        <q-btn
-          size="lg"
-          variant="outline-primary"
-          class="light mx-2"
-          v-on:click="changeRenderYear(1)"
-        >
-          下年
-        </q-btn>
+  <q-dialog v-model="alSummaryModalShow" full-height full-width title="職員放取年假紀錄">
+    <q-card class="q-pa-md">
+      <div class="row">
+        <div class="col">
+          <q-btn
+            class="q-mx-md"
+            size="lg"
+            outline
+            color="primary"
+            v-on:click="changeRenderYear(-1)"
+          >
+            上年
+          </q-btn>
+          <q-btn
+            class="q-mx-md"
+            size="lg"
+            outline
+            color="primary"
+            v-on:click="changeRenderYear(1)"
+          >
+            下年
+          </q-btn>
+          <q-btn
+            class="q-mx-md"
+            size="lg"
+            outline
+            color="primary"
+            icon="print"
+            v-print="printObj"
+          />
+        </div>
+        <div class="col-3">
+          <q-select
+            v-model="ALReportParameters.reportUser"
+            :options="userList"
+            id="userList"
+            label="員工"
+            filled
+            @update:model-value="(val) => setUsername(val)"
+          ></q-select>
+        </div>
       </div>
-      <div class="col">
-        <q-btn class="q-mx-md" outline color="primary" icon="print" v-print="printObj" />
+      <div id="printMe" style="margin-top: 20px">
+        <ALReport :key="ALReportKey" v-bind="ALReportParameters" />
       </div>
-      <div class="col-3">
-        員工：<q-select
-          v-model="ALReportParameters.reportUserID"
-          :options="userList"
-          id="userList"
-          @change="setUsername"
-        ></q-select>
-      </div>
-    </div>
-    <div id="printMe" style="margin-top: 20px">
-      <!-- <ALReport :key="ALReportKey" v-bind="ALReportParameters"/> -->
-    </div>
+    </q-card>
   </q-dialog>
 
   <q-page>
@@ -75,7 +86,6 @@
 import AnnualLeave from "components/AnnualLeaveSummary";
 import ALReport from "components/AnnualLeaveReport";
 import print from "vue3-print-nb";
-import date from "src/lib/date.js";
 import { useStore } from "vuex";
 import { computed } from "vue";
 import { usersCollection } from "boot/firebase";
@@ -92,26 +102,20 @@ export default {
   data() {
     return {
       ALReportParameters: {
-        reportUserID: "",
-        reportUsername: "",
+        reportUser: "",
         renderYearOffset: 0,
         renderYear: 0,
       },
       printObj: {
         id: "printMe",
         preview: true,
-        previewTitle: "列印預覽", // The title of the preview window. The default is 打印预览
+        previewTitle: "列印預覽",
         popTitle: "CCIYC 年假結餘總表",
         extraCss:
           "https://cdn.bootcdn.net/ajax/libs/animate.css/4.1.1/animate.compat.css, https://cdn.bootcdn.net/ajax/libs/hover.css/2.3.1/css/hover-min.css,",
         extraHead: '<meta http-equiv="Content-Language" content="en"/>',
-        /*        previewBeforeOpenCallback() {console.log("preview before open")},
-        previewOpenCallback() {console.log("preview open")},
-        beforeOpenCallback() {console.log("before open")},
-        openCallback() {console.log("open")},
-        closeCallback() {console.log("close"); this.$forceUpdate()}, */
       },
-      userList: [{ value: "", text: "" }],
+      userList: [{ value: "", label: "" }],
       renderDate: new Date(Number(Date.now())),
       alSummaryModalShow: false,
     };
@@ -125,15 +129,8 @@ export default {
       // await this.renderALTable();
     },
     setUsername(arg) {
-      if (arg != "") {
-        this.ALReportParameters.reportUsername = this.userList[
-          this.userList.findIndex((element) => element.value == arg)
-        ].text;
-        this.ALReportParameters.renderYearOffset = 0;
-      } else {
-        this.ALReportParameters.reportUsername = "";
-        this.ALReportParameters.renderYearOffset = 0;
-      }
+      this.ALReportParameters.reportUser = arg.value;
+      this.ALReportParameters.renderYearOffset = 0;
     },
     changeRenderMonth(month) {
       this.renderDate = new Date(
@@ -147,16 +144,20 @@ export default {
     ALReportKey() {
       return JSON.stringify(this.ALReportParameters);
     },
+    getCalendarYear: function () {
+      let date = new Date();
+      return date.getMonth() > 2 ? date.getFullYear() : date.getFullYear() - 1;
+    },
   },
   async mounted() {
-    this.ALReportParameters.renderYear = 2021;
+    this.ALReportParameters.renderYear = this.getCalendarYear;
 
     const userDoc = await usersCollection.get();
     userDoc.forEach((user) => {
       if (!user.data().privilege.systemAdmin) {
         this.userList.push({
           value: user.data().uid,
-          text: user.data().name,
+          label: user.data().name,
         });
       }
     });
@@ -165,13 +166,8 @@ export default {
     const $store = useStore();
 
     return {
-      uid: computed(() => $store.getters["userModule/getUID"]),
       isLeaveManage: computed(() => $store.getters["userModule/getLeaveManage"]),
     };
-  },
-  created() {
-    this.daysOfWeek = date.daysOfWeek.bind(this);
-    this.formatDate = date.formatDate.bind(this);
   },
 };
 </script>

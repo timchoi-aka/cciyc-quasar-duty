@@ -1,23 +1,36 @@
 <template>
-  {{ tableFields }}
-  {{ tableData }}
   <q-page>
     <q-table
       dense
       flat
+      :title="renderDate.getFullYear() + '年年假表'"
       :grid="$q.screen.lt.sm && allowModify"
       :rows="tableData"
       :columns="tableFields"
       :pagination="defaultPagination"
       :hide-bottom="true"
+      separator="cell"
       color="primary"
       row-key="name"
     >
-      <template #table-caption
-        ><h3>{{ renderDate.getFullYear() }}年年假表</h3></template
-      >
-      <template #foot()="data">
-        <span>{{ totalAnnualLeaveDays(data.column) }}</span>
+      <template v-slot:body-cell-Date="props">
+        <q-td :class="['nameColumn', getHoliday(props.row.Date) ? 'isHoliday' : '']"
+          >{{ props.value }}{{ daysOfWeek(props.row.Date) }}
+          <q-popup-proxy class="bg-red-2" v-if="getHoliday(props.row.Date)">{{
+            getHoliday(props.row.Date)
+          }}</q-popup-proxy>
+        </q-td>
+      </template>
+      <template v-slot:bottom-row="props">
+        <q-tr>
+          <q-td
+            v-for="index in props.cols.length"
+            class="text-center bg-grey-2"
+            style="font-size: 1.5vw"
+          >
+            {{ totalAnnualLeaveDays(props.cols[index - 1].name) }}
+          </q-td>
+        </q-tr>
       </template>
     </q-table>
   </q-page>
@@ -25,6 +38,9 @@
 
 <script>
 import { scheduleCollection, usersCollection } from "boot/firebase";
+import date from "src/lib/date.js";
+import { computed } from "vue";
+import holiday from "assets/holiday.json";
 
 export default {
   name: "AnnualLeave",
@@ -42,6 +58,33 @@ export default {
       },
     };
   },
+  computed: {
+    publicHoliday: function () {
+      var ph = [];
+      holiday.vcalendar[0].vevent.forEach((record) => {
+        ph.push({
+          date: new Date(
+            Date.UTC(
+              record.dtstart[0].substring(0, 4),
+              new Number(record.dtstart[0].substring(4, 6)) - 1,
+              record.dtstart[0].substring(6, 8),
+              0,
+              0,
+              0
+            )
+          ),
+          summary: record.summary,
+        });
+      });
+      return ph;
+    },
+  },
+  created() {
+    this.daysOfWeek = date.daysOfWeek.bind(this);
+    this.formatDate = date.formatDate.bind(this);
+    this.mergeDateSlot = date.mergeDateSlot.bind(this);
+    this.splitDateSlot = date.splitDateSlot.bind(this);
+  },
   methods: {
     totalAnnualLeaveDays(name) {
       let index = this.uidMap.findIndex((element) => element.uid == name);
@@ -50,10 +93,15 @@ export default {
       let sum = this.tableData.reduce((a, b) => ({ [name]: a[name] + b[name] }));
       return sum[name];
     },
-    printableDate(date) {
-      let d = new Date(Number(Date.parse(date)));
-      let result = d.getMonth() + 1 + "月" + d.getDate() + "日";
-      return result;
+    getHoliday(date) {
+      let i = this.publicHoliday.findIndex(
+        (element) => element.date.getTime() == date.getTime()
+      );
+      if (i == -1) {
+        return "";
+      } else {
+        return this.publicHoliday[i].summary;
+      }
     },
   },
   async mounted() {
@@ -112,26 +160,38 @@ export default {
               name: "Date",
               field: "Date",
               label: "日期",
+              style: "font-size: 1.5vw; text-align: center",
+              headerStyle: "font-size: 1.5vw; text-align: center;",
+              headerClasses: "bg-grey-2",
+              format: (val) => this.formatDate(val, "", "月日"),
             });
             this.uidMap.forEach((user) => {
               this.tableFields.push({
                 name: user.uid,
                 label: user.name,
                 field: user.uid,
+                style: "font-size: 1.5vw; text-align: center",
+                headerStyle: "font-size: 1.5vw; text-align: center;",
+                headerClasses: "bg-grey-2",
               });
             });
 
             // load days of the month and user name into table, initialize to 0 ALs
             for (let i = 1; i <= 31; i++) {
               let curDate = new Date(
-                this.renderDate.getFullYear(),
-                this.renderDate.getMonth(),
-                i
+                Date.UTC(
+                  this.renderDate.getFullYear(),
+                  this.renderDate.getMonth(),
+                  i,
+                  0,
+                  0,
+                  0
+                )
               );
               if (curDate > endOfMonth) break;
 
               tableData.push({
-                Date: this.printableDate(curDate),
+                Date: curDate,
               });
 
               users.forEach((user) => {
@@ -156,7 +216,7 @@ export default {
             // add up AL items array and update table
             items.forEach((item) => {
               let i = tableData.findIndex(
-                (row) => row.Date == this.printableDate(item.date)
+                (row) => row.Date == this.formatDate(item.date, "", "月日")
               );
               if (i == -1) return;
               let thisCount = Number.parseFloat(tableData[i][item.uid]) + 0.5;
@@ -170,27 +230,29 @@ export default {
 };
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+.q-table__container {
+  width: 97.2vw;
+  margin-bottom: 5vh;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.isHoliday {
+  background-color: $red-2;
+}
+
+.q-table__container::v-deep .q-table__title {
+  font-size: 2vw !important;
+}
+
+.q-table__container::v-deep .nameColumn {
+  font-size: 1.5vw;
+  text-decoration: bold;
+  text-align: center;
+}
+
 @media screen {
-  .isHoliday {
-    background-color: #e07264 !important;
-  }
-
-  .table-bordered {
-    border: 1px solid black;
-  }
-
-  .table-bordered th {
-    border: 1px solid black;
-  }
-
-  .table-bordered td {
-    border: 1px solid black;
-  }
-
-  .table {
-    border-collapse: collapse;
-  }
 }
 
 @media print {

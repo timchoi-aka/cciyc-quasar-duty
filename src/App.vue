@@ -98,7 +98,7 @@ const linksList = [
   {
     title: "年假表",
     caption: "年假結餘和放取記錄",
-    icon: "print",
+    icon: "table_rows",
     link: "al-view",
   },
 ];
