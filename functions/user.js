@@ -51,6 +51,27 @@ exports.newUserSignUp = functions.auth.user().onCreate((user) => {
                 "",
                 "",
               ],
+            }).then(()=>{
+              return FireDB
+                  .collection("dashboard")
+                  .doc("leaveConfig")
+                  .set({
+                    [user.uid]: [{
+                      "al": 0,
+                      "date": "2021-03-30T16:00:00.000Z",
+                    }],
+                  }, {merge: true}).then(()=>{
+                    return FireDB.collection("dashboard").doc("otConfig").set({
+                      [user.uid]: 0,
+                    }, {merge: true}).then(()=>{
+                      return FireDB
+                          .collection("dashboard")
+                          .doc("otConfig")
+                          .update({
+                            [`balance.${user.uid}`]: 0,
+                          }, {merge: true});
+                    });
+                  });
             });
       });
 });
@@ -164,5 +185,52 @@ exports.toggleSal = functions.https.onCall(async (data, context) => {
     console.log("USER: " +
     changeUserData.name + "[privilege.sal]:" + newPrivilege);
     return newPrivilege;
+  });
+});
+
+exports.changeOrder = functions.https.onCall(async (data, context) => {
+  const loginUserDoc = FireDB
+      .collection("users")
+      .doc(context.auth.uid);
+  const loginUser = await loginUserDoc.get();
+  const loginUserData = loginUser.data();
+  if (loginUserData.privilege.userManagement != true) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only user management admin can change user privilege",
+    );
+  }
+
+  const changeUserDoc1 = FireDB.collection("users").doc(data.uid);
+  const changeUser1 = await changeUserDoc1.get();
+  const changeUserData1 = changeUser1.data();
+  const order1 = changeUserData1.order + (data.dir == "UP"? -1: 1);
+
+  const changeUserDoc2 = await FireDB.collection("users")
+      .where("order", "==", order1)
+      .get();
+
+  let changeUserData2;
+  changeUserDoc2.forEach((doc) => {
+    changeUserData2 = doc.data();
+  });
+
+  return await changeUserDoc1.update({
+    "order": order1,
+  }).then(() => {
+    FireDB.collection("users").doc(changeUserData2.uid).update({
+      "order": changeUserData1.order,
+    });
+  }).then(() => {
+    console.log("USER: " +
+    changeUserData1.name + "[order]:" + order1);
+    console.log("USER: " +
+    changeUserData2.name + "[order]:" + changeUserData1.order);
+    return {
+      uid1: changeUserData1.uid,
+      uid2: changeUserData2.uid,
+      order1: order1,
+      order2: changeUserData1.order,
+    };
   });
 });

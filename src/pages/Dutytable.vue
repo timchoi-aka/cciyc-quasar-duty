@@ -1,6 +1,6 @@
 <template>
   <q-page>
-    <div class="row q-my-sm">
+    <div class="row q-my-sm q-mx-xs">
       <q-btn
         class="q-mx-md"
         size="lg"
@@ -22,11 +22,13 @@
       </q-btn>
     </div>
 
-    <DutyCalendar
-      v-bind:renderDate="renderDate"
-      :allowModify="true"
-      :key="renderDate.getDate()"
-    />
+    <div class="row q-mx-xs justify-center">
+      <DutyCalendar
+        v-bind:renderDate="renderDate"
+        :allowModify="true"
+        :key="renderDate.getDate()"
+      />
+    </div>
   </q-page>
 </template>
 

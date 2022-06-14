@@ -1,12 +1,8 @@
 
 const routes = [
   {
-    path: '/login',
-    component: () => import('src/pages/Auth.vue'),
-  },
-  {
     path: '/',
-    component: () => import('src/pages/Home.vue'), meta: {requiresAuth: true}
+    component: () => import('src/pages/Auth.vue'),
   },
   {
     path: '/duty',
@@ -21,8 +17,25 @@ const routes = [
     component: () => import('src/pages/Print.vue'), meta: {requiresAuth: true}
   },
   {
-    path: '/al-view',
-    component: () => import('src/pages/AnnualLeaveSummary.vue'), meta: {requiresAuth: true}
+    path: '/holiday',
+    component: () => import('src/pages/Holiday.vue'), meta: {requiresAuth: true},
+    children: [
+      {  path: 'al-view',
+      component: () => import('src/pages/ALSummary.vue'), meta: {requiresAuth: true }},
+      {  path: 'sal-view',
+      component: () => import('src/pages/SALSummary.vue'), meta: {requiresAuth: true}},
+      {  path: 'al-apply',
+      component: () => import('src/pages/ALApply.vue'), meta: {requiresAuth: true}},
+      {  path: 'holiday-pending',
+      component: () => import('src/pages/HolidayPending.vue'), meta: {requiresAuth: true}},
+      {  path: 'holiday-approve',
+      component: () => import('src/pages/HolidayApprove.vue'), meta: {requiresAuth: true}}
+    ]
+  },
+  {
+    path: '/user-management',
+    name: 'UserManagementView',
+    component: () => import('src/pages/UserManagementView.vue'), meta: { requiresAuth: true}
   },
     /*
     component: () => import('layouts/MainLayout.vue'),

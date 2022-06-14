@@ -68,15 +68,11 @@ exports.approveLeave = functions.https.onCall(async (data, context) => {
 
   if (myBal + leaveData.hours > 24) {
     return FireDB.collection("dashboard").doc("otConfig").update({
-      balance: {
-        [uid]: 24,
-      },
+      [`balance.${uid}`]: 24,
     });
   } else {
     return FireDB.collection("dashboard").doc("otConfig").update({
-      balance: {
-        [uid]: myBal + leaveData.hours,
-      },
+      [`balance.${uid}`]: myBal + leaveData.hours,
     });
   }
 });
@@ -200,9 +196,7 @@ exports.modifyLeave = functions.https.onCall(async (data, context) => {
     if (leaveData.status == "批准" && data.status == "批准") {
       const newBal = myBal - leaveData.hours + data.hours;
       return FireDB.collection("dashboard").doc("otConfig").update({
-        balance: {
-          [uid]: newBal,
-        },
+        [`balance.${uid}`]: newBal,
       });
     }
   });

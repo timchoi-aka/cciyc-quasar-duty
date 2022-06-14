@@ -3,77 +3,92 @@ const {functions, FireDB, Timestamp} = require("./fbadmin");
 const {formatDate} = require("./utilities");
 
 
-// http callable function (managing schedule)
-exports.updateSchedule = functions.https.onCall(async (data, context) => {
+// http callable function (adding a schedule)
+exports.updateSchedule = functions.https.onCall(async (datas, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
         "unauthenticated",
-        "only authenticated users can update schedules",
+        "only authenticated users can add requests",
     );
   }
 
-  for (const req of data) {
-    const firebaseDate = Timestamp.fromDate(new Date(req.date));
+  /* app check
+  if (context.app == undefined) {
+    throw new functions.https.HttpsError(
+        'failed-precondition',
+        'The function must be called from an App Check verified app.')
+  }
+  */
+  const batch = FireDB.batch();
+
+  let logData = "";
+  for (const data of datas) {
+    const firebaseDate = Timestamp.fromDate(new Date(data.date));
     // get user and schedule buckets
     const userDoc = FireDB
         .collection("users")
-        .doc(req.uid);
+        .doc(data.uid);
     const user = await userDoc.get();
 
-    // generate docid based on uid, date and slot
-    const docid = req.uid+formatDate(req.date, "", "YYYYMMDD")+req.slot;
-    const scheduleDoc = FireDB.collection("schedule").doc(docid);
+    // set docid and try to get it
+    const newDocid = data.uid+formatDate(data.date, "", "YYYYMMDD")+data.slot;
+    const scheduleDoc = FireDB.collection("schedule").doc(newDocid);
     const schedule = await scheduleDoc.get();
 
     if (!schedule.exists) { // no record found
-      if (req.type != "") { // only if the new schedule is not empty
-        await scheduleDoc.set({ // create a new schedule
+      if (data.type == "") { // do nothing if the schedule content is empty
+        continue;
+      } else { // create a new schedule
+        batch.set(scheduleDoc, {
           date: firebaseDate,
-          slot: req.slot,
-          uid: req.uid,
-          type: req.type,
-        }).then(() => {
-          console.log(
-              "SCHEDULE: " +
-              user.data().name +
-              " 新增了 " +
-              formatDate(req.date, "-", "YYYYMMDD") +
-              ":" +
-              req.slot +
-              "(" +
-              req.type + ")",
-          );
+          slot: data.slot,
+          uid: data.uid,
+          type: data.type,
         });
+        logData += "SCHEDULE: " +
+            user.data().name +
+            " added " +
+            formatDate(data.date, "-", "YYYYMMDD") +
+            ":" +
+            data.slot +
+            "(" +
+            data.type + ")" + "\n";
       }
     } else { // if existing record found
-      if (req.type == "") { // delete if it changes to empty
-        await scheduleDoc.delete().then(()=> {
-          console.log(
-              "SCHEDULE: " +
-              user.data().name +
-              " 刪除了 " +
-              formatDate(req.date, "-", "YYYYMMDD") +
-              ":" +
-              req.slot,
-          );
-        });
+      if (data.type == null) { // delete if it changes to empty
+        batch.delete(scheduleDoc);
+        logData += "SCHEDULE: " +
+            user.data().name +
+            " deleted " +
+            formatDate(data.date, "-", "YYYYMMDD") +
+            ":" +
+            data.slot + "\n";
       } else { // update new value if old schedule found
-        await scheduleDoc.update({
-          type: req.type,
-        }).then(()=>{
-          console.log(
-              "SCHEDULE: " +
+        if (data.type == schedule.data().type) continue;
+        else {
+          batch.update(scheduleDoc, {
+            type: data.type,
+          });
+          logData += "SCHEDULE: " +
                 user.data().name +
-                " 修改了 " +
-                formatDate(req.date, "-", "YYYYMMDD") +
+                " modified " +
+                formatDate(data.date, "-", "YYYYMMDD") +
                 ":" +
-                req.slot +
+                data.slot +
                 "(" +
-                req.type + ")",
-          );
-        });
+                data.type + ")" + "\n";
+        }
       }
     }
   }
-  return Promise.resolve("更表已經更新");
+  return batch.commit().then((res) => {
+    console.log(logData);
+
+    return {
+      status: true,
+      result: "Successfully updated schedules",
+    };
+  }).catch((e) => {
+    throw e;
+  });
 });

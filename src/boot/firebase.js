@@ -3,6 +3,7 @@ import 'firebase/auth';
 import 'firebase/firestore';
 import 'firebase/functions';
 import 'firebase/storage';
+import 'firebase/app-check';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBn3kOruwr2QZlFuecSiPswBdm6ijulxvM",
@@ -13,8 +14,19 @@ const firebaseConfig = {
   appId: "1:40845111899:web:f5110e9801b0c21704457e"
 };
 
-!Firebase.apps.length ? Firebase.initializeApp(firebaseConfig) : '';
+let app;
+!Firebase.apps.length ? app = Firebase.initializeApp(firebaseConfig) : '';
 
+// Pass your reCAPTCHA v3 site key (public key) to activate(). Make sure this
+// key is the counterpart to the secret key you set in the Firebase console.
+const captcha = new Firebase.appCheck.ReCaptchaV3Provider('6LdODkkgAAAAAEuYdrIue_LXyM_eSda4bufqj0wN', true);
+
+/*
+app.appCheck().activate(captcha);
+app.appCheck().getToken().then((value) => {
+  console.log("token: " + JSON.stringify(token));
+})
+*/
 if(window.location.hostname === 'localhost') {
   Firebase.auth().useEmulator('http://localhost:9099');
   Firebase.firestore().useEmulator('localhost', 8081);

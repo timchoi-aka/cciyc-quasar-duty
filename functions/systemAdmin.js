@@ -102,6 +102,54 @@ exports.attachHoliday = functions.https.onCall(async (data, context) => {
   });
 });
 
+// remove NaN schedules
+exports.deleteNaNSchedule = functions.https.onCall(async (data, context) => {
+  // only authenticated users can run this
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated users can add requests",
+    );
+  }
+
+  const schedule = [];
+  const scheduleDocid = [];
+  const newScheduleDocid = [];
+  const scheduleDoc = await FireDB.collection("schedule").get();
+
+  scheduleDoc.forEach((doc) => {
+    const d = doc.data();
+    if (doc.id.includes("NaN")) {
+      scheduleDocid.push(doc.id);
+      schedule.push(d);
+    }
+  });
+  console.log("dataset: " + JSON.stringify(schedule));
+  console.log("datasize: " + schedule.length);
+
+  // create a batch
+  let batch = FireDB.batch();
+  for (let i=0; i < schedule.length; i++) {
+    // delete old record
+    const ref = FireDB.collection("schedule").doc(scheduleDocid[i]);
+    batch.delete(ref);
+  }
+  await batch.commit();
+  batch = FireDB.batch();
+  for (let i=0; i < schedule.length; i++) {
+    const dateString = new Date(schedule[i].date.toMillis());
+    const newDocid = schedule[i].uid + formatDate(dateString, "", "YYYYMMDD") + schedule[i].slot;
+    console.log(newDocid);
+    newScheduleDocid.push(newDocid);
+    const newRef = FireDB.collection("schedule").doc(newDocid);
+    console.log("ref:" + JSON.stringify(newRef));
+    batch.set(newRef, {...schedule[i]});
+  }
+  console.log("updated dataset: " + JSON.stringify(newScheduleDocid));
+  console.log("updated datasize: " + newScheduleDocid.length);
+  await batch.commit();
+});
+
 // migrate old schedule doc to new doc id
 exports.migrateSchedule = functions.https.onCall(async (data, context) => {
   // only authenticated users can run this

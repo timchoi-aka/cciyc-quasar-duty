@@ -1,5 +1,5 @@
 <template>
-  <table>
+  <q-markup-table>
     <tbody>
       <tr>
         <th class="caption" rowspan="2">備註</th>
@@ -28,7 +28,7 @@
         </th>
       </tr>
     </tbody>
-  </table>
+  </q-markup-table>
 </template>
 
 <script>

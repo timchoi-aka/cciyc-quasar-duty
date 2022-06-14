@@ -4,7 +4,6 @@
       dense
       flat
       :title="renderDate.getFullYear() + '年年假表'"
-      :grid="$q.screen.lt.sm && allowModify"
       :rows="tableData"
       :columns="tableFields"
       :pagination="defaultPagination"
@@ -14,7 +13,18 @@
       row-key="name"
     >
       <template v-slot:body-cell-Date="props">
-        <q-td :class="['nameColumn', getHoliday(props.row.Date) ? 'isHoliday' : '']"
+        <q-td
+          v-if="$q.screen.lt.sm"
+          :class="[getHoliday(props.row.Date) ? 'isHoliday' : '']"
+        >
+          <div v-html="qdate.formatDate(props.row.Date, 'MM/DD')" />
+          <q-popup-proxy class="bg-red-2" v-if="getHoliday(props.row.Date)">{{
+            getHoliday(props.row.Date)
+          }}</q-popup-proxy>
+        </q-td>
+        <q-td
+          v-else
+          :class="['nameColumn', getHoliday(props.row.Date) ? 'isHoliday' : '']"
           >{{ props.value }}{{ daysOfWeek(props.row.Date) }}
           <q-popup-proxy class="bg-red-2" v-if="getHoliday(props.row.Date)">{{
             getHoliday(props.row.Date)
@@ -40,6 +50,7 @@
 import { scheduleCollection, usersCollection } from "boot/firebase";
 import date from "src/lib/date.js";
 import { computed } from "vue";
+import { date as qdate } from "quasar";
 import holiday from "assets/holiday.json";
 
 export default {
@@ -49,6 +60,7 @@ export default {
   },
   data() {
     return {
+      qdate: qdate,
       tableFields: [],
       tableData: [],
       date: [],
@@ -216,8 +228,11 @@ export default {
             // add up AL items array and update table
             items.forEach((item) => {
               let i = tableData.findIndex(
-                (row) => row.Date == this.formatDate(item.date, "", "月日")
+                (row) =>
+                  date.formatDate(row.Date, "", "YYYYMMDD") ==
+                  date.formatDate(item.date, "", "YYYYMMDD")
               );
+
               if (i == -1) return;
               let thisCount = Number.parseFloat(tableData[i][item.uid]) + 0.5;
               tableData[i][item.uid] = thisCount;
@@ -242,17 +257,14 @@ export default {
   background-color: $red-2;
 }
 
-.q-table__container::v-deep .q-table__title {
+.q-table__container::v-deep(.q-table__title) {
   font-size: 2vw !important;
 }
 
-.q-table__container::v-deep .nameColumn {
+.q-table__container::v-deep(.nameColumn) {
   font-size: 1.5vw;
   text-decoration: bold;
   text-align: center;
-}
-
-@media screen {
 }
 
 @media print {

@@ -1,144 +1,147 @@
 <template>
-  <q-table
-    dense
-    flat
-    :grid="$q.screen.lt.sm && allowModify"
-    :rows="rows"
-    :columns="columns"
-    :pagination="defaultPagination"
-    :hide-bottom="true"
-    color="primary"
-    row-key="name"
-  >
-    <!-- header template -->
-    <template v-slot:header="props">
-      <q-tr :props="props" class="bg-blue-2">
-        <template
-          style="display: contents"
-          v-for="(col, index) in props.cols"
-          :key="col.name"
-          :props="props"
-        >
-          <q-th v-if="index == 0" rowspan="2" class="vertical-bottom nameColumn">
-            {{ col.label }}
-          </q-th>
-          <q-th v-if="index % 3 == 1" colspan="3">
-            <span
-              :class="[
-                'q-px-md',
-                getHoliday(splitDateSlot(col.label)[0]) != '' ? 'bg-red-2' : '',
-              ]"
-              >{{ formatDate(splitDateSlot(col.label)[0], "", "月日") }}
-              <q-tooltip
-                v-if="getHoliday(splitDateSlot(col.label)[0]) != ''"
-                anchor="top middle"
-                self="bottom middle"
-                :offset="[10, 10]"
-                transition-show="flip-right"
-                transition-hide="flip-left"
-              >
-                {{ getHoliday(splitDateSlot(col.label)[0]) }}
-              </q-tooltip>
-            </span>
-          </q-th>
-        </template>
-      </q-tr>
-      <q-tr class="bg-blue-2">
-        <template
-          style="display: contents"
-          v-for="(col, index) in props.cols"
-          :key="col.name"
-          :props="props"
-        >
-          <q-th v-if="index > 0" class="dataColumn">
-            {{ slotMap[splitDateSlot(col.label)[1]] }}
-          </q-th>
-        </template>
-      </q-tr>
-    </template>
+  <q-page>
+    <q-table
+      dense
+      flat
+      :grid="$q.screen.lt.md && allowModify"
+      :rows="rows"
+      :columns="columns"
+      :pagination="defaultPagination"
+      :hide-bottom="true"
+      color="primary"
+      row-key="name"
+    >
+      <!-- header template -->
+      <template v-slot:header="props">
+        <q-tr :props="props" class="bg-blue-2">
+          <template
+            style="display: contents"
+            v-for="(col, index) in props.cols"
+            :key="col.name"
+            :props="props"
+          >
+            <q-th v-if="index == 0" rowspan="2" class="vertical-bottom nameColumn">
+              {{ col.label }}
+            </q-th>
+            <q-th v-if="index % 3 == 1" colspan="3">
+              <span
+                :class="[
+                  'q-px-md',
+                  getHoliday(splitDateSlot(col.label)[0]) != '' ? 'bg-red-2' : '',
+                ]"
+                >{{ formatDate(splitDateSlot(col.label)[0], "", "月日") }}
+                <q-tooltip
+                  v-if="getHoliday(splitDateSlot(col.label)[0]) != ''"
+                  anchor="top middle"
+                  self="bottom middle"
+                  :offset="[10, 10]"
+                  transition-show="flip-right"
+                  transition-hide="flip-left"
+                >
+                  {{ getHoliday(splitDateSlot(col.label)[0]) }}
+                </q-tooltip>
+              </span>
+            </q-th>
+          </template>
+        </q-tr>
+        <q-tr class="bg-blue-2">
+          <template
+            style="display: contents"
+            v-for="(col, index) in props.cols"
+            :key="col.name"
+            :props="props"
+          >
+            <q-th v-if="index > 0" class="dataColumn">
+              {{ slotMap[splitDateSlot(col.label)[1]] }}
+            </q-th>
+          </template>
+        </q-tr>
+      </template>
 
-    <!-- username column template -->
-    <template v-slot:body-cell-name="props">
-      <q-td :props="props" class="q-pa-none nameColumn">
-        <span class="row">
-          <q-space />
-          <div>{{ props.value }}</div>
-          <q-btn
-            size="1vw"
-            class="col"
-            color="primary"
-            dense
-            outline
-            icon="edit"
-            v-if="canModifyTable(props.row.uid) && !rowUnderModification"
-            @click="toggleModifyTable(props.row)"
-            >編更
-          </q-btn>
-          <q-space />
-        </span>
-        <span class="row">
-          <q-btn
-            size="1vw"
-            class="col"
-            color="primary"
-            dense
-            outline
-            icon="save"
-            :disabled="validateEditingRow()"
-            v-if="canModifyTable(props.row.uid) && rowUnderModification == props.row.uid"
-            @click="updateTable()"
-            >儲存
-          </q-btn>
-          <q-btn
-            size="1vw"
-            class="col"
-            color="primary"
-            dense
-            outline
-            icon="input"
-            v-if="canModifyTable(props.row.uid) && rowUnderModification == props.row.uid"
-            @click="loadDefault(props.row)"
-            >預設
-          </q-btn>
-        </span>
-      </q-td>
-    </template>
+      <!-- username column template -->
+      <template v-slot:body-cell-name="props">
+        <q-td :props="props" class="q-pa-none nameColumn">
+          <div class="row wrap">
+            <div>{{ props.value }}</div>
+            <q-btn
+              class="q-mx-auto"
+              size="1vw"
+              color="primary"
+              dense
+              outline
+              icon="edit"
+              v-if="canModifyTable(props.row.uid) && !rowUnderModification"
+              @click="toggleModifyTable(props.row)"
+              >編更
+            </q-btn>
+          </div>
+          <span class="row">
+            <q-btn
+              size="1vw"
+              class="col"
+              color="primary"
+              dense
+              outline
+              icon="save"
+              :disabled="validateEditingRow()"
+              v-if="
+                canModifyTable(props.row.uid) && rowUnderModification == props.row.uid
+              "
+              @click="updateTable()"
+              >儲存
+            </q-btn>
+            <q-btn
+              size="1vw"
+              class="col"
+              color="primary"
+              dense
+              outline
+              icon="input"
+              v-if="
+                canModifyTable(props.row.uid) && rowUnderModification == props.row.uid
+              "
+              @click="loadDefault(props.row)"
+              >預設
+            </q-btn>
+          </span>
+        </q-td>
+      </template>
 
-    <!-- all cell template -->
-    <template v-slot:body-cell="props">
-      <q-td :props="props" class="q-pa-none dataColumn">
-        <template
-          v-if="
-            rowUnderModification == props.row.uid &&
-            !(props.col.name + '.approved' in props.row)
-          "
-        >
-          <q-select
-            new-value-mode="add"
-            class="q-ma-none"
-            clearable
-            hide-dropdown-icon
-            use-input
-            :options="dutyInputOptions"
-            color="primary"
-            bg-color="green-2"
-            dense
-            options-dense
-            v-model="editingRow[props.col.name]"
-            @input-value="
-              (val) => {
-                tempInputValue = val;
-              }
+      <!-- all cell template -->
+      <template v-slot:body-cell="props">
+        <q-td :props="props" class="q-pa-none dataColumn">
+          <template
+            v-if="
+              rowUnderModification == props.row.uid &&
+              !(props.col.name + '.approved' in props.row)
             "
-            @update:model-value="
-              (val) => {
-                tempInputValue = val;
-              }
-            "
-            @blur="editingRow[props.col.name] = tempInputValue"
-            :rules="[(val) => validateInput(val)]"
-          ></q-select>
-          <!-- <q-input
+          >
+            <q-select
+              new-value-mode="add"
+              class="q-ma-none"
+              clearable
+              hide-dropdown-icon
+              use-input
+              :options="dutyInputOptions"
+              color="primary"
+              bg-color="green-2"
+              dense
+              options-dense
+              v-model="editingRow[props.col.name]"
+              @input-value="
+                (val) => {
+                  tempInputValue = val;
+                }
+              "
+              @update:model-value="
+                (val) => {
+                  tempInputValue = val;
+                }
+              "
+              @blur="editingRow[props.col.name] = tempInputValue"
+              :rules="[(val) => validateInput(val)]"
+            ></q-select>
+            <!-- <q-input
             class="q-ma-none"
             outlined
             square
@@ -170,165 +173,171 @@
               </q-list>
             </q-menu>
           </q-input> -->
-        </template>
-        <div
-          v-if="props.col.name + '.approved' in props.row"
-          class="q-my-none q-py-none approved"
-        >
-          {{ props.value }}
+          </template>
+          <div
+            v-if="props.col.name + '.approved' in props.row"
+            class="q-my-none q-py-none approved"
+          >
+            {{ props.value }}
+          </div>
+          <div v-else style="display: contents" class="q-my-none q-py-none">
+            <span v-if="props.value">{{ props.value }}</span>
+            <span v-else>&nbsp;</span>
+          </div>
+        </q-td>
+      </template>
+
+      <!-- top row template -->
+      <template v-slot:top v-if="$q.screen.lt.sm">
+        <div class="text-h5 text-bold">
+          {{ formatDate(splitDateSlot(Object(columns[1]).name)[0], "", "月日") }} 至
+          {{ formatDate(splitDateSlot(Object(columns[21]).name)[0], "", "月日") }}
         </div>
-        <div v-else style="display: contents" class="q-my-none q-py-none">
-          <span v-if="props.value">{{ props.value }}</span>
-          <span v-else>&nbsp;</span>
-        </div>
-      </q-td>
-    </template>
+      </template>
 
-    <!-- top row template -->
-    <template v-slot:top v-if="$q.screen.lt.sm">
-      <div class="text-h5 text-bold">
-        {{ formatDate(splitDateSlot(Object(columns[1]).name)[0], "", "月日") }} 至
-        {{ formatDate(splitDateSlot(Object(columns[21]).name)[0], "", "月日") }}
-      </div>
-    </template>
+      <!-- grid template -->
+      <template v-slot:item="props">
+        <div class="q-pa-xs col-xs-12 col-sm-6 col-md-4 flex">
+          <q-card style="width: 95%">
+            <q-card-section class="flex q-my-md">
+              <span class="gridCard">員工: </span
+              ><strong class="gridCard">{{ props.row.name }}</strong>
 
-    <!-- grid template -->
-    <template v-slot:item="props">
-      <div class="q-pa-xs col-xs-12 col-sm-6 col-md-4 flex">
-        <q-space />
-        <q-card style="width: 90%">
-          <q-card-section class="flex q-my-md gridCard">
-            員工: <strong>{{ props.row.name }}</strong>
-            <q-btn
-              style="margin-left: 5px; padding: 3px"
-              color="primary"
-              icon="edit"
-              outline
-              v-if="canModifyTable(props.row.uid) && !rowUnderModification"
-              @click="toggleModifyTable(props.row)"
-              >編更
-            </q-btn>
+              <q-btn
+                style="margin-left: 5px; padding: 3px"
+                color="primary"
+                icon="edit"
+                outline
+                dense
+                v-if="canModifyTable(props.row.uid) && !rowUnderModification"
+                @click="toggleModifyTable(props.row)"
+                label="編更"
+              />
 
-            <q-btn
-              style="margin-left: 5px; padding: 3px"
-              color="primary"
-              icon="save"
-              outline
-              :disabled="validateEditingRow()"
-              v-if="
-                canModifyTable(props.row.uid) && rowUnderModification == props.row.uid
-              "
-              @click="updateTable()"
-              >儲存
-            </q-btn>
+              <q-btn
+                style="margin-left: 5px; padding: 3px"
+                color="primary"
+                icon="save"
+                outline
+                dense
+                :disabled="validateEditingRow()"
+                v-if="
+                  canModifyTable(props.row.uid) && rowUnderModification == props.row.uid
+                "
+                @click="updateTable()"
+                label="儲存"
+              />
 
-            <q-btn
-              style="margin-left: 5px; padding: 3px"
-              color="primary"
-              icon="input"
-              outline
-              v-if="
-                canModifyTable(props.row.uid) && rowUnderModification == props.row.uid
-              "
-              @click="loadDefault(props.row)"
-              >預設
-            </q-btn>
-            <q-space />
-            <q-btn
-              color="grey"
-              round
-              flat
-              dense
-              :icon="
-                qcardExpanded[props.row.uid] ? 'keyboard_arrow_up' : 'keyboard_arrow_down'
-              "
-              @click="qcardExpanded[props.row.uid] = !qcardExpanded[props.row.uid]"
-            />
-          </q-card-section>
+              <q-btn
+                style="margin-left: 5px; padding: 3px"
+                color="primary"
+                icon="input"
+                outline
+                dense
+                v-if="
+                  canModifyTable(props.row.uid) && rowUnderModification == props.row.uid
+                "
+                @click="loadDefault(props.row)"
+                label="預設"
+              />
 
-          <q-slide-transition>
-            <div v-show="qcardExpanded[props.row.uid]">
-              <q-separator />
-              <q-card-section v-for="(col, index) in props.cols" class="text-h6">
-                <div class="display: contents; row" v-if="col.label != '員工'">
-                  <div class="col text-left" style="margin-left: 10px">
-                    {{ formatDate(splitDateSlot(col.label)[0], "", "月日") }}
-                    {{ slotMap[splitDateSlot(col.label)[1]] }}
-                  </div>
-                  <div class="col text-right" style="margin-right: 10px">
-                    <div
-                      v-if="
-                        rowUnderModification == props.row.uid &&
-                        !(col.name + '.approved' in props.row)
-                      "
-                    >
-                      <q-select
-                        new-value-mode="add"
-                        clearable
-                        use-input
-                        :options="dutyInputOptions"
-                        color="primary"
-                        bg-color="green-2"
-                        dense
-                        options-dense
-                        v-model="editingRow[col.name]"
-                        @input-value="
-                          (val) => {
-                            tempInputValue = val;
-                          }
-                        "
-                        @update:model-value="
-                          (val) => {
-                            tempInputValue = val;
-                          }
-                        "
-                        @blur="editingRow[col.name] = tempInputValue"
-                        :rules="[(val) => validateInput(val)]"
-                      ></q-select>
-                    </div>
-                    <div v-else>
-                      <q-chip
-                        square
-                        color="secondary"
-                        size="lg"
-                        v-if="col.name + '.approved' in props.row"
-                        >{{ props.row[col.name] }}</q-chip
-                      >
-                      <span v-else style="display: contents">{{
-                        props.row[col.name]
-                      }}</span>
-                    </div>
-                  </div>
-                </div>
+              <q-space />
+              <q-btn
+                color="grey"
+                round
+                flat
+                dense
+                :icon="
+                  qcardExpanded[props.row.uid]
+                    ? 'keyboard_arrow_up'
+                    : 'keyboard_arrow_down'
+                "
+                @click="qcardExpanded[props.row.uid] = !qcardExpanded[props.row.uid]"
+              />
+            </q-card-section>
+            <q-slide-transition>
+              <div v-show="qcardExpanded[props.row.uid]">
                 <q-separator />
-              </q-card-section>
-            </div>
-          </q-slide-transition>
-        </q-card>
-        <q-space />
-      </div>
-    </template>
-  </q-table>
+                <q-card-section v-for="(col, index) in props.cols" class="text-h6">
+                  <div class="display: contents; row" v-if="col.label != '員工'">
+                    <div class="col text-left" style="margin-left: 10px">
+                      {{ formatDate(splitDateSlot(col.label)[0], "", "月日") }}
+                      {{ slotMap[splitDateSlot(col.label)[1]] }}
+                    </div>
+                    <div class="col text-right" style="margin-right: 10px">
+                      <div
+                        v-if="
+                          rowUnderModification == props.row.uid &&
+                          !(col.name + '.approved' in props.row)
+                        "
+                      >
+                        <q-select
+                          new-value-mode="add"
+                          clearable
+                          use-input
+                          :options="dutyInputOptions"
+                          color="primary"
+                          bg-color="green-2"
+                          dense
+                          options-dense
+                          v-model="editingRow[col.name]"
+                          @input-value="
+                            (val) => {
+                              tempInputValue = val;
+                            }
+                          "
+                          @update:model-value="
+                            (val) => {
+                              tempInputValue = val;
+                            }
+                          "
+                          @blur="editingRow[col.name] = tempInputValue"
+                          :rules="[(val) => validateInput(val)]"
+                        ></q-select>
+                      </div>
+                      <div v-else>
+                        <q-chip
+                          square
+                          color="secondary"
+                          size="lg"
+                          v-if="col.name + '.approved' in props.row"
+                          >{{ props.row[col.name] }}</q-chip
+                        >
+                        <span v-else style="display: contents">{{
+                          props.row[col.name]
+                        }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <q-separator />
+                </q-card-section>
+              </div>
+            </q-slide-transition>
+          </q-card>
+        </div>
+      </template>
+    </q-table>
 
-  <q-dialog v-model="waitingAsync" position="bottom">
-    <q-card style="width: 200px">
-      <q-card-section class="row">
-        <!-- <div class="col text-h5 text-bold fixed-left vertical-bottom">儲存中...</div> -->
-        <q-circular-progress
-          indeterminate
-          show-value
-          size="100px"
-          :thickness="0.4"
-          font-size="10px"
-          color="lime"
-          track-color="grey-3"
-          center-color="grey-3"
-          class="q-ma-md col float-right vertical-middle"
-          >儲存中</q-circular-progress
-        >
-      </q-card-section>
-    </q-card>
-  </q-dialog>
+    <q-dialog v-model="waitingAsync" position="bottom">
+      <q-card style="width: 200px">
+        <q-card-section class="row">
+          <!-- <div class="col text-h5 text-bold fixed-left vertical-bottom">儲存中...</div> -->
+          <q-circular-progress
+            indeterminate
+            show-value
+            size="100px"
+            :thickness="0.4"
+            font-size="10px"
+            color="lime"
+            track-color="grey-3"
+            center-color="grey-3"
+            class="q-ma-md col float-right vertical-middle"
+            >儲存中</q-circular-progress
+          >
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+  </q-page>
 </template>
 
 <script>
@@ -338,7 +347,7 @@ import {
   FirebaseFunctions,
   usersCollection,
 } from "boot/firebase";
-import { mapState } from "vuex";
+
 import { useStore } from "vuex";
 import { defineComponent, computed } from "vue";
 import holiday from "assets/holiday.json";
@@ -446,7 +455,8 @@ export default defineComponent({
         const updateSchedule = FirebaseFunctions.httpsCallable("schedule-updateSchedule");
         this.awaitServerResponse++;
         updateSchedule(changeRequest)
-          .then(() => {
+          .then((response) => {
+            // console.log(JSON.stringify(response));
             this.awaitServerResponse--;
             this.rowUnderModification = "";
             this.editingRow = {};

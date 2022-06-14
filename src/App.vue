@@ -39,11 +39,12 @@
         </div>
       </q-toolbar>
 
-      <q-tabs class="desktop-only" align="left">
-        <q-route-tab to="/duty" label="更表" />
-        <q-route-tab to="/activity" label="活動" />
-        <q-route-tab to="/print" label="列印更表" />
-        <q-route-tab to="/al-view" label="年假表" />
+      <q-tabs inline-label v-if="username" class="desktop-only" align="left">
+        <q-route-tab to="/duty" icon="calendar_month" label="更表" />
+        <q-route-tab to="/activity" icon="event" label="活動" />
+        <q-route-tab to="/print" icon="print" label="列印更表" />
+        <q-route-tab to="/holiday" icon="festival" label="假期系統" />
+        <q-route-tab to="/user-management" icon="account_circle" label="用戶管理" />
       </q-tabs>
     </q-header>
 

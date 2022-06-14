@@ -33,3 +33,19 @@ export function getDefaultSchedule(state) {
 export function getLeaveManage(state) {
   return state.userProfile.privilege.leaveManage
 }
+
+export function getLeaveApprove(state) {
+  return state.userProfile.privilege.leaveApprove
+}
+
+export function getALBalance(state) {
+  return state.userProfile.balance.al
+}
+
+export function getSALBalance(state) {
+  return state.userProfile.balance.sal
+}
+
+export function getSAL(state) {
+  return state.userProfile.privilege.sal
+}

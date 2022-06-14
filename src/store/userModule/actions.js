@@ -19,5 +19,5 @@ export async function logout({ commit }) {
   // clear userProfile and redirect to /login
   commit('setUserProfile', {})
   commit('setAuth', {})
-  this.$router.push('/login').catch(()=>{});
+  this.$router.push('/').catch(()=>{});
 }

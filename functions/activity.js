@@ -1,6 +1,5 @@
 /* eslint-disable max-len */
 const {functions, FireDB, Timestamp} = require("./fbadmin");
-const {formatDate} = require("./utilities");
 
 // delete activity
 exports.delActivity = functions.https.onCall(async (data, context) => {
@@ -59,9 +58,13 @@ exports.editActivityCustomName = functions.https.onCall(
       );
 
       const dateEntries = activityDoc.data().date;
-      const i = dateEntries.findIndex((element) => formatDate(fbDate.toMillis(), "-", "YYYYMMDD") == formatDate(element.date.toMillis(), "-", "YYYYMMDD"));
-
-      dateEntries[i].customName = data.customName;
+      const i = dateEntries.findIndex(
+          (element) => element.date.toMillis() == fbDate.toMillis(),
+      );
+      dateEntries[i] = {
+        date: dateEntries[i].date,
+        customName: data.customName,
+      };
 
       return activityCollection.doc(data.docid).update({
         name: data.name,
@@ -129,11 +132,6 @@ exports.modifyActivity = functions.https.onCall(async (data, context) => {
 
   // console.log("dateMapping: " + JSON.stringify(newEventDateMapping));
 
-  const eventDatePrintable = [];
-  eventDate.forEach((date) => {
-    eventDatePrintable.push(formatDate(date.toDate(), "/", "DDMMYYYY"));
-  });
-
   console.log(
       "ACTIVITIES: " +
       userName +
@@ -142,7 +140,7 @@ exports.modifyActivity = functions.https.onCall(async (data, context) => {
       ", name " +
       data.name +
       ", event dates : " +
-      JSON.stringify(eventDatePrintable),
+      JSON.stringify(eventDate),
   );
   return activityCollection.doc(data.docid).set({
     id: data.id,

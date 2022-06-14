@@ -31,6 +31,46 @@ exports.delLeave = functions.https.onCall(async (data, context) => {
   }
 });
 
+// delete a leave application
+exports.delLeaveByDocid = functions.https.onCall(async (data, context) => {
+  if (!context.auth.uid) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated user can access this function",
+    );
+  }
+  // get user information for logging
+  const user = await FireDB.collection("users").doc(context.auth.uid).get();
+  const userData = user.data();
+
+  let logData = "";
+
+  const batch = FireDB.batch();
+  for (const d of data) {
+    const leaveDoc = FireDB.collection("leave").doc(d.docid);
+    const leave = await leaveDoc.get();
+    if (leave.data().uid == context.auth.uid) {
+      batch.delete(leaveDoc);
+      logData += "HOLIDAY: " + userData.name +
+        " 刪除了 " +
+        leave.data().date +
+        " 於 " +
+        leave.data().slot +
+        " 假期種類 " +
+        leave.data().type + "\n";
+    } else {
+      throw new functions.https.HttpsError(
+          "unauthenticated",
+          "only leave owner can delete leave request",
+      );
+    }
+  }
+
+  return await batch.commit().then((doc) => {
+    console.log(logData);
+  });
+});
+
 // approve a leave
 exports.approveLeave = functions.https.onCall(async (data, context) => {
   const docid = data.docid;
@@ -137,6 +177,159 @@ exports.approveLeave = functions.https.onCall(async (data, context) => {
       );
   }
 });
+
+// approve a leave by docid
+exports.approveLeaveByDocid = functions.https.onCall(async (data, context) => {
+  const user = await FireDB.collection("users").doc(context.auth.uid).get();
+  const userData = user.data();
+  if (!context.auth.uid) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated user can access this function",
+    );
+  }
+
+  if (userData.privilege.leaveApprove != true) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only leave admin can approve leave request",
+    );
+  }
+  const currentDate = new Date();
+  // offset 8 hours to hk time
+  currentDate.setTime(currentDate.getTime() + 8 * 60 * 60 * 1000);
+
+  let logData = "";
+  const batch = FireDB.batch();
+
+  for (const d of data) {
+    const leaveDoc = FireDB.collection("leave").doc(d.docid);
+    const scheduleDocid = d.uid + formatDate(d.date, "", "YYYYMMDD") + d.slot;
+
+    batch.update(leaveDoc, {
+      remarks: FieldValue.arrayUnion(...d.remarks),
+      status: d.status,
+    });
+
+    logData += "HOLIDAY: " + userData.name +
+            " 批准了 " +
+            d.name +
+            " 於 " +
+            d.date +
+            " 時段 " +
+            d.slot +
+            " 假期種類 " +
+            d.type + "\n";
+
+    const firebaseDate = Timestamp.fromDate(
+        new Date(d.date),
+    );
+
+    const scheduleCollection = FireDB.collection("schedule");
+
+    // find if timeslot is already occupied
+    const scheduleDoc = scheduleCollection.doc(scheduleDocid);
+    const schedule = await scheduleDoc.get();
+    const scheduleData = schedule.data();
+
+    if (!scheduleData) { // old data doesn't exist, create new schedule
+      batch.set(scheduleDoc, {
+        date: firebaseDate,
+        slot: d.slot,
+        uid: d.uid,
+        type: d.type,
+        leaveDocid: d.docid,
+      });
+
+      logData += "HOLIDAY>SCHEDULE: （批准假期>新更表）" +
+                      d.name +
+                      " 於 " +
+                      d.date +
+                      " 時段 " +
+                      d.slot +
+                      " 假期種類 " +
+                      d.type + "\n";
+    } else {
+      batch.update(scheduleDoc, {
+        type: d.type,
+        leaveDocid: d.docid,
+      });
+
+      logData += "HOLIDAY>SCHEDULE: （批准假期>修改更表）" +
+      d.name +
+      " 於 " +
+      d.date +
+      " 時段 " +
+      d.slot +
+      " 假期種類 " +
+      d.type + "\n";
+    }
+  }
+
+  return await batch.commit().then((result) => {
+    console.log(logData);
+  });
+});
+
+// modify a leave by docid
+exports.modifyLeaveByDocid = functions.https.onCall(async (data, context) => {
+  if (!context.auth.uid) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated user can access this function",
+    );
+  }
+
+  const userDoc = FireDB
+      .collection("users")
+      .doc(context.auth.uid);
+  const user = await userDoc.get();
+  const userData = user.data();
+
+  const batch = FireDB.batch();
+  let logData = "";
+  for (const d of data) {
+    const leaveDoc = FireDB
+        .collection("leave")
+        .doc(d.docid);
+    const leave = await leaveDoc.get();
+    const leaveData = leave.data();
+    if (leave.data().uid == context.auth.uid || userData.privilege.leaveApprove) {
+      batch.update(leaveDoc, {
+        date: d.date,
+        slot: d.slot,
+        type: d.type,
+        remarks: FieldValue.arrayUnion(...d.remarks),
+      });
+
+      logData +=
+          "HOLIDAY: " + userData.name +
+          " 修改了申請 - 由 [" +
+          leaveData.name + "]" +
+          leaveData.date +
+          ":" +
+          leaveData.slot +
+          "(" +
+          leaveData.type + ")" +
+          " 至 " +
+          d.date +
+          ":" +
+          d.slot +
+          "(" +
+          d.type + ")\n";
+    } else {
+      throw new functions.https.HttpsError(
+          "unauthenticated",
+          "only leave admin or leave owner can modify leave request",
+      );
+    }
+  }
+
+  return await batch.commit().then(() => {
+    console.log(logData);
+  });
+});
+
 
 // modify a leave
 exports.modifyLeave = functions.https.onCall(async (data, context) => {
@@ -334,6 +527,56 @@ exports.rejectLeave = functions.https.onCall(async (data, context) => {
   });
 });
 
+// reject leave by docid
+exports.rejectLeaveByDocid = functions.https.onCall(async (data, context) => {
+  const user = await FireDB.collection("users").doc(context.auth.uid).get();
+  const userData = user.data();
+
+  if (!context.auth.uid) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated user can access this function",
+    );
+  }
+
+  if (userData.privilege.leaveApprove != true) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only leave admin can reject leave request",
+    );
+  }
+
+  const currentDate = new Date();
+  // offset 8 hours to hk time
+  currentDate.setTime(currentDate.getTime() + 8 * 60 * 60 * 1000);
+
+  let logData = "";
+  const batch = FireDB.batch();
+
+  for (const d of data) {
+    const leaveDoc = FireDB.collection("leave").doc(d.docid);
+
+    batch.update(leaveDoc, {
+      remarks: FieldValue.arrayUnion(...d.remarks),
+      status: d.status,
+    });
+
+    logData += "HOLIDAY: " + userData.name +
+            " 拒絕了 " +
+            d.name +
+            " 於 " +
+            d.date +
+            " 時段 " +
+            d.slot +
+            " 假期種類 " +
+            d.type + "\n";
+  }
+
+  return await batch.commit().then((result) => {
+    console.log(logData);
+  });
+});
+
 // add a leave application
 exports.addLeave = functions.https.onCall(async (data, context) => {
   /* const leave = {
@@ -347,10 +590,25 @@ exports.addLeave = functions.https.onCall(async (data, context) => {
     remarks: data.remarks,
   }; */
   // const leaveCollection = FireDB.collection("leave");
-  return await FireDB.collection("leave").add(data).then(() => {
-    console.log(
-        "HOLIDAY: " + data.name + " 申請了 " + data.date + ":" + data.slot + "(" + data.type + ")",
+  // only authenticated can proceed
+  if (!context.auth.uid) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated user can access this function",
     );
+  }
+
+  const batch = FireDB.batch();
+  let logData = "";
+  let leaveDoc;
+  data.forEach((d) => {
+    leaveDoc = FireDB.collection("leave").doc();
+    batch.set(leaveDoc, d);
+    logData += "HOLIDAY: " + d.name + " 申請了 " + d.date + ":" + d.slot + "(" + d.type + ")\n";
+  });
+
+  return await batch.commit().then(() => {
+    console.log(logData);
   });
 });
 
@@ -380,17 +638,19 @@ exports.updatePendingCount = functions.firestore
         // delete record or didn't approve anything
         if (!change.after.exists || (change.before.data().status == "未批" && change.after.data().status != "未批")) {
           const pendingDoc = await FireDB.collection("dashboard").doc("notification").get();
-          const pending = pendingDoc.data().leave_waitingForApproval;
-          console.log("HOLIDAY: 待審批 " + pending-1);
+          let pending = pendingDoc.data().leave_waitingForApproval;
+          pending -= 1;
+          console.log("HOLIDAY: 待審批 " + pending);
           return FireDB.collection("dashboard").doc("notification").update(
               {
                 leave_waitingForApproval: FieldValue.increment(-1),
               });
-        // change back to un-approved
+          // change back to un-approved
         } else if (change.before.data().status != "未批" && change.after.data().status == "未批") {
           const pendingDoc = await FireDB.collection("dashboard").doc("notification").get();
-          const pending = pendingDoc.data().leave_waitingForApproval;
-          console.log("HOLIDAY: 待審批 " + pending+1);
+          let pending = pendingDoc.data().leave_waitingForApproval;
+          pending += 1;
+          console.log("HOLIDAY: 待審批 " + pending);
           return FireDB.collection("dashboard").doc("notification").update(
               {
                 leave_waitingForApproval: FieldValue.increment(1),
@@ -427,6 +687,12 @@ exports.updatePendingCount = functions.firestore
           });
         }
       }
-      console.log(change.after.data());
-      return Promise.reject(new Error("updatePendingCount: Direct DB modification/deletion or Unhandled Case."));
+      console.log("CHANGE DETECTED BEFORE: " + JSON.stringify(change.before.data()) + " AFTER: " + JSON.stringify(change.after.data()));
+      // return Promise.reject(new Error("updatePendingCount: Direct DB modification/deletion or Unhandled Case."));
     });
+
+
+exports.updateALBalance = functions.pubsub.schedule("0 0 * * *").timeZone("Asia/Hong_Kong").onRun((context) => {
+  console.log("This will be run every day at 00:00 AM Eastern!");
+  return null;
+});

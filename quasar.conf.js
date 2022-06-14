@@ -7,6 +7,7 @@
 // https://v2.quasar.dev/quasar-cli/quasar-conf-js
 
 const { configure } = require('quasar/wrappers');
+var path = require('path');
 
 module.exports = configure(function (ctx) {
   return {
@@ -63,18 +64,17 @@ module.exports = configure(function (ctx) {
 
       // https://v2.quasar.dev/quasar-cli/handling-webpack
       // "chain" is a webpack-chain object https://github.com/neutrinojs/webpack-chain
-      chainWebpack ( /* chain */ ) {
-        /* chain.resolve.alias = {
+      /*chainWebpack (  chain  ) {
+         chain.resolve.alias = {
           ...chain.resolve.alias,
           '@': path.resolve(__dirname, './src'),
           '@components': path.resolve(__dirname, './src/components'),
           '@boot': path.resolve(__dirname, './src/boot'),
           '@store': path.resolve(__dirname, './src/store'),
-          // ....
         }
-        //
-        */
       },
+      */
+     chainWebpack() {},
     },
 
     // Full list of options: https://v2.quasar.dev/quasar-cli/quasar-conf-js#Property%3A-devServer
@@ -87,7 +87,7 @@ module.exports = configure(function (ctx) {
     // https://v2.quasar.dev/quasar-cli/quasar-conf-js#Property%3A-framework
     framework: {
       config: {},
-
+      i18n: 'zh-hant',
       // iconSet: 'material-icons', // Quasar icon set
       // lang: 'en-US', // Quasar language pack
 
