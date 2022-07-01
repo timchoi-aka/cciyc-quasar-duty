@@ -3,49 +3,145 @@ export function someGetter (state) {
 }
 */
  export function getUsername(state) {
+  if (Object.keys(state.userProfile).length) {
    return state.userProfile.name;
+  } else {
+    return null;
+  }
  }
 
  export function getPhotoURL(state) {
+  if (Object.keys(state.userProfile).length) {
    return state.auth.photoURL;
+  } else {
+    return null;
+  }
+ }
+
+ export function getUserManagement(state) {
+  if (Object.keys(state.userProfile).length) {
+   return state.userProfile.privilege.userManagement;
+  } else {
+    return null;
+  }
+ }
+
+ export function getDateOfExit(state) {
+  if (Object.keys(state.userProfile).length && state.userProfile.dateOfExit != undefined) {
+   return state.userProfile.dateOfExit;
+  } else {
+    return null;
+  }
+ }
+
+ export function getRank(state) {
+  if (Object.keys(state.userProfile).length) {
+   return state.userProfile.rank;
+  } else {
+    return null;
+  }
+ }
+
+ export function getDateOfEntry(state) {
+  if (Object.keys(state.userProfile).length) {
+   return state.userProfile.dateOfEntry;
+  } else {
+    return null;
+  }
  }
 
  export function getUID(state) {
+  if (Object.keys(state.userProfile).length) {
    return state.userProfile.uid;
+  } else {
+    return null;
+  }
  }
 
 export function getSystemAdmin(state) {
-  return state.userProfile.privilege.systemAdmin;
+  if (Object.keys(state.userProfile).length) {
+    return state.userProfile.privilege.systemAdmin;
+  } else {
+    return null;
+  }
 }
 
 export function getScheduleModify(state) {
-  return state.userProfile.privilege.scheduleModify;
+  if (Object.keys(state.userProfile).length) {
+    return state.userProfile.privilege.scheduleModify;
+  } else {
+    return null;
+  }
 }
 
 export function getCenterIC(state) {
-  return state.userProfile.privilege.centeric;
+  if (Object.keys(state.userProfile).length) {
+    return state.userProfile.privilege.centeric;
+  } else {
+    return null;
+  }
 }
 
 export function getDefaultSchedule(state) {
-  return state.userProfile.defaultSchedule
+  if (Object.keys(state.userProfile).length) {
+    return state.userProfile.defaultSchedule
+  } else {
+    return null;
+  }
 }
 
 export function getLeaveManage(state) {
-  return state.userProfile.privilege.leaveManage
+  if (Object.keys(state.userProfile).length) {
+    return state.userProfile.privilege.leaveManage
+  } else {
+    return null;
+  }
 }
 
 export function getLeaveApprove(state) {
-  return state.userProfile.privilege.leaveApprove
+  if (Object.keys(state.userProfile).length) {
+    return state.userProfile.privilege.leaveApprove
+  } else {
+    return null;
+  }
+}
+
+export function getTmp(state) {
+  if (Object.keys(state.userProfile).length) {
+    return state.userProfile.privilege.tmp
+  } else {
+    return null;
+  }
 }
 
 export function getALBalance(state) {
-  return state.userProfile.balance.al
+  if (Object.keys(state.userProfile).length) {
+    return state.userProfile.balance.al
+  } else {
+    return null;
+  }
+}
+
+export function getOTBalance(state) {
+  if (Object.keys(state.userProfile).length) {
+    return state.userProfile.balance.ot
+  } else {
+    return null;
+  }
 }
 
 export function getSALBalance(state) {
-  return state.userProfile.balance.sal
+  if (Object.keys(state.userProfile).length) {
+    return state.userProfile.balance.sal
+  } else {
+    return null;
+  }
 }
 
 export function getSAL(state) {
-  return state.userProfile.privilege.sal
+  if (Object.keys(state.userProfile).length) {
+    return state.userProfile.privilege.sal
+  } else {
+    return null;
+  }
 }

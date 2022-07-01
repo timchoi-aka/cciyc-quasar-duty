@@ -1,5 +1,104 @@
+/* eslint-disable max-len */
 const {functions, FireDB, Timestamp} = require("./fbadmin");
-// auth trigger (new user signup)
+const {formatDate} = require("./utilities");
+// API 2.0 - add temp staff
+exports.addTempStaff = functions.https.onCall(async (data, context) => {
+  // only authenticated users can run this
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated users can add requests",
+    );
+  }
+
+  // only user management can run this
+  const loginUserDoc = FireDB
+      .collection("users")
+      .doc(context.auth.uid);
+  const loginUser = await loginUserDoc.get();
+  const loginUserData = loginUser.data();
+  if (loginUserData.privilege.userManagement != true) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only user management admin can add temp users",
+    );
+  }
+
+  const newStaff = JSON.parse(JSON.stringify(data));
+  const users = await FireDB.collection("users").where("privilege.tmp", "==", true).get();
+  const userCount = users.docs.length + 100;
+  const tempUserCount = users.docs.length + 1;
+  const entryTimestamp = Timestamp.fromDate(new Date(newStaff.dateOfEntry));
+
+  const newDocRef = FireDB.collection("users").doc();
+
+  newStaff.uid = newDocRef.id;
+  newStaff.dateOfEntry = entryTimestamp;
+  newStaff.order = userCount;
+
+  return await newDocRef.set(newStaff).then(() => {
+    console.log("USERS: " + context.auth.token.name + "新增了臨時員工" + data.name);
+    console.log("USERS: 臨時員工總數 - " + tempUserCount);
+  });
+});
+
+// API 2.0 - add temp staff
+exports.delTempStaff = functions.https.onCall(async (data, context) => {
+  // only authenticated users can run this
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated users can add requests",
+    );
+  }
+
+  // only user management can run this
+  const loginUserDoc = FireDB
+      .collection("users")
+      .doc(context.auth.uid);
+  const loginUser = await loginUserDoc.get();
+  const loginUserData = loginUser.data();
+  if (loginUserData.privilege.userManagement != true) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only user management admin can delete temp users",
+    );
+  }
+
+  let batch = FireDB.batch();
+
+  let logData = "";
+  let scheduleCount = 0;
+  for (const d of data) {
+    const userRef = FireDB.collection("users").doc(d.uid);
+    batch.delete(userRef);
+    logData += d.name + " ";
+
+    // commit a batch once every 200 items (200 delete + 200 update)
+    if (batch._ops.length == 200) {
+      await batch.commit();
+      batch = FireDB.batch();
+    }
+
+    const scheduleDoc = await FireDB.collection("schedule").where("uid", "==", d.uid).get();
+    for (const doc of scheduleDoc.docs) {
+      const scheduleRef = FireDB.collection("schedule").doc(doc.id);
+      batch.delete(scheduleRef);
+      scheduleCount++;
+      // commit a batch once every 200 items (200 delete + 200 update)
+      if (batch._ops.length == 200) {
+        await batch.commit();
+        batch = FireDB.batch();
+      }
+    }
+  }
+
+  return await batch.commit().then(() => {
+    console.log("USERS: " + context.auth.token.name + "刪除了臨時員工" + logData + ". 移除了" + scheduleCount + "項更表記錄.");
+  });
+});
+
+// API 1.0 - auth trigger (new user signup)
 exports.newUserSignUp = functions.auth.user().onCreate((user) => {
   // for background triggers you must return a value/promise
   return FireDB
@@ -17,6 +116,7 @@ exports.newUserSignUp = functions.auth.user().onCreate((user) => {
               name: user.displayName,
               uid: user.uid,
               order: userCount,
+              enable: true,
               privilege: {
                 scheduleModify: false,
                 leaveManage: false,
@@ -25,8 +125,14 @@ exports.newUserSignUp = functions.auth.user().onCreate((user) => {
                 systemAdmin: false,
                 sal: false,
                 userManagement: false,
+                tmp: true,
               },
-              rank: "wm2",
+              balance: {
+                al: 0,
+                sal: 0,
+                ot: 0,
+              },
+              rank: "tmp",
               dateOfEntry: now,
               defaultSchedule: [
                 "",
@@ -82,6 +188,32 @@ exports.userDeleted = functions.auth.user().onDelete((user) => {
       .collection("users")
       .doc(user.uid);
   return doc.delete();
+});
+
+exports.toggleEnable = functions.https.onCall(async (data, context) => {
+  const loginUserDoc = FireDB
+      .collection("users")
+      .doc(context.auth.uid);
+  const loginUser = await loginUserDoc.get();
+  const loginUserData = loginUser.data();
+  if (loginUserData.privilege.userManagement != true) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only user management admin can change user privilege",
+    );
+  }
+
+  const changeUserDoc = FireDB.collection("users").doc(data);
+  const changeUser = await changeUserDoc.get();
+  const changeUserData = changeUser.data();
+  const newEnable = !changeUserData.enable;
+  return await changeUserDoc.update({
+    "enable": newEnable,
+  }).then(() => {
+    console.log("USER: " +
+    changeUserData.name + "[enable]:" + newEnable);
+    return newEnable;
+  });
 });
 
 exports.toggleUserManagement = functions.https.onCall(async (data, context) => {
@@ -231,6 +363,82 @@ exports.changeOrder = functions.https.onCall(async (data, context) => {
       uid2: changeUserData2.uid,
       order1: order1,
       order2: changeUserData1.order,
+    };
+  });
+});
+
+exports.changeRank = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated users can add requests",
+    );
+  }
+
+  const loginUserDoc = FireDB
+      .collection("users")
+      .doc(context.auth.uid);
+  const loginUser = await loginUserDoc.get();
+  const loginUserData = loginUser.data();
+  if (loginUserData.privilege.userManagement != true) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only user management admin can change user privilege",
+    );
+  }
+
+  const changeUserDoc = FireDB.collection("users").doc(data.uid);
+  const changeUser = await changeUserDoc.get();
+  const changeUserData = changeUser.data();
+
+  return await changeUserDoc.update({
+    "rank": data.rank,
+  }).then(() => {
+    console.log("USER: " +
+    loginUserData.name + "修改了 " + changeUserData.name + "[職級]:" + data.rank);
+    return {
+      uid: changeUserData.uid,
+      rank: data.rank,
+    };
+  });
+});
+
+exports.changeDateOfExit = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated users can add requests",
+    );
+  }
+
+  const loginUserDoc = FireDB
+      .collection("users")
+      .doc(context.auth.uid);
+  const loginUser = await loginUserDoc.get();
+  const loginUserData = loginUser.data();
+  if (loginUserData.privilege.userManagement != true) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only user management admin can change user privilege",
+    );
+  }
+
+  const changeUserDoc = FireDB.collection("users").doc(data.uid);
+  const changeUser = await changeUserDoc.get();
+  const changeUserData = changeUser.data();
+
+  const exitTimestamp = Timestamp.fromDate(new Date(data.dateOfExit));
+  const dateOfExit = new Date(data.dateOfExit);
+  dateOfExit.setTime(dateOfExit.getTime() + 8 * 60 * 60 * 1000);
+
+  return await changeUserDoc.update({
+    "dateOfExit": exitTimestamp,
+  }).then(() => {
+    console.log("USER: " +
+    loginUserData.name + " 修改了 " + changeUserData.name + "[離職日期]:" + formatDate(dateOfExit, "-", "YYYYMMDD"));
+    return {
+      uid: changeUserData.uid,
+      dateOfExit: data.dateOfExit,
     };
   });
 });

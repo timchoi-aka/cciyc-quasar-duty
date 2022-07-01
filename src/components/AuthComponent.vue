@@ -1,7 +1,33 @@
 <template>
   <div>
+    <!-- loading dialog -->
+    <q-dialog v-model="waitingAsync" position="bottom">
+      <q-card style="width: 200px">
+        <q-card-section class="row">
+          <q-circular-progress
+            indeterminate
+            show-value
+            size="100px"
+            :thickness="0.4"
+            font-size="10px"
+            color="lime"
+            track-color="grey-3"
+            center-color="grey-3"
+            class="q-ma-md col float-right vertical-middle"
+            >登入中</q-circular-progress
+          >
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+
     <template class="flex flex-center">
-      <q-btn v-if="!username" class="flex flex-center q-px-lg q-py-sm q-mb-md" color="primary" size="md" label="Google 登入" icon="login"
+      <q-btn
+        v-if="!username"
+        class="flex flex-center q-px-lg q-py-sm q-mb-md"
+        color="primary"
+        size="md"
+        label="Google 登入"
+        icon="login"
         @click="google"
       />
       <div v-if="username">你已成功登入</div>
@@ -10,28 +36,55 @@
 </template>
 
 <script>
-import firebase from "firebase/app";
-import { computed } from "vue"
-import { useStore } from "vuex"
+import { computed } from "vue";
+import { useStore } from "vuex";
+import { useQuasar } from "quasar";
 
 export default {
   name: "AuthComponent",
+  data() {
+    return {
+      awaitServerResponse: 0,
+    };
+  },
   setup() {
-    const $store = useStore()
+    const $store = useStore();
 
     return {
-      username: computed(() => $store.getters['userModule/getUsername']),
-      login: () => $store.dispatch('userModule/login')
-    }
+      username: computed(() => $store.getters["userModule/getUsername"]),
+      login: () => $store.dispatch("userModule/login"),
+      saveProfile: () => $store.dispatch("userModule/saveProfile"),
+    };
+  },
+  computed: {
+    waitingAsync() {
+      return this.awaitServerResponse > 0 ? true : false;
+    },
   },
   methods: {
-    google () {
+    google() {
+      this.login();
+      /*
       this.login()
-      .then(()=> {
-        this.$q.notify({message: this.username + " 登入成功."})
-      })
-      .catch(error => console.log('error',error))
+        .then(() => {
+          this.$q.notify({ message: this.username + " 登入成功." });
+        })
+        .catch((error) => console.log("error", error));
+        */
     },
-  }
-}
+  },
+  async mounted() {
+    // const $q = useQuasar();
+    // console.log(JSON.stringify($q.platform));
+    this.awaitServerResponse++;
+    this.saveProfile()
+      .then(() => {
+        this.awaitServerResponse--;
+        if (this.username) {
+          this.$q.notify({ message: this.username + " 登入成功." });
+        }
+      })
+      .catch((error) => console.log("error", error));
+  },
+};
 </script>

@@ -1,0 +1,272 @@
+<template>
+  <div class="full-width">
+    <!-- sticky button at bottom -->
+    <q-page-sticky position="bottom-right" :offset="[20, 20]" style="z-index: 1">
+      <q-fab
+        v-if="this.selectedRow.length > 0 && !$q.screen.lt.sm"
+        label="確定刪除"
+        color="red"
+        push
+        @click="confirmDialog = !confirmDialog"
+      />
+    </q-page-sticky>
+
+    <!-- confirm delete dialog -->
+    <q-dialog v-model="confirmDialog">
+      <q-card style="border-radius: 30px">
+        <q-card-section>
+          <div class="text-h5 text-center" style="border-bottom: 3px solid red">
+            確定取消超時補假申請？
+          </div>
+        </q-card-section>
+
+        <q-card-section class="q-pa-md">
+          <div v-for="app in selectedRow">
+            <span v-html="qdate.formatDate(app.date, 'YYYY-MM-DD')" /> - {{ app.type }} -
+            {{ app.hours }}小時
+          </div>
+        </q-card-section>
+
+        <q-separator />
+
+        <q-card-actions align="right">
+          <q-btn v-close-popup flat color="primary" label="取消" />
+          <q-btn
+            v-close-popup
+            @click="confirmOTRemove"
+            flat
+            color="red"
+            label="確認刪除"
+            round
+            icon="cancel"
+          />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- loading dialog -->
+    <q-dialog v-model="waitingAsync" position="bottom">
+      <q-card>
+        <q-card-section class="row">
+          <q-circular-progress
+            indeterminate
+            show-value
+            size="100px"
+            :thickness="0.4"
+            font-size="10px"
+            color="lime"
+            track-color="grey-3"
+            center-color="grey-3"
+            class="q-ma-md col float-right vertical-middle"
+            >讀取資料中</q-circular-progress
+          >
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+
+    <!-- Application Table -->
+    <div class="full-width">
+      <!-- header row -->
+      <q-table
+        dense
+        flat
+        selection="multiple"
+        v-model:selected="selectedRow"
+        :grid="$q.screen.lt.md"
+        :rows="applicationList"
+        :columns="columns"
+        :pagination="defaultPagination"
+        :hide-bottom="true"
+        color="primary"
+        row-key="docid"
+      >
+        <!-- remarks cell template -->
+        <template v-slot:body-cell-remarks="props">
+          <q-td class="q-pa-sm" style="font-size: 1.5vw; text-align: center">
+            <div v-for="remark in props.row.remarks">{{ remark }}</div>
+          </q-td>
+        </template>
+
+        <!-- grid template -->
+        <template v-slot:item="props">
+          <q-card class="q-pa-xs q-mb-xs col-xs-12 col-sm-12 col-md-12">
+            <q-card-section
+              ><q-btn
+                color="red"
+                class="absolute-top-right"
+                icon="cancel"
+                @click="confirmOTRemoveByDocid(props.row)"
+              ></q-btn>
+            </q-card-section>
+            <q-card-section>
+              <div class="row items-center">
+                <div class="col-xs-5 col-sm-5 col-md-5 text-h6">
+                  日期:
+                  <span
+                    v-html="
+                      qdate.formatDate(
+                        applicationList[applicationList.indexOf(props.row)].date,
+                        'YYYY-MM-DD(ddd)',
+                        {
+                          daysShort: ['日', '一', '二', '三', '四', '五', '六'],
+                        }
+                      )
+                    "
+                  />
+                </div>
+                <q-space class="col-xs-1" />
+                <div class="col-xs-2 col-sm-2 col-md-2 text-h6">
+                  時數:{{ applicationList[applicationList.indexOf(props.row)].hours }}
+                </div>
+                <q-space class="col-xs-1" />
+                <div class="col-xs-2 col-sm-2 col-md-2 text-h6">
+                  種類:{{ applicationList[applicationList.indexOf(props.row)].type }}
+                </div>
+              </div>
+
+              <div class="row">
+                <q-space class="col-xs-12" />
+                <div class="col-xs-2 col-sm-2 col-md-2 text-h6">備註:</div>
+                <div class="col-xs-10 col-sm-10 col-md-10 text-h6">
+                  <div
+                    v-for="remark in applicationList[applicationList.indexOf(props.row)]
+                      .remarks"
+                  >
+                    {{ remark }}
+                  </div>
+                </div>
+              </div>
+            </q-card-section>
+          </q-card>
+        </template>
+      </q-table>
+    </div>
+  </div>
+</template>
+
+<script>
+import { FirebaseFunctions, OTCollection } from "boot/firebase";
+import { useStore } from "vuex";
+import { defineComponent, computed } from "vue";
+import { date as qdate } from "quasar";
+
+export default defineComponent({
+  name: "OTPending",
+  data() {
+    return {
+      confirmDialog: false,
+      selectedRow: [],
+      qdate: qdate,
+      awaitServerResponse: 0,
+      applicationList: [],
+      defaultPagination: {
+        rowsPerPage: 20,
+        descending: true,
+        sortBy: "date",
+      },
+      leaveMap: {
+        OT: "OT",
+        CL: "補OT",
+      },
+      rows: [],
+      columns: [
+        {
+          name: "date",
+          label: "日期",
+          field: "date",
+          style: "font-size: 1.5vw; text-align: center",
+          headerStyle: "font-size: 1.5vw; text-align: center; width: 10vw;",
+          headerClasses: "bg-grey-2 nameColumn",
+          format: (val) => qdate.formatDate(val, "YYYY-MM-DD"),
+        },
+        {
+          name: "type",
+          label: "種類",
+          field: "type",
+          style: "font-size: 1.5vw; text-align: center",
+          headerStyle: "font-size: 1.5vw; text-align: center; width: 10vw;",
+          headerClasses: "bg-grey-2",
+          format: (val) => this.leaveMap[val],
+        },
+        {
+          name: "hours",
+          label: "時數",
+          field: "hours",
+          style: "font-size: 1.5vw; text-align: center",
+          headerStyle: "font-size: 1.5vw; text-align: center; width: 10vw;",
+          headerClasses: "bg-grey-2",
+        },
+        {
+          name: "remarks",
+          label: "備註",
+          field: "remarks",
+          style: "font-size: 1.5vw; text-align: center",
+          headerStyle:
+            "font-size: 1.5vw; text-align: center; width: 40vw; min-width: 40vw;",
+          headerClasses: "bg-grey-2",
+        },
+      ],
+    };
+  },
+  methods: {
+    async fetchAllOTRecords() {
+      this.applicationList = [];
+      const OTRecords = await OTCollection.where("uid", "==", this.uid)
+        .where("status", "==", "未批")
+        .get();
+
+      OTRecords.forEach((doc) => {
+        this.applicationList.push({
+          docid: doc.id,
+          ...doc.data(),
+        });
+      });
+    },
+    async confirmOTRemove() {
+      // call https functions to add leaves
+      const delOT = FirebaseFunctions.httpsCallable("ot-delLeaveByDocid");
+      this.awaitServerResponse++;
+      delOT(this.selectedRow)
+        .then(() => {
+          this.awaitServerResponse--;
+          this.selectedRow = [];
+          this.fetchAllOTRecords();
+        })
+        .catch((error) => {
+          console.log(error.message);
+        });
+    },
+    async confirmOTRemoveByDocid(docid) {
+      // call https functions to add leaves
+      const delOT = FirebaseFunctions.httpsCallable("ot-delLeaveByDocid");
+      this.awaitServerResponse++;
+      delOT([docid])
+        .then(() => {
+          this.awaitServerResponse--;
+          this.selectedRow = [];
+          this.fetchAllOTRecords();
+        })
+        .catch((error) => {
+          console.log(error.message);
+        });
+    },
+  },
+  async mounted() {
+    await this.fetchAllOTRecords();
+  },
+  computed: {
+    waitingAsync() {
+      return this.awaitServerResponse > 0 ? true : false;
+    },
+  },
+  setup() {
+    const $store = useStore();
+
+    return {
+      uid: computed(() => $store.getters["userModule/getUID"]),
+    };
+  },
+});
+</script>
+
+<style lang="scss" scoped></style>

@@ -23,6 +23,40 @@ exports.addLeave = functions.https.onCall(async (data, context) => {
   });
 });
 
+// API 2.0 add a leave application
+exports.addLeaveByDocid = functions.https.onCall(async (data, context) => {
+  if (!context.auth.uid) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated user can apply for OT/CL",
+    );
+  }
+  // data structure expected
+  /* const leave = {
+      validity: true,
+      uid: data.uid,
+      name: data.name,
+      date: data.date,
+      slot: data.slot,
+      type: data.type,
+      status: data.status,
+      remarks: data.remarks,
+    }; */
+  // const leaveCollection = FireDB.collection("notification");
+  const batch = FireDB.batch();
+
+  let logData = "";
+  for (let i = 0; i < data.length; i++) {
+    const otRef = await FireDB.collection("ot").doc();
+    batch.set(otRef, data[i]);
+    logData += "OT: " + data[i].name + " 申請了 " + formatDate(data[i].date, "-", "YYYYMMDD") + "(" + data[i].hours + "小時)" + " 的 " + data[i].type + "\n";
+  }
+
+  return await batch.commit().then(() => {
+    console.log(logData);
+  });
+});
+
 // approve a leave
 exports.approveLeave = functions.https.onCall(async (data, context) => {
   const docid = data.docid;
@@ -77,6 +111,78 @@ exports.approveLeave = functions.https.onCall(async (data, context) => {
   }
 });
 
+// API 2.0 - approve a leave
+exports.approveLeaveByDocid = functions.https.onCall(async (data, context) => {
+  if (!context.auth.uid) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated user can apply for OT/CL",
+    );
+  }
+
+  const editorDoc = FireDB
+      .collection("users")
+      .doc(context.auth.uid);
+  const editor = await editorDoc.get();
+  const editorData = editor.data();
+  if (editorData.privilege.leaveApprove != true) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only leave admin can reject leave request",
+    );
+  }
+
+  const batch = FireDB.batch();
+  let logData = "";
+  for (let i = 0; i < data.length; i++) {
+    const leaveDoc = FireDB
+        .collection("ot")
+        .doc(data[i].docid);
+    const leave = await leaveDoc.get();
+    const leaveData = leave.data();
+    delete data[i].docid;
+
+    batch.update(leaveDoc, data[i]);
+    logData += "OT: " + editorData.name +
+    " 批准了 " +
+    leaveData.name +
+    " 於 " +
+    leaveData.date +
+    " (" +
+    leaveData.hours +
+    "小時) 的 " +
+    leaveData.type + "\n";
+
+    const userRef = FireDB.collection("users").doc(data[i].uid);
+    const userDoc = await userRef.get();
+    const OTBalance = Number(userDoc.data().balance.ot);
+    const newBal = OTBalance + Number(leaveData.hours);
+
+    // can't use batch, because next loop need the latest result of this loop
+    if (newBal > 24) {
+      await userRef.update({
+        balance: {
+          ot: 24,
+          al: userDoc.data().balance.al,
+          sal: userDoc.data().balance.sal,
+        },
+      });
+    } else {
+      await userRef.update({
+        balance: {
+          ot: newBal,
+          al: userDoc.data().balance.al,
+          sal: userDoc.data().balance.sal,
+        },
+      });
+    }
+  }
+
+  return await batch.commit().then(() => {
+    console.log(logData);
+  });
+});
+
 // reject leave
 exports.rejectLeave = functions.https.onCall(async (data, context) => {
   const docid = data.docid;
@@ -119,6 +225,54 @@ exports.rejectLeave = functions.https.onCall(async (data, context) => {
   });
 });
 
+// API 2.0 - reject leave by docid
+exports.rejectLeaveByDocid = functions.https.onCall(async (data, context) => {
+  if (!context.auth.uid) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated user can apply for OT/CL",
+    );
+  }
+
+  const editorDoc = FireDB
+      .collection("users")
+      .doc(context.auth.uid);
+  const editor = await editorDoc.get();
+  const editorData = editor.data();
+  if (editorData.privilege.leaveApprove != true) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only leave admin can reject leave request",
+    );
+  }
+
+  const batch = FireDB.batch();
+  let logData = "";
+  for (let i = 0; i < data.length; i++) {
+    const leaveDoc = FireDB
+        .collection("ot")
+        .doc(data[i].docid);
+    const leave = await leaveDoc.get();
+    const leaveData = leave.data();
+    delete data[i].docid;
+
+    batch.update(leaveDoc, data[i]);
+    logData += "OT: " + editorData.name +
+    " 拒絕了 " +
+    leaveData.name +
+    " 於 " +
+    leaveData.date +
+    " (" +
+    leaveData.hours +
+    "小時) 的 " +
+    leaveData.type + "\n";
+  }
+
+  return await batch.commit().then(() => {
+    console.log(logData);
+  });
+});
+
 // delete a leave application
 exports.delLeave = functions.https.onCall(async (data, context) => {
   const leaveDoc = FireDB.collection("ot").doc(data);
@@ -146,6 +300,44 @@ exports.delLeave = functions.https.onCall(async (data, context) => {
         "only leave owner can delete leave request",
     );
   }
+});
+
+// API 2.0 - delete a leave application
+exports.delLeaveByDocid = functions.https.onCall(async (data, context) => {
+  if (!context.auth.uid) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated user can apply for OT/CL",
+    );
+  }
+
+  const user = await FireDB.collection("users").doc(context.auth.uid).get();
+  const userData = user.data();
+
+  let logData = "";
+  const batch = FireDB.batch();
+
+  for (let i = 0; i < data.length; i++) {
+    if (data[i].uid == context.auth.uid) {
+      const ref = FireDB.collection("ot").doc(data[i].docid);
+      batch.delete(ref);
+      logData += "OT: " + userData.name +
+          " 刪除了 " +
+          formatDate(data[i].date, "-", "YYYYMMDD") +
+          " (" +
+          data[i].hours +
+          "小時) 的 " +
+          data[i].type + "\n";
+    } else {
+      throw new functions.https.HttpsError(
+          "unauthenticated",
+          "only leave owner can delete leave request",
+      );
+    }
+  }
+  return await batch.commit().then((doc) => {
+    console.log(logData);
+  });
 });
 
 // modify a leave
@@ -202,6 +394,59 @@ exports.modifyLeave = functions.https.onCall(async (data, context) => {
   });
 });
 
+// API 2.0 - modify a leave
+exports.modifyLeaveByDocid = functions.https.onCall(async (data, context) => {
+  if (!context.auth.uid) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated user can apply for OT/CL",
+    );
+  }
+
+  const editorDoc = FireDB
+      .collection("users")
+      .doc(context.auth.uid);
+  const editor = await editorDoc.get();
+  const editorData = editor.data();
+  if (editorData.privilege.leaveApprove != true) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only leave admin can modify leave request",
+    );
+  }
+
+  const batch = FireDB.batch();
+  let logData = "";
+  for (let i = 0; i < data.length; i++) {
+    const otRef = FireDB
+        .collection("ot")
+        .doc(data[i].docid);
+    const leave = await otRef.get();
+    const leaveData = leave.data();
+    logData += "OT: " + context.auth.token.name + "修改了" + leaveData.name + "的申請 - 由 " + formatDate(leaveData.date, "-", "YYYYMMDD") + "[" + leaveData.type + "](" + leaveData.hours + "小時) 至 " + formatDate(data[i].date, "-", "YYYYMMDD") + "[" + data[i].type + "](" + data[i].hours + "小時) \n";
+    batch.update(otRef, data[i]);
+
+    // update ot balance
+    if (leaveData.status == "批准" && data[i].status == "批准") {
+      const userRef = FireDB.collection("users").doc(data[i].uid);
+      const userDoc = await userRef.get();
+      const newBal = Number(userDoc.data().balance.ot) - Number(leaveData.hours) + Number(data[i].hours);
+
+      batch.update(userRef, {
+        balance: {
+          ot: newBal,
+          al: userDoc.data().balance.al,
+          sal: userDoc.data().balance.sal,
+        },
+      });
+    }
+  }
+
+  return await batch.commit().then(() => {
+    console.log(logData);
+  });
+});
+
 // Listen for changes in all documents in the 'ot' collection and update dashboard
 exports.updatePendingCount = functions.firestore
     .document("ot/{leaveId}")
@@ -249,5 +494,5 @@ exports.updatePendingCount = functions.firestore
         }
       }
       console.log(change.after.data());
-      return Promise.reject(new Error("OT - updatePendingCount: Direct DB modification/deletion or Unhandled Case."));
+      return Promise.resolve("OT - updatePendingCount: Direct DB modification/deletion or Unhandled Case.");
     });

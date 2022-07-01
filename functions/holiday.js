@@ -2,7 +2,7 @@
 const {functions, FireDB, FieldValue, Timestamp} = require("./fbadmin");
 const {formatDate} = require("./utilities");
 
-// delete a leave application
+// API 1.0 - delete a leave application
 exports.delLeave = functions.https.onCall(async (data, context) => {
   const leaveDoc = FireDB.collection("leave").doc(data);
   const leave = await leaveDoc.get();
@@ -31,7 +31,7 @@ exports.delLeave = functions.https.onCall(async (data, context) => {
   }
 });
 
-// delete a leave application
+// API 2.0 - delete a leave application
 exports.delLeaveByDocid = functions.https.onCall(async (data, context) => {
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
@@ -71,7 +71,7 @@ exports.delLeaveByDocid = functions.https.onCall(async (data, context) => {
   });
 });
 
-// approve a leave
+// API 1.0 - approve a leave
 exports.approveLeave = functions.https.onCall(async (data, context) => {
   const docid = data.docid;
   const remarks = data.remarks;
@@ -178,7 +178,7 @@ exports.approveLeave = functions.https.onCall(async (data, context) => {
   }
 });
 
-// approve a leave by docid
+// API 2.0 - approve a leave by docid
 exports.approveLeaveByDocid = functions.https.onCall(async (data, context) => {
   const user = await FireDB.collection("users").doc(context.auth.uid).get();
   const userData = user.data();
@@ -205,6 +205,8 @@ exports.approveLeaveByDocid = functions.https.onCall(async (data, context) => {
   for (const d of data) {
     const leaveDoc = FireDB.collection("leave").doc(d.docid);
     const scheduleDocid = d.uid + formatDate(d.date, "", "YYYYMMDD") + d.slot;
+    const userRef = FireDB.collection("users").doc(d.uid);
+    const userData = await (await userRef.get()).data();
 
     batch.update(leaveDoc, {
       remarks: FieldValue.arrayUnion(...d.remarks),
@@ -220,6 +222,14 @@ exports.approveLeaveByDocid = functions.https.onCall(async (data, context) => {
             d.slot +
             " 假期種類 " +
             d.type + "\n";
+
+    // reduce balance
+    if (d.type == "AL") {
+      batch.update(userRef, "balance.al", FieldValue.increment(-0.5));
+    } else if (d.type == "SAL") {
+      batch.update(userRef, "balance.sal", FieldValue.increment(-0.5));
+    }
+
 
     const firebaseDate = Timestamp.fromDate(
         new Date(d.date),
@@ -271,7 +281,7 @@ exports.approveLeaveByDocid = functions.https.onCall(async (data, context) => {
   });
 });
 
-// modify a leave by docid
+// API 2.0 - modify a leave by docid
 exports.modifyLeaveByDocid = functions.https.onCall(async (data, context) => {
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
@@ -279,6 +289,7 @@ exports.modifyLeaveByDocid = functions.https.onCall(async (data, context) => {
         "only authenticated user can access this function",
     );
   }
+  const actionUsername = context.auth.token.name;
 
   const userDoc = FireDB
       .collection("users")
@@ -294,7 +305,15 @@ exports.modifyLeaveByDocid = functions.https.onCall(async (data, context) => {
         .doc(d.docid);
     const leave = await leaveDoc.get();
     const leaveData = leave.data();
-    if (leave.data().uid == context.auth.uid || userData.privilege.leaveApprove) {
+    const scheduleCollection = FireDB.collection("schedule");
+    const oldScheduleDocid = leaveData.uid + formatDate(leaveData.date, "", "YYYYMMDD") + leaveData.slot;
+    const oldScheduleDocRef = scheduleCollection.doc(oldScheduleDocid);
+    const newScheduleDocid = leaveData.uid + formatDate(d.date, "", "YYYYMMDD") + d.slot;
+    const newScheduleDocRef = scheduleCollection.doc(newScheduleDocid);
+    const newScheduleDoc = await newScheduleDocRef.get();
+    const newScheduleDocData = newScheduleDoc.data();
+
+    if (leaveData.uid == context.auth.uid || userData.privilege.leaveApprove) {
       batch.update(leaveDoc, {
         date: d.date,
         slot: d.slot,
@@ -303,7 +322,7 @@ exports.modifyLeaveByDocid = functions.https.onCall(async (data, context) => {
       });
 
       logData +=
-          "HOLIDAY: " + userData.name +
+          "HOLIDAY: " + actionUsername +
           " 修改了申請 - 由 [" +
           leaveData.name + "]" +
           leaveData.date +
@@ -317,6 +336,50 @@ exports.modifyLeaveByDocid = functions.https.onCall(async (data, context) => {
           d.slot +
           "(" +
           d.type + ")\n";
+
+      if (leaveData.status == "批准") { // modify schedule if the leave is already approved, otherwise do nothing
+        if (newScheduleDocData) { // modify existing schedule information
+          batch.update(newScheduleDocRef, {
+            type: d.type,
+            leaveDocid: d.docid,
+          });
+
+          logData += "HOLIDAY: " +
+          actionUsername +
+          " 在[時間表] 修改了 " +
+          d.date +
+          ":" +
+          d.slot +
+          "(" +
+          d.type + ")\n";
+        } else { // add new schedule
+          batch.set(newScheduleDocRef, {
+            date: Timestamp.fromDate(new Date(d.date)),
+            slot: d.slot,
+            uid: d.uid,
+            type: d.type,
+            leaveDocid: d.docid,
+          });
+
+          logData += "HOLIDAY: " +
+          actionUsername +
+          " 在[時間表] 新增了 " +
+          d.date +
+          ":" +
+          d.slot +
+          "(" +
+          d.type + ")\n";
+        }
+
+        // delete old schedule information
+        batch.delete(oldScheduleDocRef);
+        logData += "HOLIDAY: " +
+        actionUsername +
+        " 在[時間表] 重置了 " +
+        leaveData.date +
+        ":" +
+        leaveData.slot + "\n";
+      }
     } else {
       throw new functions.https.HttpsError(
           "unauthenticated",
@@ -331,7 +394,7 @@ exports.modifyLeaveByDocid = functions.https.onCall(async (data, context) => {
 });
 
 
-// modify a leave
+// API 1.0 - modify a leave
 exports.modifyLeave = functions.https.onCall(async (data, context) => {
   const docid = data.docid;
   /* const existingLeaveObject = {
@@ -485,7 +548,7 @@ exports.modifyLeave = functions.https.onCall(async (data, context) => {
   }
 });
 
-// reject leave
+// API 1.0 - reject leave
 exports.rejectLeave = functions.https.onCall(async (data, context) => {
   const docid = data.docid;
   const remarks = data.remarks;
@@ -527,7 +590,7 @@ exports.rejectLeave = functions.https.onCall(async (data, context) => {
   });
 });
 
-// reject leave by docid
+// API 2.0 - reject leave by docid
 exports.rejectLeaveByDocid = functions.https.onCall(async (data, context) => {
   const user = await FireDB.collection("users").doc(context.auth.uid).get();
   const userData = user.data();
@@ -577,7 +640,7 @@ exports.rejectLeaveByDocid = functions.https.onCall(async (data, context) => {
   });
 });
 
-// add a leave application
+// API 1.0 - add a leave application
 exports.addLeave = functions.https.onCall(async (data, context) => {
   /* const leave = {
     validity: true,
@@ -630,7 +693,7 @@ exports.setCarryOverHoliday = functions.https.onCall(async (data, context) => {
 });
 */
 
-// Listen for changes in all documents in the 'leave' collection and update dashboard
+// API 1.0 - Listen for changes in all documents in the 'leave' collection and update dashboard
 exports.updatePendingCount = functions.firestore
     .document("leave/{leaveId}")
     .onWrite(async (change, context) => {
@@ -687,12 +750,82 @@ exports.updatePendingCount = functions.firestore
           });
         }
       }
-      console.log("CHANGE DETECTED BEFORE: " + JSON.stringify(change.before.data()) + " AFTER: " + JSON.stringify(change.after.data()));
+      console.log("待審批不變: 由 " + JSON.stringify(change.before.data()) + " 改為: " + JSON.stringify(change.after.data()));
       // return Promise.reject(new Error("updatePendingCount: Direct DB modification/deletion or Unhandled Case."));
     });
 
 
-exports.updateALBalance = functions.pubsub.schedule("0 0 * * *").timeZone("Asia/Hong_Kong").onRun((context) => {
-  console.log("This will be run every day at 00:00 AM Eastern!");
-  return null;
+exports.updateALBalance = functions.pubsub.schedule("0 0 1 * *").timeZone("Asia/Hong_Kong").onRun(async (context) => {
+  const usersDocRef = FireDB.collection("users");
+  const usersDoc = await usersDocRef.where("privilege.tmp", "==", false).get();
+  const userData = [];
+  const leaveData = [];
+
+  const leaveDocRef = FireDB.collection("leave");
+  const leaveDoc = await leaveDocRef.where("status", "==", "批准").where("validity", "==", true).where("type", "==", "AL").orderBy("uid").get();
+  usersDoc.forEach((doc) => {
+    userData.push(doc.data());
+  });
+  leaveDoc.forEach((doc) => {
+    leaveData.push(doc.data());
+  });
+  const batch = FireDB.batch();
+  const leaveConfigRef = FireDB.collection("dashboard").doc("leaveConfig");
+  const leaveConfigDoc = await leaveConfigRef.get();
+  const leaveConfigData = leaveConfigDoc.data();
+  const tiersConfig = [0, 5, 8, 10, 12];
+
+  for (const usr of userData) {
+    const tiers = leaveConfigData[usr.rank];
+    const today = new Date();
+    const entryDate = new Date(usr.dateOfEntry.toDate().getTime() + 28800000);
+    const systemMonthStart = new Date(2021, 3, 1);
+    const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    let counter = systemMonthStart;
+    let leaveGain = 0;
+    do {
+      // year difference, and month difference, then calculate exact year difference
+      const yearDiff = counter.getFullYear() - entryDate.getFullYear();
+      const monthDiff = counter.getMonth() - entryDate.getMonth();
+      const yearServed = Math.floor((yearDiff*12 + monthDiff)/12);
+      let tier = 0;
+      for (let j = tiersConfig.length; j > 0; j--) {
+        if (yearServed >= tiersConfig[j - 1]) {
+          tier = tiers["t" + j];
+          break;
+        }
+      }
+
+      // console.log("yearServed:" + yearServed + " dateOfEntry:" + entryDate + " counter:" + counter + " tier:" + tier);
+      leaveGain += tier/12;
+      counter = new Date(counter.getFullYear(), counter.getMonth()+1, 1);
+    } while (counter <= thisMonthStart);
+
+    // console.log(usr.name + " date diff: " + yearDiff + ":" + monthDiff + ":" + diff );
+    const ALTaken = leaveData.filter((row) => row.uid == usr.uid).length/2;
+    const alBalance = parseFloat(leaveConfigData[usr.uid][0]["al"]) + parseFloat(leaveGain) - parseFloat(ALTaken);
+    // console.log(usr.name + "[" + usr.rank + ":" + tier + "]: " + ALTaken);
+    // console.log(usr.name + " starts with " + leaveConfigData[usr.uid][0]["al"] + " gained " + leaveGain + " ALTaken " + ALTaken + " balance: " + alBalance);
+    /* leaveData.forEach((data) => {
+      if (data.uid == usr.uid) {
+        console.log(data.date + "[" + data.slot + "]");
+      }
+    });
+    */
+    const ref = FireDB.collection("users").doc(usr.uid);
+    const refData = await ref.get();
+    batch.update(ref, {
+      balance: {
+        al: alBalance,
+        sal: refData.data().balance.sal,
+        ot: refData.data().balance.ot,
+      },
+    });
+  }
+
+  // console.log(JSON.stringify(leaveData));
+
+  return await batch.commit().then(() => {
+    console.log("ALBalance updated at: " + new Date());
+  });
 });

@@ -27,11 +27,13 @@ app.appCheck().getToken().then((value) => {
   console.log("token: " + JSON.stringify(token));
 })
 */
+
 if(window.location.hostname === 'localhost') {
   Firebase.auth().useEmulator('http://localhost:9099');
   Firebase.firestore().useEmulator('localhost', 8081);
   Firebase.functions().useEmulator('localhost', 5001);
 }
+
   //Firebase.auth().useEmulator('http://10.0.2.2:9099');
   //Firebase.firestore().useEmulator('10.0.2.2', 8081);
   //Firebase.functions().useEmulator('10.0.2.2', 5001);

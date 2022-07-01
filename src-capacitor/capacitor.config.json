@@ -3,5 +3,20 @@
   "appName": "CCIYC Duty Management System",
   "bundledWebRuntime": false,
   "npmClient": "[object Object]",
-  "webDir": "www"
+  "webDir": "www",
+  "plugins": {
+    "CapacitorFirebaseAuth": {
+      "providers": ["google.com"],
+      "languageCode": "en",
+      "nativeAuth": false,
+      "properties": {
+        "google": {
+            "hostedDomain": "duty.cciyc.com"
+        }
+      },
+      "permissions": {
+           "google": ["profile", "https://www.googleapis.com/auth/drive", ...]
+       }
+    }
+  }
 }
