@@ -268,9 +268,10 @@
       />
     </q-page-sticky>
 
+    <!-- toolbar -->
     <div class="row full-width">
       <div class="col-12 col-xs-12 text-h6">篩選：</div>
-      <div class="col-3 col-xs-4 row justify-left">
+      <div class="col-md-3 col-xs-4 row justify-left">
         <q-select
           class="col"
           v-model="usersSelected"
@@ -281,20 +282,21 @@
           filled
         ></q-select>
       </div>
+      <q-space />
       <q-select
-        class="col-2 col-xs-3 offset-1 justify-left"
+        class="col-md-2 col-xs-4 justify-left"
         v-model="statusSelected"
         hide-bottom-space
         :options="statusList"
         label="狀態"
         filled
       ></q-select>
-
+      <q-space />
       <q-btn
-        class="col-2 col-xs-3 offset-1 justify-left"
+        class="col-md-2 col-xs-4 justify-left"
         icon="restart_alt"
         label="重置篩選"
-        size="lg"
+        size="md"
         @click="
           this.usersSelected = [];
           this.statusSelected = { value: '未批', label: '未批' };
@@ -331,9 +333,9 @@
 
         <!-- grid template -->
         <template v-slot:item="props">
-          <div class="q-pa-xs col-xs-12 col-sm-6 col-md-4 flex">
-            <q-card style="width: 95%; margin: auto; margin-top: 10px" class="q-pa-md">
-              <q-card-section class="bg-blue-1 text-h5 q-my-md">
+          <div class="col-xs-12 col-sm-6 col-md-4 full-width">
+            <q-card class="q-mt-md">
+              <q-card-section class="bg-blue-1 text-h6">
                 <div class="row">
                   <div class="col">{{ props.row.name }}</div>
                   <q-space />
@@ -344,7 +346,7 @@
                   </div>
                 </div>
 
-                <div class="text-h6 row">
+                <div class="text-caption row">
                   <span>日期:</span>
                   <span
                     v-html="
@@ -361,26 +363,34 @@
               </q-card-section>
               <q-separator inset />
               <q-card-section class="row">
-                <div class="col-9" style="font-size: 1vw">
-                  <div class="col-1 text-left">附註：</div>
-                  <div class="col text-left" v-for="remark in props.row.remarks">
+                <div class="col-12 text-caption">
+                  <div class="col-12 text-left">附註：</div>
+                  <div class="col-12 text-left" v-for="remark in props.row.remarks">
                     {{ remark }}
                   </div>
                 </div>
-                <div v-if="props.row.status == '未批'" class="col-3">
-                  <q-btn
-                    icon="check"
-                    color="blue"
-                    outline
-                    label="批准"
-                    @click="singleApprove(props.row)"
-                  />
-                  <q-btn icon="close" color="red" outline label="拒絕" />
+              </q-card-section>
+              <q-separator inset />
+              <q-card-actions class="row">
+                <div v-if="props.row.status == '未批'" class="col-12 row justify-around">
+                  <div class="col-xs-6">
+                    <q-btn
+                      class="fit"
+                      icon="check"
+                      color="blue"
+                      outline
+                      label="批准"
+                      @click="singleApprove(props.row)"
+                    />
+                  </div>
+                  <div class="col-xs-6">
+                    <q-btn class="fit" icon="close" color="red" outline label="拒絕" />
+                  </div>
                 </div>
-                <div v-else class="col-3">
+                <div v-else class="col-xs-6">
                   <q-btn icon="edit" color="warning" outline label="修改" />
                 </div>
-              </q-card-section>
+              </q-card-actions>
             </q-card>
           </div>
         </template>
@@ -789,10 +799,4 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss" scoped>
-/*
-.q-table__container {
-  width: 97.2vw;
-  table-layout: auto;
-}*/
-</style>
+<style lang="scss" scoped></style>
