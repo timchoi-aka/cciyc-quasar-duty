@@ -8,18 +8,39 @@
         indicator-color="blue"
         align="justify"
       >
-        <q-route-tab to="/holiday/al-view" icon="celebration" label="年假表" />
-        <q-route-tab to="/holiday/sal-view" icon="local_activity" label="特別年假表" />
-        <q-route-tab to="/holiday/al-apply" icon="edit_calendar" label="申請假期">
+        <q-route-tab
+          style="max-width: 20%; padding: 0"
+          to="/holiday/al-view"
+          icon="celebration"
+          label="年假表"
+        />
+        <q-route-tab
+          style="max-width: 20%; padding: 0"
+          to="/holiday/sal-view"
+          icon="local_activity"
+          label="特別年假"
+        />
+        <q-route-tab
+          style="max-width: 20%; padding: 0"
+          to="/holiday/al-apply"
+          icon="edit_calendar"
+          label="申請假期"
+        >
           <q-badge color="red" floating
             >{{ ALBalance }}<span v-if="isSAL">+{{ SALBalance }}</span></q-badge
           >
         </q-route-tab>
-        <q-route-tab to="/holiday/holiday-pending" icon="hourglass_empty" label="待審批">
+        <q-route-tab
+          style="max-width: 20%; padding: 0"
+          to="/holiday/holiday-pending"
+          icon="hourglass_empty"
+          label="待審批"
+        >
           <q-badge color="red" floating>{{ pendingCount }}</q-badge>
         </q-route-tab>
         <q-route-tab
           v-if="isLeaveApprove"
+          style="max-width: 20%; padding: 0"
           to="/holiday/holiday-approve"
           icon="approval"
           label="批核假期"
