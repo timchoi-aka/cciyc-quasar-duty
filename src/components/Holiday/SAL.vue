@@ -20,8 +20,10 @@
       color="primary"
       row-key="name"
     >
+      <!-- date column -->
       <template v-slot:body-cell-Date="props">
         <q-td
+          style="font-size: 2.5vw; text-align: center"
           :class="['nameColumn', getHoliday(props.row.Date) != '' ? 'isHoliday' : '']"
         >
           {{ props.value }}
@@ -30,21 +32,19 @@
           }}</q-popup-proxy>
         </q-td>
       </template>
+
+      <!-- bottom row -->
       <template v-slot:bottom-row="props">
         <q-tr>
           <q-td
             v-for="index in props.cols.length"
             class="text-center bg-grey-2"
-            style="font-size: 1.5vw"
+            style="font-size: 2.5vw"
           >
             {{ totalAnnualLeaveDays(props.cols[index - 1].name) }}
           </q-td>
         </q-tr>
       </template>
-      <!--  <template #foot()="data">
-        <span>{{ totalAnnualLeaveDays(data.column) }}</span>
-      </template>
-      -->
     </q-table>
   </q-page>
 </template>
@@ -88,8 +88,8 @@ export default {
           name: "Date",
           field: "Date",
           label: "日期",
-          style: "font-size: 1.5vw; text-align: center",
-          headerStyle: "font-size: 1.5vw; text-align: center;",
+          style: "font-size: 2.5vw; text-align: center",
+          headerStyle: "font-size: 2.5vw; text-align: center;",
           headerClasses: "bg-grey-2",
           format: (val) =>
             qdate.formatDate(val, "M月D日(ddd)", {
@@ -161,13 +161,13 @@ export default {
     // build users list and uidMapping
     userDoc.forEach((doc) => {
       // build tableFields
-      if (queryStartDate < doc.data().salDeadline.toDate()) {
+      if (doc.data().salDeadline && queryStartDate < doc.data().salDeadline.toDate()) {
         this.tableFields.push({
           name: doc.id,
           field: doc.id,
           label: doc.data().name,
-          style: "font-size: 1.5vw; text-align: center",
-          headerStyle: "font-size: 1.5vw; text-align: center;",
+          style: "font-size: 2.5vw; text-align: center",
+          headerStyle: "font-size: 2.5vw; text-align: center;",
           headerClasses: "bg-grey-2",
         });
       }

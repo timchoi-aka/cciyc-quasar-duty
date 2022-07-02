@@ -36,9 +36,9 @@
               />
             </div>
           </q-card-section>
-          <q-card-section style="font-size: 1vw" class="row justify-around">
-            <div class="col-xs-2 justify-center q-mx-xs">
-              <div class="text-body1">帳戶有效</div>
+          <q-card-section style="font-size: 1vw" class="row justify-around q-pa-none">
+            <div class="col-xs-2 justify-center" style="text-align: center">
+              <div class="text-caption">帳戶有效</div>
               <q-btn
                 round
                 :color="props.row.enable ? 'positive' : 'negative'"
@@ -46,8 +46,8 @@
                 @click="changeEnable(props.key)"
               />
             </div>
-            <div class="col-xs-2 justify-center q-mx-xs">
-              <div class="text-body1">批核假期</div>
+            <div class="col-xs-2 justify-center" style="text-align: center">
+              <div class="text-caption">批核假期</div>
               <q-btn
                 round
                 :color="props.row.privilege_leaveApprove ? 'positive' : 'negative'"
@@ -55,8 +55,17 @@
                 @click="changeLeaveApprove(props.key)"
               />
             </div>
-            <div class="col-xs-2 justify-center q-mx-xs">
-              <div class="text-body1">特別年假</div>
+            <div class="col-xs-2 justify-center" style="text-align: center">
+              <div class="text-caption">檢視假期</div>
+              <q-btn
+                round
+                :color="props.row.privilege_leaveManage ? 'positive' : 'negative'"
+                :label="props.row.privilege_leaveManage ? '有' : '沒有'"
+                @click="changeLeaveManage(props.key)"
+              />
+            </div>
+            <div class="col-xs-2 justify-center" style="text-align: center">
+              <div class="text-caption">特別年假</div>
               <q-btn
                 round
                 :color="props.row.privilege_sal ? 'positive' : 'negative'"
@@ -64,8 +73,8 @@
                 @click="changeSal(props.key)"
               />
             </div>
-            <div class="col-xs-2 justify-center q-mx-xs">
-              <div class="text-body1">修改更表</div>
+            <div class="col-xs-2 justify-center" style="text-align: center">
+              <div class="text-caption">修改更表</div>
               <q-btn
                 round
                 :color="props.row.privilege_scheduleModify ? 'positive' : 'negative'"
@@ -73,8 +82,8 @@
                 @click="changeScheduleModify(props.key)"
               />
             </div>
-            <div class="col-xs-2 justify-center q-mx-xs">
-              <div class="text-body1">用戶管理</div>
+            <div class="col-xs-2 justify-center" style="text-align: center">
+              <div class="text-caption">用戶管理</div>
               <q-btn
                 round
                 :color="props.row.privilege_userManagement ? 'positive' : 'negative'"
@@ -83,9 +92,12 @@
               />
             </div>
           </q-card-section>
-          <q-separator inet />
-          <q-card-section style="font-size: 1vw" class="row justify-around items-center">
-            <div class="col-xs-5 justify-center q-mx-xs text-body2">
+          <q-separator inet class="q-mt-sm" />
+          <q-card-section
+            style="font-size: 1vw"
+            class="row justify-around items-center q-pa-none"
+          >
+            <div class="col-xs-8 justify-center q-mx-xs text-body2">
               <div>
                 入職日期：
                 <span v-html="qdate.formatDate(props.row.dateOfEntry, 'YYYY-MM-DD')" />
@@ -121,7 +133,7 @@
                 </q-btn>
               </div>
             </div>
-            <div class="col-xs-5 justify-center q-mx-xs">
+            <div class="col-xs-3 justify-center q-mx-xs">
               <q-select
                 :label="rankInputReverseMap[props.row.rank]"
                 hide-bottom-space
@@ -160,6 +172,18 @@
           :color="props.value ? 'positive' : 'negative'"
           :label="props.value ? '有' : '沒有'"
           @click="changeLeaveApprove(props.key)"
+        />
+      </q-td>
+    </template>
+
+    <!-- template of column "leaveManage" -->
+    <template v-slot:body-cell-privilege_leaveManage="props">
+      <q-td :props="props">
+        <q-btn
+          round
+          :color="props.value ? 'positive' : 'negative'"
+          :label="props.value ? '有' : '沒有'"
+          @click="changeLeaveManage(props.key)"
         />
       </q-td>
     </template>
@@ -336,6 +360,14 @@ export default {
           style: "font-size: 1.2vw; text-align: center; width: 3vw; max-width: 3vw;",
         },
         {
+          name: "privilege_leaveManage",
+          label: "檢視假期",
+          field: "privilege_leaveManage",
+          headerStyle:
+            "font-size: 1.5vw; text-align: center; width: 3vw; max-width: 3vw;",
+          style: "font-size: 1.2vw; text-align: center; width: 3vw; max-width: 3vw;",
+        },
+        {
           name: "privilege_sal",
           label: "特別年假",
           field: "privilege_sal",
@@ -444,6 +476,15 @@ export default {
         ].privilege_leaveApprove = result.data;
       });
     },
+    async changeLeaveManage(uid) {
+      // call https functions to change leaveApprove privilege
+      const toggleLeaveManage = FirebaseFunctions.httpsCallable("user-toggleLeaveManage");
+      toggleLeaveManage(uid).then((result) => {
+        this.users[
+          this.users.findIndex((value) => value.uid == uid)
+        ].privilege_leaveManage = result.data;
+      });
+    },
     async changeUserManagement(uid) {
       // call https functions to change leaveApprove privilege
       const toggleUserManagement = FirebaseFunctions.httpsCallable(
@@ -514,6 +555,7 @@ export default {
         enable: "enable" in d ? d.enable : true,
         uid: d.uid,
         privilege_leaveApprove: d.privilege.leaveApprove,
+        privilege_leaveManage: d.privilege.leaveManage,
         privilege_sal: d.privilege.sal,
         privilege_scheduleModify: d.privilege.scheduleModify,
         privilege_userManagement: d.privilege.userManagement,

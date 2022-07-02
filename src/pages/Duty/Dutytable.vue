@@ -64,48 +64,44 @@
 
     <div class="q-mb-sm q-mx-xs justify-center fit" v-if="$q.screen.lt.sm">
       <q-btn
-        class="q-mx-xs"
+        class="q-mx-xs q-pa-sm"
         size="md"
         outline
-        icon="keyboard_double_arrow_left"
         color="primary"
         v-on:click="changeRenderDate(-364)"
         label="上年"
       /><q-btn
-        class="q-mx-xs"
+        class="q-mx-xs q-pa-sm"
         size="md"
         outline
-        icon="keyboard_arrow_left"
         color="primary"
         v-on:click="changeRenderDate(-28)"
         label="上月"
       /><q-btn
-        class="q-mx-xs"
+        class="q-mx-xs q-pa-sm"
         size="md"
         outline
         color="primary"
         v-on:click="changeRenderDate(-7)"
         label="上周"
       /><q-btn
-        class="q-mx-xs"
+        class="q-mx-xs q-pa-sm"
         size="md"
         outline
         color="primary"
         v-on:click="changeRenderDate(7)"
         label="下周"
       /><q-btn
-        class="q-mx-xs"
+        class="q-mx-xs q-pa-sm"
         size="md"
         outline
-        icon="keyboard_arrow_right"
         color="primary"
         v-on:click="changeRenderDate(28)"
         label="下月"
       /><q-btn
-        class="q-mx-xs"
+        class="q-mx-xs q-pa-xs"
         size="md"
         outline
-        icon="keyboard_double_arrow_right"
         color="primary"
         v-on:click="changeRenderDate(364)"
         label="下年"

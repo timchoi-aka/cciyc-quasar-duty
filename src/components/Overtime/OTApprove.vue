@@ -20,7 +20,7 @@
 
     <!-- confirm dialog -->
     <q-dialog v-model="showApproveDialog">
-      <q-card style="width: 70vw; border-radius: 30px" class="q-gutter-md q-pa-md">
+      <q-card style="width: 70vw; border-radius: 30px">
         <q-card-section>
           <div class="text-h5 bg-blue-3 text-center">確定批准放假？</div>
         </q-card-section>
@@ -75,7 +75,7 @@
 
     <!-- reject dialog -->
     <q-dialog v-model="showRejectDialog">
-      <q-card style="width: 70vw; border-radius: 30px" class="q-gutter-md q-pa-md">
+      <q-card style="width: 70vw; border-radius: 30px">
         <q-card-section>
           <div class="text-h5 bg-blue-3 text-center">確定拒絕放假？</div>
         </q-card-section>
@@ -130,7 +130,7 @@
 
     <!-- modification dialog -->
     <q-dialog v-model="showModificationDialog">
-      <q-card style="width: 100vw; border-radius: 30px" class="q-pa-md">
+      <q-card style="width: 100vw; border-radius: 30px" class="q-pa-none">
         <q-card-section>
           <div class="text-h5 bg-blue-3 text-center">確定修改放假？</div>
         </q-card-section>
@@ -151,53 +151,110 @@
             v-for="(application, index) in modifyingRow"
             :key="index"
           >
-            <div class="row items-center">
-              <span class="col-2">{{ application.name }}</span>
-              <span class="col-3"
-                ><q-btn-toggle
-                  class="bg-light-blue-2"
-                  v-model="application.type"
-                  push
-                  toggle-color="primary"
-                  :options="[
-                    { label: 'OT', value: 'OT' },
-                    { label: '補OT', value: 'CL' },
-                  ]"
-                  @update:model-value="checkValidEdit_Slot(index)"
-                />
-              </span>
-              <span class="col-3">
-                <span v-html="qdate.formatDate(application.date, 'DD/MM/YYYY')" />
-                <q-btn icon="event" round color="primary">
-                  <q-popup-proxy
-                    @before-show="proxyDate = application.date"
-                    cover
-                    transition-show="scale"
-                    transition-hide="scale"
-                  >
-                    <q-date v-model="proxyDate" mask="YYYY-MM-DD">
-                      <div class="row items-center justify-end q-gutter-sm">
-                        <q-btn label="取消" color="primary" flat v-close-popup />
-                        <q-btn
-                          label="確定"
-                          color="primary"
-                          @click="checkValidEdit_Date(index)"
-                          flat
-                          v-close-popup
-                        />
-                      </div>
-                    </q-date>
-                  </q-popup-proxy>
-                </q-btn>
-              </span>
-              <span class="col-2 offset-1">
-                <q-input
-                  label="時數"
-                  type="number"
-                  step="0.5"
-                  v-model="application.hours"
-                ></q-input>
-              </span>
+            <div v-if="!$q.screen.lt.sm">
+              <div class="row items-center">
+                <span class="col-2">{{ application.name }}</span>
+                <span class="col-3"
+                  ><q-btn-toggle
+                    class="bg-light-blue-2"
+                    v-model="application.type"
+                    push
+                    toggle-color="primary"
+                    :options="[
+                      { label: 'OT', value: 'OT' },
+                      { label: '補OT', value: 'CL' },
+                    ]"
+                    @update:model-value="checkValidEdit_Slot(index)"
+                  />
+                </span>
+                <span class="col-3">
+                  <span v-html="qdate.formatDate(application.date, 'DD/MM/YYYY')" />
+                  <q-btn icon="event" round color="primary">
+                    <q-popup-proxy
+                      @before-show="proxyDate = application.date"
+                      cover
+                      transition-show="scale"
+                      transition-hide="scale"
+                    >
+                      <q-date v-model="proxyDate" mask="YYYY-MM-DD">
+                        <div class="row items-center justify-end q-gutter-sm">
+                          <q-btn label="取消" color="primary" flat v-close-popup />
+                          <q-btn
+                            label="確定"
+                            color="primary"
+                            @click="checkValidEdit_Date(index)"
+                            flat
+                            v-close-popup
+                          />
+                        </div>
+                      </q-date>
+                    </q-popup-proxy>
+                  </q-btn>
+                </span>
+                <span class="col-2 offset-1">
+                  <q-input
+                    label="時數"
+                    type="number"
+                    step="0.5"
+                    v-model="application.hours"
+                  ></q-input>
+                </span>
+              </div>
+            </div>
+            <div v-else>
+              <div class="row justify-left">
+                <div class="row fit">
+                  <div class="col-xs-6">員工：{{ application.name }}</div>
+                  <div class="col-xs-6">
+                    <q-btn-toggle
+                      class="bg-light-blue-2"
+                      v-model="application.type"
+                      push
+                      size="xs"
+                      toggle-color="primary"
+                      :options="[
+                        { label: 'OT', value: 'OT' },
+                        { label: '補OT', value: 'CL' },
+                      ]"
+                      @update:model-value="checkValidEdit_Slot(index)"
+                    />
+                  </div>
+                </div>
+                <div class="col-xs-7 items-center">
+                  日期：
+                  <span v-html="qdate.formatDate(application.date, 'DD/MM/YYYY')" />
+                  <q-btn icon="event" round color="primary" class="q-mx-xs">
+                    <q-popup-proxy
+                      @before-show="proxyDate = application.date"
+                      cover
+                      transition-show="scale"
+                      transition-hide="scale"
+                    >
+                      <q-date v-model="proxyDate" mask="YYYY-MM-DD">
+                        <div class="row items-center justify-end q-gutter-sm">
+                          <q-btn label="取消" color="primary" flat v-close-popup />
+                          <q-btn
+                            label="確定"
+                            color="primary"
+                            @click="checkValidEdit_Date(index)"
+                            flat
+                            v-close-popup
+                          />
+                        </div>
+                      </q-date>
+                    </q-popup-proxy>
+                  </q-btn>
+                </div>
+                <div class="col-xs-5 row items-center">
+                  <div class="col-xs-5">時數：</div>
+                  <q-input
+                    class="col-xs-6"
+                    type="number"
+                    step="0.5"
+                    v-model="application.hours"
+                  ></q-input>
+                </div>
+              </div>
             </div>
           </div>
         </q-card-section>
@@ -276,9 +333,10 @@
       />
     </q-page-sticky>
 
+    <!-- toolbar -->
     <div class="row full-width">
       <div class="col-12 col-xs-12 text-h6">篩選：</div>
-      <div class="col-3 col-xs-4 row justify-left">
+      <div class="col-md-3 col-xs-4 row justify-left">
         <q-select
           class="col"
           v-model="usersSelected"
@@ -289,26 +347,24 @@
           filled
         ></q-select>
       </div>
+      <q-space />
       <q-select
-        class="col-2 col-xs-3 offset-1 justify-left"
+        class="col-md-2 col-xs-4 justify-left"
         v-model="statusSelected"
         hide-bottom-space
         :options="statusList"
         label="狀態"
         filled
       ></q-select>
-
+      <q-space />
       <q-btn
-        class="col-2 col-xs-3 offset-1 justify-left"
+        class="col-md-2 col-xs-4 justify-left"
         icon="restart_alt"
         label="重置篩選"
-        size="lg"
+        size="md"
         @click="
           this.usersSelected = [];
-          this.statusSelected = {
-            value: '未批',
-            label: '未批',
-          };
+          this.statusSelected = { value: '未批', label: '未批' };
         "
       />
     </div>
@@ -342,9 +398,9 @@
 
         <!-- grid template -->
         <template v-slot:item="props">
-          <div class="q-pa-xs col-xs-12 col-sm-6 col-md-4 flex">
-            <q-card style="width: 95%; margin: auto; margin-top: 10px" class="q-pa-md">
-              <q-card-section class="bg-blue-1 text-h5 q-my-md">
+          <div class="col-xs-12 col-sm-6 col-md-4 full-width">
+            <q-card class="q-mt-md">
+              <q-card-section class="bg-blue-1 text-h6">
                 <div class="row">
                   <div class="col">{{ props.row.name }}</div>
                   <q-space />
@@ -355,7 +411,7 @@
                   </div>
                 </div>
 
-                <div class="text-h6 row">
+                <div class="text-caption row">
                   <span>日期:</span>
                   <span
                     v-html="
@@ -372,26 +428,56 @@
               </q-card-section>
               <q-separator inset />
               <q-card-section class="row">
-                <div class="col-9" style="font-size: 1vw">
-                  <div class="col-1 text-left">附註：</div>
-                  <div class="col text-left" v-for="remark in props.row.remarks">
+                <div class="col-12 text-caption">
+                  <div class="col-12 text-left">附註：</div>
+                  <div class="col-12 text-left" v-for="remark in props.row.remarks">
                     {{ remark }}
                   </div>
                 </div>
-                <div v-if="props.row.status == '未批'" class="col-3">
-                  <q-btn
-                    icon="check"
-                    color="blue"
-                    outline
-                    label="批准"
-                    @click="singleApprove(props.row)"
-                  />
-                  <q-btn icon="close" color="red" outline label="拒絕" />
-                </div>
-                <div v-else class="col-3">
-                  <q-btn icon="edit" color="warning" outline label="修改" />
-                </div>
               </q-card-section>
+              <q-separator inset />
+              <q-card-actions class="row">
+                <div
+                  v-if="props.row.status == '未批'"
+                  class="col-xs-12 row justify-around"
+                >
+                  <div class="col-xs-6">
+                    <q-btn
+                      class="fit"
+                      icon="check"
+                      color="blue"
+                      outline
+                      label="批准"
+                      @click="singleApprove(props.row)"
+                    />
+                  </div>
+                  <div class="col-xs-6">
+                    <q-btn
+                      class="fit"
+                      icon="close"
+                      color="red"
+                      outline
+                      label="拒絕"
+                      @click="
+                        this.selectedRow.push(props.row);
+                        showRejectDialog = !showRejectDialog;
+                      "
+                    />
+                  </div>
+                </div>
+                <div v-else class="col-xs-6">
+                  <q-btn
+                    icon="edit"
+                    color="warning"
+                    outline
+                    label="修改"
+                    @click="
+                      this.modifyingRow = [JSON.parse(JSON.stringify(props.row))];
+                      showModificationDialog = !showModificationDialog;
+                    "
+                  />
+                </div>
+              </q-card-actions>
             </q-card>
           </div>
         </template>

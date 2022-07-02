@@ -317,10 +317,12 @@ exports.delLeaveByDocid = functions.https.onCall(async (data, context) => {
   let logData = "";
   const batch = FireDB.batch();
 
+  const result = [];
   for (let i = 0; i < data.length; i++) {
     if (data[i].uid == context.auth.uid) {
       const ref = FireDB.collection("ot").doc(data[i].docid);
       batch.delete(ref);
+      result.push({docid: data[i].docid});
       logData += "OT: " + userData.name +
           " 刪除了 " +
           formatDate(data[i].date, "-", "YYYYMMDD") +
@@ -337,6 +339,7 @@ exports.delLeaveByDocid = functions.https.onCall(async (data, context) => {
   }
   return await batch.commit().then((doc) => {
     console.log(logData);
+    return result;
   });
 });
 

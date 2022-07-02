@@ -144,7 +144,7 @@
   </q-dialog>
 
   <!-- sticky button at bottom -->
-  <q-page-sticky position="bottom-right" :offset="[20, 20]" style="z-index: 1">
+  <q-page-sticky position="bottom-left" :offset="[30, 80]" style="z-index: 1">
     <q-fab
       v-if="
         this.applicationList.length +
@@ -189,24 +189,30 @@
   </q-page-sticky>
 
   <!-- toolbar -->
-  <div class="full-width row no-wrap justify-between q-px-sm">
-    <div class="col-md-2 col-lg-2 col-xl-2 col-xs-4 col-sm-4">
+  <div class="full-width row justify-between q-px-sm">
+    <div class="col-md-4 col-lg-4 col-xl-4 col-xs-12 col-sm-6 q-my-sm">
       <q-btn
         size="lg"
         outline
         color="primary"
         v-on:click="changeRenderYear(-1)"
-        class="q-mx-sm"
+        class="q-mx-sm q-pa-sm"
       >
         上年
       </q-btn>
 
-      <q-btn size="lg" outline color="primary" v-on:click="changeRenderYear(1)">
+      <q-btn
+        size="lg"
+        class="q-mx-sm q-pa-sm"
+        outline
+        color="primary"
+        v-on:click="changeRenderYear(1)"
+      >
         下年
       </q-btn>
     </div>
     <q-space class="col" />
-    <div class="row col-md-5 col-lg-5 col-xl-5 col-sm-7 col-xs-8">
+    <div class="row col-md-5 col-lg-5 col-xl-5 col-sm-6 col-xs-12">
       <div class="q-mr-sm col">
         本月結餘
         <q-knob
@@ -274,7 +280,9 @@
       >
         <!-- date cell template -->
         <template v-slot:body-cell-Date="props">
-          <q-td :class="[getHoliday(props.row.Date) ? 'isHoliday' : '']"
+          <q-td
+            style="font-size: 2.5vw; text-align: center"
+            :class="[getHoliday(props.row.Date) ? 'isHoliday' : '']"
             >{{ props.value }}
             <div class="bg-red-2" v-if="getHoliday(props.row.Date)">
               ({{ getHoliday(props.row.Date) }})
@@ -477,8 +485,8 @@ export default defineComponent({
           name: "Date",
           label: "日期",
           field: "Date",
-          style: "font-size: 1.5vw; text-align: center",
-          headerStyle: "font-size: 1.5vw; text-align: center;",
+          style: "font-size: 2.5vw; text-align: center",
+          headerStyle: "font-size: 2.5vw; text-align: center;",
           headerClasses: "bg-grey-2 nameColumn",
           format: (val) =>
             qdate.formatDate(val, "M月D日(ddd)", {
@@ -489,24 +497,24 @@ export default defineComponent({
           name: "slot_a",
           label: "早",
           field: "slot_a",
-          style: "font-size: 1.5vw; text-align: center",
-          headerStyle: "font-size: 1.5vw; text-align: center;",
+          style: "font-size: 2.5vw; text-align: center",
+          headerStyle: "font-size: 2.5vw; text-align: center;",
           headerClasses: "bg-grey-2",
         },
         {
           name: "slot_b",
           label: "午",
           field: "slot_b",
-          style: "font-size: 1.5vw; text-align: center",
-          headerStyle: "font-size: 1.5vw; text-align: center;",
+          style: "font-size: 2.5vw; text-align: center",
+          headerStyle: "font-size: 2.5vw; text-align: center;",
           headerClasses: "bg-grey-2",
         },
         {
           name: "slot_c",
           label: "晚",
           field: "slot_c",
-          style: "font-size: 1.5vw; text-align: center",
-          headerStyle: "font-size: 1.5vw; text-align: center;",
+          style: "font-size: 2.5vw; text-align: center",
+          headerStyle: "font-size: 2.5vw; text-align: center;",
           headerClasses: "bg-grey-2",
         },
       ],

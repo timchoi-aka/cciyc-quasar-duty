@@ -1,13 +1,18 @@
 <template>
   <q-page>
     <div v-if="isLeaveApprove" class="row q-my-sm">
-      <div class="col-1 col-xs-4 col-sm-4 col-md-4">
-        <q-btn size="lg" outline color="primary" class="q-mx-md" v-print="printObj"
+      <div class="col-1 col-xs-4 col-sm-2 col-md-2">
+        <q-btn
+          size="lg"
+          outline
+          color="primary"
+          class="q-mx-md q-pa-sm"
+          v-print="printObj"
           >列印</q-btn
         >
       </div>
       <q-select
-        class="offset-1 col-1 col-xs-3 col-sm-3 col-md-3"
+        class="offset-1 col-1 col-xs-4 col-sm-3 col-md-2"
         :options="userList"
         v-model="selectedUser"
         label="員工"

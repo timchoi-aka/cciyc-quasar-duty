@@ -68,7 +68,7 @@
     <!-- Application Table -->
     <div class="full-width">
       <div class="row">
-        <div class="q-mr-sm col-1 col-xs-3 col-md-2 col-lg-1 col-sm-3">
+        <div class="q-mr-sm col-1 col-xs-5 col-md-3 col-lg-3 col-sm-3 text-h6">
           超時結餘
           <q-knob
             :min="0"
@@ -203,7 +203,7 @@
             <q-card-section>
               <div class="row items-center">
                 <div class="col-xs-2 col-sm-2 col-md-2 text-h6">日期:</div>
-                <div class="col-xs-4 col-sm-4 col-md-4">
+                <div class="col-xs-10 col-sm-4 col-md-4">
                   <q-input
                     borderless
                     bottom-slots
@@ -223,9 +223,9 @@
                     </template>
                   </q-input>
                 </div>
-                <q-space class="col-1" />
+
                 <div class="col-xs-2 col-sm-2 col-md-2 text-h6">種類:</div>
-                <div class="col-xs-3 col-sm-3 col-md-3">
+                <div class="col-xs-5 col-sm-3 col-md-3">
                   <q-btn-toggle
                     size="md"
                     class="bg-light-blue-2"
@@ -238,11 +238,8 @@
                     ]"
                   />
                 </div>
-              </div>
-
-              <div class="row">
                 <div class="col-xs-2 col-sm-2 col-md-2 text-h6">時數:</div>
-                <div class="col-xs-2 col-sm-2 col-md-2">
+                <div class="col-xs-3 col-sm-2 col-md-2">
                   <q-input
                     :rules="[
                       (val) => val >= 0 || '數值要大於0',
@@ -255,9 +252,11 @@
                     v-model="applicationList[applicationList.indexOf(props.row)].hours"
                   ></q-input>
                 </div>
-                <q-space class="col-1" />
+              </div>
+
+              <div class="row">
                 <div class="col-xs-2 col-sm-2 col-md-2 text-h6">備註:</div>
-                <div class="col-xs-5 col-sm-5 col-md-5">
+                <div class="col-xs-10 col-sm-5 col-md-5">
                   <q-input
                     type="text"
                     v-model="applicationList[applicationList.indexOf(props.row)].remarks"
@@ -359,6 +358,7 @@ export default defineComponent({
       let result = true;
       for (let i = 0; i < this.applicationList.length; i++) {
         if (this.OTHistory.includes(this.applicationList[i].date)) result = false;
+        if (this.applicationList[i].hours <= 0) result = false;
         for (let j = 0; j < this.applicationList.length; j++) {
           // prevents the element from comparing with itself
           if (i !== j) {
@@ -372,6 +372,18 @@ export default defineComponent({
           }
         }
       }
+      let tempApplicationList = JSON.parse(JSON.stringify(this.applicationList));
+      for (let i = 0; i < tempApplicationList.length; i++) {
+        if (tempApplicationList[i].type == "補OT")
+          tempApplicationList[i].hours = -tempApplicationList[i].hours;
+      }
+
+      if (
+        this.ot_balance +
+          tempApplicationList.reduce((a, b) => parseFloat(a) + parseFloat(b.hours), 0) <
+        0
+      )
+        result = false;
       return result;
     },
     async confirmOTApplication() {

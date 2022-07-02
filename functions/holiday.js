@@ -44,12 +44,13 @@ exports.delLeaveByDocid = functions.https.onCall(async (data, context) => {
   const userData = user.data();
 
   let logData = "";
-
+  const result = [];
   const batch = FireDB.batch();
   for (const d of data) {
     const leaveDoc = FireDB.collection("leave").doc(d.docid);
     const leave = await leaveDoc.get();
     if (leave.data().uid == context.auth.uid) {
+      result.push({docid: d.docid});
       batch.delete(leaveDoc);
       logData += "HOLIDAY: " + userData.name +
         " 刪除了 " +
@@ -68,6 +69,7 @@ exports.delLeaveByDocid = functions.https.onCall(async (data, context) => {
 
   return await batch.commit().then((doc) => {
     console.log(logData);
+    return result;
   });
 });
 

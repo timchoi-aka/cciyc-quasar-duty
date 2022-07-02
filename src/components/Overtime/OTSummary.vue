@@ -1,5 +1,6 @@
 <template>
   <div>
+    <!-- loading dialog -->
     <q-dialog v-model="waitingAsync" position="bottom">
       <q-card style="width: 200px">
         <q-card-section class="row">
@@ -33,7 +34,7 @@
     >
       <!-- remark template -->
       <template v-slot:body-cell-remarks="props">
-        <q-td style="font-size: 1.5vw; text-align: center">
+        <q-td style="font-size: 2.5vw; text-align: center">
           <div v-for="remark in props.value" :key="remark">
             {{ remark }}
           </div>
@@ -46,7 +47,7 @@
           <q-td
             v-for="index in props.cols.length"
             class="text-center bg-grey-2"
-            style="font-size: 1.5vw"
+            style="font-size: 2.5vw"
           >
             {{ OTCarryOver(props.cols[index - 1]) }}
           </q-td>
@@ -59,7 +60,7 @@
           <q-td
             v-for="index in props.cols.length"
             class="text-center bg-grey-2"
-            style="font-size: 1.5vw"
+            style="font-size: 2.5vw"
           >
             {{ OTBalance(props.cols[index - 1]) }}
           </q-td>
@@ -91,8 +92,8 @@ export default {
           name: "date",
           field: "date",
           label: "日期",
-          style: "font-size: 1.5vw; text-align: center",
-          headerStyle: "font-size: 1.5vw; text-align: center;",
+          style: "font-size: 2.5vw; text-align: center",
+          headerStyle: "font-size: 2.5vw; text-align: center;",
           headerClasses: "bg-grey-2",
           format: (val) => qdate.formatDate(val, "YYYY年M月DD日"),
         },
@@ -100,8 +101,8 @@ export default {
           name: "type",
           field: "type",
           label: "種類",
-          style: "font-size: 1.5vw; text-align: center",
-          headerStyle: "font-size: 1.5vw; text-align: center;",
+          style: "font-size: 2.5vw; text-align: center",
+          headerStyle: "font-size: 2.5vw; text-align: center;",
           headerClasses: "bg-grey-2",
           format: (val) => this.typeMap[val],
         },
@@ -109,24 +110,24 @@ export default {
           name: "hours",
           field: "hours",
           label: "時數",
-          style: "font-size: 1.5vw; text-align: center",
-          headerStyle: "font-size: 1.5vw; text-align: center;",
+          style: "font-size: 2.5vw; text-align: center",
+          headerStyle: "font-size: 2.5vw; text-align: center;",
           headerClasses: "bg-grey-2",
         },
         {
           name: "remarks",
           field: "remarks",
           label: "附註",
-          style: "font-size: 1.5vw; text-align: center",
-          headerStyle: "font-size: 1.5vw; text-align: center;",
+          style: "font-size: 2.5vw; text-align: center",
+          headerStyle: "font-size: 2.5vw; text-align: center;",
           headerClasses: "bg-grey-2",
         },
         {
           name: "status",
           field: "status",
           label: "狀態",
-          style: "font-size: 1.5vw; text-align: center",
-          headerStyle: "font-size: 1.5vw; text-align: center;",
+          style: "font-size: 2.5vw; text-align: center",
+          headerStyle: "font-size: 2.5vw; text-align: center;",
           headerClasses: "bg-grey-2",
         },
       ],
@@ -212,25 +213,8 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.q-table__container {
-  width: 97.2vw;
-  margin-bottom: 5vh;
-  margin-left: auto;
-  margin-right: auto;
-}
-
 .isHoliday {
   background-color: $red-2;
-}
-
-.q-table__container::v-deep(.q-table__title) {
-  font-size: 2vw !important;
-}
-
-.q-table__container::v-deep(.nameColumn) {
-  font-size: 1.5vw;
-  text-decoration: bold;
-  text-align: center;
 }
 
 @media print {

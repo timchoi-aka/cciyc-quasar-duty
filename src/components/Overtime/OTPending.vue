@@ -98,42 +98,30 @@
                 @click="confirmOTRemoveByDocid(props.row)"
               ></q-btn>
             </q-card-section>
-            <q-card-section>
-              <div class="row items-center">
-                <div class="col-xs-5 col-sm-5 col-md-5 text-h6">
-                  日期:
-                  <span
-                    v-html="
-                      qdate.formatDate(
-                        applicationList[applicationList.indexOf(props.row)].date,
-                        'YYYY-MM-DD(ddd)',
-                        {
-                          daysShort: ['日', '一', '二', '三', '四', '五', '六'],
-                        }
-                      )
-                    "
-                  />
-                </div>
-                <q-space class="col-xs-1" />
-                <div class="col-xs-2 col-sm-2 col-md-2 text-h6">
-                  時數:{{ applicationList[applicationList.indexOf(props.row)].hours }}
-                </div>
-                <q-space class="col-xs-1" />
-                <div class="col-xs-2 col-sm-2 col-md-2 text-h6">
-                  種類:{{ applicationList[applicationList.indexOf(props.row)].type }}
-                </div>
-              </div>
-
+            <q-card-section class="bg-blue-1 text-body1">
               <div class="row">
-                <q-space class="col-xs-12" />
-                <div class="col-xs-2 col-sm-2 col-md-2 text-h6">備註:</div>
-                <div class="col-xs-10 col-sm-10 col-md-10 text-h6">
-                  <div
-                    v-for="remark in applicationList[applicationList.indexOf(props.row)]
-                      .remarks"
-                  >
-                    {{ remark }}
-                  </div>
+                <span>日期:</span>
+                <span
+                  v-html="
+                    qdate.formatDate(props.row.date, 'YYYY年MM月DD日(ddd)', {
+                      daysShort: ['日', '一', '二', '三', '四', '五', '六'],
+                    })
+                  "
+                />
+                <q-space />
+                <span>時數:</span><span v-html="props.row.hours" />
+                <q-space />
+                <span>種類:</span><span v-html="leaveMap[props.row.type]" />
+              </div>
+            </q-card-section>
+            <q-card-section>
+              <div class="row">
+                <div
+                  class="col-xs-10 col-sm-10 col-md-10 text-h6"
+                  v-for="remark in applicationList[applicationList.indexOf(props.row)]
+                    .remarks"
+                >
+                  {{ remark }}
                 </div>
               </div>
             </q-card-section>
@@ -227,10 +215,15 @@ export default defineComponent({
       const delOT = FirebaseFunctions.httpsCallable("ot-delLeaveByDocid");
       this.awaitServerResponse++;
       delOT(this.selectedRow)
-        .then(() => {
-          this.awaitServerResponse--;
-          this.selectedRow = [];
-          this.fetchAllOTRecords();
+        .then((result) => {
+          for (let i = 0; i < result.data.length; i++) {
+            let index = this.applicationList.findIndex(
+              (element) => element.docid == result.data[i].docid
+            );
+            this.applicationList.splice(index, 1);
+            this.selectedRow = [];
+            this.awaitServerResponse--;
+          }
         })
         .catch((error) => {
           console.log(error.message);
@@ -241,10 +234,15 @@ export default defineComponent({
       const delOT = FirebaseFunctions.httpsCallable("ot-delLeaveByDocid");
       this.awaitServerResponse++;
       delOT([docid])
-        .then(() => {
-          this.awaitServerResponse--;
-          this.selectedRow = [];
-          this.fetchAllOTRecords();
+        .then((result) => {
+          for (let i = 0; i < result.data.length; i++) {
+            let index = this.applicationList.findIndex(
+              (element) => element.docid == result.data[i].docid
+            );
+            this.applicationList.splice(index, 1);
+            this.selectedRow = [];
+            this.awaitServerResponse--;
+          }
         })
         .catch((error) => {
           console.log(error.message);
@@ -252,7 +250,10 @@ export default defineComponent({
     },
   },
   async mounted() {
-    await this.fetchAllOTRecords();
+    this.awaitServerResponse++;
+    this.fetchAllOTRecords().then(() => {
+      this.awaitServerResponse--;
+    });
   },
   computed: {
     waitingAsync() {

@@ -268,6 +268,32 @@ exports.toggleLeaveApprove = functions.https.onCall(async (data, context) => {
   });
 });
 
+exports.toggleLeaveManage = functions.https.onCall(async (data, context) => {
+  const loginUserDoc = FireDB
+      .collection("users")
+      .doc(context.auth.uid);
+  const loginUser = await loginUserDoc.get();
+  const loginUserData = loginUser.data();
+  if (loginUserData.privilege.userManagement != true) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only user management admin can change user privilege",
+    );
+  }
+
+  const changeUserDoc = FireDB.collection("users").doc(data);
+  const changeUser = await changeUserDoc.get();
+  const changeUserData = changeUser.data();
+  const newPrivilege = !changeUserData.privilege.leaveManage;
+  return await changeUserDoc.update({
+    "privilege.leaveManage": newPrivilege,
+  }).then(() => {
+    console.log("USER: " +
+    changeUserData.name + "[privilege.leaveManage]:" + newPrivilege);
+    return newPrivilege;
+  });
+});
+
 exports.toggleScheduleModify = functions.https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
       .collection("users")

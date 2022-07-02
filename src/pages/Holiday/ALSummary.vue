@@ -53,6 +53,7 @@
               :options="userList"
               label="員工"
               filled
+              v-if="isLeaveManage"
               @update:model-value="
                 (value) => (this.ALReportParameters.reportUser = value)
               "
@@ -70,51 +71,54 @@
       </q-card>
     </q-dialog>
 
-    <div class="row q-my-sm">
+    <div class="row fit q-my-sm">
       <q-btn
         size="lg"
         outline
         color="primary"
-        class="q-mx-md"
+        icon="keyboard_arrow_left"
+        :class="[$q.screen.lt.sm ? 'q-mx-xs q-pa-xs' : 'q-mx-md q-pa-md']"
         v-on:click="changeRenderMonth(-12)"
+        label="上年"
       >
-        上年
       </q-btn>
       <q-btn
         size="lg"
         outline
         color="primary"
-        class="q-mx-md"
+        :class="[$q.screen.lt.sm ? 'q-mx-xs q-pa-xs' : 'q-mx-md q-pa-md']"
         v-on:click="changeRenderMonth(-1)"
+        label="上月"
       >
-        上月
       </q-btn>
       <q-btn
         size="lg"
         outline
         color="primary"
-        class="q-mx-md"
+        :class="[$q.screen.lt.sm ? 'q-mx-xs q-pa-xs' : 'q-mx-md q-pa-md']"
         v-on:click="changeRenderMonth(1)"
+        label="下月"
       >
-        下月
       </q-btn>
       <q-btn
         size="lg"
         outline
         color="primary"
-        class="q-mx-md"
+        icon="keyboard_arrow_right"
+        :class="[$q.screen.lt.sm ? 'q-mx-xs q-pa-xs' : 'q-mx-md q-pa-md']"
         v-on:click="changeRenderMonth(12)"
+        label="下年"
       >
-        下年
       </q-btn>
+
       <q-btn
         size="lg"
         outline
         color="primary"
-        class="q-mx-md"
+        :class="[$q.screen.lt.sm ? 'q-mx-xs q-pa-xs' : 'q-mx-md q-pa-md']"
+        icon="print"
         v-on:click="alSummaryModalShow = !alSummaryModalShow"
       >
-        列印
       </q-btn>
     </div>
     <AnnualLeave v-bind:renderDate="renderDate" :key="renderDate.toDateString()" />
@@ -227,8 +231,4 @@ export default {
 };
 </script>
 
-<style scoped>
-.home {
-  margin-top: 30px;
-}
-</style>
+<style scoped></style>

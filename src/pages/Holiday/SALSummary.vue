@@ -2,39 +2,39 @@
   <q-page>
     <div class="row q-my-sm">
       <q-btn
-        size="lg"
+        size="md"
         outline
         color="primary"
-        class="q-mx-md"
+        class="q-mx-sm"
         icon="keyboard_arrow_left"
         v-on:click="changeRenderMonth(-12)"
       >
         上年
       </q-btn>
       <q-btn
-        size="lg"
+        size="md"
         outline
         color="primary"
-        class="q-mx-md"
+        class="q-mx-sm"
         v-on:click="changeRenderMonth(-1)"
       >
         上月
       </q-btn>
 
       <q-btn
-        size="lg"
+        size="md"
         outline
         color="primary"
-        class="q-mx-md"
+        class="q-mx-sm"
         v-on:click="changeRenderMonth(1)"
       >
         下月
       </q-btn>
       <q-btn
-        size="lg"
+        size="md"
         outline
         color="primary"
-        class="q-mx-md"
+        class="q-mx-sm"
         icon="keyboard_arrow_right"
         v-on:click="changeRenderMonth(12)"
       >

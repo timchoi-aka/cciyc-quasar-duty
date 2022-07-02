@@ -12,8 +12,10 @@
       color="primary"
       row-key="name"
     >
+      <!-- date column -->
       <template v-slot:body-cell-Date="props">
         <q-td
+          style="font-size: 2vw; text-align: center"
           v-if="$q.screen.lt.sm"
           :class="[getHoliday(props.row.Date) ? 'isHoliday' : '']"
         >
@@ -23,20 +25,24 @@
           }}</q-popup-proxy>
         </q-td>
         <q-td
+          style="font-size: 2vw; text-align: center"
           v-else
           :class="['nameColumn', getHoliday(props.row.Date) ? 'isHoliday' : '']"
-          >{{ props.value }}{{ daysOfWeek(props.row.Date) }}
+        >
+          {{ props.value }}{{ daysOfWeek(props.row.Date) }}
           <q-popup-proxy class="bg-red-2" v-if="getHoliday(props.row.Date)">{{
             getHoliday(props.row.Date)
           }}</q-popup-proxy>
         </q-td>
       </template>
+
+      <!-- bottom total row -->
       <template v-slot:bottom-row="props">
         <q-tr>
           <q-td
             v-for="index in props.cols.length"
             class="text-center bg-grey-2"
-            style="font-size: 1.5vw"
+            style="font-size: 2vw"
           >
             {{ totalAnnualLeaveDays(props.cols[index - 1].name) }}
           </q-td>
@@ -179,9 +185,9 @@ export default {
               name: "Date",
               field: "Date",
               label: "日期",
-              style: "font-size: 1.5vw; text-align: center",
-              headerStyle: "font-size: 1.5vw; text-align: center;",
-              headerClasses: "bg-grey-2",
+              headerStyle: "font-size: 2vw; text-align: center;",
+              headerClasses: "bg-grey-2 q-pa-none",
+              classes: "q-pa-none",
               format: (val) => this.formatDate(val, "", "月日"),
             });
             this.uidMap.forEach((user) => {
@@ -189,9 +195,10 @@ export default {
                 name: user.uid,
                 label: user.name,
                 field: user.uid,
-                style: "font-size: 1.5vw; text-align: center",
-                headerStyle: "font-size: 1.5vw; text-align: center;",
-                headerClasses: "bg-grey-2",
+                style: "font-size: 2vw; text-align: center;",
+                headerStyle: "font-size: 2vw; text-align: center;",
+                headerClasses: "bg-grey-2 q-pa-none",
+                classes: "q-pa-none",
               });
             });
 
@@ -262,16 +269,6 @@ export default {
 
 .isHoliday {
   background-color: $red-2;
-}
-
-.q-table__container::v-deep(.q-table__title) {
-  font-size: 2vw !important;
-}
-
-.q-table__container::v-deep(.nameColumn) {
-  font-size: 1.5vw;
-  text-decoration: bold;
-  text-align: center;
 }
 
 @media print {
