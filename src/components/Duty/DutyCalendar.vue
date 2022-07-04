@@ -164,6 +164,7 @@
                   tempInputValue = val;
                 }
               "
+              @blur="editingRow[props.col.name] = tempInputValue"
               :rules="[(val) => validateInput(val)]"
             >
               <template v-if="editingRow[props.col.name]" v-slot:append>
@@ -295,6 +296,7 @@
                               tempInputValue = val;
                             }
                           "
+                          @blur="editingRow[props.col.name] = tempInputValue"
                           :rules="[(val) => validateInput(val)]"
                         ></q-select>
                       </div>
