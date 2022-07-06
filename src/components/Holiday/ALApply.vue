@@ -1,4 +1,38 @@
 <template>
+  <!-- All staff annual balance dialog -->
+  <q-dialog v-model="showAllStaffAnnualBalance" full-width>
+    <q-card class="q-pa-none">
+      <q-card-section class="text-h4 bg-primary text-white q-px-md row">
+        <div class="col-shrink">全體員工假期結餘表</div>
+        <q-space />
+        <div class="col-shrink">
+          <q-btn
+            icon="cancel"
+            flat
+            text-color="white"
+            @click="showAllStaffAnnualBalance = !showAllStaffAnnualBalance"
+          />
+        </div>
+      </q-card-section>
+
+      <q-card-section>
+        <q-table
+          class="col"
+          dense
+          flat
+          :rows="allStaffAnnualLeaveList"
+          :columns="allStaffAnnualLeaveColumns"
+          :pagination="defaultPagination"
+          :hide-bottom="true"
+          separator="cell"
+          color="primary"
+          row-key="uid"
+        >
+        </q-table>
+      </q-card-section>
+    </q-card>
+  </q-dialog>
+
   <!-- confirm dialog -->
   <q-dialog v-model="confirmDialog">
     <q-card style="border-radius: 30px">
@@ -209,6 +243,17 @@
         v-on:click="changeRenderYear(1)"
       >
         下年
+      </q-btn>
+
+      <q-btn
+        v-if="isLeaveApprove"
+        size="lg"
+        class="q-mx-sm q-pa-sm"
+        outline
+        color="primary"
+        v-on:click="getAllStaffAnnualBalance"
+      >
+        全體結餘
       </q-btn>
     </div>
     <q-space class="col" />
@@ -439,6 +484,8 @@ export default defineComponent({
   },
   data() {
     return {
+      showAllStaffAnnualBalance: false,
+      allStaffAnnualLeaveList: [],
       confirmDialog: false,
       al_YearBalance: 0,
       applicationRemarks: "",
@@ -479,6 +526,49 @@ export default defineComponent({
         slot_b: "午",
         slot_c: "晚",
       },
+      allStaffAnnualLeaveColumns: [
+        {
+          name: "name",
+          label: "員工",
+          field: "name",
+          style: "font-size: 2.5vw; text-align: center",
+          headerStyle: "font-size: 2.5vw; text-align: center;",
+          headerClasses: "bg-grey-2",
+        },
+        {
+          name: "alBalance_month",
+          label: "本月年假",
+          field: "alBalance_month",
+          style: "font-size: 2.5vw; text-align: center",
+          headerStyle: "font-size: 2.5vw; text-align: center;",
+          headerClasses: "bg-grey-2",
+        },
+        {
+          name: "alBalance_year",
+          label: "年尾年假",
+          field: "alBalance_year",
+          style: "font-size: 2.5vw; text-align: center",
+          headerStyle: "font-size: 2.5vw; text-align: center;",
+          headerClasses: "bg-grey-2",
+        },
+
+        {
+          name: "salBalance_month",
+          label: "特別年假",
+          field: "salBalance_month",
+          style: "font-size: 2.5vw; text-align: center",
+          headerStyle: "font-size: 2.5vw; text-align: center;",
+          headerClasses: "bg-grey-2",
+        },
+        {
+          name: "otBalance_month",
+          label: "超時結餘（小時）",
+          field: "otBalance_month",
+          style: "font-size: 2.5vw; text-align: center",
+          headerStyle: "font-size: 2.5vw; text-align: center;",
+          headerClasses: "bg-grey-2",
+        },
+      ],
       rows: [],
       columns: [
         {
@@ -616,6 +706,33 @@ export default defineComponent({
           old: { ...this.originalApplicationList[i] },
         });
       }
+    },
+    async getAllStaffAnnualBalance() {
+      // this.awaitServerResponse++;
+      const usersDoc = await usersCollection
+        .where("privilege.systemAdmin", "==", false)
+        .where("enable", "==", true)
+        .where("privilege.tmp", "==", false)
+        .orderBy("order")
+        .get();
+      this.allStaffAnnualLeaveList = [];
+      usersDoc.forEach((doc) => {
+        this.allStaffAnnualLeaveList.push({
+          uid: doc.data().uid,
+          name: doc.data().name,
+          alBalance_month: doc.data().balance.al,
+          salBalance_month: doc.data().balance.sal,
+          otBalance_month: doc.data().balance.ot,
+        });
+      });
+      this.awaitServerResponse++;
+      for (let i = 0; i < this.allStaffAnnualLeaveList.length; i++) {
+        this.allStaffAnnualLeaveList[i].alBalance_year = await this.updateYearEndBalance(
+          this.allStaffAnnualLeaveList[i].uid
+        );
+      }
+      this.awaitServerResponse--;
+      this.showAllStaffAnnualBalance = true;
     },
     removeApplication(date, slot, type) {
       const docidAttributeName = slot + ".unapprovedDocid";
@@ -794,14 +911,20 @@ export default defineComponent({
         return this.publicHoliday[i].summary;
       }
     },
-    async updateYearEndBalance() {
+    async updateYearEndBalance(uid) {
+      // get user data
+      const userDoc = await usersCollection.doc(uid).get();
+      const rank = userDoc.data().rank;
+      const dateOfExit = userDoc.data().dateOfExit ? userDoc.data().dateOfExit : null;
+      const dateOfEntry = userDoc.data().dateOfEntry;
+
       // get leaveConfig
       const leaveConfigDoc = await dashboardCollection.doc("leaveConfig").get();
       const leaveConfigData = leaveConfigDoc.data();
-      const tiers = leaveConfigData[this.rank];
+      const tiers = leaveConfigData[rank];
 
       // get AL starting balance
-      const systemStartBalance = leaveConfigData[this.uid][0].al;
+      const systemStartBalance = leaveConfigData[uid][0].al;
 
       // determine year end
       const now = new Date();
@@ -830,18 +953,17 @@ export default defineComponent({
 
       // determine data retrieval boundary combining yearEnd and dateOfExit
       const dataBoundary =
-        this.dateOfExit && this.dateOfExit.toDate() < yearEnd
-          ? this.dateOfExit.toDate()
-          : yearEnd;
+        dateOfExit && dateOfExit.toDate() < yearEnd ? dateOfExit.toDate() : yearEnd;
 
       const leaveDocData = await leaveCollection
-        .where("uid", "==", this.uid)
+        .where("uid", "==", uid)
         .where("status", "==", "批准")
+        .where("type", "==", "AL")
         .get();
       let leaveData = [];
       leaveDocData.forEach((doc) => {
         let d = new Date(doc.data().date);
-        if (d.getTime() < dataBoundary.getTime()) {
+        if (d - dataBoundary < 0) {
           leaveData.push(doc);
         }
       });
@@ -856,7 +978,7 @@ export default defineComponent({
         const yearServed =
           qdate.getDateDiff(
             qdate.endOfDate(monthLoop, "month"),
-            this.dateOfEntry.toDate(),
+            dateOfEntry.toDate(),
             "month"
           ) / 12;
 
@@ -870,10 +992,10 @@ export default defineComponent({
         }
         let perMonthGain = tier / 12;
 
-        let lastWorkingDate = qdate.addToDate(this.dateBoundary, { days: -1 });
+        let lastWorkingDate = qdate.addToDate(dataBoundary, { days: -1 });
 
         if (
-          qdate.getDateDiff(this.dateBoundary, monthLoop) <
+          qdate.getDateDiff(this.dataBoundary, monthLoop) <
           qdate.daysInMonth(lastWorkingDate)
         ) {
           perMonthGain = 0;
@@ -882,7 +1004,7 @@ export default defineComponent({
         monthLoop = qdate.addToDate(monthLoop, { month: 1 });
       } while (qdate.getDateDiff(monthLoop, dataBoundary, "day") < 0);
 
-      this.al_YearBalance = systemStartBalance + totalGain - totalALTaken;
+      return systemStartBalance + totalGain - totalALTaken;
     },
     async refreshHolidayTable() {
       this.renderYear = [];
@@ -983,7 +1105,8 @@ export default defineComponent({
       this.awaitServerResponse--;
     });
     this.awaitServerResponse++;
-    this.updateYearEndBalance().then((response) => {
+    this.updateYearEndBalance(this.uid).then((response) => {
+      this.al_YearBalance = response;
       this.awaitServerResponse--;
     });
   },
@@ -1014,6 +1137,7 @@ export default defineComponent({
       dateOfExit: computed(() => $store.getters["userModule/getDateOfExit"]),
       dateOfEntry: computed(() => $store.getters["userModule/getDateOfEntry"]),
       rank: computed(() => $store.getters["userModule/getRank"]),
+      isLeaveApprove: computed(() => $store.getters["userModule/getLeaveApprove"]),
     };
   },
 });

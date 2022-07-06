@@ -19,9 +19,9 @@
     </q-dialog>
 
     <!-- confirm dialog -->
-    <q-dialog v-model="showApproveDialog">
-      <q-card style="width: 70vw; border-radius: 30px" class="q-gutter-md q-pa-md">
-        <q-card-section>
+    <q-dialog v-model="showApproveDialog" persistent>
+      <q-card style="width: 70vw" class="q-pa-none">
+        <q-card-section class="fit q-pa-none">
           <div class="text-h5 bg-blue-3 text-center">確定批准放假？</div>
         </q-card-section>
 
@@ -75,9 +75,9 @@
     </q-dialog>
 
     <!-- reject dialog -->
-    <q-dialog v-model="showRejectDialog">
-      <q-card style="width: 70vw; border-radius: 30px" class="q-gutter-md q-pa-md">
-        <q-card-section>
+    <q-dialog v-model="showRejectDialog" persistent>
+      <q-card style="width: 70vw" class="q-pa-none">
+        <q-card-section class="fit q-pa-none">
           <div class="text-h5 bg-blue-3 text-center">確定拒絕放假？</div>
         </q-card-section>
 
@@ -131,9 +131,9 @@
     </q-dialog>
 
     <!-- modification dialog -->
-    <q-dialog v-model="showModificationDialog">
-      <q-card style="width: 70vw; border-radius: 30px" class="q-gutter-md q-pa-md">
-        <q-card-section>
+    <q-dialog v-model="showModificationDialog" persistent>
+      <q-card style="width: 70vw" class="q-pa-none">
+        <q-card-section class="fit q-pa-none">
           <div class="text-h5 bg-blue-3 text-center">確定修改放假？</div>
         </q-card-section>
 
@@ -162,6 +162,7 @@
               />
               <q-btn icon="event" round color="primary">
                 <q-popup-proxy
+                  persistent
                   @before-show="proxyDate = application.date"
                   cover
                   transition-show="scale"
@@ -173,7 +174,7 @@
                       <q-btn
                         label="確定"
                         color="primary"
-                        @click="checkValidEdit_Date(index)"
+                        @click="checkValidEdit(index)"
                         flat
                         v-close-popup
                       />
@@ -188,7 +189,7 @@
                 push
                 toggle-color="primary"
                 :options="slotOptions"
-                @update:model-value="checkValidEdit_Slot(index)"
+                @update:model-value="checkValidEdit(index)"
               />
             </div>
           </div>
@@ -243,10 +244,7 @@
         icon="edit"
         color="warning"
         push
-        @click="
-          this.modifyingRow = JSON.parse(JSON.stringify(this.selectedRow));
-          showModificationDialog = !showModificationDialog;
-        "
+        @click="buildModifyingRow()"
       />
       <q-fab
         v-if="checkForApproval()"
@@ -384,11 +382,24 @@
                     />
                   </div>
                   <div class="col-xs-6">
-                    <q-btn class="fit" icon="close" color="red" outline label="拒絕" />
+                    <q-btn
+                      class="fit"
+                      icon="close"
+                      color="red"
+                      outline
+                      label="拒絕"
+                      @click="showRejectDialog = !showRejectDialog"
+                    />
                   </div>
                 </div>
                 <div v-else class="col-xs-6">
-                  <q-btn icon="edit" color="warning" outline label="修改" />
+                  <q-btn
+                    icon="edit"
+                    color="warning"
+                    outline
+                    label="修改"
+                    @click="buildModifyingRow()"
+                  />
                 </div>
               </q-card-actions>
             </q-card>
@@ -569,29 +580,42 @@ export default defineComponent({
     invalidInModification() {
       return this.modifyingRow.findIndex((element) => "invalidEdit" in element) != -1;
     },
-    checkValidEdit_Date(modifyingRowIndex) {
-      this.modifyingRow[modifyingRowIndex].date = new Date(this.proxyDate);
+    buildModifyingRow() {
+      this.proxyDate = "";
+      this.modifyingRow = JSON.parse(JSON.stringify(this.selectedRow));
+      for (let i = 0; i < this.modifyingRow.length; i++) {
+        this.modifyingRow[i].invalidEdit = true;
+      }
+      this.showModificationDialog = !this.showModificationDialog;
+    },
+    checkValidEdit(modifyingRowIndex) {
+      if (this.proxyDate != "") {
+        this.modifyingRow[modifyingRowIndex].date = new Date(this.proxyDate);
+        this.proxyDate = "";
+      }
 
-      this.checkDuplicate(this.modifyingRow[modifyingRowIndex])
-        ? (this.modifyingRow[modifyingRowIndex].invalidEdit = true)
-        : delete this.modifyingRow[modifyingRowIndex].invalidEdit;
-    },
-    checkValidEdit_Slot(modifyingRowIndex) {
-      this.checkDuplicate(this.modifyingRow[modifyingRowIndex])
-        ? (this.modifyingRow[modifyingRowIndex].invalidEdit = true)
-        : delete this.modifyingRow[modifyingRowIndex].invalidEdit;
-    },
-    checkDuplicate(data) {
-      let i = this.rows.findIndex(
+      let inSelectedRow = this.selectedRow.findIndex(
         (element) =>
-          element.docid != data.docid &&
-          element.uid == data.uid &&
+          element.docid == this.modifyingRow[modifyingRowIndex].docid &&
           qdate.formatDate(element.date, "YYYYMMDD") ==
-            qdate.formatDate(data.date, "YYYYMMDD") &&
-          element.slot == data.slot &&
+            qdate.formatDate(this.modifyingRow[modifyingRowIndex].date, "YYYYMMDD") &&
+          element.slot == this.modifyingRow[modifyingRowIndex].slot &&
           (element.status == "批准" || element.status == "未批")
       );
-      return i != -1;
+
+      let inRow = this.rows.findIndex(
+        (element) =>
+          element.docid != this.modifyingRow[modifyingRowIndex].docid &&
+          element.uid == this.modifyingRow[modifyingRowIndex].uid &&
+          qdate.formatDate(element.date, "YYYYMMDD") ==
+            qdate.formatDate(this.modifyingRow[modifyingRowIndex].date, "YYYYMMDD") &&
+          element.slot == this.modifyingRow[modifyingRowIndex].slot &&
+          (element.status == "批准" || element.status == "未批")
+      );
+
+      if (inSelectedRow >= 0 || inRow >= 0) {
+        this.modifyingRow[modifyingRowIndex].invalidEdit = true;
+      } else delete this.modifyingRow[modifyingRowIndex].invalidEdit;
     },
     singleApprove(row) {
       this.selectedRow = [row];

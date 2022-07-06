@@ -182,8 +182,8 @@ exports.approveLeave = functions.https.onCall(async (data, context) => {
 
 // API 2.0 - approve a leave by docid
 exports.approveLeaveByDocid = functions.https.onCall(async (data, context) => {
-  const user = await FireDB.collection("users").doc(context.auth.uid).get();
-  const userData = user.data();
+  const runUser = await FireDB.collection("users").doc(context.auth.uid).get();
+  const runUserData = runUser.data();
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
         "unauthenticated",
@@ -191,7 +191,7 @@ exports.approveLeaveByDocid = functions.https.onCall(async (data, context) => {
     );
   }
 
-  if (userData.privilege.leaveApprove != true) {
+  if (runUserData.privilege.leaveApprove != true) {
     throw new functions.https.HttpsError(
         "unauthenticated",
         "only leave admin can approve leave request",
@@ -208,14 +208,13 @@ exports.approveLeaveByDocid = functions.https.onCall(async (data, context) => {
     const leaveDoc = FireDB.collection("leave").doc(d.docid);
     const scheduleDocid = d.uid + formatDate(d.date, "", "YYYYMMDD") + d.slot;
     const userRef = FireDB.collection("users").doc(d.uid);
-    const userData = await (await userRef.get()).data();
 
     batch.update(leaveDoc, {
       remarks: FieldValue.arrayUnion(...d.remarks),
       status: d.status,
     });
 
-    logData += "HOLIDAY: " + userData.name +
+    logData += "HOLIDAY: " + runUserData.name +
             " 批准了 " +
             d.name +
             " 於 " +
@@ -700,7 +699,7 @@ exports.updatePendingCount = functions.firestore
     .document("leave/{leaveId}")
     .onWrite(async (change, context) => {
       if (change.before.exists) { // update of record
-        // delete record or didn't approve anything
+        // delete record / approve / reject
         if (!change.after.exists || (change.before.data().status == "未批" && change.after.data().status != "未批")) {
           const pendingDoc = await FireDB.collection("dashboard").doc("notification").get();
           let pending = pendingDoc.data().leave_waitingForApproval;
@@ -759,17 +758,22 @@ exports.updatePendingCount = functions.firestore
 
 exports.updateALBalance = functions.pubsub.schedule("0 0 1 * *").timeZone("Asia/Hong_Kong").onRun(async (context) => {
   const usersDocRef = FireDB.collection("users");
-  const usersDoc = await usersDocRef.where("privilege.tmp", "==", false).get();
+  const usersDoc = await usersDocRef.where("privilege.tmp", "==", false).where("privilege.systemAdmin", "==", false).get();
   const userData = [];
   const leaveData = [];
+  const salLeaveData = [];
 
   const leaveDocRef = FireDB.collection("leave");
   const leaveDoc = await leaveDocRef.where("status", "==", "批准").where("validity", "==", true).where("type", "==", "AL").orderBy("uid").get();
+  const salLeaveDoc = await leaveDocRef.where("status", "==", "批准").where("validity", "==", true).where("type", "==", "SAL").orderBy("uid").get();
   usersDoc.forEach((doc) => {
     userData.push(doc.data());
   });
   leaveDoc.forEach((doc) => {
     leaveData.push(doc.data());
+  });
+  salLeaveDoc.forEach((doc) => {
+    salLeaveData.push(doc.data());
   });
   const batch = FireDB.batch();
   const leaveConfigRef = FireDB.collection("dashboard").doc("leaveConfig");
@@ -779,6 +783,7 @@ exports.updateALBalance = functions.pubsub.schedule("0 0 1 * *").timeZone("Asia/
 
   for (const usr of userData) {
     const tiers = leaveConfigData[usr.rank];
+    const salBeginBalance = leaveConfigData[usr.uid][0].sal? leaveConfigData[usr.uid][0].sal:0;
     const today = new Date();
     const entryDate = new Date(usr.dateOfEntry.toDate().getTime() + 28800000);
     const systemMonthStart = new Date(2021, 3, 1);
@@ -814,12 +819,13 @@ exports.updateALBalance = functions.pubsub.schedule("0 0 1 * *").timeZone("Asia/
       }
     });
     */
+    const salBalance = parseFloat(salBeginBalance) - parseFloat(salLeaveData.filter((element) => element.uid == usr.uid).length/2);
     const ref = FireDB.collection("users").doc(usr.uid);
     const refData = await ref.get();
     batch.update(ref, {
       balance: {
         al: alBalance,
-        sal: refData.data().balance.sal,
+        sal: salBalance,
         ot: refData.data().balance.ot,
       },
     });
@@ -828,6 +834,6 @@ exports.updateALBalance = functions.pubsub.schedule("0 0 1 * *").timeZone("Asia/
   // console.log(JSON.stringify(leaveData));
 
   return await batch.commit().then(() => {
-    console.log("ALBalance updated at: " + new Date());
+    console.log("AL / SAL Balance updated at: " + new Date());
   });
 });

@@ -319,22 +319,26 @@ exports.updateLeaveBalance = functions.https.onCall(async (data, context) => {
 
   // const batch = FireDB.batch();
   const usersDocRef = FireDB.collection("users");
-  const usersDoc = await usersDocRef.where("privilege.tmp", "==", false).get();
+  const usersDoc = await usersDocRef.where("privilege.tmp", "==", false).where("privilege.systemAdmin", "==", false).get();
   const userData = [];
   const allLeaveData = [];
+  const salLeaveData = [];
   const recordEnd = new Date();
   recordEnd.setTime(new Date(recordEnd.getFullYear(), recordEnd.getMonth()+1, 1, 0, 0, 0) - 1);
   if (DEBUG) console.log(recordEnd);
 
   const leaveDocRef = FireDB.collection("leave");
   const leaveDoc = await leaveDocRef.where("status", "==", "批准").where("validity", "==", true).where("type", "==", "AL").orderBy("uid").get();
+  const salLeaveDoc = await leaveDocRef.where("status", "==", "批准").where("validity", "==", true).where("type", "==", "SAL").orderBy("uid").get();
   usersDoc.forEach((doc) => {
     userData.push(doc.data());
   });
   leaveDoc.forEach((doc) => {
     allLeaveData.push(doc.data());
   });
-
+  salLeaveDoc.forEach((doc) => {
+    salLeaveData.push(doc.data());
+  });
   if (DEBUG) console.log("before filter: " + allLeaveData.length);
   const leaveData = allLeaveData.filter((record) => Date.parse(record.date) < recordEnd.getTime());
   if (DEBUG) console.log("after filter: " + leaveData.length);
@@ -347,6 +351,7 @@ exports.updateLeaveBalance = functions.https.onCall(async (data, context) => {
 
   for (const usr of userData) {
     const tiers = leaveConfigData[usr.rank];
+    const salBeginBalance = leaveConfigData[usr.uid][0].sal? leaveConfigData[usr.uid][0].sal:0;
     const today = new Date();
     const entryDate = new Date(usr.dateOfEntry.toDate().getTime() + 28800000);
     const systemMonthStart = new Date(2021, 3, 1);
@@ -375,6 +380,7 @@ exports.updateLeaveBalance = functions.https.onCall(async (data, context) => {
 
     const ALTaken = leaveData.filter((row) => row.uid == usr.uid).length/2;
     const alBalance = parseFloat(leaveConfigData[usr.uid][0]["al"]) + parseFloat(leaveGain) - parseFloat(ALTaken);
+    const salBalance = parseFloat(salBeginBalance) - parseFloat(salLeaveData.filter((element) => element.uid == usr.uid).length/2);
     if (DEBUG) {
       console.log(usr.name + " starts with " + leaveConfigData[usr.uid][0]["al"] + " gained " + leaveGain + " ALTaken " + ALTaken + " balance: " + alBalance);
       leaveData.forEach((data) => {
@@ -389,7 +395,7 @@ exports.updateLeaveBalance = functions.https.onCall(async (data, context) => {
     batch.update(ref, {
       balance: {
         al: alBalance,
-        sal: refData.data().balance.sal,
+        sal: salBalance,
         ot: refData.data().balance.ot,
       },
     });
@@ -423,32 +429,43 @@ exports.calculateLeaveBalance = functions.https.onCall(async (data, context) => 
 
   // const batch = FireDB.batch();
   const usersDocRef = FireDB.collection("users");
-  const usersDoc = await usersDocRef.where("privilege.tmp", "==", false).get();
+  const usersDoc = await usersDocRef.where("privilege.tmp", "==", false).where("privilege.systemAdmin", "==", false).get();
   const userData = [];
   const leaveData = [];
+  const salLeaveData = [];
 
   const leaveDocRef = FireDB.collection("leave");
   const leaveDoc = await leaveDocRef.where("status", "==", "批准").where("validity", "==", true).where("type", "==", "AL").orderBy("uid").get();
+  const salLeaveDoc = await leaveDocRef.where("status", "==", "批准").where("validity", "==", true).where("type", "==", "SAL").orderBy("uid").get();
   usersDoc.forEach((doc) => {
     userData.push(doc.data());
   });
   leaveDoc.forEach((doc) => {
     leaveData.push(doc.data());
   });
-
+  salLeaveDoc.forEach((doc) => {
+    salLeaveData.push({
+      docid: doc.id,
+      ...doc.data(),
+    });
+  });
   const leaveConfigRef = FireDB.collection("dashboard").doc("leaveConfig");
   const leaveConfigDoc = await leaveConfigRef.get();
   const leaveConfigData = leaveConfigDoc.data();
+
   const tiersConfig = [0, 5, 8, 10, 12];
 
   for (const usr of userData) {
     const tiers = leaveConfigData[usr.rank];
+    const salBeginBalance = leaveConfigData[usr.uid][0].sal? leaveConfigData[usr.uid][0].sal:0;
     const today = new Date();
     const entryDate = new Date(usr.dateOfEntry.toDate().getTime() + 28800000);
     const systemMonthStart = new Date(2021, 3, 1);
     const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
     let counter = systemMonthStart;
     let leaveGain = 0;
+
+    // console.log(usr.name);
     do {
       // year difference, and month difference, then calculate exact year difference
       const yearDiff = counter.getFullYear() - entryDate.getFullYear();
@@ -477,15 +494,15 @@ exports.calculateLeaveBalance = functions.https.onCall(async (data, context) => 
         console.log(data.date + "[" + data.slot + "]");
       }
     });
+
+    console.log(usr.name + " SAL balance: initial " + salBeginBalance);
+    salLeaveData.forEach((data) => {
+      if (data.uid == usr.uid) {
+        console.log(data.docid + " " + data.date + "[" + data.slot + "]");
+      }
+    });
+    console.log("Total SAL date: " + salLeaveData.filter((element) => element.uid == usr.uid).length/2);
   }
-
-  // console.log(JSON.stringify(leaveData));
-
-  /*
-  return await batch.commit().then(() => {
-    console.log("ALBalance updated at: " + new Date());
-  });
-  */
 });
 
 // upgrade user privilege object
