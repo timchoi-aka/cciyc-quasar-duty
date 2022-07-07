@@ -56,23 +56,35 @@
 
 <script>
 import { useStore } from "vuex";
-import { leaveCollection, dashboardCollection } from "boot/firebase";
+import { leaveCollection, dashboardCollection, usersCollection } from "boot/firebase";
 import { defineComponent, computed } from "vue";
+import { date as qdate } from "quasar";
 
 export default defineComponent({
   name: "Holiday",
   data() {
     return {
+      qdate: qdate,
       leaveListener: Function(),
+      leaveApprovedListener: Function(),
       dashboardListener: Function(),
       pendingALApprovalCount: 0,
       pendingCount: 0,
       renderDate: new Date(),
+      awaitServerResponse: 0,
+      ALBalance: 0,
     };
+  },
+  methods: {},
+  computed: {
+    waitingAsync() {
+      return this.awaitServerResponse > 0 ? true : false;
+    },
   },
   async unmounted() {
     this.leaveListener();
     this.dashboardListener();
+    this.leaveApprovedListener();
   },
   async mounted() {
     this.leaveListener = leaveCollection
@@ -86,6 +98,87 @@ export default defineComponent({
       .onSnapshot((snapshot) => {
         this.pendingALApprovalCount = snapshot.data().leave_waitingForApproval;
       });
+    this.awaitServerResponse++;
+
+    // listen and update month end balance
+    // get user data
+    const userDoc = await usersCollection.doc(this.uid).get();
+    const rank = userDoc.data().rank;
+    const dateOfExit = userDoc.data().dateOfExit ? userDoc.data().dateOfExit : null;
+    const dateOfEntry = userDoc.data().dateOfEntry;
+
+    // get leaveConfig
+    const leaveConfigDoc = await dashboardCollection.doc("leaveConfig").get();
+    const leaveConfigData = leaveConfigDoc.data();
+    const tiers = leaveConfigData[rank];
+
+    // get AL starting balance
+    const systemStartBalance = leaveConfigData[this.uid][0].al;
+
+    // determine month end
+    const now = new Date();
+    let monthEnd = qdate.endOfDate(now, "month");
+
+    // determine data retrieval boundary combining yearEnd and dateOfExit
+    const dataBoundary =
+      dateOfExit && dateOfExit.toDate() < monthEnd ? dateOfExit.toDate() : monthEnd;
+
+    let totalGain = 0;
+    // begin with system start date
+    let systemStart = new Date("2021/04/01");
+    let monthLoop = systemStart;
+    do {
+      const yearServed =
+        qdate.getDateDiff(
+          qdate.endOfDate(monthLoop, "month"),
+          dateOfEntry.toDate(),
+          "month"
+        ) / 12;
+
+      let tier = 0;
+      const tiersConfig = [0, 5, 8, 10, 12];
+      for (let j = tiersConfig.length; j > 0; j--) {
+        if (yearServed >= tiersConfig[j - 1]) {
+          tier = tiers["t" + j];
+          break;
+        }
+      }
+      let perMonthGain = tier / 12;
+
+      let lastWorkingDate = qdate.addToDate(dataBoundary, { days: -1 });
+
+      if (
+        qdate.getDateDiff(this.dataBoundary, monthLoop) <
+        qdate.daysInMonth(lastWorkingDate)
+      ) {
+        perMonthGain = 0;
+      }
+      totalGain += perMonthGain;
+      monthLoop = qdate.addToDate(monthLoop, { month: 1 });
+    } while (qdate.getDateDiff(monthLoop, dataBoundary, "day") < 0);
+    let holidayCount = 0;
+    this.leaveApprovedListener = leaveCollection
+      .where("uid", "==", this.uid)
+      .where("status", "==", "批准")
+      .where("type", "==", "AL")
+      .onSnapshot((snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          if (change.type == "added") {
+            let d = change.doc.data();
+            qdate.isBetweenDates(d.date, systemStart, dataBoundary)
+              ? (holidayCount += 0.5)
+              : (holidayCount = holidayCount);
+          } else if (change.type == "removed") {
+            let d = change.doc.data();
+            qdate.isBetweenDates(d.date, systemStart, dataBoundary)
+              ? (holidayCount -= 0.5)
+              : (holidayCount = holidayCount);
+          }
+
+          this.ALBalance = systemStartBalance + totalGain - holidayCount;
+        });
+      });
+    this.ALBalance = systemStartBalance + totalGain - holidayCount;
     this.$router.push("/holiday/al-view").catch(() => {});
   },
   setup() {
@@ -96,7 +189,6 @@ export default defineComponent({
       isLeaveManage: computed(() => $store.getters["userModule/getLeaveManage"]),
       isLeaveApprove: computed(() => $store.getters["userModule/getLeaveApprove"]),
       isSAL: computed(() => $store.getters["userModule/getSAL"]),
-      ALBalance: computed(() => $store.getters["userModule/getALBalance"]),
       SALBalance: computed(() => $store.getters["userModule/getSALBalance"]),
     };
   },
