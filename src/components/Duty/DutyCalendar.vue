@@ -154,6 +154,7 @@
               options-dense
               tabindex="0"
               v-model="editingRow[props.col.name]"
+              @focus="tempInputValue = null"
               @input-value="
                 (val) => {
                   tempInputValue = val;
@@ -164,7 +165,9 @@
                   tempInputValue = val;
                 }
               "
-              @blur="editingRow[props.col.name] = tempInputValue"
+              @blur="
+                tempInputValue ? (editingRow[props.col.name] = tempInputValue) : false
+              "
               :rules="[(val) => validateInput(val)]"
             >
               <template v-if="editingRow[props.col.name]" v-slot:append>
@@ -461,7 +464,8 @@ export default defineComponent({
     },
     validateEditingRow() {
       if (Object.keys(this.editingRow) == 0) return false;
-      const constrains = ["al", "sal", "sl"];
+      if (this.isSystemAdmin || this.isCenterIC) return false;
+      const constrains = ["al", "sal", "sl", "ssl"];
       for (const [key, value] of Object.entries(this.editingRow)) {
         if (
           key != "uid" &&

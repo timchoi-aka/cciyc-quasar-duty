@@ -484,6 +484,7 @@ export default defineComponent({
   },
   data() {
     return {
+      al_balance: 0,
       showAllStaffAnnualBalance: false,
       allStaffAnnualLeaveList: [],
       confirmDialog: false,
@@ -716,15 +717,15 @@ export default defineComponent({
         .orderBy("order")
         .get();
       this.allStaffAnnualLeaveList = [];
-      usersDoc.forEach((doc) => {
+      for (let i = 0; i < usersDoc.docs.length; i++) {
         this.allStaffAnnualLeaveList.push({
-          uid: doc.data().uid,
-          name: doc.data().name,
-          alBalance_month: doc.data().balance.al,
-          salBalance_month: doc.data().balance.sal,
-          otBalance_month: doc.data().balance.ot,
+          uid: usersDoc.docs[i].data().uid,
+          name: usersDoc.docs[i].data().name,
+          alBalance_month: await this.updateMonthEndBalance(usersDoc.docs[i].data().uid),
+          salBalance_month: usersDoc.docs[i].data().balance.sal,
+          otBalance_month: usersDoc.docs[i].data().balance.ot,
         });
-      });
+      }
       this.awaitServerResponse++;
       for (let i = 0; i < this.allStaffAnnualLeaveList.length; i++) {
         this.allStaffAnnualLeaveList[i].alBalance_year = await this.updateYearEndBalance(
@@ -911,6 +912,80 @@ export default defineComponent({
         return this.publicHoliday[i].summary;
       }
     },
+    async updateMonthEndBalance(uid) {
+      // get user data
+      const userDoc = await usersCollection.doc(uid).get();
+      const rank = userDoc.data().rank;
+      const dateOfExit = userDoc.data().dateOfExit ? userDoc.data().dateOfExit : null;
+      const dateOfEntry = userDoc.data().dateOfEntry;
+
+      // get leaveConfig
+      const leaveConfigDoc = await dashboardCollection.doc("leaveConfig").get();
+      const leaveConfigData = leaveConfigDoc.data();
+      const tiers = leaveConfigData[rank];
+
+      // get AL starting balance
+      const systemStartBalance = leaveConfigData[uid][0].al;
+
+      // determine month end
+      const now = new Date();
+      let monthEnd = qdate.endOfDate(now, "month");
+
+      // determine data retrieval boundary combining yearEnd and dateOfExit
+      const dataBoundary =
+        dateOfExit && dateOfExit.toDate() < monthEnd ? dateOfExit.toDate() : monthEnd;
+
+      const leaveDocData = await leaveCollection
+        .where("uid", "==", uid)
+        .where("status", "==", "批准")
+        .where("type", "==", "AL")
+        .get();
+      let leaveData = [];
+      leaveDocData.forEach((doc) => {
+        let d = new Date(doc.data().date);
+        if (d - dataBoundary < 0) {
+          leaveData.push(doc);
+        }
+      });
+
+      const totalALTaken = leaveData.length / 2;
+
+      let totalGain = 0;
+      // begin with system start date
+      let systemStart = new Date("2021/04/01");
+      let monthLoop = systemStart;
+      do {
+        const yearServed =
+          qdate.getDateDiff(
+            qdate.endOfDate(monthLoop, "month"),
+            dateOfEntry.toDate(),
+            "month"
+          ) / 12;
+
+        let tier = 0;
+        const tiersConfig = [0, 5, 8, 10, 12];
+        for (let j = tiersConfig.length; j > 0; j--) {
+          if (yearServed >= tiersConfig[j - 1]) {
+            tier = tiers["t" + j];
+            break;
+          }
+        }
+        let perMonthGain = tier / 12;
+
+        let lastWorkingDate = qdate.addToDate(dataBoundary, { days: -1 });
+
+        if (
+          qdate.getDateDiff(this.dataBoundary, monthLoop) <
+          qdate.daysInMonth(lastWorkingDate)
+        ) {
+          perMonthGain = 0;
+        }
+        totalGain += perMonthGain;
+        monthLoop = qdate.addToDate(monthLoop, { month: 1 });
+      } while (qdate.getDateDiff(monthLoop, dataBoundary, "day") < 0);
+
+      return systemStartBalance + totalGain - totalALTaken;
+    },
     async updateYearEndBalance(uid) {
       // get user data
       const userDoc = await usersCollection.doc(uid).get();
@@ -1007,6 +1082,11 @@ export default defineComponent({
       return systemStartBalance + totalGain - totalALTaken;
     },
     async refreshHolidayTable() {
+      this.awaitServerResponse++;
+      this.updateMonthEndBalance(this.uid).then((response) => {
+        this.al_balance = response;
+        this.awaitServerResponse--;
+      });
       this.renderYear = [];
       this.rows = [];
       let queryStartDate = new Date(
@@ -1131,7 +1211,7 @@ export default defineComponent({
     return {
       uid: computed(() => $store.getters["userModule/getUID"]),
       username: computed(() => $store.getters["userModule/getUsername"]),
-      al_balance: computed(() => $store.getters["userModule/getALBalance"]),
+      // al_balance: computed(() => $store.getters["userModule/getALBalance"]),
       sal_balance: computed(() => $store.getters["userModule/getSALBalance"]),
       isSAL: computed(() => $store.getters["userModule/getSAL"]),
       dateOfExit: computed(() => $store.getters["userModule/getDateOfExit"]),
