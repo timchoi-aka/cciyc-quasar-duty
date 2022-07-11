@@ -154,7 +154,6 @@
               options-dense
               tabindex="0"
               v-model="editingRow[props.col.name]"
-              @focus="tempInputValue = null"
               @input-value="
                 (val) => {
                   tempInputValue = val;
@@ -165,9 +164,7 @@
                   tempInputValue = val;
                 }
               "
-              @blur="
-                tempInputValue ? (editingRow[props.col.name] = tempInputValue) : false
-              "
+              @blur="updateEditingRow(props.col.name)"
               :rules="[(val) => validateInput(val)]"
             >
               <template v-if="editingRow[props.col.name]" v-slot:append>
@@ -299,7 +296,7 @@
                               tempInputValue = val;
                             }
                           "
-                          @blur="editingRow[props.col.name] = tempInputValue"
+                          @blur="updateEditingRow(col.name)"
                           :rules="[(val) => validateInput(val)]"
                         ></q-select>
                       </div>
@@ -392,6 +389,12 @@ export default defineComponent({
     };
   },
   methods: {
+    updateEditingRow(col) {
+      if (this.tempInputValue) {
+        this.editingRow[col] = this.tempInputValue;
+        this.tempInputValue = "";
+      }
+    },
     selectPop() {
       //console.log("test");
       //console.log(this.$refs.selectionPopup);
