@@ -176,8 +176,11 @@ export default {
               this.uidMap.push({
                 uid: doc.id,
                 name: doc.data().name,
+                order: doc.data().order,
               });
             });
+
+            this.uidMap.sort((a, b) => parseInt(a.order) - parseInt(b.order));
 
             // build table fields (not neccessary)
             this.tableFields = [];
