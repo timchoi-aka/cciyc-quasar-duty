@@ -1,5 +1,6 @@
 /* eslint-disable max-len */
 const {functions, FireDB, Timestamp} = require("./fbadmin");
+const {formatDate} = require("./utilities");
 
 // delete activity
 exports.delActivity = functions.https.onCall(async (data, context) => {
@@ -29,52 +30,45 @@ exports.delActivity = functions.https.onCall(async (data, context) => {
 });
 
 // http callable function (modify an activity customName)
-exports.editActivityCustomName = functions.https.onCall(
-    async (data, context) => {
-      if (!context.auth) {
-        throw new functions.https.HttpsError(
-            "unauthenticated",
-            "only authenticated users can add requests",
-        );
-      }
-      const fbDate = Timestamp.fromDate(new Date(data.date));
-      const activityCollection = FireDB.collection("activity");
-      const activityDoc = await activityCollection.doc(data.docid).get();
-      const userDoc = await FireDB
-          .collection("users")
-          .doc(context.auth.uid)
-          .get();
-      const userName = userDoc.data().name;
+exports.editActivityCustomName = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated users can add requests",
+    );
+  }
 
-      console.log(
-          "ACTIVITIES: " +
-        userName +
-        " changed activity docid " +
-        data.docid +
-        ", to customName " +
-        data.customName +
-        " on event dates : " +
-        data.date,
-      );
+  const activityCollection = FireDB.collection("activity");
+  const activityDoc = await activityCollection.doc(data.docid).get();
+  const userDoc = await FireDB
+      .collection("users")
+      .doc(context.auth.uid)
+      .get();
+  const userName = userDoc.data().name;
 
-      const dateEntries = activityDoc.data().date;
-      const i = dateEntries.findIndex(
-          (element) => element.date.toMillis() == fbDate.toMillis(),
-      );
-      dateEntries[i] = {
-        date: dateEntries[i].date,
-        customName: data.customName,
-      };
+  const logData = "ACTIVITIES: " +
+                  userName +
+                  " changed activity docid " +
+                  data.docid +
+                  ", to customName " +
+                  data.customName +
+                  " on event dates : " +
+                  data.date;
 
-      return activityCollection.doc(data.docid).update({
-        name: data.name,
-        venue: data.venue,
-        active: data.active,
-        date: dateEntries,
-        docid: data.docid,
-      });
-    },
-);
+  const dateEntries = activityDoc.data().date;
+  const i = dateEntries.findIndex((element) => formatDate(new Date(element.date.toMillis() + 8*60*60*1000), "-", "YYYYMMDD") == formatDate(data.date, "", "YYYYMMDD"));
+
+  dateEntries[i] = {
+    date: dateEntries[i].date,
+    customName: data.customName,
+  };
+
+  return activityCollection.doc(data.docid).update({
+    date: dateEntries,
+  }).then(()=> {
+    console.log(logData);
+  });
+});
 
 // http callable function (modify an activity)
 exports.modifyActivity = functions.https.onCall(async (data, context) => {

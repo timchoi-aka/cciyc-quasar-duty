@@ -1,4 +1,33 @@
-import { GoogleAuthProvider, FirebaseAuth, usersCollection } from "boot/firebase.js";
+import { GoogleAuthProvider, FirebaseAuth, usersCollection, getAuth, signInWithCredential } from "boot/firebase.js";
+
+
+export async function nonWebLogin({commit}) {
+  // Build Firebase credential with the Google ID token.
+  const credential = GoogleAuthProvider.credential(id_token);
+
+  // Sign in with credential from the Google user.
+  const auth = getAuth();
+  signInWithCredential(auth, credential).catch((error) => {
+    // Handle Errors here.
+    const errorCode = error.code;
+    const errorMessage = error.message;
+    // The email of the user's account used.
+    const email = error.customData.email;
+    // The AuthCredential type that was used.
+    const credential = GoogleAuthProvider.credentialFromError(error);
+    // ...
+  });
+}
+
+export async function desktopLogin({commit}) {
+  const { user } = await FirebaseAuth.signInWithPopup(GoogleAuthProvider);
+  let userDoc = await usersCollection.doc(user.uid).get();
+  commit('setUserProfile', userDoc.data());
+  commit('setAuth', user);
+
+  // change route to dashboard
+  this.$router.push('/').catch(()=>{});
+}
 
 export async function login({ commit }) {
   // sign user in
@@ -6,6 +35,8 @@ export async function login({ commit }) {
 
 
   FirebaseAuth.signInWithRedirect(GoogleAuthProvider);
+  //FirebaseAuth.signInWithPopup(GoogleAuthProvider);
+
   // fetch user profile and set in state
   /*
   let userDoc = await usersCollection.doc(user.uid).get();

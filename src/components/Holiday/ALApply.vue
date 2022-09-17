@@ -933,7 +933,9 @@ export default defineComponent({
 
       // determine data retrieval boundary combining yearEnd and dateOfExit
       const dataBoundary =
-        dateOfExit && dateOfExit.toDate() < monthEnd ? dateOfExit.toDate() : monthEnd;
+        dateOfExit && dateOfExit.toDate() < monthEnd
+          ? qdate.subtractFromDate(dateOfExit.toDate(), { milliseconds: 1 })
+          : monthEnd;
 
       const leaveDocData = await leaveCollection
         .where("uid", "==", uid)
@@ -972,11 +974,9 @@ export default defineComponent({
         }
         let perMonthGain = tier / 12;
 
-        let lastWorkingDate = qdate.addToDate(dataBoundary, { days: -1 });
-
         if (
           qdate.getDateDiff(this.dataBoundary, monthLoop) <
-          qdate.daysInMonth(lastWorkingDate)
+          qdate.daysInMonth(monthLoop) - 1
         ) {
           perMonthGain = 0;
         }
@@ -1028,7 +1028,9 @@ export default defineComponent({
 
       // determine data retrieval boundary combining yearEnd and dateOfExit
       const dataBoundary =
-        dateOfExit && dateOfExit.toDate() < yearEnd ? dateOfExit.toDate() : yearEnd;
+        dateOfExit && dateOfExit.toDate() < yearEnd
+          ? qdate.subtractFromDate(dateOfExit.toDate(), { milliseconds: 1 })
+          : yearEnd;
 
       const leaveDocData = await leaveCollection
         .where("uid", "==", uid)
@@ -1067,11 +1069,9 @@ export default defineComponent({
         }
         let perMonthGain = tier / 12;
 
-        let lastWorkingDate = qdate.addToDate(dataBoundary, { days: -1 });
-
         if (
-          qdate.getDateDiff(this.dataBoundary, monthLoop) <
-          qdate.daysInMonth(lastWorkingDate)
+          qdate.getDateDiff(dataBoundary, monthLoop) <
+          qdate.daysInMonth(monthLoop) - 1
         ) {
           perMonthGain = 0;
         }

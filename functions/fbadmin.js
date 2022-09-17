@@ -1,12 +1,15 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const firestore = require("firebase-admin/firestore");
+
 if (admin.apps.length === 0) {
   admin.initializeApp();
 }
 
 const FireDB = admin.firestore();
-const Timestamp = admin.firestore.Timestamp;
-const FieldValue = admin.firestore.FieldValue;
+// FireDB.settings({timestampsInSnapshots: true});
+const Timestamp = firestore.Timestamp;
+const FieldValue = firestore.FieldValue;
 const arrayUnion = FireDB.arrayUnion;
 
 module.exports = {

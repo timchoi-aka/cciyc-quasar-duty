@@ -53,6 +53,7 @@ export default {
     return {
       username: computed(() => $store.getters["userModule/getUsername"]),
       login: () => $store.dispatch("userModule/login"),
+      desktopLogin: () => $store.dispatch("userModule/desktopLogin"),
       saveProfile: () => $store.dispatch("userModule/saveProfile"),
     };
   },
@@ -63,7 +64,15 @@ export default {
   },
   methods: {
     google() {
-      this.login();
+      if (this.$q.platform.is.electron) {
+        this.desktopLogin();
+      } else {
+        this.login()
+          .then(() => {
+            this.$q.notify({ message: this.username + " 登入成功." });
+          })
+          .catch((error) => console.log("error", error));
+      }
       /*
       this.login()
         .then(() => {
@@ -74,17 +83,21 @@ export default {
     },
   },
   async mounted() {
-    // const $q = useQuasar();
-    // console.log(JSON.stringify($q.platform));
-    this.awaitServerResponse++;
-    this.saveProfile()
-      .then(() => {
-        this.awaitServerResponse--;
-        if (this.username) {
-          this.$q.notify({ message: this.username + " 登入成功." });
-        }
-      })
-      .catch((error) => console.log("error", error));
+    if (
+      !this.username &&
+      !this.$q.platform.is.capacitor &&
+      !this.$q.platform.is.electron
+    ) {
+      this.awaitServerResponse++;
+      this.saveProfile()
+        .then(() => {
+          this.awaitServerResponse--;
+          if (this.username) {
+            this.$q.notify({ message: this.username + " 登入成功." });
+          }
+        })
+        .catch((error) => console.log("error", error));
+    }
   },
 };
 </script>

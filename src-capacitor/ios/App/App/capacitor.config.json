@@ -1,0 +1,27 @@
+{
+  "appId": "cciyc.duty.aka.technology.com",
+  "appName": "CCIYC Duty Management System",
+  "bundledWebRuntime": false,
+  "npmClient": "npm",
+  "webDir": "www",
+  "plugins": {
+    "CapacitorFirebaseAuth": {
+      "providers": [
+        "google.com"
+      ],
+      "languageCode": "en",
+      "nativeAuth": false,
+      "properties": {
+        "google": {
+          "hostedDomain": "duty.cciyc.com"
+        }
+      },
+      "permissions": {
+        "google": [
+          "profile",
+          "https://www.googleapis.com/auth/drive"
+        ]
+      }
+    }
+  }
+}

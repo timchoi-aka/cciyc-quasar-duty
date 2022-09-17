@@ -8,6 +8,7 @@
     "@capacitor/android": "^2.5.0",
     "@capacitor/cli": "^2.0.0",
     "@capacitor/core": "^2.0.0",
+    "@capacitor/ios": "^2.5.0",
     "capacitor-firebase-auth": "^3.0.0"
   }
 }

@@ -141,7 +141,7 @@ module.exports = configure(function (ctx) {
       },
 
       manifest: {
-        name: `CCIYC Duty Management System`,
+        name: `青年假期系統`,
         short_name: `CCIYC Duty Management System`,
         description: `CCIYC Duty Management System`,
         display: 'standalone',

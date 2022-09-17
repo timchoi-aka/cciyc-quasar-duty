@@ -52,6 +52,9 @@ export const FirebaseAuth = Firebase.auth();
 export const Firestore = Firebase.firestore();
 export const FirebaseFunctions = Firebase.functions();
 export const FirebaseStorage = Firebase.storage();
+export const getAuth = Firebase.auth().getAuth;
+export const signInWithCredential = Firebase.auth().signInWithCredential;
+
 export default Firebase;
 
 
