@@ -4,6 +4,9 @@ node_modules
 
 # Quasar core related directories
 .quasar
+.firebase
+.vscode
+app
 /dist
 
 # Cordova related directories and files
@@ -13,8 +16,11 @@ node_modules
 /src-cordova/www
 
 # Capacitor related directories and files
+/src-capacitor
 /src-capacitor/www
 /src-capacitor/node_modules
+
+/src-electron
 
 # BEX related directories and files
 /src-bex/www
@@ -36,6 +42,10 @@ pubsub-debug.log
 
 # Ignore Gradle project-specific cache directory
 .gradle
+.editorconfig
 
 # Ignore Gradle build output directory
 build
+
+firebase-export-*
+firestore-debug.log
