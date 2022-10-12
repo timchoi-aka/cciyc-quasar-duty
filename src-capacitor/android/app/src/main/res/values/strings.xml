@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">CCIYC Duty Management System</string>
-    <string name="title_activity_main">CCIYC Duty Management System</string>
-    <string name="package_name">cciyc.duty.aka.technology.com</string>
-    <string name="custom_url_scheme">cciyc.duty.aka.technology.com</string>
-</resources>
