@@ -6,6 +6,7 @@ node_modules
 .quasar
 .firebase
 .vscode
+.editorconfig
 app
 /dist
 
@@ -15,11 +16,14 @@ app
 /src-cordova/plugins
 /src-cordova/www
 
+/src-electron
+
 # Capacitor related directories and files
 /src-capacitor
 /src-capacitor/www
 /src-capacitor/node_modules
 
+# electron source
 /src-electron
 
 # BEX related directories and files
@@ -32,6 +36,7 @@ yarn-debug.log*
 yarn-error.log*
 firestore-debug.Log
 pubsub-debug.log
+ui-debug.log
 
 # Editor directories and files
 .idea
@@ -43,9 +48,14 @@ pubsub-debug.log
 # Ignore Gradle project-specific cache directory
 .gradle
 .editorconfig
+gradle
+gradlew
+gradlew.bat
+settings.gradle.kts
 
 # Ignore Gradle build output directory
 build
 
+# firestore data dump
 firebase-export-*
-firestore-debug.log
+
