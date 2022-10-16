@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-const {functions, FireDB, Timestamp, admin} = require("./fbadmin");
+const {functions, FireDB, Timestamp} = require("./fbadmin");
 const {formatDate} = require("./utilities");
 
 exports.setCustomClaims = functions.region("asia-east2").https.onCall(async (data, context) => {
@@ -20,6 +20,7 @@ exports.setCustomClaims = functions.region("asia-east2").https.onCall(async (dat
     );
   }
 
+  // only admin can run this
   const loginUserDoc = await FireDB.collection("users").doc(context.auth.uid).get();
   const loginUserData = loginUserDoc.data();
   if (!loginUserData.privilege.systemAdmin) {
@@ -29,20 +30,31 @@ exports.setCustomClaims = functions.region("asia-east2").https.onCall(async (dat
     );
   }
 
-  const customClaims = {
+  /* const customClaims = {
     "https://hasura.io/jwt/claims": {
       "x-hasura-default-role": "user",
       "x-hasura-allowed-roles": ["user"],
       "x-hasura-user-id": context.auth.uid,
     },
   };
-  return await admin.auth().setCustomUserClaims(context.auth.uid, customClaims).then(() => {
-    console.log(context.auth.uid + " customClaims updated");
-  });
+  */
+  console.log(context.auth);
+
+  const usersDocRef = FireDB.collection("users");
+  const usersDoc = await usersDocRef.get();
+  for (const usr of usersDoc.data()) {
+    // await admin.auth().setCustomUserClaims(usr.uid, customClaims)
+    console.log(usr.uid);
+  }
+
+  /*
+  return .then(() => {
+    console.log(context.auth.uid + " updated customClaims on all users");
+  }); */
 });
 
 // API 2.0 - add SAL deadline to 3 user objects
-exports.addSALDeadline = functions.https.onCall(async (data, context) => {
+exports.addSALDeadline = functions.region("asia-east2").https.onCall(async (data, context) => {
   // only authenticated users can run this
   if (!context.auth) {
     throw new functions.https.HttpsError(
@@ -84,7 +96,7 @@ exports.addSALDeadline = functions.https.onCall(async (data, context) => {
 });
 
 // migrate OT balance from dashboard to user object
-exports.migrateOTBalance = functions.https.onCall(async (data, context) => {
+exports.migrateOTBalance = functions.region("asia-east2").https.onCall(async (data, context) => {
   // only authenticated users can run this
   if (!context.auth) {
     throw new functions.https.HttpsError(
@@ -128,7 +140,7 @@ exports.migrateOTBalance = functions.https.onCall(async (data, context) => {
 });
 
 // reshape user object in 2.0 rollout
-exports.upgradeUserObject = functions.https.onCall(async (data, context) => {
+exports.upgradeUserObject = functions.region("asia-east2").https.onCall(async (data, context) => {
   // only authenticated users can run this
   if (!context.auth) {
     throw new functions.https.HttpsError(
@@ -249,7 +261,7 @@ exports.upgradeUserObject = functions.https.onCall(async (data, context) => {
 });
 
 // API 2.0 - find dangling approved holiday
-exports.findDanglingHoliday = functions.https.onCall(async (data, context) => {
+exports.findDanglingHoliday = functions.region("asia-east2").https.onCall(async (data, context) => {
   // only authenticated users can run this
   if (!context.auth) {
     throw new functions.https.HttpsError(
@@ -305,7 +317,7 @@ exports.findDanglingHoliday = functions.https.onCall(async (data, context) => {
 });
 
 // API 2.0 - add new staff rank
-exports.addNewRank = functions.https.onCall(async (data, context) => {
+exports.addNewRank = functions.region("asia-east2").https.onCall(async (data, context) => {
   // only authenticated users can run this
   if (!context.auth) {
     throw new functions.https.HttpsError(
@@ -337,7 +349,7 @@ exports.addNewRank = functions.https.onCall(async (data, context) => {
 });
 
 // API 2.0 - update leave balance
-exports.updateLeaveBalance = functions.https.onCall(async (data, context) => {
+exports.updateLeaveBalance = functions.region("asia-east2").https.onCall(async (data, context) => {
   const DEBUG = false;
   // only authenticated users can run this
   if (!context.auth) {
@@ -448,7 +460,7 @@ exports.updateLeaveBalance = functions.https.onCall(async (data, context) => {
 });
 
 // API 2.0 - show leave balance calculation
-exports.calculateLeaveBalance = functions.https.onCall(async (data, context) => {
+exports.calculateLeaveBalance = functions.region("asia-east2").https.onCall(async (data, context) => {
   // only authenticated users can run this
   if (!context.auth) {
     throw new functions.https.HttpsError(
@@ -545,7 +557,7 @@ exports.calculateLeaveBalance = functions.https.onCall(async (data, context) => 
 });
 
 // upgrade user privilege object
-exports.upgradePrivilege = functions.https.onCall(async (data, context) => {
+exports.upgradePrivilege = functions.region("asia-east2").https.onCall(async (data, context) => {
   // only authenticated users can run this
   if (!context.auth) {
     throw new functions.https.HttpsError(
@@ -603,7 +615,7 @@ exports.upgradePrivilege = functions.https.onCall(async (data, context) => {
 });
 
 // attach holiday to schedule
-exports.attachHoliday = functions.https.onCall(async (data, context) => {
+exports.attachHoliday = functions.region("asia-east2").https.onCall(async (data, context) => {
   // only authenticated users can run this
   if (!context.auth) {
     throw new functions.https.HttpsError(
@@ -645,7 +657,7 @@ exports.attachHoliday = functions.https.onCall(async (data, context) => {
 });
 
 // remove NaN schedules
-exports.deleteNaNSchedule = functions.https.onCall(async (data, context) => {
+exports.deleteNaNSchedule = functions.region("asia-east2").https.onCall(async (data, context) => {
   // only authenticated users can run this
   if (!context.auth) {
     throw new functions.https.HttpsError(
@@ -693,7 +705,7 @@ exports.deleteNaNSchedule = functions.https.onCall(async (data, context) => {
 });
 
 // API 2.0 - housekeep schedule docid
-exports.housekeepSchedule = functions.https.onCall(async (data, context) => {
+exports.housekeepSchedule = functions.region("asia-east2").https.onCall(async (data, context) => {
   // only authenticated users can run this
   if (!context.auth) {
     throw new functions.https.HttpsError(
@@ -768,7 +780,7 @@ exports.housekeepSchedule = functions.https.onCall(async (data, context) => {
 });
 
 // API 1.0 - http callable function (adding an activity)
-exports.mergeActivity = functions.https.onCall(async (data, context) => {
+exports.mergeActivity = functions.region("asia-east2").https.onCall(async (data, context) => {
   // only authenticated users can run this
   if (!context.auth) {
     throw new functions.https.HttpsError(
@@ -816,7 +828,7 @@ exports.mergeActivity = functions.https.onCall(async (data, context) => {
 });
 
 // API 1.0 - move leaveConfig
-exports.moveLeaveConfig = functions.https.onCall(async (data, context) => {
+exports.moveLeaveConfig = functions.region("asia-east2").https.onCall(async (data, context) => {
   const oldLeaveConfigDoc = FireDB.collection("leave").doc("config");
   const oldLeaveConfig = await oldLeaveConfigDoc.get();
   const oldLeaveConfigData = oldLeaveConfig.data();
@@ -827,7 +839,7 @@ exports.moveLeaveConfig = functions.https.onCall(async (data, context) => {
 });
 
 // API 1.0 - manual administration function
-exports.adminFunc = functions.https.onCall(async (data, context) => {
+exports.adminFunc = functions.region("asia-east2").https.onCall(async (data, context) => {
   const oldUID = data.oldUID;
   const newUID = data.newUID;
   console.log("converting " + oldUID + " to " + newUID);
@@ -905,7 +917,7 @@ exports.adminFunc = functions.https.onCall(async (data, context) => {
 });
 
 // API 1.0 - used during system migration
-exports.convertNewSystem = functions.https.onCall(async (data, context) => {
+exports.convertNewSystem = functions.region("asia-east2").https.onCall(async (data, context) => {
   const oldUID = data.oldUID;
   const newUID = data.newUID;
 

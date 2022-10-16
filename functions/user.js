@@ -2,7 +2,7 @@
 const {functions, FireDB, Timestamp} = require("./fbadmin");
 const {formatDate} = require("./utilities");
 // API 2.0 - add temp staff
-exports.addTempStaff = functions.https.onCall(async (data, context) => {
+exports.addTempStaff = functions.region("asia-east2").https.onCall(async (data, context) => {
   // only authenticated users can run this
   if (!context.auth) {
     throw new functions.https.HttpsError(
@@ -43,7 +43,7 @@ exports.addTempStaff = functions.https.onCall(async (data, context) => {
 });
 
 // API 2.0 - add temp staff
-exports.delTempStaff = functions.https.onCall(async (data, context) => {
+exports.delTempStaff = functions.region("asia-east2").https.onCall(async (data, context) => {
   // only authenticated users can run this
   if (!context.auth) {
     throw new functions.https.HttpsError(
@@ -99,7 +99,7 @@ exports.delTempStaff = functions.https.onCall(async (data, context) => {
 });
 
 // API 1.0 - auth trigger (new user signup)
-exports.newUserSignUp = functions.auth.user().onCreate((user) => {
+exports.newUserSignUp = functions.region("asia-east2").auth.user().onCreate((user) => {
   // for background triggers you must return a value/promise
   return FireDB
       .collection("users")
@@ -183,14 +183,14 @@ exports.newUserSignUp = functions.auth.user().onCreate((user) => {
 });
 
 // auth trigger (user deleted)
-exports.userDeleted = functions.auth.user().onDelete((user) => {
+exports.userDeleted = functions.region("asia-east2").auth.user().onDelete((user) => {
   const doc = FireDB
       .collection("users")
       .doc(user.uid);
   return doc.delete();
 });
 
-exports.toggleEnable = functions.https.onCall(async (data, context) => {
+exports.toggleEnable = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
       .collection("users")
       .doc(context.auth.uid);
@@ -216,7 +216,7 @@ exports.toggleEnable = functions.https.onCall(async (data, context) => {
   });
 });
 
-exports.toggleUserManagement = functions.https.onCall(async (data, context) => {
+exports.toggleUserManagement = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
       .collection("users")
       .doc(context.auth.uid);
@@ -242,7 +242,7 @@ exports.toggleUserManagement = functions.https.onCall(async (data, context) => {
   });
 });
 
-exports.toggleLeaveApprove = functions.https.onCall(async (data, context) => {
+exports.toggleLeaveApprove = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
       .collection("users")
       .doc(context.auth.uid);
@@ -268,7 +268,7 @@ exports.toggleLeaveApprove = functions.https.onCall(async (data, context) => {
   });
 });
 
-exports.toggleLeaveManage = functions.https.onCall(async (data, context) => {
+exports.toggleLeaveManage = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
       .collection("users")
       .doc(context.auth.uid);
@@ -294,7 +294,7 @@ exports.toggleLeaveManage = functions.https.onCall(async (data, context) => {
   });
 });
 
-exports.toggleScheduleModify = functions.https.onCall(async (data, context) => {
+exports.toggleScheduleModify = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
       .collection("users")
       .doc(context.auth.uid);
@@ -320,7 +320,7 @@ exports.toggleScheduleModify = functions.https.onCall(async (data, context) => {
   });
 });
 
-exports.toggleSal = functions.https.onCall(async (data, context) => {
+exports.toggleSal = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
       .collection("users")
       .doc(context.auth.uid);
@@ -346,7 +346,7 @@ exports.toggleSal = functions.https.onCall(async (data, context) => {
   });
 });
 
-exports.changeOrder = functions.https.onCall(async (data, context) => {
+exports.changeOrder = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
       .collection("users")
       .doc(context.auth.uid);
@@ -393,7 +393,7 @@ exports.changeOrder = functions.https.onCall(async (data, context) => {
   });
 });
 
-exports.changeRank = functions.https.onCall(async (data, context) => {
+exports.changeRank = functions.region("asia-east2").https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
         "unauthenticated",
@@ -429,7 +429,7 @@ exports.changeRank = functions.https.onCall(async (data, context) => {
   });
 });
 
-exports.changeDateOfExit = functions.https.onCall(async (data, context) => {
+exports.changeDateOfExit = functions.region("asia-east2").https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
         "unauthenticated",

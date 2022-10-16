@@ -4,7 +4,7 @@ const {formatDate} = require("./utilities");
 
 
 // http callable function (adding a schedule)
-exports.updateSchedule = functions.https.onCall(async (datas, context) => {
+exports.updateSchedule = functions.region("asia-east2").https.onCall(async (datas, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
         "unauthenticated",

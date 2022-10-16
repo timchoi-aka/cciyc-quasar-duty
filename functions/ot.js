@@ -3,7 +3,7 @@ const {functions, FireDB, FieldValue} = require("./fbadmin");
 const {formatDate} = require("./utilities");
 
 // add a leave application
-exports.addLeave = functions.https.onCall(async (data, context) => {
+exports.addLeave = functions.region("asia-east2").https.onCall(async (data, context) => {
   /* const leave = {
       validity: true,
       uid: data.uid,
@@ -24,7 +24,7 @@ exports.addLeave = functions.https.onCall(async (data, context) => {
 });
 
 // API 2.0 add a leave application
-exports.addLeaveByDocid = functions.https.onCall(async (data, context) => {
+exports.addLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
         "unauthenticated",
@@ -58,7 +58,7 @@ exports.addLeaveByDocid = functions.https.onCall(async (data, context) => {
 });
 
 // approve a leave
-exports.approveLeave = functions.https.onCall(async (data, context) => {
+exports.approveLeave = functions.region("asia-east2").https.onCall(async (data, context) => {
   const docid = data.docid;
   const remarks = data.remarks;
   const user = await FireDB.collection("users").doc(context.auth.uid).get();
@@ -112,7 +112,7 @@ exports.approveLeave = functions.https.onCall(async (data, context) => {
 });
 
 // API 2.0 - approve a leave
-exports.approveLeaveByDocid = functions.https.onCall(async (data, context) => {
+exports.approveLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
         "unauthenticated",
@@ -184,7 +184,7 @@ exports.approveLeaveByDocid = functions.https.onCall(async (data, context) => {
 });
 
 // reject leave
-exports.rejectLeave = functions.https.onCall(async (data, context) => {
+exports.rejectLeave = functions.region("asia-east2").https.onCall(async (data, context) => {
   const docid = data.docid;
   const remarks = data.remarks;
   const userDoc = FireDB
@@ -226,7 +226,7 @@ exports.rejectLeave = functions.https.onCall(async (data, context) => {
 });
 
 // API 2.0 - reject leave by docid
-exports.rejectLeaveByDocid = functions.https.onCall(async (data, context) => {
+exports.rejectLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
         "unauthenticated",
@@ -274,7 +274,7 @@ exports.rejectLeaveByDocid = functions.https.onCall(async (data, context) => {
 });
 
 // delete a leave application
-exports.delLeave = functions.https.onCall(async (data, context) => {
+exports.delLeave = functions.region("asia-east2").https.onCall(async (data, context) => {
   const leaveDoc = FireDB.collection("ot").doc(data);
   const leave = await leaveDoc.get();
   const leaveData = leave.data();
@@ -303,7 +303,7 @@ exports.delLeave = functions.https.onCall(async (data, context) => {
 });
 
 // API 2.0 - delete a leave application
-exports.delLeaveByDocid = functions.https.onCall(async (data, context) => {
+exports.delLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
         "unauthenticated",
@@ -344,7 +344,7 @@ exports.delLeaveByDocid = functions.https.onCall(async (data, context) => {
 });
 
 // modify a leave
-exports.modifyLeave = functions.https.onCall(async (data, context) => {
+exports.modifyLeave = functions.region("asia-east2").https.onCall(async (data, context) => {
   const docid = data.docid;
 
   const userDoc = FireDB
@@ -398,7 +398,7 @@ exports.modifyLeave = functions.https.onCall(async (data, context) => {
 });
 
 // API 2.0 - modify a leave
-exports.modifyLeaveByDocid = functions.https.onCall(async (data, context) => {
+exports.modifyLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
         "unauthenticated",
@@ -451,7 +451,7 @@ exports.modifyLeaveByDocid = functions.https.onCall(async (data, context) => {
 });
 
 // Listen for changes in all documents in the 'ot' collection and update dashboard
-exports.updatePendingCount = functions.firestore
+exports.updatePendingCount = functions.region("asia-east2").firestore
     .document("ot/{leaveId}")
     .onWrite(async (change, context) => {
       if (change.before.exists) { // update of record

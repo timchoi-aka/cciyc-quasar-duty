@@ -3,7 +3,7 @@ const {functions, FireDB, Timestamp} = require("./fbadmin");
 const {formatDate} = require("./utilities");
 
 // delete activity
-exports.delActivity = functions.https.onCall(async (data, context) => {
+exports.delActivity = functions.region("asia-east2").https.onCall(async (data, context) => {
   // only authenticated users can run this
   if (!context.auth) {
     throw new functions.https.HttpsError(
@@ -30,7 +30,7 @@ exports.delActivity = functions.https.onCall(async (data, context) => {
 });
 
 // http callable function (modify an activity customName)
-exports.editActivityCustomName = functions.https.onCall(async (data, context) => {
+exports.editActivityCustomName = functions.region("asia-east2").https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
         "unauthenticated",
@@ -71,7 +71,7 @@ exports.editActivityCustomName = functions.https.onCall(async (data, context) =>
 });
 
 // http callable function (modify an activity)
-exports.modifyActivity = functions.https.onCall(async (data, context) => {
+exports.modifyActivity = functions.region("asia-east2").https.onCall(async (data, context) => {
   // only authenticated users can continue
   if (!context.auth) {
     throw new functions.https.HttpsError(
@@ -350,7 +350,7 @@ exports.addActivity_old = functions.https.onCall(async (data, context) => {
 */
 
 // http callable function (adding an activity)
-exports.addActivity = functions.https.onCall(async (data, context) => {
+exports.addActivity = functions.region("asia-east2").https.onCall(async (data, context) => {
   // only authenticated users can run this
   if (!context.auth) {
     throw new functions.https.HttpsError(
