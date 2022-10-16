@@ -13,5 +13,5 @@ const FieldValue = firestore.FieldValue;
 const arrayUnion = FireDB.arrayUnion;
 
 module.exports = {
-  FireDB, Timestamp, functions, FieldValue, arrayUnion,
+  FireDB, Timestamp, functions, FieldValue, arrayUnion, admin,
 };

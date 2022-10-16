@@ -29,9 +29,10 @@ app.appCheck().getToken().then((value) => {
 */
 
 if(window.location.hostname === 'localhost') {
-  Firebase.auth().useEmulator('http://localhost:9099');
-  Firebase.firestore().useEmulator('localhost', 8081);
-  Firebase.functions().useEmulator('localhost', 5001);
+  // connect to real firebase auth for token test
+  // Firebase.auth().useEmulator('http://localhost:9099');
+  // Firebase.firestore().useEmulator('localhost', 8081);
+  // Firebase.functions().useEmulator('localhost', 5001);
 }
 
   //Firebase.auth().useEmulator('http://10.0.2.2:9099');
@@ -50,7 +51,7 @@ Firebase.getCurrentUser = () => {
 export const GoogleAuthProvider = new Firebase.auth.GoogleAuthProvider();
 export const FirebaseAuth = Firebase.auth();
 export const Firestore = Firebase.firestore();
-export const FirebaseFunctions = Firebase.functions();
+export const FirebaseFunctions = app.functions("asia-east2");
 export const FirebaseStorage = Firebase.storage();
 export const getAuth = Firebase.auth().getAuth;
 export const signInWithCredential = Firebase.auth().signInWithCredential;

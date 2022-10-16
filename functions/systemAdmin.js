@@ -1,6 +1,36 @@
 /* eslint-disable max-len */
-const {functions, FireDB, Timestamp} = require("./fbadmin");
+const {functions, FireDB, Timestamp, admin} = require("./fbadmin");
 const {formatDate} = require("./utilities");
+
+exports.setCustomClaims = functions.region("asia-east2").https.onCall(async (data, context) => {
+  // only authenticated users can run this
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated users can add requests",
+    );
+  }
+
+  const loginUserDoc = await FireDB.collection("users").doc(context.auth.uid).get();
+  const loginUserData = loginUserDoc.data();
+  if (!loginUserData.privilege.systemAdmin) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only system admin can run upgrade",
+    );
+  }
+
+  const customClaims = {
+    "https://hasura.io/jwt/claims": {
+      "x-hasura-default-role": "user",
+      "x-hasura-allowed-roles": ["user"],
+      "x-hasura-user-id": context.auth.uid,
+    },
+  };
+  return await admin.auth().setCustomUserClaims(context.auth.uid, customClaims).then(() => {
+    console.log(context.auth.uid + " customClaims updated");
+  });
+});
 
 // API 2.0 - add SAL deadline to 3 user objects
 exports.addSALDeadline = functions.https.onCall(async (data, context) => {

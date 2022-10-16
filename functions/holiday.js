@@ -3,6 +3,7 @@ const {functions, FireDB, FieldValue, Timestamp} = require("./fbadmin");
 const {formatDate} = require("./utilities");
 
 // API 1.0 - delete a leave application
+/*
 exports.delLeave = functions.https.onCall(async (data, context) => {
   const leaveDoc = FireDB.collection("leave").doc(data);
   const leave = await leaveDoc.get();
@@ -30,7 +31,7 @@ exports.delLeave = functions.https.onCall(async (data, context) => {
     );
   }
 });
-
+*/
 // API 2.0 - delete a leave application
 exports.delLeaveByDocid = functions.https.onCall(async (data, context) => {
   if (!context.auth.uid) {
@@ -74,6 +75,7 @@ exports.delLeaveByDocid = functions.https.onCall(async (data, context) => {
 });
 
 // API 1.0 - approve a leave
+/*
 exports.approveLeave = functions.https.onCall(async (data, context) => {
   const docid = data.docid;
   const remarks = data.remarks;
@@ -179,6 +181,7 @@ exports.approveLeave = functions.https.onCall(async (data, context) => {
       );
   }
 });
+*/
 
 // API 2.0 - approve a leave by docid
 exports.approveLeaveByDocid = functions.https.onCall(async (data, context) => {
@@ -396,19 +399,9 @@ exports.modifyLeaveByDocid = functions.https.onCall(async (data, context) => {
 
 
 // API 1.0 - modify a leave
+/*
 exports.modifyLeave = functions.https.onCall(async (data, context) => {
   const docid = data.docid;
-  /* const existingLeaveObject = {
-      date: data.date,
-      id: data.id,
-      name: data.name,
-      remarks: data.remarks,
-      slot: data.slot,
-      status: data.status,
-      type: data.type,
-      uid: data.uid,
-      validity: data.validity,
-    }; */
 
   const userDoc = FireDB
       .collection("users")
@@ -548,8 +541,10 @@ exports.modifyLeave = functions.https.onCall(async (data, context) => {
     });
   }
 });
+*/
 
 // API 1.0 - reject leave
+/*
 exports.rejectLeave = functions.https.onCall(async (data, context) => {
   const docid = data.docid;
   const remarks = data.remarks;
@@ -590,6 +585,7 @@ exports.rejectLeave = functions.https.onCall(async (data, context) => {
     );
   });
 });
+*/
 
 // API 2.0 - reject leave by docid
 exports.rejectLeaveByDocid = functions.https.onCall(async (data, context) => {
@@ -642,17 +638,8 @@ exports.rejectLeaveByDocid = functions.https.onCall(async (data, context) => {
 });
 
 // API 1.0 - add a leave application
+/*
 exports.addLeave = functions.https.onCall(async (data, context) => {
-  /* const leave = {
-    validity: true,
-    uid: data.uid,
-    name: data.name,
-    date: data.date,
-    slot: data.slot,
-    type: data.type,
-    status: data.status,
-    remarks: data.remarks,
-  }; */
   // const leaveCollection = FireDB.collection("leave");
   // only authenticated can proceed
   if (!context.auth.uid) {
@@ -675,6 +662,7 @@ exports.addLeave = functions.https.onCall(async (data, context) => {
     console.log(logData);
   });
 });
+*/
 
 /*
 exports.setCarryOverHoliday = functions.https.onCall(async (data, context) => {
@@ -694,7 +682,7 @@ exports.setCarryOverHoliday = functions.https.onCall(async (data, context) => {
 });
 */
 
-// API 1.0 - Listen for changes in all documents in the 'leave' collection and update dashboard
+// API 1.0/2.0 - Listen for changes in all documents in the 'leave' collection and update dashboard
 exports.updatePendingCount = functions.firestore
     .document("leave/{leaveId}")
     .onWrite(async (change, context) => {
@@ -755,7 +743,7 @@ exports.updatePendingCount = functions.firestore
       // return Promise.reject(new Error("updatePendingCount: Direct DB modification/deletion or Unhandled Case."));
     });
 
-
+// API 2.0 Scheduled task to updated AL Balance
 exports.updateALBalance = functions.pubsub.schedule("0 0 1 * *").timeZone("Asia/Hong_Kong").onRun(async (context) => {
   const usersDocRef = FireDB.collection("users");
   const usersDoc = await usersDocRef.where("privilege.tmp", "==", false).where("privilege.systemAdmin", "==", false).get();

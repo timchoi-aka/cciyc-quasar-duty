@@ -148,6 +148,7 @@ exports.modifyActivity = functions.https.onCall(async (data, context) => {
 });
 
 // http callable function (modify an activity)
+/*
 exports.modifyActivity_old = functions.https.onCall(async (data, context) => {
   // only authenticated users can continue
   if (!context.auth) {
@@ -346,6 +347,7 @@ exports.addActivity_old = functions.https.onCall(async (data, context) => {
     activityOverviewCollection.add(activity),
   );
 });
+*/
 
 // http callable function (adding an activity)
 exports.addActivity = functions.https.onCall(async (data, context) => {

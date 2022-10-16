@@ -145,3 +145,11 @@ export function getSAL(state) {
     return null;
   }
 }
+
+export function getHasuraClaim(state) {
+  if (Object.keys(state.userProfile).length) {
+    return state.userProfile.customClaims;
+  } else {
+    return null;
+  }
+}

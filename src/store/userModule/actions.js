@@ -31,21 +31,20 @@ export async function desktopLogin({commit}) {
 
 export async function login({ commit }) {
   // sign user in
-  // const { user } = await FirebaseAuth.signInWithPopup(GoogleAuthProvider);
+  const { user } = await FirebaseAuth.signInWithPopup(GoogleAuthProvider);
 
 
-  FirebaseAuth.signInWithRedirect(GoogleAuthProvider);
-  //FirebaseAuth.signInWithPopup(GoogleAuthProvider);
+  //FirebaseAuth.signInWithRedirect(GoogleAuthProvider);
+  
 
   // fetch user profile and set in state
-  /*
+  
   let userDoc = await usersCollection.doc(user.uid).get();
   commit('setUserProfile', userDoc.data());
   commit('setAuth', user);
 
   // change route to dashboard
   this.$router.push('/').catch(()=>{});
-  */
 }
 
 export async function updateProfile(obj, { commit }) {

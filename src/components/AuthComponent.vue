@@ -84,7 +84,7 @@ export default {
   },
   async mounted() {
     if (
-      !this.username &&
+      this.username != null &&
       !this.$q.platform.is.capacitor &&
       !this.$q.platform.is.electron
     ) {
