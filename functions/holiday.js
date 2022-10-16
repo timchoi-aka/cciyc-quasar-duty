@@ -4,6 +4,14 @@ const {formatDate} = require("./utilities");
 
 // API 2.0 - delete a leave application
 exports.delLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
+  // App Check token. (If the request includes an invalid App Check
+  // token, the request will be rejected with HTTP error 401.)
+  if (context.app == undefined) {
+    throw new functions.https.HttpsError(
+        "failed-precondition",
+        "The function must be called from an App Check verified app.");
+  }
+
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
         "unauthenticated",
@@ -46,6 +54,14 @@ exports.delLeaveByDocid = functions.region("asia-east2").https.onCall(async (dat
 
 // API 2.0 - approve a leave by docid
 exports.approveLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
+  // App Check token. (If the request includes an invalid App Check
+  // token, the request will be rejected with HTTP error 401.)
+  if (context.app == undefined) {
+    throw new functions.https.HttpsError(
+        "failed-precondition",
+        "The function must be called from an App Check verified app.");
+  }
+
   const runUser = await FireDB.collection("users").doc(context.auth.uid).get();
   const runUserData = runUser.data();
   if (!context.auth.uid) {
@@ -148,6 +164,14 @@ exports.approveLeaveByDocid = functions.region("asia-east2").https.onCall(async 
 
 // API 2.0 - modify a leave by docid
 exports.modifyLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
+  // App Check token. (If the request includes an invalid App Check
+  // token, the request will be rejected with HTTP error 401.)
+  if (context.app == undefined) {
+    throw new functions.https.HttpsError(
+        "failed-precondition",
+        "The function must be called from an App Check verified app.");
+  }
+
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
         "unauthenticated",
@@ -260,6 +284,14 @@ exports.modifyLeaveByDocid = functions.region("asia-east2").https.onCall(async (
 
 // API 2.0 - reject leave by docid
 exports.rejectLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
+  // App Check token. (If the request includes an invalid App Check
+  // token, the request will be rejected with HTTP error 401.)
+  if (context.app == undefined) {
+    throw new functions.https.HttpsError(
+        "failed-precondition",
+        "The function must be called from an App Check verified app.");
+  }
+
   const user = await FireDB.collection("users").doc(context.auth.uid).get();
   const userData = user.data();
 

@@ -4,6 +4,21 @@ const {formatDate} = require("./utilities");
 
 // add a leave application
 exports.addLeave = functions.region("asia-east2").https.onCall(async (data, context) => {
+  // App Check token. (If the request includes an invalid App Check
+  // token, the request will be rejected with HTTP error 401.)
+  if (context.app == undefined) {
+    throw new functions.https.HttpsError(
+        "failed-precondition",
+        "The function must be called from an App Check verified app.");
+  }
+
+  if (!context.auth.uid) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated user can apply for OT/CL",
+    );
+  }
+
   /* const leave = {
       validity: true,
       uid: data.uid,
@@ -25,6 +40,14 @@ exports.addLeave = functions.region("asia-east2").https.onCall(async (data, cont
 
 // API 2.0 add a leave application
 exports.addLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
+  // App Check token. (If the request includes an invalid App Check
+  // token, the request will be rejected with HTTP error 401.)
+  if (context.app == undefined) {
+    throw new functions.https.HttpsError(
+        "failed-precondition",
+        "The function must be called from an App Check verified app.");
+  }
+
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
         "unauthenticated",
@@ -57,8 +80,17 @@ exports.addLeaveByDocid = functions.region("asia-east2").https.onCall(async (dat
   });
 });
 
-// approve a leave
+// API 1.0 approve a leave
+/*
 exports.approveLeave = functions.region("asia-east2").https.onCall(async (data, context) => {
+  // App Check token. (If the request includes an invalid App Check
+  // token, the request will be rejected with HTTP error 401.)
+  if (context.app == undefined) {
+    throw new functions.https.HttpsError(
+        "failed-precondition",
+        "The function must be called from an App Check verified app.");
+  }
+
   const docid = data.docid;
   const remarks = data.remarks;
   const user = await FireDB.collection("users").doc(context.auth.uid).get();
@@ -110,9 +142,18 @@ exports.approveLeave = functions.region("asia-east2").https.onCall(async (data, 
     });
   }
 });
+*/
 
 // API 2.0 - approve a leave
 exports.approveLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
+  // App Check token. (If the request includes an invalid App Check
+  // token, the request will be rejected with HTTP error 401.)
+  if (context.app == undefined) {
+    throw new functions.https.HttpsError(
+        "failed-precondition",
+        "The function must be called from an App Check verified app.");
+  }
+
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
         "unauthenticated",
@@ -183,7 +224,8 @@ exports.approveLeaveByDocid = functions.region("asia-east2").https.onCall(async 
   });
 });
 
-// reject leave
+// API 1.0 - reject leave
+/*
 exports.rejectLeave = functions.region("asia-east2").https.onCall(async (data, context) => {
   const docid = data.docid;
   const remarks = data.remarks;
@@ -224,9 +266,18 @@ exports.rejectLeave = functions.region("asia-east2").https.onCall(async (data, c
     );
   });
 });
+*/
 
 // API 2.0 - reject leave by docid
 exports.rejectLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
+  // App Check token. (If the request includes an invalid App Check
+  // token, the request will be rejected with HTTP error 401.)
+  if (context.app == undefined) {
+    throw new functions.https.HttpsError(
+        "failed-precondition",
+        "The function must be called from an App Check verified app.");
+  }
+
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
         "unauthenticated",
@@ -274,6 +325,7 @@ exports.rejectLeaveByDocid = functions.region("asia-east2").https.onCall(async (
 });
 
 // delete a leave application
+/*
 exports.delLeave = functions.region("asia-east2").https.onCall(async (data, context) => {
   const leaveDoc = FireDB.collection("ot").doc(data);
   const leave = await leaveDoc.get();
@@ -301,9 +353,18 @@ exports.delLeave = functions.region("asia-east2").https.onCall(async (data, cont
     );
   }
 });
+*/
 
 // API 2.0 - delete a leave application
 exports.delLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
+  // App Check token. (If the request includes an invalid App Check
+  // token, the request will be rejected with HTTP error 401.)
+  if (context.app == undefined) {
+    throw new functions.https.HttpsError(
+        "failed-precondition",
+        "The function must be called from an App Check verified app.");
+  }
+
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
         "unauthenticated",
@@ -343,7 +404,8 @@ exports.delLeaveByDocid = functions.region("asia-east2").https.onCall(async (dat
   });
 });
 
-// modify a leave
+// API 1.0 - modify a leave
+/*
 exports.modifyLeave = functions.region("asia-east2").https.onCall(async (data, context) => {
   const docid = data.docid;
 
@@ -396,9 +458,18 @@ exports.modifyLeave = functions.region("asia-east2").https.onCall(async (data, c
     }
   });
 });
+*/
 
 // API 2.0 - modify a leave
 exports.modifyLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
+  // App Check token. (If the request includes an invalid App Check
+  // token, the request will be rejected with HTTP error 401.)
+  if (context.app == undefined) {
+    throw new functions.https.HttpsError(
+        "failed-precondition",
+        "The function must be called from an App Check verified app.");
+  }
+
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
         "unauthenticated",

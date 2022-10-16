@@ -20,12 +20,17 @@ let app;
 // Pass your reCAPTCHA v3 site key (public key) to activate(). Make sure this
 // key is the counterpart to the secret key you set in the Firebase console.
 const appCheck = Firebase.appCheck();
-appCheck.activate(
-  '6Ldn54UiAAAAAHwOOAqgnuVJ78Mgs2f6D-VfiB6H',
+appCheck.activate('6Ldn54UiAAAAAHwOOAqgnuVJ78Mgs2f6D-VfiB6H', true); // auto-refresh = true
+
+/*
+const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider('6Ldn54UiAAAAAHwOOAqgnuVJ78Mgs2f6D-VfiB6H'),
+
   // Optional argument. If true, the SDK automatically refreshes App Check
   // tokens as needed.
-  true);
-
+  isTokenAutoRefreshEnabled: true
+});
+*/
 if(window.location.hostname === 'localhost') {
   // connect to real firebase auth for token test
   // Firebase.auth().useEmulator('http://localhost:9099');
