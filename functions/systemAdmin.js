@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-const {functions, FireDB, Timestamp} = require("./fbadmin");
+const {functions, FireDB, Timestamp, admin} = require("./fbadmin");
 const {formatDate} = require("./utilities");
 
 exports.setCustomClaims = functions.region("asia-east2").https.onCall(async (data, context) => {
@@ -30,27 +30,24 @@ exports.setCustomClaims = functions.region("asia-east2").https.onCall(async (dat
     );
   }
 
-  /* const customClaims = {
-    "https://hasura.io/jwt/claims": {
-      "x-hasura-default-role": "user",
-      "x-hasura-allowed-roles": ["user"],
-      "x-hasura-user-id": context.auth.uid,
-    },
-  };
-  */
-  console.log(context.auth);
+  return await FireDB.collection("users").get().then((snapshot) => {
+    snapshot.forEach((doc) => {
+      const customClaims = {
+        "https://hasura.io/jwt/claims": {
+          "x-hasura-default-role": "user",
+          "x-hasura-allowed-roles": ["user"],
+          "x-hasura-user-id": doc.data().email,
+        },
+      };
 
-  const usersDocRef = FireDB.collection("users");
-  const usersDoc = await usersDocRef.get();
-  for (const usr of usersDoc) {
-    // await admin.auth().setCustomUserClaims(usr.uid, customClaims)
-    console.log(usr.data().uid);
-  }
-
-  /*
-  return .then(() => {
-    console.log(context.auth.uid + " updated customClaims on all users");
-  }); */
+      admin.auth().setCustomUserClaims(doc.data().uid, customClaims).then(() => {
+        console.log(context.auth.token.name + " updated customClaims on " + doc.data().name);
+      }).catch((error) => {
+        console.log("error in " + doc.data().name);
+        console.log(error.code + ":" + error.message);
+      });
+    });
+  });
 });
 
 // API 2.0 - add SAL deadline to 3 user objects

@@ -20,7 +20,7 @@ import Firebase, {
   scheduleCollection,
   FirebaseFunctions,
   FirebaseAuth,
-  getAuth
+  getAuth,
 } from "boot/firebase";
 import { date as qdate } from "quasar";
 

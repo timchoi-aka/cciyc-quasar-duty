@@ -1,9 +1,9 @@
-import Firebase from 'firebase/app';
-import 'firebase/auth';
-import 'firebase/firestore';
-import 'firebase/functions';
-import 'firebase/storage';
-import 'firebase/app-check';
+import Firebase from 'firebase/compat/app';
+import 'firebase/compat/auth';
+import 'firebase/compat/firestore';
+import 'firebase/compat/functions';
+import 'firebase/compat/storage';
+import 'firebase/compat/app-check';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBn3kOruwr2QZlFuecSiPswBdm6ijulxvM",
@@ -17,30 +17,23 @@ const firebaseConfig = {
 let app;
 !Firebase.apps.length ? app = Firebase.initializeApp(firebaseConfig) : '';
 
+if (process.env.NODE_ENV === "development") {
+//if(window.location.hostname === 'localhost') {
+  // connect to real firebase auth for token test
+  // Firebase.auth().useEmulator('http://localhost:9099');
+  // Firebase.app().firestore().useEmulator('localhost', 8081);
+  // Firebase.app().functions().useEmulator('localhost', 5001);
+  Firebase.auth().useEmulator('http://localhost:9099');
+  app.firestore().useEmulator('localhost', 8081);
+  app.functions("asia-east2").useEmulator('localhost', 5001);
+  self.FIREBASE_APPCHECK_DEBUG_TOKEN = "D0934CAD-09BB-46E6-ABCD-EB7BD32B9365";
+  console.log("Debug Mode Enabled")
+}
+
 // Pass your reCAPTCHA v3 site key (public key) to activate(). Make sure this
 // key is the counterpart to the secret key you set in the Firebase console.
 const appCheck = Firebase.appCheck();
 appCheck.activate('6Ldn54UiAAAAAHwOOAqgnuVJ78Mgs2f6D-VfiB6H', true); // auto-refresh = true
-
-/*
-const appCheck = initializeAppCheck(app, {
-  provider: new ReCaptchaV3Provider('6Ldn54UiAAAAAHwOOAqgnuVJ78Mgs2f6D-VfiB6H'),
-
-  // Optional argument. If true, the SDK automatically refreshes App Check
-  // tokens as needed.
-  isTokenAutoRefreshEnabled: true
-});
-*/
-if(window.location.hostname === 'localhost') {
-  // connect to real firebase auth for token test
-  // Firebase.auth().useEmulator('http://localhost:9099');
-  // Firebase.firestore().useEmulator('localhost', 8081);
-  // Firebase.functions().useEmulator('localhost', 5001);
-}
-
-  //Firebase.auth().useEmulator('http://10.0.2.2:9099');
-  //Firebase.firestore().useEmulator('10.0.2.2', 8081);
-  //Firebase.functions().useEmulator('10.0.2.2', 5001);
 
 Firebase.getCurrentUser = () => {
   return new Promise((resolve, reject) => {
@@ -54,7 +47,8 @@ Firebase.getCurrentUser = () => {
 export const GoogleAuthProvider = new Firebase.auth.GoogleAuthProvider();
 export const FirebaseAuth = Firebase.auth();
 export const Firestore = Firebase.firestore();
-export const FirebaseFunctions = app.functions("asia-east2");
+//export const FirebaseFunctions = app.functions("asia-east2");
+export const FirebaseFunctions = Firebase.app().functions("asia-east2");
 export const FirebaseStorage = Firebase.storage();
 export const getAuth = Firebase.auth().getAuth;
 export const signInWithCredential = Firebase.auth().signInWithCredential;
