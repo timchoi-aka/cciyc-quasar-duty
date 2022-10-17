@@ -1,13 +1,11 @@
 {
     "globalHeaders": {
-      "Access-Control-Allow-Origin": "asia-east2-manage-hr.cloudfunctions.net",
+      "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, POST, PUT"
     },
     "navigationFallback": {
       "rewrite": "/index.html",
       "exclude": ["/img/*.{png,jpg,gif,webp}", "/css/*"]
-    },
-    "mimeTypes": {
-      "custom": "text/html"
     }
   }
+  
