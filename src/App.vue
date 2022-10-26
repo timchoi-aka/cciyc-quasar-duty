@@ -39,25 +39,10 @@
             color="white"
           />
         </div>
+        <q-btn v-if="UAT" dense flat round icon="menu" @click="toggleRightDrawer" />
       </q-toolbar>
 
-      <q-tabs inline-label v-if="username" class="desktop-only" align="left">
-        <q-route-tab to="/duty" icon="calendar_month" label="編更系統" />
-        <q-route-tab v-if="!isTmp" to="/holiday" icon="festival" label="假期系統" />
-        <q-route-tab v-if="!isTmp" to="/overtime" icon="schedule" label="超時系統" />
-        <q-route-tab
-          v-if="isUserManagement"
-          to="/user"
-          icon="account_circle"
-          label="用戶管理"
-        />
-        <q-route-tab
-          v-if="isSystemAdmin"
-          to="/system-admin"
-          icon="build"
-          label="系統管理"
-        />
-      </q-tabs>
+      <MenuBar/>
     </q-header>
 
     <q-drawer
@@ -75,6 +60,15 @@
         <EssentialLink title="登入" caption="請先登入" icon="login" link="/" />
       </q-list>
     </q-drawer>
+    
+    <!-- right drawer -->
+    <q-drawer :width="100" v-model="rightDrawerOpen" side="right" overlay elevated class="column justify-around" behavior="mobile">
+        <q-list v-if="uid">
+        </q-list><q-btn v-close-popup class="col-grow" name="duty" icon="event" label="編更" @click="setCurrentModule('duty')"/>
+        <q-btn v-close-popup class="col-grow" name="member" icon="public" label="會員" @click="setCurrentModule('member')"/>
+        <q-btn v-close-popup class="col-grow" name="finance" icon="money" label="財務" @click="setCurrentModule('finance')"/>
+    </q-drawer>
+
     <q-page-container>
       <router-view />
     </q-page-container>
@@ -83,43 +77,41 @@
 
 <script>
 import EssentialLink from "components/EssentialLink.vue";
+import MenuBar from "components/MenuBar.vue";
 import { defineComponent, ref, computed } from "vue";
 import { useStore } from "vuex";
 import { usersCollection } from "boot/firebase";
 
 export default defineComponent({
   name: "App",
-
+  
   components: {
     EssentialLink,
-  },
-
-  async mounted() {
-    if (this.uid) {
-      const $store = useStore();
-      this.userListener = usersCollection.doc(this.uid).onSnapshot((snapshot) => {
-        $store.commit("userModule/setUserProfile", snapshot.data());
-      });
-    }
-  },
-
+    MenuBar,
+  }, 
   setup() {
     const leftDrawerOpen = ref(false);
+    const rightDrawerOpen = ref(false);
     const $store = useStore();
+    let currentModule = $store.getters["currentModule/getCurrentModule"];
 
     return {
-      userProfile: computed(() => $store.state.userModule.userProfile),
       uid: computed(() => $store.getters["userModule/getUID"]),
-      isTmp: computed(() => $store.getters["userModule/getTmp"]),
-      isUserManagement: computed(() => $store.getters["userModule/getUserManagement"]),
-      isSystemAdmin: computed(() => $store.getters["userModule/getSystemAdmin"]),
       username: computed(() => $store.getters["userModule/getUsername"]),
       photoURL: computed(() => $store.getters["userModule/getPhotoURL"]),
+      UAT: computed(() => $store.getters["userModule/getUAT"]),
       userProfileLogout: () => $store.dispatch("userModule/logout"),
       updateProfile: (user) => $store.dispatch("userModule/updateProfile", user),
+      setCurrentModule: ((mod) => $store.dispatch("currentModule/setCurrentModule", mod)),
+      getCurrentModule: computed(() => $store.getters["currentModule/getCurrentModule"]),
       leftDrawerOpen,
+      rightDrawerOpen,
+      currentModule,
       toggleLeftDrawer() {
         leftDrawerOpen.value = !leftDrawerOpen.value;
+      },
+      toggleRightDrawer() {
+        rightDrawerOpen.value = !rightDrawerOpen.value;
       },
     };
   },

@@ -30,7 +30,13 @@
         icon="login"
         @click="google"
       />
-      <div v-if="username">你已成功登入</div>
+      <div v-else>
+        <div>你已成功登入</div>
+        <!-- 
+        <q-btn class="col-grow" name="duty" icon="event" label="編更" @click="setCurrentModule('duty')"/>
+        <q-btn class="col-grow" name="member" icon="public" label="會員" @click="setCurrentModule('member')"/>
+        -->
+      </div>
     </template>
   </div>
 </template>
@@ -55,6 +61,7 @@ export default {
       login: () => $store.dispatch("userModule/login"),
       desktopLogin: () => $store.dispatch("userModule/desktopLogin"),
       saveProfile: () => $store.dispatch("userModule/saveProfile"),
+      setCurrentModule: ((mod) => $store.dispatch("currentModule/setCurrentModule", mod)),
     };
   },
   computed: {

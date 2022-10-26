@@ -2,6 +2,12 @@
 export function someGetter (state) {
 }
 */
+export function getUserProfile(state) {
+  if (Object.keys(state.userProfile).length) {
+    return state.userProfile;
+  } else return null;
+}
+
  export function getUsername(state) {
   if (Object.keys(state.userProfile).length) {
    return state.userProfile.name;
@@ -141,6 +147,14 @@ export function getSALBalance(state) {
 export function getSAL(state) {
   if (Object.keys(state.userProfile).length) {
     return state.userProfile.privilege.sal
+  } else {
+    return null;
+  }
+}
+
+export function getUAT(state) {
+  if (Object.keys(state.userProfile).length) {
+    return state.userProfile.privilege.uat
   } else {
     return null;
   }

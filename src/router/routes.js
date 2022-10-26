@@ -5,6 +5,20 @@ const routes = [
     component: () => import('src/pages/Auth.vue'),
   },
   {
+    path: '/member',
+    component: () => import('src/pages/Member/Member.vue'), meta: {requiresAuth: true},
+    children: [
+      {
+        path: 'list',
+        component: () => import('src/pages/Member/MemberList.vue'), meta: {requiresAuth: true},
+      },
+      {
+        path: 'add',
+        component: () => import('src/pages/Member/MemberAdd.vue'), meta: {requiresAuth: true},
+      },
+    ]
+  },
+  {
     path: '/duty',
     component: () => import('src/pages/Duty.vue'), meta: {requiresAuth: true},
     children: [
@@ -22,7 +36,6 @@ const routes = [
       },
     ]
   },
-
   {
     path: '/holiday',
     component: () => import('src/pages/Holiday.vue'), meta: {requiresAuth: true},

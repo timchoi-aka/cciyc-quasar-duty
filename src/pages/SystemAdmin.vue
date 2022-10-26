@@ -8,7 +8,7 @@
   <q-btn disabled @click="getApprovedHoliday" label="getApprovedHoliday"></q-btn>
   <q-btn @click="calculateLeaveBalance" label="calculateLeaveBalance"></q-btn>
   <q-btn @click="addSALDeadline" label="addSALDeadline"></q-btn>
-  <q-btn @click="testAxios" label="testAxios"></q-btn>
+  <q-btn @click="addCustomClaims" label="testAxios"></q-btn>
 </template>
 
 <script>
@@ -147,74 +147,11 @@ export default defineComponent({
       });
       console.log("total: " + leaveDoc.docs.length);
     },
-    async testAxios() {
-      try {
-      const graphqlQuery = {
-        operationName: "MyQuery",
-        query: `query MyQuery {
-                  HTX_Member(where: {c_barcode: {_eq: "0001"}}) {
-                    b_cssa
-                    b_lib_user
-                    c_HKID
-                    c_barcode
-                    c_centre_id
-                    c_email
-                    c_emer_name
-                    c_emer_rel
-                    c_emer_tel1_1
-                    c_intro_source
-                    c_job
-                    c_mem_id
-                    c_mem_pwd
-                    c_name
-                    c_name_other
-                    c_sex
-                    c_tel
-                    c_udf_1
-                    c_udf_6
-                    c_user_id
-                    c_vol_ser_unit
-                    c_vol_service_time
-                    c_vol_skill_act
-                    c_vol_skill_arts
-                    c_vol_skill_music
-                    c_vol_training
-                    d_birth
-                    d_come_HK
-                    d_enter_1
-                    d_expired_1
-                    d_update
-                    d_write
-                    m_addscom
-                    m_vol_remarks
-                  }
-                }`,
-        variables: {},
-      };
-      
+    async addCustomClaims() {
       const setCustomClaims = FirebaseFunctions.httpsCallable("systemAdmin-setCustomClaims");
       setCustomClaims().then((result) => {
          console.log(result);
       })  
-      
-      var token = await FirebaseAuth.currentUser.getIdToken();
-     
-     
-      this.$api.defaults.headers.common = {
-        "content-type": "application/json",
-      }
-      
-      this.$api.defaults.headers.common['Authorization'] = "Bearer " + token;
-
-      const articleResponse = await this.$api({
-        method: "post",
-        data: graphqlQuery,
-      });
-
-      console.log(articleResponse);
-    } catch (error) {
-      this.error = error;
-    }
     }
   },
 });

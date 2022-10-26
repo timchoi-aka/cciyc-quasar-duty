@@ -23,7 +23,8 @@ if (process.env.NODE_ENV === "development") {
   // Firebase.auth().useEmulator('http://localhost:9099');
   // Firebase.app().firestore().useEmulator('localhost', 8081);
   // Firebase.app().functions().useEmulator('localhost', 5001);
-  Firebase.auth().useEmulator('http://localhost:9099');
+  
+  // Firebase.auth().useEmulator('http://localhost:9099');
   app.firestore().useEmulator('localhost', 8081);
   app.functions("asia-east2").useEmulator('localhost', 5001);
   self.FIREBASE_APPCHECK_DEBUG_TOKEN = "D0934CAD-09BB-46E6-ABCD-EB7BD32B9365";

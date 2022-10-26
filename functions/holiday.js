@@ -483,3 +483,28 @@ exports.updateALBalance = functions.region("asia-east2").pubsub.schedule("0 0 1 
     console.log("AL / SAL Balance updated at: " + new Date());
   });
 });
+
+
+// API 2.0 - add a leave application
+exports.addLeave = functions.region("asia-east2").https.onCall(async (data, context) => {
+  // only authenticated can proceed
+  if (!context.auth.uid) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated user can access this function",
+    );
+  }
+
+  const batch = FireDB.batch();
+  let logData = "";
+  let leaveDoc;
+  data.forEach((d) => {
+    leaveDoc = FireDB.collection("leave").doc();
+    batch.set(leaveDoc, d);
+    logData += "HOLIDAY: " + d.name + " 申請了 " + d.date + ":" + d.slot + "(" + d.type + ")\n";
+  });
+
+  return await batch.commit().then(() => {
+    console.log(logData);
+  });
+});
