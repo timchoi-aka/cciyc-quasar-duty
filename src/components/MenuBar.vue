@@ -1,5 +1,5 @@
 <template>
-    <q-tabs v-if="username && module == 'duty'" inline-label class="desktop-only" align="left">
+    <q-tabs v-if="username && (module == 'duty' || module == '')" inline-label class="desktop-only" align="left">
         <q-route-tab to="/duty" icon="calendar_month" label="編更系統" />
         <q-route-tab v-if="!isTmp" to="/holiday" icon="festival" label="假期系統" />
         <q-route-tab v-if="!isTmp" to="/overtime" icon="schedule" label="超時系統" />
