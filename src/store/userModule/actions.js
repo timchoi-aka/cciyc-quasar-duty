@@ -32,11 +32,9 @@ export async function desktopLogin({commit}) {
 export async function login({ commit }) {
   // sign user in
   const { user } = await FirebaseAuth.signInWithPopup(GoogleAuthProvider);
-
-
+  // let token = await FirebaseAuth.currentUser.getIdToken();
+  // sessionStorage.setItem("access-token", token);
   //FirebaseAuth.signInWithRedirect(GoogleAuthProvider);
-  
-
   // fetch user profile and set in state
   
   let userDoc = await usersCollection.doc(user.uid).get();
@@ -87,6 +85,7 @@ export async function logout({ commit }) {
     // clear userProfile and redirect to /login
     commit('setUserProfile', {})
     commit('setAuth', {})
+    sessionStorage.removeItem("access-token");
     this.$router.push('/').catch(()=>{});
   }).catch((e) => {
     console.log(e);

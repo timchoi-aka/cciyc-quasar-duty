@@ -1,75 +1,109 @@
 <template class="q-mb-md">
-<div class="q-pa-md text-h6">新會員個人資料</div>
-<div class="row justify-start items-start q-pa-sm">
-    <div class="q-pa-xs col-xs-8">姓名<q-input filled v-model="personalInfo.c_name"></q-input></div>
-    
-    <div class="q-pa-xs col-xs-4">姓別<br/>
-      <q-btn-toggle
-        v-model="personalInfo.c_sex"
-        toggle-color="primary"
-        :options="[
-            {label: '男', value: '男'},
-            {label: '女', value: '女'}
-        ]"
-      />
-    </div>
+  <!-- personal info qcard -->
+  <q-card class="q-ma-md">
+    <q-card-section class="q-pa-md text-h6 bg-blue-1">新會員個人資料</q-card-section>
+    <q-card-section class="row justify-start items-start q-pa-sm">
+      <div class="q-pa-xs col-xs-8">姓名<q-input filled v-model="personalInfo.c_name"></q-input></div>
+      
+      <div class="q-pa-xs col-xs-4">姓別<br/>
+        <q-btn-toggle
+          v-model="personalInfo.c_sex"
+          toggle-color="primary"
+          :options="[
+              {label: '男', value: '男'},
+              {label: '女', value: '女'}
+          ]"
+        />
+      </div>
 
-    <div class="q-pa-xs col-xs-12">Name<q-input filled v-model="personalInfo.c_name_other" @update:model-value="capitalize"></q-input></div>
-    
-    
-    
-    <div class="q-pa-xs col-xs-12">手提電話<q-input filled v-model="personalInfo.c_mobile" mask="########"/></div>
-    
-    <div class="q-pa-xs col-xs-12">家居電話<q-input filled v-model="personalInfo.c_tel" mask="########"/></div>
-    
-    <div class="q-pa-xs col-xs-8">出生日期
-      <q-input filled v-model="personalInfo.d_birth" mask="date" hint="YYYY/MM/DD" :rules="['date']" @update:model-value="calculateAge">
-        <template v-slot:append>
-          <q-icon name="event" class="cursor-pointer">
-            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-              <q-date v-model="personalInfo.d_birth" @update:model-value="calculateAge">
-                <div class="row items-center justify-end">
-                  <q-btn v-close-popup label="Close" color="primary" flat />
-                </div>
-              </q-date>
-            </q-popup-proxy>
-          </q-icon>
-        </template>
-      </q-input>
-    </div>
+      <div class="q-pa-xs col-xs-12">Name<q-input filled v-model="personalInfo.c_name_other" @update:model-value="capitalize"></q-input></div>
+      
+      <div class="q-pa-xs col-xs-12">手提電話<q-input filled v-model="personalInfo.c_mobile" mask="########"/></div>
+      
+      <div class="q-pa-xs col-xs-12">家居電話<q-input filled v-model="personalInfo.c_tel" mask="########"/></div>
+      
+      <div class="q-pa-xs col-xs-8">出生日期
+        <q-input filled v-model="personalInfo.d_birth" mask="date" hint="YYYY/MM/DD" :rules="['date']" @update:model-value="calculateAge">
+          <template v-slot:append>
+            <q-icon name="event" class="cursor-pointer">
+              <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                <q-date v-model="personalInfo.d_birth" @update:model-value="calculateAge">
+                  <div class="row items-center justify-end">
+                    <q-btn v-close-popup label="Close" color="primary" flat />
+                  </div>
+                </q-date>
+              </q-popup-proxy>
+            </q-icon>
+          </template>
+        </q-input>
+      </div>
 
-    <div class="q-pa-xs col-xs-4">年齡<br/>
-      {{personalInfo.age}}
-    </div>
+      <div class="q-pa-xs col-xs-4">年齡<br/>
+        {{personalInfo.age}}
+      </div>
 
-    <div class="q-pa-xs col-xs-12">地址<q-input filled v-model="personalInfo.m_addscom"/></div>
-    
-    <div class="q-pa-xs col-xs-12">電郵地址<q-input filled v-model="personalInfo.c_email" type="email"/></div>
-</div>
-<div class="q-pa-md text-h6">會籍</div>
-<div class="row justify-start items-start q-pa-sm">
-  <!-- <div><q-checkbox v-model="memberInfo.b_mem_type1" /></div> -->
-  <div class="q-pa-xs col-2 col-xs-12">會籍<q-select v-model="memberInfo.c_udf_1" :options="udf1List" label="選擇會藉" @update:model-value="updateType1Expire"/></div>
-  <div class="q-pa-xs col-xs-12">入會日期
-    <q-input filled v-model="memberInfo.d_enter_1" mask="date" hint="YYYY/MM/DD" :rules="['date']" @update:model-value="updateType1Expire">
-      <template v-slot:append>
-        <q-icon name="event" class="cursor-pointer">
-          <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-            <q-date v-model="memberInfo.d_enter_1" @update:model-value="updateType1Expire">
-              <div class="row items-center justify-end">
-                <q-btn v-close-popup label="Close" color="primary" flat />
-              </div>
-            </q-date>
-          </q-popup-proxy>
-        </q-icon>
-      </template>
-    </q-input>
+      <div class="q-pa-xs col-xs-12">地址<q-input filled v-model="personalInfo.m_addscom"/></div>
+      
+      <div class="q-pa-xs col-xs-12">電郵地址<q-input filled v-model="personalInfo.c_email" type="email"/></div>
+    </q-card-section>
+  </q-card>
+
+  <!-- membership info qcard -->
+  <q-card class="q-ma-md">
+    <q-card-section class="q-pa-md text-h6 bg-green-1">會籍</q-card-section>
+    <q-card-section class="row justify-start items-start q-pa-sm">
+      <div class="q-pa-xs col-2 col-xs-12">會籍<q-select v-model="memberInfo.c_udf_1" :options="udf1List" label="選擇會藉" @update:model-value="updateType1Expire"/></div>
+      <div class="q-pa-xs col-xs-12">入會日期
+        <q-input filled v-model="memberInfo.d_enter_1" mask="date" hint="YYYY/MM/DD" :rules="['date']" @update:model-value="updateType1Expire">
+          <template v-slot:append>
+            <q-icon name="event" class="cursor-pointer">
+              <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                <q-date v-model="memberInfo.d_enter_1" @update:model-value="updateType1Expire">
+                  <div class="row items-center justify-end">
+                    <q-btn v-close-popup label="Close" color="primary" flat />
+                  </div>
+                </q-date>
+              </q-popup-proxy>
+            </q-icon>
+          </template>
+        </q-input>
+      </div>
+      <div class="q-pa-xs col-1 col-xs-12">屆滿日期<br/><div>{{memberInfo.d_expired_1}}</div></div>
+    </q-card-section>
+  </q-card>
+
+  <!-- related member -->
+  <q-card class="q-ma-md">
+    <q-card-section class="q-pa-md text-h6 bg-yellow-1">關聯會員</q-card-section>
+    <q-card-section>
+      <div class="row"><span class="col-3 q-mr-md">會員編號</span><span class="col-3 q-mr-md">關係</span><span class="col-3 q-mr-md">姓名</span></div>
+        
+      <div v-for="(relation, index) in relationTable" :key="index" class="row">
+        <q-input dense filled class="col-3 q-mr-md" debounce="500" type="text" mask="####" @update:model-value="(value)=>getNameFromMemberID(value, index)" v-model="relationTable[index].c_mem_id_2"/>
+        <q-select
+          dense 
+          filled
+          class="col-3 q-mr-md"
+          v-model="relationTable[index].relation"
+          :options="relationOptions"
+        />
+        <span class="col-3 q-mr-md">{{relationTable[index].targetName}}</span>
+        <q-btn v-if="index == (relationTable.length-1)" square class="col-1 text-white bg-primary" icon="add" @click="relationTable.push({
+          c_mem_id_1: '',
+          c_mem_id_2: '',
+          targetName: '',
+          relation: '',
+        })"/>
+        <q-btn v-if="index < (relationTable.length-1)" square class="col-1 text-white bg-negative" icon="remove" @click="relationTable.splice(index, 1)"/>
+      </div>
+    </q-card-section>
+
+  </q-card>
+
+  <div class="q-pa-xs col-xs-6 row justify-end">
+    <q-btn class="q-mr-md q-mb-xl" size="lg" square color="primary" icon="add" label="新增會員" @click="addMember"/>
   </div>
-  <div class="q-pa-xs col-1 col-xs-12">屆滿日期<br/>{{memberInfo.d_expired_1}}</div>
-  <div class="q-pa-xs col-xs-6">
-    <q-btn square color="primary" icon="add" label="新增會員" @click="addMember"/>
-  </div>
-</div>
+
 
 <!-- <div class="row justify-start items-start q-pa-sm">
   <div><q-checkbox v-model="memberInfo.b_mem_type2" /></div>
@@ -80,8 +114,8 @@
 <script>
 import { defineComponent, computed } from "vue";
 import { useStore } from "vuex";
-import { FirebaseAuth } from "boot/firebase";
 import { date as qdate, is} from "quasar";
+import { GET_MEMBER_NAME_FROM_ID } from "/src/graphQueries/Member/query.js"
 
 export default defineComponent({
   name: "MemberAdd",
@@ -92,18 +126,59 @@ export default defineComponent({
   },
   setup() {
     const $store = useStore();
+    const relationOptions = [
+        '父母', '兄弟姐妹', '祖父母', '叔姪姨甥', '其他'
+    ]
+
     $store.dispatch("currentModule/setCurrentModule", "member");
-    
+
     return {
         username: computed(() => $store.getters["userModule/getUsername"]),
+        relationOptions,
     }
   },
+  apollo: {
+    getNameFromID: {
+      query: GET_MEMBER_NAME_FROM_ID, update: data => data.Member,
+      variables() {
+        return {
+          "c_mem_id_2": this.queryMemberID,
+        }
+      },
+      skip() {
+        return true
+      }
+    },
+  },
   methods: {
+    async getNameFromMemberID(value, index) {
+      if (value != "") {
+        this.queryMemberID = value;
+        this.$apollo.queries.getNameFromID.skip = false;
+        await this.$apollo.queries.getNameFromID.refetch();
+        if (this.getNameFromID.length > 0) {
+          this.relationTable[index].targetName = this.getNameFromID[0].c_name? this.getNameFromID[0].c_name : this.getNameFromID[0].c_name_other;
+        } else {
+          this.relationTable[index].targetName = "沒有此會員"
+        }
+      }
+    },
     async addMember() {
       this.awaitServerResponse++;
+     
       try {
         await this.getLastMemberID()
-        const graphqlQuery = {
+
+        let memberRelation = [];
+        this.relationTable.forEach((rel) => {
+          memberRelation.push({
+            c_mem_id_1: this.personalInfo.c_mem_id.toString(),
+            c_mem_id_2: rel.c_mem_id_2,
+            relation: rel.relation,
+          })
+        })
+        
+        const addMemberQuery = {
           operationName: "addMember",
           query: `mutation addMember (
                 $c_mem_id: String!,
@@ -165,18 +240,46 @@ export default defineComponent({
             d_write: this.memberInfo.d_write,
           },
         };
-        
-        var token = await FirebaseAuth.currentUser.getIdToken();
-        this.$api.defaults.headers.common['Authorization'] = "Bearer " + token;
-        
+       
         const memberResponse = await this.$api({
           method: "post",
-          data: graphqlQuery,
+          data: addMemberQuery,
         });
+
+        // add relation data
+        if (memberRelation.length > 0) {
+          const addRelationQuery = {
+            operationName: "addRelation",
+            query: `mutation addRelation($objects: [Relation_insert_input!] = {}) {
+                      insert_Relation(objects: $objects) {
+                        returning {
+                          c_mem_id_1
+                          c_mem_id_2
+                          relation
+                        }
+                      }
+                    }`,
+            variables: {
+              objects: memberRelation
+            },
+          };
+
+          const addRelationResponse = await this.$api({
+            method: "post",
+            data: addRelationQuery,
+          });
+        }
         
-        // console.log(memberResponse)
         if (memberResponse.status == "200") {
-          this.$q.notify({ message: "新增會員編號: " + memberResponse.data.data.insert_Member_one.c_mem_id + " 成功." });
+          if (memberRelation.length > 0) {
+            if (addRelationResponse.status == "200") {
+              this.$q.notify({ message: "新增會員編號: " + memberResponse.data.data.insert_Member_one.c_mem_id + " 成功." });
+            } else {
+              this.$q.notify({ message: "新增會員編號: " + memberResponse.data.data.insert_Member_one.c_mem_id + " 成功. 關聯會員新增失敗。請聯絡系統管理員。" });
+            }
+          } else {
+            this.$q.notify({ message: "新增會員編號: " + memberResponse.data.data.insert_Member_one.c_mem_id + " 成功." });
+          }
           
           // initialize data
           this.personalInfo = {
@@ -219,9 +322,6 @@ export default defineComponent({
                   }`,
           variables: {},
         };
-        
-        var token = await FirebaseAuth.currentUser.getIdToken();
-        this.$api.defaults.headers.common['Authorization'] = "Bearer " + token;
         
         const memberResponse = await this.$api({
           method: "post",
@@ -282,6 +382,14 @@ export default defineComponent({
   },
   data() {
     return {
+      getNameFromID: "",
+      queryMemberID: "",
+      relationTable: [{
+        c_mem_id_1: "",
+        c_mem_id_2: "",
+        targetName: "",
+        relation: "",
+      }],
       qdate: qdate,
       udf1List: [
         {

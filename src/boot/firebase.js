@@ -42,6 +42,16 @@ Firebase.getCurrentUser = () => {
           unsubscribe();
           resolve(user);
       }, reject);
+
+      const refreshToken = FirebaseAuth.onIdTokenChanged(user => {
+        refreshToken();
+        if (user) {
+          user.getIdToken().then((token) => {
+            sessionStorage.setItem("access-token", token)
+          })
+        }
+        resolve(user);
+    }, reject);
   })
 };
 

@@ -45,6 +45,8 @@
 import { computed } from "vue";
 import { useStore } from "vuex";
 import { useQuasar } from "quasar";
+import { createHttpLink } from "@apollo/client/core";
+import { FirebaseAuth } from "boot/firebase"
 
 export default {
   name: "AuthComponent",
@@ -77,6 +79,18 @@ export default {
         this.login()
           .then(() => {
             this.$q.notify({ message: this.username + " 登入成功." });
+            /*
+            FirebaseAuth.currentUser.getIdToken().then((token) => {
+              this.$apollo.provider.defaultClient.setLink(createHttpLink(
+                {
+                  uri: 'https://cciycgw.eastasia.cloudapp.azure.com/v1/graphql/' ,
+                  headers: {
+                    "Authorization": `Bearer ${token}`
+                  }
+                }
+              ))
+            });
+            */
           })
           .catch((error) => console.log("error", error));
       }
@@ -101,6 +115,18 @@ export default {
           this.awaitServerResponse--;
           if (this.username) {
             this.$q.notify({ message: this.username + " 登入成功." });
+            /*
+            FirebaseAuth.currentUser.getIdToken().then((token) => {
+              this.$apollo.provider.defaultClient.setLink(createHttpLink(
+                {
+                  uri: 'https://cciycgw.eastasia.cloudapp.azure.com/v1/graphql/' ,
+                  headers: {
+                    "Authorization": `Bearer ${token}`
+                  }
+                }
+              ))
+            });
+            */
           }
         })
         .catch((error) => console.log("error", error));

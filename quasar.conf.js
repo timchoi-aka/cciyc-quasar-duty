@@ -20,7 +20,7 @@ module.exports = configure(function (ctx) {
     // app boot file (/src/boot)
     // --> boot files are part of "main.js"
     // https://v2.quasar.dev/quasar-cli/boot-files
-    boot: ['firebase', 'axios'
+    boot: ['firebase', 'axios', 'apollo'
     ],
 
     // https://v2.quasar.dev/quasar-cli/quasar-conf-js#Property%3A-css
@@ -64,7 +64,7 @@ module.exports = configure(function (ctx) {
 
       // https://v2.quasar.dev/quasar-cli/handling-webpack
       // "chain" is a webpack-chain object https://github.com/neutrinojs/webpack-chain
-      /*chainWebpack (  chain  ) {
+      /* chainWebpack (  chain  ) {
          chain.resolve.alias = {
           ...chain.resolve.alias,
           '@': path.resolve(__dirname, './src'),
@@ -74,7 +74,24 @@ module.exports = configure(function (ctx) {
         }
       },
       */
-     chainWebpack() {},
+      // add after apollo client
+      
+      chainWebpack (chain, { isServer, isClient }) {
+        chain.module.rule('vue')
+          .use('vue-loader')
+          .loader('vue-loader')
+          .tap(options => {
+            options.transpileOptions = {
+              transforms: {
+                dangerousTaggedTemplateString: true
+              }
+            }
+            return options
+          })
+      }
+      
+     // default
+     // chainWebpack() {},
     },
 
     // Full list of options: https://v2.quasar.dev/quasar-cli/quasar-conf-js#Property%3A-devServer

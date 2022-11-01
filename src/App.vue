@@ -80,7 +80,6 @@ import EssentialLink from "components/EssentialLink.vue";
 import MenuBar from "components/MenuBar.vue";
 import { defineComponent, ref, computed } from "vue";
 import { useStore } from "vuex";
-import { usersCollection } from "boot/firebase";
 
 export default defineComponent({
   name: "App",
@@ -115,7 +114,6 @@ export default defineComponent({
       },
     };
   },
-  async unmounted() {},
   methods: {
     logout() {
       this.userListener();
