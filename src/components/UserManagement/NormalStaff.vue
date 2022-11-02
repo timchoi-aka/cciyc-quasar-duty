@@ -2,23 +2,9 @@
   <div>
     <!-- loading dialog -->
     <q-dialog v-model="waitingAsync" position="bottom">
-      <q-card>
-        <q-card-section class="row">
-          <q-circular-progress
-            indeterminate
-            show-value
-            size="100px"
-            :thickness="0.4"
-            font-size="10px"
-            color="lime"
-            track-color="grey-3"
-            center-color="grey-3"
-            class="q-ma-md col float-right vertical-middle"
-            >儲存中</q-circular-progress
-          >
-        </q-card-section>
-      </q-card>
+      <LoadingDialog message="儲存中"/>
     </q-dialog>
+
     <q-table
       flat
       :grid="$q.screen.lt.sm"
@@ -326,9 +312,13 @@
 <script>
 import { usersCollection, FirebaseFunctions } from "boot/firebase";
 import { date as qdate } from "quasar";
+import LoadingDialog from "components/LoadingDialog.vue"
 
 export default {
   name: "NormalStaff",
+  components: {
+    LoadingDialog,
+  },
   data() {
     return {
       qdate: qdate,

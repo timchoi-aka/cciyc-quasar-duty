@@ -1,24 +1,9 @@
 <template>
   <q-markup-table flat wrap-cells square style="overflow: hidden">
     <q-dialog v-model="waitingAsync" position="bottom">
-      <q-card style="width: 200px">
-        <q-card-section class="row">
-          <!-- <div class="col text-h5 text-bold fixed-left vertical-bottom">儲存中...</div> -->
-          <q-circular-progress
-            indeterminate
-            show-value
-            size="100px"
-            :thickness="0.4"
-            font-size="10px"
-            color="lime"
-            track-color="grey-3"
-            center-color="grey-3"
-            class="q-ma-md col float-right vertical-middle"
-            >儲存中</q-circular-progress
-          >
-        </q-card-section>
-      </q-card>
+      <LoadingDialog message="儲存中"/>
     </q-dialog>
+
     <thead v-show="printHeader">
       <tr>
         <th class="caption"></th>
@@ -200,6 +185,7 @@ import { FirebaseFunctions, activityCollection } from "boot/firebase";
 import date from "src/lib/date.js";
 import dateHeader from "src/lib/dateHeader.js";
 import { useStore } from "vuex";
+import LoadingDialog from "components/LoadingDialog.vue"
 
 export default {
   name: "ActivityCalendar",
@@ -211,6 +197,9 @@ export default {
     waitingAsync() {
       return this.awaitServerResponse > 0 ? true : false;
     },
+  },
+  components: {
+    LoadingDialog,
   },
   data() {
     return {

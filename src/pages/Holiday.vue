@@ -1,5 +1,10 @@
 <template>
   <q-page>
+     <!-- loading dialog -->
+     <q-dialog v-model="waitingAsync" position="bottom">
+      <LoadingDialog message="資料讀取中"/>
+    </q-dialog>
+
     <q-page-sticky style="z-index: 1" position="top" expand>
       <q-tabs
         dense

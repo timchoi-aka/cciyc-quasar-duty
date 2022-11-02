@@ -2,23 +2,7 @@
   <q-page>
     <!-- loading dialog -->
     <q-dialog v-model="waitingAsync" position="bottom">
-      <q-card style="width: 200px">
-        <q-card-section class="row">
-          <!-- <div class="col text-h5 text-bold fixed-left vertical-bottom">儲存中...</div> -->
-          <q-circular-progress
-            indeterminate
-            show-value
-            size="100px"
-            :thickness="0.4"
-            font-size="10px"
-            color="lime"
-            track-color="grey-3"
-            center-color="grey-3"
-            class="q-ma-md col float-right vertical-middle"
-            >儲存中</q-circular-progress
-          >
-        </q-card-section>
-      </q-card>
+      <LoadingDialog message="儲存中"/>
     </q-dialog>
 
     <!-- add user dialog -->
@@ -274,9 +258,13 @@
 <script>
 import { usersCollection, FirebaseFunctions } from "boot/firebase";
 import { date as qdate } from "quasar";
+import LoadingDialog from "components/LoadingDialog.vue"
 
 export default {
   name: "TempStaff",
+  components: {
+    LoadingDialog,
+  },
   computed: {
     waitingAsync() {
       return this.awaitServerResponse > 0 ? true : false;

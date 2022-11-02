@@ -1,4 +1,9 @@
 <template>
+  <!-- loading dialog -->
+  <q-dialog v-model="waitingAsync" position="bottom">
+    <LoadingDialog message="讀取資料中"/>
+  </q-dialog>
+
   <!-- All staff annual balance dialog -->
   <q-dialog v-model="showAllStaffAnnualBalance" full-width>
     <q-card class="q-pa-none">
@@ -441,25 +446,6 @@
         </template>
       </q-table>
     </q-expansion-item>
-
-    <q-dialog v-model="waitingAsync" position="bottom">
-      <q-card>
-        <q-card-section class="row">
-          <q-circular-progress
-            indeterminate
-            show-value
-            size="100px"
-            :thickness="0.4"
-            font-size="10px"
-            color="lime"
-            track-color="grey-3"
-            center-color="grey-3"
-            class="q-ma-md col float-right vertical-middle"
-            >讀取資料中</q-circular-progress
-          >
-        </q-card-section>
-      </q-card>
-    </q-dialog>
   </div>
 </template>
 
@@ -476,11 +462,15 @@ import { useStore } from "vuex";
 import { ref, defineComponent, computed } from "vue";
 import holiday from "assets/holiday.json";
 import { date as qdate } from "quasar";
+import LoadingDialog from "components/LoadingDialog.vue"
 
 export default defineComponent({
   name: "ALApply",
   props: {
     renderDate: Date,
+  },
+  components: {
+    LoadingDialog,
   },
   data() {
     return {

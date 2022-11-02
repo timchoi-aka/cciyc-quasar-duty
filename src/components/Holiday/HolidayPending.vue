@@ -1,5 +1,10 @@
 <template>
   <q-page class="full-width">
+    <!-- loading dialog -->
+    <q-dialog v-model="waitingAsync" position="bottom">
+      <LoadingDialog message="讀取資料中"/>
+    </q-dialog>
+
     <div class="row full-width">
       <q-table
         class="col"
@@ -64,26 +69,6 @@
         </template>
       </q-table>
 
-      <!-- loading dialog -->
-      <q-dialog v-model="waitingAsync" position="bottom">
-        <q-card>
-          <q-card-section class="row">
-            <q-circular-progress
-              indeterminate
-              show-value
-              size="100px"
-              :thickness="0.4"
-              font-size="10px"
-              color="lime"
-              track-color="grey-3"
-              center-color="grey-3"
-              class="q-ma-md col float-right vertical-middle"
-              >讀取資料中</q-circular-progress
-            >
-          </q-card-section>
-        </q-card>
-      </q-dialog>
-
       <!-- sticky button at bottom -->
       <q-page-sticky position="bottom-right" :offset="[20, 20]" style="z-index: 1">
         <q-fab
@@ -143,11 +128,15 @@
 import { FirebaseFunctions, leaveCollection } from "boot/firebase";
 import { defineComponent } from "vue";
 import { date as qdate } from "quasar";
+import LoadingDialog from "components/LoadingDialog.vue"
 
 export default defineComponent({
   name: "HolidayPending",
   props: {
     uid: String,
+  },
+  components: {
+    LoadingDialog,
   },
   data() {
     return {

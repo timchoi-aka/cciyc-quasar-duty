@@ -2,22 +2,7 @@
   <div>
     <!-- loading dialog -->
     <q-dialog v-model="waitingAsync" position="bottom">
-      <q-card style="width: 200px">
-        <q-card-section class="row">
-          <q-circular-progress
-            indeterminate
-            show-value
-            size="100px"
-            :thickness="0.4"
-            font-size="10px"
-            color="lime"
-            track-color="grey-3"
-            center-color="grey-3"
-            class="q-ma-md col float-right vertical-middle"
-            >讀取資料中</q-circular-progress
-          >
-        </q-card-section>
-      </q-card>
+      <LoadingDialog message="讀取資料中"/>
     </q-dialog>
 
     <q-table
@@ -75,9 +60,13 @@ import { OTCollection, dashboardCollection } from "boot/firebase";
 import { computed } from "vue";
 import { useStore } from "vuex";
 import { date as qdate } from "quasar";
+import LoadingDialog from "components/LoadingDialog.vue"
 
 export default {
   name: "OTSummary",
+  components: {
+    LoadingDialog,
+  },
   props: {
     renderUID: String,
     renderName: String,

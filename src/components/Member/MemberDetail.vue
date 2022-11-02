@@ -1,23 +1,7 @@
 <template>
   <!-- loading dialog -->
   <q-dialog v-model="waitingAsync" position="bottom">
-    <q-card style="width: 200px">
-      <q-card-section class="row">
-        <!-- <div class="col text-h5 text-bold fixed-left vertical-bottom">儲存中...</div> -->
-        <q-circular-progress
-          indeterminate
-          show-value
-          size="100px"
-          :thickness="0.4"
-          font-size="10px"
-          color="lime"
-          track-color="grey-3"
-          center-color="grey-3"
-          class="q-ma-md col float-right vertical-middle"
-          >處理中</q-circular-progress
-        >
-      </q-card-section>
-    </q-card>
+    <LoadingDialog message="處理中"/>
   </q-dialog>
 
     <!-- confirm delete dialog -->
@@ -131,7 +115,8 @@
       <q-card-section v-if="relatedMemberResult.length > 0" class="bg-teal-1 row text-h6" style="border: 1px solid lightgrey;">
         <div class="q-pa-sm col-12 bg-teal-2 text-black text-h5">關聯會員</div>
         <div v-for="(member, index) in relatedMemberResult" :key="index" class="col-2 col-xs-12">
-        {{member.c_mem_id}} - {{member.relation}}</div>
+          <div v-if="member.b_mem_type1">[{{member.c_mem_id}}] {{member.name}} ({{member.age}}) - {{member.relation}}</div>
+        </div>
       </q-card-section>
       <q-card-section class="bg-grey-1 row text-caption justify-end q-pa-none" style="border: 1px solid lightgrey;">
         <div class="col-shrink q-ma-md">更新日期: {{qdate.formatDate(member.d_update, "YYYY年MM月DD日")}}</div>
@@ -143,12 +128,16 @@
 <script>
 import { defineComponent, computed } from "vue";
 import { useStore } from "vuex";
-import { FirebaseAuth } from "boot/firebase";
-import { date as qdate, is} from "quasar";
-import { GET_RELATED_MEMBER_FROM_ID } from "/src/graphQueries/Member/query.js"
+import LoadingDialog from "components/LoadingDialog.vue"
+import { date as qdate} from "quasar";
+import { DELETE_MEMBER_FROM_ID } from "/src/graphQueries/Member/mutation.js"
+import { GET_RELATED_MEMBER_FROM_ID, GET_NAME_FROM_IDS } from "/src/graphQueries/Member/query.js"
 
 export default defineComponent({
   name: "MemberDetail",
+  components: {
+    LoadingDialog,
+  },
   apollo: {
     relatedMember: {
       query: GET_RELATED_MEMBER_FROM_ID,
@@ -161,7 +150,19 @@ export default defineComponent({
       skip() {
         return true
       }
-    }
+    },
+    getNameFromIDs: {
+      query: GET_NAME_FROM_IDS,
+      update: data => data.Member, 
+      variables() {
+        return {
+          "c_mem_ids": this.relatedMemberResult.map(({c_mem_id})=>c_mem_id),
+        }
+      },
+      skip() {
+        return true
+      }
+    },
   },
   props: {
     modalObject: Object, 
@@ -169,6 +170,7 @@ export default defineComponent({
   data() {
     return {
       relatedMember: [],
+      getNameFromIDs: [],
       relatedMemberResult: [],
       editState: false,
       member: JSON.parse(JSON.stringify(this.modalObject)),
@@ -318,38 +320,35 @@ export default defineComponent({
     },
     async confirmUserRemove() {
       this.awaitServerResponse++;
-      try {
-        const graphqlQuery = {
-          operationName: "delMember",
-          query: `mutation delMember($c_mem_id: String!) {
-                    delete_Member_by_pk(c_mem_id: $c_mem_id) {
-                      c_mem_id
-                    }
-                  }`,
-          variables: {
-            c_mem_id: this.member.c_mem_id,
-          },
-        };
-        
-        const memberResponse = await this.$api({
-          method: "post",
-          data: graphqlQuery,
-        });
-        
-        this.awaitServerResponse--;
-        if (memberResponse.status == "200") {
-          this.$q.notify({ message: "刪除會員編號: " + memberResponse.data.data.delete_Member_by_pk.c_mem_id + " 成功." });
-          this.member = {}
+
+      this.$apollo.mutate({
+        mutation: DELETE_MEMBER_FROM_ID,
+        variables: {
+          c_mem_id: this.member.c_mem_id,
+        },
+      }).then((data) => {
+        const deleteMember = data.data.delete_Member_by_pk;
+        const deleteRelateMember = data.data.delete_Relation;
+        if (deleteMember.c_mem_id == this.member.c_mem_id) {
+          if (deleteRelateMember.affected_rows > 0) {
+            this.$q.notify({ message: "刪除會員編號: " + deleteMember.c_mem_id + " 成功，" + deleteRelateMember.affected_rows + "個關聯關係已刪除。"});
+          } else {
+            this.$q.notify({ message: "刪除會員編號: " + deleteMember.c_mem_id + " 成功."});
+          }
         }
-      } catch (error) {
-        this.error = error;
-      }
+        this.member = {}
+      })
+
+      this.awaitServerResponse--;     
     },
   },
   async mounted() {
     this.member.d_birth = qdate.formatDate(this.member.d_birth, "YYYY/MM/DD")
+    
+    // get related member information
     this.$apollo.queries.relatedMember.skip = false;
     await this.$apollo.queries.relatedMember.refetch();
+    
     if (this.relatedMember.length > 0) {
       this.relatedMember.forEach((data) => {
         if (data.c_mem_id_1 == this.member.c_mem_id) {
@@ -364,7 +363,18 @@ export default defineComponent({
           })
         }
       })
-    }
+
+      // get related member detail
+      this.$apollo.queries.getNameFromIDs.skip = false;
+      await this.$apollo.queries.getNameFromIDs.refetch();
+      if (this.getNameFromIDs.length > 0) {
+        for (const index in this.relatedMemberResult) {
+          this.relatedMemberResult[index].name = this.getNameFromIDs[index].c_name? this.getNameFromIDs[index].c_name : this.getNameFromIDs[index].c_name_other;
+          this.relatedMemberResult[index].age = this.calculateAge(this.getNameFromIDs[index].d_birth)
+          this.relatedMemberResult[index].b_mem_type1 = this.getNameFromIDs[index].b_mem_type1
+        }
+      }
+    }    
   },
 });
 </script>
