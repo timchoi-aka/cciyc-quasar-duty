@@ -211,7 +211,7 @@
     </q-card-section>
   </q-card>
 
-  <div class="q-pa-xs-none q-pa-sm-sm q-pa-md-md col-xs-6 row justify-end">
+  <div class="q-pa-xs-none q-pa-sm-sm q-pa-md-md col-xs-6 row justify-end">    
     <q-btn
       class="q-ma-md q-mb-xl"
       size="lg"
@@ -230,15 +230,15 @@
 </template>
 
 <script>
-import { computed } from "vue";
+import { ref, computed } from "vue";
 import { useStore } from "vuex";
 import { date as qdate, is } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue";
 import { GET_MEMBER_NAME_FROM_ID, LATEST_MEMBER_ID } from "/src/graphQueries/Member/query.js";
-import { MEMBER_GET_ALL } from "/src/graphQueries/Member/query.js"
 import {
   ADD_MEMBER_FROM_ID,
   ADD_MEMBER_AND_RELATION_FROM_ID,
+  ADD_MEMBER_AND_RELATION_FROM_ID_UPDATE_RELATED_YOUTH_STATUS
 } from "/src/graphQueries/Member/mutation.js";
 import {useSubscription} from "@vue/apollo-composable"
 
@@ -261,22 +261,96 @@ export default {
     const { result, loading } = useSubscription(
       LATEST_MEMBER_ID,
     );
-    
+
+    const personalInfo = ref({
+        c_name: "",
+        c_name_other: "",
+        c_sex: "",
+        c_tel: "",
+        c_mobile: "",
+        d_birth: "",
+        c_email: "",
+        m_addscom: "",
+        age: "",
+      })
+
+    function capitalize() {
+      if (personalInfo.value.c_name_other != "") {
+        const arr = personalInfo.value.c_name_other.split(" ");
+        for (var i = 0; i < arr.length; i++) {
+          arr[i] = arr[i].charAt(0).toUpperCase() + arr[i].slice(1);
+        }
+        personalInfo.value.c_name_other = arr.join(" ");
+      }
+    }
+
+    function calculateAge(value) {
+      if (qdate.isValid(value)) {
+        let now = new Date();
+        let birth = new Date(value);
+        let birthyear = birth.getFullYear();
+        birth = qdate.adjustDate(birth, { year: now.getFullYear() });
+        let offset = qdate.getDateDiff(now, birth, "days") < 0 ? -1 : 0;
+        if (birthyear == now.getFullYear()) {
+          return 0;
+        } else {
+          return qdate.getDateDiff(now, value, "years") + offset;
+        }
+      }
+    }
+
     return {
       username: computed(() => $store.getters["userModule/getUsername"]),
       latestMemberID: computed(() => result.value? parseInt(result.value.Member[0].c_mem_id)+1: []),
       loading,
+      capitalize,
+      calculateAge,
+      personalInfo,
+      awaitServerResponse: ref(0),
       relationOptions: ["父母子女", "兄弟姐妹", "其他親人"],
+      udf1List: [
+        {
+          label: "全部",
+          value: "",
+        },
+        {
+          label: "個人",
+          value: "個人會員",
+        },
+        {
+          label: "永久",
+          value: "永久會員",
+        },
+        {
+          label: "青年義工(<25歲)",
+          value: "青年義工會員",
+        },
+        {
+          label: "青年家人義工(>25歲)",
+          value: "青年家人義工",
+        },
+        {
+          label: "社區義工",
+          value: "社區義工",
+        },
+      ],
+      relationTable: ref([
+        {
+          c_mem_id_1: "",
+          c_mem_id_2: "",
+          targetName: "",
+          relation: "",
+        },
+      ]),
     };
   },
   methods: {
     async getNameFromMemberID(value, index) {
       if (value != "") {
-        this.queryMemberID = value;
         this.$apollo.query({
           query: GET_MEMBER_NAME_FROM_ID,
           variables: {
-            "c_mem_id_2": this.queryMemberID,
+            "c_mem_id_2": value,
           }
         }).then((data) => {
           const getNameFromID = data.data.Member;
@@ -289,6 +363,7 @@ export default {
           this.relationTable[index].age = this.calculateAge(getNameFromID[0].d_birth)
         } else {
           this.relationTable[index].targetName = "沒有此會員";
+          this.relationTable[index].age = null;
         }
         });
       }
@@ -311,8 +386,15 @@ export default {
       if (memberRelation.length == 0) {
         queryString = ADD_MEMBER_FROM_ID;
       } else {
-        queryString = ADD_MEMBER_AND_RELATION_FROM_ID;
-        console.log(this.relationTable.findIndex((element) => element.age >= 15 && element.age <= 24));
+        if (this.relationTable.findIndex((element) => element.age >= 15 && element.age <= 24 && element.b_mem_type1) != -1) {
+          this.memberInfo.b_mem_type10 = true;
+        }
+
+        if (this.personalInfo.age >= 15 && this.personalInfo.age <= 24) {
+          queryString = ADD_MEMBER_AND_RELATION_FROM_ID_UPDATE_RELATED_YOUTH_STATUS
+        } else {
+          queryString = ADD_MEMBER_AND_RELATION_FROM_ID;
+        }
       }
 
       this.$apollo
@@ -329,6 +411,7 @@ export default {
             c_email: this.personalInfo.c_email,
             d_birth: this.personalInfo.d_birth,
             b_mem_type1: true,
+            b_mem_type10: this.memberInfo.b_mem_type10,
             c_udf_1: this.memberInfo.c_udf_1.value,
             c_update_user: this.memberInfo.c_update_user,
             d_enter_1: this.memberInfo.d_enter_1,
@@ -336,6 +419,7 @@ export default {
             d_update: this.memberInfo.d_update,
             d_write: this.memberInfo.d_write,
             relationObjects: memberRelation,
+            related_ids: memberRelation.map(({c_mem_id_2})=>c_mem_id_2),
           },
         })
         .then((data) => {
@@ -343,6 +427,7 @@ export default {
           const relationResponse = data.data.insert_Relation
             ? data.data.insert_Relation.returning
             : [];
+          //const updateMemberResponse = data.data.update_Member ? data.data.update_Member : [];
 
           if (memberResponse.c_mem_id == this.latestMemberID.toString()) {
             if (relationResponse.length > 0) {
@@ -376,6 +461,7 @@ export default {
 
           this.memberInfo = {
             b_mem_type1: false,
+            b_mem_type10: false,
             c_udf_1: "",
             c_update_user: this.username,
             d_enter_1: qdate.formatDate(Date.now(), "YYYY/MM/DD"),
@@ -394,29 +480,6 @@ export default {
           ];
         });
       this.awaitServerResponse--;
-    },
-    capitalize() {
-      if (this.personalInfo.c_name_other != "") {
-        const arr = this.personalInfo.c_name_other.split(" ");
-        for (var i = 0; i < arr.length; i++) {
-          arr[i] = arr[i].charAt(0).toUpperCase() + arr[i].slice(1);
-        }
-        this.personalInfo.c_name_other = arr.join(" ");
-      }
-    },
-    calculateAge(value) {
-      if (qdate.isValid(value)) {
-        let now = new Date();
-        let birth = new Date(value);
-        let birthyear = birth.getFullYear();
-        birth = qdate.adjustDate(birth, { year: now.getFullYear() });
-        let offset = qdate.getDateDiff(now, birth, "days") < 0 ? -1 : 0;
-        if (birthyear == now.getFullYear()) {
-          return 0;
-        } else {
-          return qdate.getDateDiff(now, value, "years") + offset;
-        }
-      }
     },
     updateType1Expire() {
       // console.log(this.memberInfo.d_enter_1 + ":" + qdate.isValid(this.memberInfo.d_enter_1))
@@ -463,56 +526,10 @@ export default {
   },
   data() {
     return {
-      queryMemberID: "",
-      relationTable: [
-        {
-          c_mem_id_1: "",
-          c_mem_id_2: "",
-          targetName: "",
-          relation: "",
-        },
-      ],
       qdate: qdate,
-      udf1List: [
-        {
-          label: "全部",
-          value: "",
-        },
-        {
-          label: "個人",
-          value: "個人會員",
-        },
-        {
-          label: "永久",
-          value: "永久會員",
-        },
-        {
-          label: "青年義工(<25歲)",
-          value: "青年義工會員",
-        },
-        {
-          label: "青年家人義工(>25歲)",
-          value: "青年家人義工",
-        },
-        {
-          label: "社區義工",
-          value: "社區義工",
-        },
-      ],
-      awaitServerResponse: 0,
-      personalInfo: {
-        c_name: "",
-        c_name_other: "",
-        c_sex: "",
-        c_tel: "",
-        c_mobile: "",
-        d_birth: "",
-        c_email: "",
-        m_addscom: "",
-        age: "",
-      },
       memberInfo: {
         b_mem_type1: false,
+        b_mem_type10: false,
         c_udf_1: "",
         c_update_user: this.username,
         d_enter_1: qdate.formatDate(Date.now(), "YYYY/MM/DD"),
