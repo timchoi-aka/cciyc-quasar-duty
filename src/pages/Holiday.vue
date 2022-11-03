@@ -43,6 +43,7 @@ import { useStore } from "vuex";
 import { leaveCollection, dashboardCollection, usersCollection } from "boot/firebase";
 import { defineComponent, computed } from "vue";
 import { date as qdate } from "quasar";
+import LoadingDialog from "components/LoadingDialog.vue"
 
 export default defineComponent({
   name: "Holiday",
@@ -58,6 +59,9 @@ export default defineComponent({
       awaitServerResponse: 0,
       ALBalance: 0,
     };
+  },
+  components: {
+    LoadingDialog,
   },
   methods: {},
   computed: {
@@ -163,6 +167,7 @@ export default defineComponent({
         });
       });
     this.ALBalance = systemStartBalance + totalGain - holidayCount;
+    this.awaitServerResponse--;
     this.$router.push("/holiday/al-view").catch(() => {});
   },
   setup() {

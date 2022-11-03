@@ -1,3 +1,4 @@
+<!-- TODO: edit all member attributes -->
 <template>
   <!-- loading dialog -->
   <q-dialog v-model="waitingAsync" position="bottom">

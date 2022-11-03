@@ -1,3 +1,5 @@
+<!-- TODO set related member type10 -->
+<!-- TODO check form before submit -->
 <template class="q-mb-md">
   <!-- loading dialog -->
   <q-dialog v-model="waitingAsync" position="bottom">
@@ -5,16 +7,16 @@
   </q-dialog>
 
   <!-- personal info qcard -->
-  <q-card class="q-ma-md">
-    <q-card-section class="q-pa-md text-h6 bg-blue-1"
-      >新會員個人資料</q-card-section
-    >
-    <q-card-section class="row justify-start items-start q-pa-sm">
-      <div class="q-pa-xs col-xs-8">
+  <q-card class="q-ma-md-md q-ma-xs-none q-ma-sm-sm">
+    <q-card-section class="q-pa-md-md q-pa-sm-sm q-pa-xs-xs text-h6 bg-blue-1"
+      >新會員個人資料<span v-if="!loading">(編號：{{latestMemberID}})</span>
+    </q-card-section>
+    <q-card-section class="row justify-start items-start q-pa-sm-sm q-pa-xs-xs q-pa-md-md">
+      <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-8">
         姓名<q-input filled v-model="personalInfo.c_name"></q-input>
       </div>
 
-      <div class="q-pa-xs col-xs-4">
+      <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-4">
         姓別<br />
         <q-btn-toggle
           v-model="personalInfo.c_sex"
@@ -26,7 +28,7 @@
         />
       </div>
 
-      <div class="q-pa-xs col-xs-12">
+      <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-12">
         Name<q-input
           filled
           v-model="personalInfo.c_name_other"
@@ -34,7 +36,7 @@
         ></q-input>
       </div>
 
-      <div class="q-pa-xs col-xs-12">
+      <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-12">
         手提電話<q-input
           filled
           v-model="personalInfo.c_mobile"
@@ -42,11 +44,11 @@
         />
       </div>
 
-      <div class="q-pa-xs col-xs-12">
+      <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-12">
         家居電話<q-input filled v-model="personalInfo.c_tel" mask="########" />
       </div>
 
-      <div class="q-pa-xs col-xs-8">
+      <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-8">
         出生日期
         <q-input
           filled
@@ -54,7 +56,7 @@
           mask="date"
           hint="YYYY/MM/DD"
           :rules="['date']"
-          @update:model-value="calculateAge"
+          @update:model-value="(value) => personalInfo.age = calculateAge(value)"
         >
           <template v-slot:append>
             <q-icon name="event" class="cursor-pointer">
@@ -65,7 +67,7 @@
               >
                 <q-date
                   v-model="personalInfo.d_birth"
-                  @update:model-value="calculateAge"
+                  @update:model-value="(value)=>personalInfo.age = calculateAge(value)"
                 >
                   <div class="row items-center justify-end">
                     <q-btn v-close-popup label="Close" color="primary" flat />
@@ -77,26 +79,26 @@
         </q-input>
       </div>
 
-      <div class="q-pa-xs col-xs-4">
+      <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-4">
         年齡<br />
         {{ personalInfo.age }}
       </div>
 
-      <div class="q-pa-xs col-xs-12">
+      <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-12">
         地址<q-input filled v-model="personalInfo.m_addscom" />
       </div>
 
-      <div class="q-pa-xs col-xs-12">
+      <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-12">
         電郵地址<q-input filled v-model="personalInfo.c_email" type="email" />
       </div>
     </q-card-section>
   </q-card>
 
   <!-- membership info qcard -->
-  <q-card class="q-ma-md">
-    <q-card-section class="q-pa-md text-h6 bg-green-1">會籍</q-card-section>
-    <q-card-section class="row justify-start items-start q-pa-sm">
-      <div class="q-pa-xs col-2 col-xs-12">
+  <q-card class="q-ma-md-md q-ma-xs-none q-ma-sm-sm">
+    <q-card-section class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md text-h6 bg-green-1">會籍</q-card-section>
+    <q-card-section class="row justify-start items-start q-pa-xs-xs q-pa-sm-sm q-pa-md-md">
+      <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-2 col-xs-12">
         會籍<q-select
           v-model="memberInfo.c_udf_1"
           :options="udf1List"
@@ -104,7 +106,7 @@
           @update:model-value="updateType1Expire"
         />
       </div>
-      <div class="q-pa-xs col-xs-12">
+      <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-12">
         入會日期
         <q-input
           filled
@@ -134,7 +136,7 @@
           </template>
         </q-input>
       </div>
-      <div class="q-pa-xs col-1 col-xs-12">
+      <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-1 col-xs-12">
         屆滿日期<br />
         <div>{{ memberInfo.d_expired_1 }}</div>
       </div>
@@ -142,22 +144,23 @@
   </q-card>
 
   <!-- related member -->
-  <q-card class="q-ma-md">
-    <q-card-section class="q-pa-md text-h6 bg-yellow-1"
+  <q-card class="q-ma-md-md q-ma-xs-none q-ma-sm-sm">
+    <q-card-section class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md text-h6 bg-yellow-1"
       >關聯會員</q-card-section
     >
-    <q-card-section>
+    <q-card-section class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md">
       <div class="row">
-        <span class="col-3 q-mr-md">會員編號</span
-        ><span class="col-3 q-mr-md">關係</span
-        ><span class="col-3 q-mr-md">姓名(會藉有效？)</span>
+        <span class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none">編號</span>
+        <span class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none">關係</span>
+        <span class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none">姓名</span>
+        <span class="col-1 col-xs-1 q-mr-md-md q-mr-sm-sm q-mr-xs-none">會藉</span>
       </div>
 
       <div v-for="(relation, index) in relationTable" :key="index" class="row">
         <q-input
           dense
           filled
-          class="col-3 q-mr-md"
+          class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none"
           debounce="500"
           type="text"
           mask="####"
@@ -167,25 +170,26 @@
         <q-select
           dense
           filled
-          class="col-3 q-mr-md"
+          class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none"
           v-model="relationTable[index].relation"
           :options="relationOptions"
         />
-        <span class="col-3 q-mr-md">
+        <span class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none">
           {{ relationTable[index].targetName }}
-          <span v-if="relationTable[index].b_mem_type1 != null">
-            (<q-icon
-              v-if="relationTable[index].b_mem_type1"
-              color="positive"
-              name="check"
-            />
-            <q-icon v-else color="negative" name="cancel" />)
-          </span>
+          <span v-if="relationTable[index].age != null">({{relationTable[index].age}})</span>
+        </span>
+        <span class="col-1 col-xs-1 q-mr-md-md q-mr-sm-sm q-mr-xs-none">
+          <q-icon
+            v-if="relationTable[index].b_mem_type1"
+            color="positive"
+            name="check"
+          />
+          <q-icon v-if="relationTable[index].b_mem_type1 == false" color="negative" name="cancel" />
         </span>
         <q-btn
           v-if="index == relationTable.length - 1"
           square
-          class="col-1 text-white bg-primary"
+          class="col-1 col-xs-1 text-white bg-primary"
           icon="add"
           @click="
             relationTable.push({
@@ -207,9 +211,9 @@
     </q-card-section>
   </q-card>
 
-  <div class="q-pa-xs col-xs-6 row justify-end">
+  <div class="q-pa-xs-none q-pa-sm-sm q-pa-md-md col-xs-6 row justify-end">
     <q-btn
-      class="q-mr-md q-mb-xl"
+      class="q-ma-md q-mb-xl"
       size="lg"
       square
       color="primary"
@@ -226,17 +230,19 @@
 </template>
 
 <script>
-import { defineComponent, computed } from "vue";
+import { computed } from "vue";
 import { useStore } from "vuex";
 import { date as qdate, is } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue";
-import { GET_MEMBER_NAME_FROM_ID } from "/src/graphQueries/Member/query.js";
+import { GET_MEMBER_NAME_FROM_ID, LATEST_MEMBER_ID } from "/src/graphQueries/Member/query.js";
+import { MEMBER_GET_ALL } from "/src/graphQueries/Member/query.js"
 import {
   ADD_MEMBER_FROM_ID,
   ADD_MEMBER_AND_RELATION_FROM_ID,
 } from "/src/graphQueries/Member/mutation.js";
+import {useSubscription} from "@vue/apollo-composable"
 
-export default defineComponent({
+export default {
   name: "MemberAdd",
   computed: {
     waitingAsync() {
@@ -247,73 +253,73 @@ export default defineComponent({
     LoadingDialog,
   },
   setup() {
+    // save current module
     const $store = useStore();
-    const relationOptions = ["父母子女", "兄弟姐妹", "其他親人"];
-
     $store.dispatch("currentModule/setCurrentModule", "member");
 
+    // load graphql subscription on latest member id
+    const { result, loading } = useSubscription(
+      LATEST_MEMBER_ID,
+    );
+    
     return {
       username: computed(() => $store.getters["userModule/getUsername"]),
-      relationOptions,
+      latestMemberID: computed(() => result.value? parseInt(result.value.Member[0].c_mem_id)+1: []),
+      loading,
+      relationOptions: ["父母子女", "兄弟姐妹", "其他親人"],
     };
-  },
-  apollo: {
-    getNameFromID: {
-      query: GET_MEMBER_NAME_FROM_ID,
-      update: (data) => data.Member,
-      variables() {
-        return {
-          c_mem_id_2: this.queryMemberID,
-        };
-      },
-      skip() {
-        return true;
-      },
-    },
   },
   methods: {
     async getNameFromMemberID(value, index) {
       if (value != "") {
         this.queryMemberID = value;
-        this.$apollo.queries.getNameFromID.skip = false;
-        await this.$apollo.queries.getNameFromID.refetch();
-        if (this.getNameFromID.length > 0) {
-          this.relationTable[index].targetName = this.getNameFromID[0].c_name
-            ? this.getNameFromID[0].c_name
-            : this.getNameFromID[0].c_name_other;
+        this.$apollo.query({
+          query: GET_MEMBER_NAME_FROM_ID,
+          variables: {
+            "c_mem_id_2": this.queryMemberID,
+          }
+        }).then((data) => {
+          const getNameFromID = data.data.Member;
+          if (getNameFromID.length > 0) {
+          this.relationTable[index].targetName = getNameFromID[0].c_name
+            ? getNameFromID[0].c_name
+            : getNameFromID[0].c_name_other;
           this.relationTable[index].b_mem_type1 =
-            this.getNameFromID[0].b_mem_type1;
+            getNameFromID[0].b_mem_type1;
+          this.relationTable[index].age = this.calculateAge(getNameFromID[0].d_birth)
         } else {
           this.relationTable[index].targetName = "沒有此會員";
         }
+        });
       }
     },
     async addMember() {
       this.awaitServerResponse++;
 
-      await this.getLastMemberID();
       let queryString;
       let memberRelation = [];
       this.relationTable.forEach((rel) => {
         if (rel.targetName != "" && rel.targetName != "沒有此會員") {
           memberRelation.push({
-            c_mem_id_1: this.personalInfo.c_mem_id.toString(),
+            c_mem_id_1: this.latestMemberID.toString(),
             c_mem_id_2: rel.c_mem_id_2,
             relation: rel.relation,
           });
         }
       });
+      
       if (memberRelation.length == 0) {
         queryString = ADD_MEMBER_FROM_ID;
       } else {
         queryString = ADD_MEMBER_AND_RELATION_FROM_ID;
+        console.log(this.relationTable.findIndex((element) => element.age >= 15 && element.age <= 24));
       }
 
       this.$apollo
         .mutate({
           mutation: queryString,
           variables: {
-            c_mem_id: this.personalInfo.c_mem_id.toString(),
+            c_mem_id: this.latestMemberID.toString(),
             c_name: this.personalInfo.c_name,
             c_name_other: this.personalInfo.c_name_other,
             c_sex: this.personalInfo.c_sex,
@@ -338,7 +344,7 @@ export default defineComponent({
             ? data.data.insert_Relation.returning
             : [];
 
-          if (memberResponse.c_mem_id == this.personalInfo.c_mem_id) {
+          if (memberResponse.c_mem_id == this.latestMemberID.toString()) {
             if (relationResponse.length > 0) {
               this.$q.notify({
                 message:
@@ -357,7 +363,6 @@ export default defineComponent({
 
           // initialize data
           this.personalInfo = {
-            c_mem_id: "",
             c_name: "",
             c_name_other: "",
             c_sex: "",
@@ -390,31 +395,6 @@ export default defineComponent({
         });
       this.awaitServerResponse--;
     },
-    async getLastMemberID() {
-      this.awaitServerResponse++;
-      try {
-        const graphqlQuery = {
-          operationName: "getLatestMemberID",
-          query: `query getLatestMemberID {
-                    Member(limit: 1, order_by: {c_mem_id: desc}, offset: 1) {
-                      c_mem_id
-                    }
-                  }`,
-          variables: {},
-        };
-
-        const memberResponse = await this.$api({
-          method: "post",
-          data: graphqlQuery,
-        });
-
-        this.personalInfo.c_mem_id =
-          parseInt(memberResponse.data.data.Member[0].c_mem_id) + 1;
-        this.awaitServerResponse--;
-      } catch (error) {
-        this.error = error;
-      }
-    },
     capitalize() {
       if (this.personalInfo.c_name_other != "") {
         const arr = this.personalInfo.c_name_other.split(" ");
@@ -424,18 +404,17 @@ export default defineComponent({
         this.personalInfo.c_name_other = arr.join(" ");
       }
     },
-    calculateAge() {
-      if (qdate.isValid(this.personalInfo.d_birth)) {
+    calculateAge(value) {
+      if (qdate.isValid(value)) {
         let now = new Date();
-        let birth = new Date(this.personalInfo.d_birth);
+        let birth = new Date(value);
         let birthyear = birth.getFullYear();
         birth = qdate.adjustDate(birth, { year: now.getFullYear() });
         let offset = qdate.getDateDiff(now, birth, "days") < 0 ? -1 : 0;
         if (birthyear == now.getFullYear()) {
-          this.personalInfo.age = 0;
+          return 0;
         } else {
-          this.personalInfo.age =
-            qdate.getDateDiff(now, this.personalInfo.d_birth, "years") + offset;
+          return qdate.getDateDiff(now, value, "years") + offset;
         }
       }
     },
@@ -484,7 +463,6 @@ export default defineComponent({
   },
   data() {
     return {
-      getNameFromID: "",
       queryMemberID: "",
       relationTable: [
         {
@@ -523,7 +501,6 @@ export default defineComponent({
       ],
       awaitServerResponse: 0,
       personalInfo: {
-        c_mem_id: "",
         c_name: "",
         c_name_other: "",
         c_sex: "",
@@ -545,6 +522,5 @@ export default defineComponent({
       },
     };
   },
-  async mounted() {},
-});
+};
 </script>

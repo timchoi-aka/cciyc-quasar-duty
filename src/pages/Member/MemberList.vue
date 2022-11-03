@@ -199,14 +199,14 @@
 </template>
 
 <script>
-import { defineComponent, computed } from "vue";
+import { computed } from "vue";
 import { useStore } from "vuex";
 import { date as qdate} from "quasar";
 import MemberDetail from "components/Member/MemberDetail.vue"
 import { MEMBER_GET_ALL } from "/src/graphQueries/Member/query.js"
 import {useSubscription} from "@vue/apollo-composable"
 
-export default defineComponent({
+export default {
   name: "MemberList",
   components: {
     MemberDetail,
@@ -337,75 +337,19 @@ export default defineComponent({
     },
   },
   setup() {
+    // save current module
     const $store = useStore();
-
     $store.dispatch("currentModule/setCurrentModule", "member");
+
+    // load graphql subscription on member list
     const { result, loading } = useSubscription(
       MEMBER_GET_ALL,
     );
-    const MemberData = computed(() => result.value?.Member??[])
-    //let result = {};
-    /*
-    let {result, loading} = useQuery(gql`
-      query getEvent {
-        HTX_Event(limit: 2) {
-          EventID
-        }
-      }
-    `);
-    const eventList = computed(() => result.value?.HTX_Event??[]);
-    */
-    /*
-    let { result, loading } = useQuery(gql`
-      query getEvent {
-        HTX_Event(limit: 3) {
-          EventID
-        }
-      }
-    `);
-    const userList = computed(() => result.value?.HTX_Event??[]);
-    */
-    /*
-    let { result, loading }  = useQuery(gql`
-                query getMember {
-                  Member(limit: 100) {
-                    c_mem_id
-                    b_mem_type1
-                    b_mem_type10
-                    c_email
-                    c_emer_name
-                    c_emer_rel
-                    c_emer_tel1_1
-                    c_mobile
-                    c_name
-                    c_name_other
-                    c_sex
-                    c_tel
-                    c_udf_1
-                    c_update_user
-                    d_birth
-                    d_enter_1
-                    d_exit_1
-                    d_expired_1
-                    d_renew_1
-                    d_update
-                    d_write
-                    m_addscom
-                  }
-                }
-    `);
-    */
-    
-    // const result = {};
-    const memberList = computed(() => result.value?.Member??[]);
-    //const eventID = computed(() => result2.HTX_Event ?? []);
     
     return {
       uid: computed(() => $store.getters["userModule/getUID"]),
-      // memberList,
-      // userList,
       loading,
-      MemberData,
+      MemberData: computed(() => result.value?.Member??[]),
       udf1List: [
         {
           label: "全部",
@@ -622,7 +566,7 @@ export default defineComponent({
     }
     */
   },
-});
+};
 </script>
 
 <style>
