@@ -17,7 +17,7 @@
       </div>
 
       <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-4">
-        姓別<br />
+        性別<br />
         <q-btn-toggle
           v-model="personalInfo.c_sex"
           toggle-color="primary"
@@ -234,7 +234,7 @@ import { ref, computed } from "vue";
 import { useStore } from "vuex";
 import { date as qdate, is } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue";
-import { GET_MEMBER_NAME_FROM_ID, LATEST_MEMBER_ID } from "/src/graphQueries/Member/query.js";
+import { GET_NAME_FROM_IDS, LATEST_MEMBER_ID } from "/src/graphQueries/Member/query.js";
 import {
   ADD_MEMBER_FROM_ID,
   ADD_MEMBER_AND_RELATION_FROM_ID,
@@ -348,9 +348,9 @@ export default {
     async getNameFromMemberID(value, index) {
       if (value != "") {
         this.$apollo.query({
-          query: GET_MEMBER_NAME_FROM_ID,
+          query: GET_NAME_FROM_IDS,
           variables: {
-            "c_mem_id_2": value,
+            "c_mem_ids": [value],
           }
         }).then((data) => {
           const getNameFromID = data.data.Member;

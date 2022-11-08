@@ -16,6 +16,10 @@ const routes = [
         path: 'add',
         component: () => import('src/pages/Member/MemberAdd.vue'), meta: {requiresAuth: true},
       },
+      {
+        path: 'admin',
+        component: () => import('src/pages/Member/MemberAdmin.vue'), meta: {requiresAuth: true},
+      },
     ]
   },
   {

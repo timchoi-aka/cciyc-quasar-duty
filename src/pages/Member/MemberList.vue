@@ -1,7 +1,7 @@
 <template>
   <!-- rowDetail modal -->
   <q-dialog v-model="modalDisplay"
-            full-height 
+            full-height
             transition-show="slide-up"
             transition-hide="slide-down"
             class="q-pa-none">

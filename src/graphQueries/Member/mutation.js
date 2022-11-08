@@ -1,12 +1,21 @@
 import { gql } from "graphql-tag"
 
-export const DELETE_MEMBER_FROM_ID = gql`
-  mutation deleteMemberFromID($c_mem_id: String!) {
+export const DELETE_MEMBER_BY_ID = gql`
+  mutation deleteMemberFromID($c_mem_id: String!, $logObject: Log_insert_input! = {}) {
     delete_Member_by_pk(c_mem_id: $c_mem_id) {
       c_mem_id
     },
     delete_Relation(where: {_or: [{c_mem_id_1: {_eq: $c_mem_id}}, {c_mem_id_2: {_eq: $c_mem_id}}]}) {
       affected_rows
+      returning {
+        uuid
+        c_mem_id_1
+        c_mem_id_2
+        relation
+      }
+    }
+    insert_Log_one(object: $logObject) {
+      log_id
     }
   }`
 
@@ -167,3 +176,101 @@ mutation addMemberFromID (
   }
 }
 `
+
+export const UPDATE_RELATED_YOUTH_MEMBER_STATUS = gql`
+  mutation updateRelatedYouthMemberStatus ($b_mem_type10: Boolean, $c_mem_ids: [String!] = [], $logObject: Log_insert_input! = {}) {
+    update_Member(where: {c_mem_id: {_in: $c_mem_ids}}, _set: {b_mem_type10: $b_mem_type10}) {
+      affected_rows
+    }
+    insert_Log_one(object: $logObject) {
+      log_id
+    }
+  }
+`
+/*
+ MemberRelation1 {
+          c_mem_id_1
+          RelationMember1 {
+            b_mem_type1
+            c_mem_id
+            d_birth
+          }
+          c_mem_id_2
+          RelationMember2 {
+            b_mem_type1
+            c_mem_id
+            d_birth
+          }
+        }
+        MemberRelation2 {
+          c_mem_id_1
+          RelationMember1 {
+            b_mem_type1
+            c_mem_id
+            d_birth
+          }
+          c_mem_id_2
+          RelationMember2 {
+            b_mem_type1
+            c_mem_id
+            d_birth
+          }
+        }
+        */
+export const QUIT_MEMBER_BY_ID = gql`
+  mutation quitMemberByID ($c_mem_id: String, $logObject: Log_insert_input! = {}, $exitDate: datetime2) {
+    update_Member(where: {c_mem_id: {_eq: $c_mem_id}}, _set: {b_mem_type1: false, d_exit_1: $exitDate}) {
+      returning {
+        c_mem_id
+        b_mem_type1
+        d_exit_1
+      }
+    }
+    delete_Relation(where: {_or: [{c_mem_id_1: {_eq: $c_mem_id}}, {c_mem_id_2: {_eq: $c_mem_id}}]}) {
+      affected_rows
+      returning {
+        uuid
+        c_mem_id_1
+        c_mem_id_2
+        relation
+      }
+    }
+    insert_Log_one(object: $logObject) {
+      log_id
+    }
+  }
+`
+
+export const UPDATE_MEMBER_BY_ID = gql`
+  mutation updateMember($c_mem_id: String!, $object: Member_set_input = {}, $logObject: Log_insert_input! = {}, $relationObjects: [Relation_insert_input!] = {}) {
+    update_Member_by_pk(pk_columns: {c_mem_id: $c_mem_id}, _set: $object) {
+      c_mem_id
+    }
+    insert_Log_one(object: $logObject) {
+      log_id
+    }
+  }
+  `
+
+export const INSERT_RELATION = gql`
+  mutation updateMember($newObjects: [Relation_insert_input] = {}) {
+    insert_Relation(
+      objects: $newObjects,
+    ) {
+      affected_rows
+    }
+  }`
+
+export const UPDATE_RELATION = gql`
+  mutation updateMember($uuid: uniqueidentifier!, $changeObject: Relation_set_input = {}) {
+    update_Relation_by_pk(pk_columns: {uuid: $uuid}, _set: $changeObject) {
+      uuid
+    }
+  }`
+  
+export const DELETE_RELATION = gql`
+  mutation updateMember($deleteObjects: [uniqueidentifier!]) {
+    delete_Relation(where: {uuid: {_in: $deleteObjects}}) {
+      affected_rows
+    }
+  }`

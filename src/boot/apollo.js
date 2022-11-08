@@ -51,15 +51,18 @@ export default boot(
           logErrorMessages(error)
       }
     })
-
+/* 
+InMemoryCache-options
+{
+  typePolicies: {
+    Member: {
+      keyFields: ["c_mem_id"],
+    },
+  },
+}
+*/
     const apolloClient = new ApolloClient({
-      cache: new InMemoryCache({
-        typePolicies: {
-          Member: {
-            keyFields: ["c_mem_id"],
-          },
-        },
-      }),
+      cache: new InMemoryCache(),
       link: split(
         ({ query }) => {
             const definition = getMainDefinition(query)
@@ -72,6 +75,13 @@ export default boot(
         wsLink,
         concat(authMiddleware, apiLink)
       ),
+      defaultOptions: {
+        //fetchPolicy: 'cache-and-network',
+        //nextFetchPolicy: 'cache-and-network',
+        //fetchPolicy: 'network-only',
+        //nextFetchPolicy: 'network-only'
+        fetchPolicy: 'network-only',
+      },
     })
     
     const apolloClients = {
@@ -82,12 +92,34 @@ export default boot(
 
     const apolloProvider = createApolloProvider({
       defaultClient: apolloClient,
+      
       defaultOptions: {
+       
         $query: {
           loadingKey: 'loading',
-          fetchPolicy: 'cache-and-network',
+          //fetchPolicy: 'cache-and-network',
+          //nextFetchPolicy: 'cache-and-network',
+          //fetchPolicy: 'network-only',
+          //nextFetchPolicy: 'network-only'
+          fetchPolicy: 'network-only',
+          watchQuery: {
+            nextFetchPolicy: 'network-only', 
+          },
         },
+        $mutate: {
+          loadingKey: 'loading',
+          //fetchPolicy: 'cache-and-network',
+          //nextFetchPolicy: 'cache-and-network',
+          //fetchPolicy: 'network-only',
+          //nextFetchPolicy: 'network-only'
+          fetchPolicy: 'network-only',
+          watchQuery: {
+            nextFetchPolicy: 'network-only', 
+          },
+        }
+        
       },
+      
     })
     app.use(apolloProvider)
   }

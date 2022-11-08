@@ -35,20 +35,28 @@ export const MEMBER_GET_ALL = gql`
     }
   }`
 
-export const GET_MEMBER_NAME_FROM_ID = gql`
-  query getMemberNameFromID($c_mem_id_2: String) {
-    Member(where: {c_mem_id: {_eq: $c_mem_id_2}}) {
+export const GET_MEMBER_BASIC_AND_RELATED_MEMBER_FROM_IDS = gql`
+  query getMemberNameFromID($c_mem_ids: [String!]) {
+    Member(where: {c_mem_id: {_in: $c_mem_ids}}) {
       c_mem_id,
       b_mem_type1,
+      b_mem_type10,
       d_birth,
       c_name,
       c_name_other,
+    }
+    Relation(where: {_or: [{c_mem_id_1: {_in: $c_mem_ids}} {c_mem_id_2: {_in: $c_mem_ids}}]}) {
+      uuid
+      c_mem_id_1
+      c_mem_id_2
+      relation
     }
   }`
 
 export const GET_RELATED_MEMBER_FROM_ID = gql`
   query getRelatedMemberFromID($c_mem_id: String) {
     Relation(where: {_or: [{c_mem_id_1: {_eq: $c_mem_id}} {c_mem_id_2: {_eq: $c_mem_id}}]}) {
+      uuid
       c_mem_id_1
       c_mem_id_2
       relation
@@ -66,3 +74,12 @@ export const GET_NAME_FROM_IDS = gql`
     }
   }`
 
+export const MIGRATE_RELATION = gql`
+  query getMemberRelation {
+    Member(where: {b_mem_type1: {_eq: true}}) {
+      c_mem_id
+      c_mem_relative_memid
+      c_mem_relation
+    }
+  }
+`
