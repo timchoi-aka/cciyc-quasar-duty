@@ -1,4 +1,5 @@
-<!-- TODO: edit all member attributes -->
+<!-- TODO renew membership -->
+<!-- TODO renew print receipt-->
 <template>
   <!-- loading dialog -->
   <q-dialog v-model="waitingAsync" position="bottom">
@@ -640,7 +641,28 @@ export default defineComponent({
       })
     },
     async renewMember(c_mem_id) {
+
       this.$q.notify({ message: "會員: " + c_mem_id + "續會. （未完成）續會日期：" + qdate.formatDate(Date.now(), "YYYY年MM月DD日")});
+      // assume renew for 1 year
+      const expiry_date = qdate.formatDate(
+              qdate.subtractFromDate(
+                qdate.addToDate(this.memberInfo.d_enter_1, { years: 1 }),
+                { days: 1 }
+              ),
+              "YYYY/MM/DD"
+            )
+      /*
+      let data_RENEW_MEMBERSHIP = await this.$apollo.query({
+        query: RENEW_MEMBERSHIP,
+        variables: {
+          "c_mem_id": c_mem_id,
+          "d_renew_1": qdate.formatDate(Date.now(), "YYYY年MM月DD日"),
+          "d_expired_1": expiry_date
+        }
+      })
+      console.log("data_RENEW_MEMBERSHIP:" + JSON.stringify(data_RENEW_MEMBERSHIP));
+      */
+
     },
     async updateYouthRelatedMember(mem_id, excluded_mem_id = "") {
       // query and update mem_type_10 based on mem_id

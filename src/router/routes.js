@@ -20,6 +20,10 @@ const routes = [
         path: 'admin',
         component: () => import('src/pages/Member/MemberAdmin.vue'), meta: {requiresAuth: true},
       },
+      {
+        path: 'status',
+        component: () => import('src/pages/Member/Status.vue'), meta: {requiresAuth: true},
+      },
     ]
   },
   {

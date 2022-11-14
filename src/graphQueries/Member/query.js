@@ -32,6 +32,9 @@ export const MEMBER_GET_ALL = gql`
       d_update
       d_write
       m_addscom
+      MemberAccount {
+        c_receipt_no
+      }
     }
   }`
 
@@ -80,6 +83,29 @@ export const MIGRATE_RELATION = gql`
       c_mem_id
       c_mem_relative_memid
       c_mem_relation
+    }
+  }
+`
+
+export const GET_MEMBER_RECEIPTS_BY_PK = gql`
+  query getMemberReceiptsByPK($c_mem_id: String!) {
+    Member_by_pk(c_mem_id: $c_mem_id) {
+      MemberAccount {
+        c_act_code
+        c_desc
+        c_cash_type
+        c_receipt_no
+        c_type
+        c_user_id
+        d_create
+        i_prints
+        i_receipt_type
+        m_remark
+        d_clear
+        u_price_after_discount
+        c_name
+        b_clear
+      }
     }
   }
 `

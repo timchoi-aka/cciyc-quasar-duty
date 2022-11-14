@@ -1,4 +1,4 @@
-<!-- TODO set related member type10 -->
+<!-- TODO print receipt-->
 <!-- TODO check form before submit -->
 <template class="q-mb-md">
   <!-- loading dialog -->
@@ -6,6 +6,61 @@
     <LoadingDialog message="處理中" />
   </q-dialog>
 
+  <q-dialog v-model="receipt" class="q-ma-md-none q-pa-md-none">
+    <q-card class="receipt q-ma-md-none q-pa-md-none">
+      <q-card-section class="bg-primary row">
+        <q-space/>
+        <q-btn icon="print" flat class="bg-primary text-white" v-print="printObj">
+          <q-tooltip class="bg-white text-primary">列印</q-tooltip>  
+        </q-btn>
+      </q-card-section>
+      <!--<q-card-section class="row wrap justify-center q-my-none"> -->
+      <div id="printMe" class="row wrap justify-center q-my-none" style="font-size: 3px;">
+        <div class="row col-12"><span class="text-bold">長洲鄉事委員會青年綜合服務中心</span></div>
+        <div class="row col-12">CHEUNG CHAU RURAL COMMITTEE INTEGRATED YOUTH CENTRE</div>
+        <div class="row col-12">地址 Address: 長洲東灣道 Tung Wan Road, Cheung Chau</div>
+        <div class="row col-12"><span class="q-mx-sm">電話 Tel: 2981 1484</span><span class="q-mx-sm">yc@cciyc.com</span><span class="q-mx-sm">www.cciyc.com</span></div>
+        <div class="row col-12"><span class="text-bold">正式收據 OFFICIAL RECEIPT</span></div>
+        <div class="row col-12"><span class="text-center q-mx-lg">收據編號 Receipt No:</span></div>
+        <div class="row col-12"><span class="q-mx-lg text-center">日期 Date:</span><span class="q-mx-lg text-center">Copy:</span></div>
+        <div class="row col-12">
+          <span class="col-shrink">
+            <div>茲收到</div>
+            <div>Received From</div>
+          </span>
+          <span class="col-shrink">Username</span>
+        </div>
+        <div class="row col-12">
+          <span class="col-shrink">
+            <div>港幣</div>
+            <div>the sum of HK dollars</div>
+          </span>
+          <span class="col-shrink">Amount</span>
+        </div>
+        <div class="row col-12">
+          <span class="col-shrink">
+            <div>支付</div>
+            <div>being payment for</div>
+          </span>
+          <span class="col-shrink">Item</span>
+        </div>
+        <div class="row col-12">
+          <span class="col-shrink">
+            <div>經手人</div>
+            <div>issued by</div>
+          </span>
+          <span class="col-shrink">Item</span>
+        </div>
+        <div class="row col-12">收據字體會退色，若需要保留，請自行影印。</div>
+        <div class="row col-12 wrap">The receipt will eventually fade out.  Please make a photocopy for a more lasting document.</div>
+        <div class="row col-12">繳付：itemname</div>
+        <div class="row col-12">會員類別：membertype</div>
+        <div class="row col-12">屆滿日期：expirydate</div>
+      <!--</q-card-section> -->
+      </div>
+    </q-card>
+  
+  </q-dialog>
   <!-- personal info qcard -->
   <q-card class="q-ma-md-md q-ma-xs-none q-ma-sm-sm">
     <q-card-section class="q-pa-md-md q-pa-sm-sm q-pa-xs-xs text-h6 bg-blue-1"
@@ -216,6 +271,16 @@
       class="q-ma-md q-mb-xl"
       size="lg"
       square
+      color="secondary"
+      icon="money"
+      label="列印收據"
+      :disable="memberInfo.c_udf_1 && !['個人','永久'].includes(memberInfo.c_udf_1.label)"
+      @click="printReceipt"
+    />
+    <q-btn
+      class="q-ma-md q-mb-xl"
+      size="lg"
+      square
       color="primary"
       icon="add"
       label="新增會員"
@@ -231,6 +296,7 @@
 
 <script>
 import { ref, computed } from "vue";
+import print from "vue3-print-nb";
 import { useStore } from "vuex";
 import { date as qdate, is } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue";
@@ -248,6 +314,9 @@ export default {
     waitingAsync() {
       return this.awaitServerResponse > 0 ? true : false;
     },
+  },
+  directives: {
+    print,
   },
   components: {
     LoadingDialog,
@@ -345,6 +414,9 @@ export default {
     };
   },
   methods: {
+    printReceipt() {
+      this.receipt = true
+    },
     async getNameFromMemberID(value, index) {
       if (value != "") {
         this.$apollo.query({
@@ -527,6 +599,16 @@ export default {
   data() {
     return {
       qdate: qdate,
+      receipt: true,
+      printObj: {
+        id: "printMe",
+        preview: true,
+        previewTitle: "列印預覽", // The title of the preview window. The default is 打印预览
+        popTitle: "收據",
+        extraCss:
+          "https://cdn.bootcdn.net/ajax/libs/animate.css/4.1.1/animate.compat.css, https://cdn.bootcdn.net/ajax/libs/hover.css/2.3.1/css/hover-min.css,",
+        extraHead: '<meta http-equiv="Content-Language" content="en"/>',
+      },
       memberInfo: {
         b_mem_type1: false,
         b_mem_type10: false,
@@ -541,3 +623,21 @@ export default {
   },
 };
 </script>
+
+<style>
+.receipt {
+  width: 90mm;
+  height: 153mm;
+}
+
+
+  @page {
+    size: 30mm 50.8mm portrait;
+    margin: 0;
+    zoom: 50%;
+  }
+
+
+
+
+</style>
