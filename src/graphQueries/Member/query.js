@@ -6,6 +6,20 @@ export const LATEST_MEMBER_ID = gql`
       c_mem_id
     }
   }`
+  
+export const LATEST_RECEIPT_NO = gql`
+  subscription getLatestReceiptNo {
+    tbl_account(limit: 1, order_by: {c_receipt_no: desc}, where: {c_receipt_no: {_lt: "M"}}) {
+      c_receipt_no
+    }
+  }`
+
+export const LATEST_MRECEIPT_NO = gql`
+  subscription getLatestMReceiptNo {
+    tbl_account(limit: 1, order_by: {c_receipt_no: desc}) {
+      c_receipt_no
+    }
+  }`
 
 export const MEMBER_GET_ALL = gql`
   subscription getMember {

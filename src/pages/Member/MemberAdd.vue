@@ -1,4 +1,3 @@
-<!-- TODO print receipt-->
 <!-- TODO check form before submit -->
 <template class="q-mb-md">
   <!-- loading dialog -->
@@ -6,61 +5,6 @@
     <LoadingDialog message="處理中" />
   </q-dialog>
 
-  <q-dialog v-model="receipt" class="q-ma-md-none q-pa-md-none">
-    <q-card class="receipt q-ma-md-none q-pa-md-none">
-      <q-card-section class="bg-primary row">
-        <q-space/>
-        <q-btn icon="print" flat class="bg-primary text-white" v-print="printObj">
-          <q-tooltip class="bg-white text-primary">列印</q-tooltip>  
-        </q-btn>
-      </q-card-section>
-      <!--<q-card-section class="row wrap justify-center q-my-none"> -->
-      <div id="printMe" class="row wrap justify-center q-my-none" style="font-size: 3px;">
-        <div class="row col-12"><span class="text-bold">長洲鄉事委員會青年綜合服務中心</span></div>
-        <div class="row col-12">CHEUNG CHAU RURAL COMMITTEE INTEGRATED YOUTH CENTRE</div>
-        <div class="row col-12">地址 Address: 長洲東灣道 Tung Wan Road, Cheung Chau</div>
-        <div class="row col-12"><span class="q-mx-sm">電話 Tel: 2981 1484</span><span class="q-mx-sm">yc@cciyc.com</span><span class="q-mx-sm">www.cciyc.com</span></div>
-        <div class="row col-12"><span class="text-bold">正式收據 OFFICIAL RECEIPT</span></div>
-        <div class="row col-12"><span class="text-center q-mx-lg">收據編號 Receipt No:</span></div>
-        <div class="row col-12"><span class="q-mx-lg text-center">日期 Date:</span><span class="q-mx-lg text-center">Copy:</span></div>
-        <div class="row col-12">
-          <span class="col-shrink">
-            <div>茲收到</div>
-            <div>Received From</div>
-          </span>
-          <span class="col-shrink">Username</span>
-        </div>
-        <div class="row col-12">
-          <span class="col-shrink">
-            <div>港幣</div>
-            <div>the sum of HK dollars</div>
-          </span>
-          <span class="col-shrink">Amount</span>
-        </div>
-        <div class="row col-12">
-          <span class="col-shrink">
-            <div>支付</div>
-            <div>being payment for</div>
-          </span>
-          <span class="col-shrink">Item</span>
-        </div>
-        <div class="row col-12">
-          <span class="col-shrink">
-            <div>經手人</div>
-            <div>issued by</div>
-          </span>
-          <span class="col-shrink">Item</span>
-        </div>
-        <div class="row col-12">收據字體會退色，若需要保留，請自行影印。</div>
-        <div class="row col-12 wrap">The receipt will eventually fade out.  Please make a photocopy for a more lasting document.</div>
-        <div class="row col-12">繳付：itemname</div>
-        <div class="row col-12">會員類別：membertype</div>
-        <div class="row col-12">屆滿日期：expirydate</div>
-      <!--</q-card-section> -->
-      </div>
-    </q-card>
-  
-  </q-dialog>
   <!-- personal info qcard -->
   <q-card class="q-ma-md-md q-ma-xs-none q-ma-sm-sm">
     <q-card-section class="q-pa-md-md q-pa-sm-sm q-pa-xs-xs text-h6 bg-blue-1"
@@ -266,157 +210,202 @@
     </q-card-section>
   </q-card>
 
-  <div class="q-pa-xs-none q-pa-sm-sm q-pa-md-md col-xs-6 row justify-end">    
-    <q-btn
-      class="q-ma-md q-mb-xl"
-      size="lg"
-      square
-      color="secondary"
-      icon="money"
-      label="列印收據"
-      :disable="memberInfo.c_udf_1 && !['個人','永久'].includes(memberInfo.c_udf_1.label)"
-      @click="printReceipt"
-    />
-    <q-btn
-      class="q-ma-md q-mb-xl"
-      size="lg"
-      square
-      color="primary"
-      icon="add"
-      label="新增會員"
-      @click="addMember"
-    />
+  <div class="q-pa-xs-none q-pa-sm-sm q-pa-md-md col-xs-6 row justify-end">   
+    <div v-if="memberInfo.c_udf_1 != ''" class="text-h6 self-end q-ma-md">
+      <span>應收會費: {{memberInfo.c_udf_1.label? membershipFee[memberInfo.c_udf_1.label] : ''}}</span> 
+    </div>
+    <div>
+      <q-btn
+        class="q-ma-md self-end"
+        size="lg"
+        square
+        color="primary"
+        icon="add"
+        label="新增會員"
+        @click="addMember"
+      />
+    </div>
   </div>
-
-  <!-- <div class="row justify-start items-start q-pa-sm">
-  <div><q-checkbox v-model="memberInfo.b_mem_type2" /></div>
-  <div class="q-pa-xs col-2">小於15歲青年家屬</div>
-</div>-->
 </template>
 
-<script>
+<script setup>
 import { ref, computed } from "vue";
-import print from "vue3-print-nb";
 import { useStore } from "vuex";
 import { date as qdate, is } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue";
-import { GET_NAME_FROM_IDS, LATEST_MEMBER_ID } from "/src/graphQueries/Member/query.js";
+import { GET_NAME_FROM_IDS, LATEST_MEMBER_ID, LATEST_RECEIPT_NO } from "/src/graphQueries/Member/query.js";
 import {
   ADD_MEMBER_FROM_ID,
+  ADD_MEMBER_FROM_ID_WITH_PAYMENT,
   ADD_MEMBER_AND_RELATION_FROM_ID,
-  ADD_MEMBER_AND_RELATION_FROM_ID_UPDATE_RELATED_YOUTH_STATUS
+  ADD_MEMBER_AND_RELATION_FROM_ID_WITH_PAYMENT,
+  ADD_MEMBER_AND_RELATION_FROM_ID_UPDATE_RELATED_YOUTH_STATUS,
+  ADD_MEMBER_AND_RELATION_FROM_ID_UPDATE_RELATED_YOUTH_STATUS_WITH_PAYMENT
 } from "/src/graphQueries/Member/mutation.js";
-import {useSubscription} from "@vue/apollo-composable"
+import {useSubscription, useQuery} from "@vue/apollo-composable"
+
+let awaitServerResponse = ref(0)
+const waitingAsync = computed(() => awaitServerResponse > 0 ? true : false)
+
+// save current module
+const $store = useStore();
+$store.dispatch("currentModule/setCurrentModule", "member");
+
+// load graphql subscription on latest member id
+const { result: MemberData, loading } = useSubscription(
+  LATEST_MEMBER_ID,
+);
+
+// load graphql subscription on latest receipt number
+const { result: ReceiptData } = useSubscription(
+  LATEST_RECEIPT_NO,
+);
+
+/*
+let GET_NAME_FROM_IDS_variables = ref([])
+const { result: MemberName } = useQuery(
+  GET_NAME_FROM_IDS,
+  () => ({
+    c_mem_id: GET_NAME_FROM_IDS_variables
+  })
+)*/
+
+const username = computed(() => $store.getters["userModule/getUsername"])
+const latestMemberID = computed(() => MemberData.value? parseInt(MemberData.value.Member[0].c_mem_id)+1: [])
+// const MemberNameFromID = computed(() => MemberName.value?.Member[0]??[])
+const latestReceiptNO = computed(() => {
+  if (ReceiptData.value) {
+    let token = ReceiptData.value.tbl_account[0].c_receipt_no.split("-")
+    let receiptNo = parseInt(token[1])
+    receiptNo = (receiptNo + 1).toString()
+    while (receiptNo.length < 4) receiptNo = "0" + receiptNo
+    return token[0] + "-" + receiptNo
+  } else return null
+})
+
+const membershipFee = ref({
+  "個人": "$60",
+  "永久": "$100",
+  "青年義工(<25歲)": "免費",
+  "青年家人義工(>25歲)": "免費",
+  "社區義工": "免費",
+})
+
+const relationOptions = ["父母子女", "兄弟姐妹", "其他親人"]
+const udf1List = [
+  {
+    label: "全部",
+    value: "",
+  },
+  {
+    label: "個人",
+    value: "個人會員",
+  },
+  {
+    label: "永久",
+    value: "永久會員",
+  },
+  {
+    label: "青年義工(<25歲)",
+    value: "青年義工會員",
+  },
+  {
+    label: "青年家人義工(>25歲)",
+    value: "青年家人義工",
+  },
+  {
+    label: "社區義工",
+    value: "社區義工",
+  },
+]
+
+let relationTable = ref([
+  {
+    c_mem_id_1: "",
+    c_mem_id_2: "",
+    targetName: "",
+    relation: "",
+  },
+])
+
+let personalInfo = ref({
+  c_name: "",
+  c_name_other: "",
+  c_sex: "",
+  c_tel: "",
+  c_mobile: "",
+  d_birth: "",
+  c_email: "",
+  m_addscom: "",
+  age: "",
+})
+
+let memberInfo = ref({
+  b_mem_type1: false,
+  b_mem_type10: false,
+  c_udf_1: "",
+  c_update_user: username,
+  d_enter_1: qdate.formatDate(Date.now(), "YYYY/MM/DD"),
+  d_expired_1: "",
+  d_update: qdate.formatDate(Date.now(), "YYYY/MM/DD"),
+  d_write: qdate.formatDate(Date.now(), "YYYY/MM/DD"),
+})
+
+// functions
+function capitalize() {
+  if (personalInfo.value.c_name_other != "") {
+    const arr = personalInfo.value.c_name_other.split(" ");
+    for (var i = 0; i < arr.length; i++) {
+      arr[i] = arr[i].charAt(0).toUpperCase() + arr[i].slice(1);
+    }
+    personalInfo.value.c_name_other = arr.join(" ");
+  }
+}
+
+function calculateAge(value) {
+  if (qdate.isValid(value)) {
+    let now = new Date();
+    let birth = new Date(value);
+    let birthyear = birth.getFullYear();
+    birth = qdate.adjustDate(birth, { year: now.getFullYear() });
+    let offset = qdate.getDateDiff(now, birth, "days") < 0 ? -1 : 0;
+    if (birthyear == now.getFullYear()) {
+      return 0;
+    } else {
+      return qdate.getDateDiff(now, value, "years") + offset;
+    }
+  }
+}
+
+
+/* async function getNameFromMemberID(c_mem_ids, index) {
+  if (c_mem_ids != "") {
+    GET_NAME_FROM_IDS_variables.value = [c_mem_ids]
+    
+    const getNameFromID = MemberName?.Member??[];
+
+    if (getNameFromID.length > 0) {
+      this.relationTable[index].targetName = getNameFromID[0].c_name
+        ? getNameFromID[0].c_name
+        : getNameFromID[0].c_name_other;
+      this.relationTable[index].b_mem_type1 =
+        getNameFromID[0].b_mem_type1;
+      this.relationTable[index].age = this.calculateAge(getNameFromID[0].d_birth)
+    } else {
+      this.relationTable[index].targetName = "沒有此會員";
+      this.relationTable[index].age = null;
+    }
+  }
+} */
+</script>
+
+<script>
 
 export default {
   name: "MemberAdd",
-  computed: {
-    waitingAsync() {
-      return this.awaitServerResponse > 0 ? true : false;
-    },
-  },
-  directives: {
-    print,
-  },
-  components: {
-    LoadingDialog,
-  },
-  setup() {
-    // save current module
-    const $store = useStore();
-    $store.dispatch("currentModule/setCurrentModule", "member");
-
-    // load graphql subscription on latest member id
-    const { result, loading } = useSubscription(
-      LATEST_MEMBER_ID,
-    );
-
-    const personalInfo = ref({
-        c_name: "",
-        c_name_other: "",
-        c_sex: "",
-        c_tel: "",
-        c_mobile: "",
-        d_birth: "",
-        c_email: "",
-        m_addscom: "",
-        age: "",
-      })
-
-    function capitalize() {
-      if (personalInfo.value.c_name_other != "") {
-        const arr = personalInfo.value.c_name_other.split(" ");
-        for (var i = 0; i < arr.length; i++) {
-          arr[i] = arr[i].charAt(0).toUpperCase() + arr[i].slice(1);
-        }
-        personalInfo.value.c_name_other = arr.join(" ");
-      }
-    }
-
-    function calculateAge(value) {
-      if (qdate.isValid(value)) {
-        let now = new Date();
-        let birth = new Date(value);
-        let birthyear = birth.getFullYear();
-        birth = qdate.adjustDate(birth, { year: now.getFullYear() });
-        let offset = qdate.getDateDiff(now, birth, "days") < 0 ? -1 : 0;
-        if (birthyear == now.getFullYear()) {
-          return 0;
-        } else {
-          return qdate.getDateDiff(now, value, "years") + offset;
-        }
-      }
-    }
-
-    return {
-      username: computed(() => $store.getters["userModule/getUsername"]),
-      latestMemberID: computed(() => result.value? parseInt(result.value.Member[0].c_mem_id)+1: []),
-      loading,
-      capitalize,
-      calculateAge,
-      personalInfo,
-      awaitServerResponse: ref(0),
-      relationOptions: ["父母子女", "兄弟姐妹", "其他親人"],
-      udf1List: [
-        {
-          label: "全部",
-          value: "",
-        },
-        {
-          label: "個人",
-          value: "個人會員",
-        },
-        {
-          label: "永久",
-          value: "永久會員",
-        },
-        {
-          label: "青年義工(<25歲)",
-          value: "青年義工會員",
-        },
-        {
-          label: "青年家人義工(>25歲)",
-          value: "青年家人義工",
-        },
-        {
-          label: "社區義工",
-          value: "社區義工",
-        },
-      ],
-      relationTable: ref([
-        {
-          c_mem_id_1: "",
-          c_mem_id_2: "",
-          targetName: "",
-          relation: "",
-        },
-      ]),
-    };
-  },
+ 
   methods: {
-    printReceipt() {
-      this.receipt = true
-    },
+    
     async getNameFromMemberID(value, index) {
       if (value != "") {
         this.$apollo.query({
@@ -440,11 +429,28 @@ export default {
         });
       }
     },
+    
     async addMember() {
       this.awaitServerResponse++;
 
       let queryString;
       let memberRelation = [];
+      let receiptDescription = ""
+      let price = 0
+      let remark = ""
+      switch(this.memberInfo.c_udf_1.value) {
+        case "永久會員":
+          receiptDescription = "永久會員會費"
+          price = 135
+          remark = "繳 付：永久會員會費"
+          break
+        case "個人會員":
+          receiptDescription = "會員會費"
+          price = 35
+          remark = "繳 付：至" + qdate.formatDate(this.memberInfo.d_expired_1, "YYYY年MM月") + "之會費\r\n屆滿日期:" + qdate.formatDate(this.memberInfo.d_expired_1, "DD/MM/YYYY")
+          break
+      }
+
       this.relationTable.forEach((rel) => {
         if (rel.targetName != "" && rel.targetName != "沒有此會員") {
           memberRelation.push({
@@ -456,42 +462,85 @@ export default {
       });
       
       if (memberRelation.length == 0) {
-        queryString = ADD_MEMBER_FROM_ID;
+        if (price == 0) {
+          queryString = ADD_MEMBER_FROM_ID;
+        } else {
+          queryString = ADD_MEMBER_FROM_ID_WITH_PAYMENT;
+        }
       } else {
         if (this.relationTable.findIndex((element) => element.age >= 15 && element.age <= 24 && element.b_mem_type1) != -1) {
           this.memberInfo.b_mem_type10 = true;
         }
 
         if (this.personalInfo.age >= 15 && this.personalInfo.age <= 24) {
-          queryString = ADD_MEMBER_AND_RELATION_FROM_ID_UPDATE_RELATED_YOUTH_STATUS
+          if (price == 0) {
+            queryString = ADD_MEMBER_AND_RELATION_FROM_ID_UPDATE_RELATED_YOUTH_STATUS
+          } else {
+            queryString = ADD_MEMBER_AND_RELATION_FROM_ID_UPDATE_RELATED_YOUTH_STATUS_WITH_PAYMENT
+          }
         } else {
-          queryString = ADD_MEMBER_AND_RELATION_FROM_ID;
+          if (price == 0) {
+            queryString = ADD_MEMBER_AND_RELATION_FROM_ID;
+          } else {
+            queryString = ADD_MEMBER_AND_RELATION_FROM_ID_WITH_PAYMENT;
+          }
         }
+      }
+
+      let updateObject = {
+        c_mem_id: this.latestMemberID.toString(),
+        c_name: this.personalInfo.c_name,
+        c_name_other: this.personalInfo.c_name_other,
+        c_sex: this.personalInfo.c_sex,
+        c_tel: this.personalInfo.c_tel,
+        c_mobile: this.personalInfo.c_mobile,
+        m_addscom: this.personalInfo.m_addscom,
+        c_email: this.personalInfo.c_email,
+        d_birth: this.personalInfo.d_birth,
+        b_mem_type1: true,
+        b_mem_type10: this.memberInfo.b_mem_type10,
+        c_udf_1: this.memberInfo.c_udf_1.value,
+        c_update_user: this.memberInfo.c_update_user,
+        d_enter_1: this.memberInfo.d_enter_1,
+        d_expired_1: this.memberInfo.d_expired_1,
+        d_update: this.memberInfo.d_update,
+        d_write: this.memberInfo.d_write,
       }
 
       this.$apollo
         .mutate({
           mutation: queryString,
           variables: {
-            c_mem_id: this.latestMemberID.toString(),
-            c_name: this.personalInfo.c_name,
-            c_name_other: this.personalInfo.c_name_other,
-            c_sex: this.personalInfo.c_sex,
-            c_tel: this.personalInfo.c_tel,
-            c_mobile: this.personalInfo.c_mobile,
-            m_addscom: this.personalInfo.m_addscom,
-            c_email: this.personalInfo.c_email,
-            d_birth: this.personalInfo.d_birth,
-            b_mem_type1: true,
-            b_mem_type10: this.memberInfo.b_mem_type10,
-            c_udf_1: this.memberInfo.c_udf_1.value,
-            c_update_user: this.memberInfo.c_update_user,
-            d_enter_1: this.memberInfo.d_enter_1,
-            d_expired_1: this.memberInfo.d_expired_1,
-            d_update: this.memberInfo.d_update,
-            d_write: this.memberInfo.d_write,
+            memberObject: updateObject,
             relationObjects: memberRelation,
             related_ids: memberRelation.map(({c_mem_id_2})=>c_mem_id_2),
+            logObject: {
+              "username": this.username,
+              "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+              "module": "會員系統",
+              "action": "新增會員 " + this.latestMemberID.toString(),
+            },
+            accountObject: {
+              c_receipt_no: this.latestReceiptNO,
+              d_create: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+              i_receipt_type: 1, //type 1 = membership fee
+              c_desc: receiptDescription,
+              c_type: "新會員費",
+              u_discount: 0,
+              u_price_after_discount: price,
+              c_cash_type: "Cash",
+              c_cheque_no: "",
+              m_remark: remark,
+              c_mem_id: this.latestMemberID.toString(),
+              c_user_id: this.username,
+              c_name: this.personalInfo.c_name,
+              b_cssa: false,
+              b_refund: false,
+              b_OtherIncome: false,
+              b_clear: false,
+              d_clear: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+              i_prints: 0,
+            }
           },
         })
         .then((data) => {
@@ -596,48 +645,5 @@ export default {
       } else this.memberInfo.d_expired_1 = "";
     },
   },
-  data() {
-    return {
-      qdate: qdate,
-      receipt: true,
-      printObj: {
-        id: "printMe",
-        preview: true,
-        previewTitle: "列印預覽", // The title of the preview window. The default is 打印预览
-        popTitle: "收據",
-        extraCss:
-          "https://cdn.bootcdn.net/ajax/libs/animate.css/4.1.1/animate.compat.css, https://cdn.bootcdn.net/ajax/libs/hover.css/2.3.1/css/hover-min.css,",
-        extraHead: '<meta http-equiv="Content-Language" content="en"/>',
-      },
-      memberInfo: {
-        b_mem_type1: false,
-        b_mem_type10: false,
-        c_udf_1: "",
-        c_update_user: this.username,
-        d_enter_1: qdate.formatDate(Date.now(), "YYYY/MM/DD"),
-        d_expired_1: "",
-        d_update: qdate.formatDate(Date.now(), "YYYY/MM/DD"),
-        d_write: qdate.formatDate(Date.now(), "YYYY/MM/DD"),
-      },
-    };
-  },
 };
 </script>
-
-<style>
-.receipt {
-  width: 90mm;
-  height: 153mm;
-}
-
-
-  @page {
-    size: 30mm 50.8mm portrait;
-    margin: 0;
-    zoom: 50%;
-  }
-
-
-
-
-</style>

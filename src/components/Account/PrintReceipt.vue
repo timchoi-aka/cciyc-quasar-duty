@@ -68,7 +68,7 @@
 
 <script setup>
 import { useQuery } from "@vue/apollo-composable";
-import { computed, ref, defineProps } from "vue"
+import { computed, ref } from "vue"
 import { GET_MEMBER_RECEIPTS_BY_PK } from "src/graphQueries/Member/query"
 import { date as qdate } from "quasar"
 
