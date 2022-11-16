@@ -1,3 +1,4 @@
+<!-- TODO print receipt increment copy count -->
 <template>
   <!-- loading dialog -->
   <q-dialog v-model="waitingAsync" position="bottom">
