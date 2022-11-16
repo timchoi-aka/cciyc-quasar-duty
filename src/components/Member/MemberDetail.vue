@@ -1,5 +1,3 @@
-<!-- TODO renew membership -->
-<!-- TODO renew print receipt-->
 <template>
   <!-- renew modal -->
   <q-dialog v-model="renewDialog">

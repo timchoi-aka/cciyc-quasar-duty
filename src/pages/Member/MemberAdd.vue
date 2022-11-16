@@ -55,7 +55,7 @@
           mask="date"
           hint="YYYY/MM/DD"
           :rules="['date']"
-          @update:model-value="(value) => personalInfo.age = calculateAge(value)"
+          @update:model-value="(value) => updateType1Expire().then(personalInfo.age = ageUtil.calculateAge(value)) "
         >
           <template v-slot:append>
             <q-icon name="event" class="cursor-pointer">
@@ -66,7 +66,7 @@
               >
                 <q-date
                   v-model="personalInfo.d_birth"
-                  @update:model-value="(value)=>personalInfo.age = calculateAge(value)"
+                  @update:model-value="(value) => updateType1Expire().then(personalInfo.age = ageUtil.calculateAge(value)) "
                 >
                   <div class="row items-center justify-end">
                     <q-btn v-close-popup label="Close" color="primary" flat />
@@ -89,55 +89,6 @@
 
       <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-12">
         電郵地址<q-input filled v-model="personalInfo.c_email" type="email" />
-      </div>
-    </q-card-section>
-  </q-card>
-
-  <!-- membership info qcard -->
-  <q-card class="q-ma-md-md q-ma-xs-none q-ma-sm-sm">
-    <q-card-section class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md text-h6 bg-green-1">會籍</q-card-section>
-    <q-card-section class="row justify-start items-start q-pa-xs-xs q-pa-sm-sm q-pa-md-md">
-      <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-2 col-xs-12">
-        會籍<q-select
-          v-model="memberInfo.c_udf_1"
-          :options="udf1List"
-          label="選擇會藉"
-          @update:model-value="updateType1Expire"
-        />
-      </div>
-      <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-12">
-        入會日期
-        <q-input
-          filled
-          v-model="memberInfo.d_enter_1"
-          mask="date"
-          hint="YYYY/MM/DD"
-          :rules="['date']"
-          @update:model-value="updateType1Expire"
-        >
-          <template v-slot:append>
-            <q-icon name="event" class="cursor-pointer">
-              <q-popup-proxy
-                cover
-                transition-show="scale"
-                transition-hide="scale"
-              >
-                <q-date
-                  v-model="memberInfo.d_enter_1"
-                  @update:model-value="updateType1Expire"
-                >
-                  <div class="row items-center justify-end">
-                    <q-btn v-close-popup label="Close" color="primary" flat />
-                  </div>
-                </q-date>
-              </q-popup-proxy>
-            </q-icon>
-          </template>
-        </q-input>
-      </div>
-      <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-1 col-xs-12">
-        屆滿日期<br />
-        <div>{{ memberInfo.d_expired_1 }}</div>
       </div>
     </q-card-section>
   </q-card>
@@ -204,8 +155,57 @@
           square
           class="col-1 text-white bg-negative"
           icon="remove"
-          @click="relationTable.splice(index, 1)"
+          @click="relationTable.splice(index, 1) && updateType1Expire()"
         />
+      </div>
+    </q-card-section>
+  </q-card>
+
+  <!-- membership info qcard -->
+  <q-card class="q-ma-md-md q-ma-xs-none q-ma-sm-sm">
+    <q-card-section class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md text-h6 bg-green-1">會籍</q-card-section>
+    <q-card-section class="row justify-start items-start q-pa-xs-xs q-pa-sm-sm q-pa-md-md">
+      <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-2 col-xs-12">
+        會籍<q-select
+          v-model="memberInfo.c_udf_1"
+          :options="udf1List"
+          label="選擇會藉"
+          @update:model-value="updateType1Expire"
+        />
+      </div>
+      <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-12">
+        入會日期
+        <q-input
+          filled
+          v-model="memberInfo.d_enter_1"
+          mask="date"
+          hint="YYYY/MM/DD"
+          :rules="['date']"
+          @update:model-value="updateType1Expire"
+        >
+          <template v-slot:append>
+            <q-icon name="event" class="cursor-pointer">
+              <q-popup-proxy
+                cover
+                transition-show="scale"
+                transition-hide="scale"
+              >
+                <q-date
+                  v-model="memberInfo.d_enter_1"
+                  @update:model-value="updateType1Expire"
+                >
+                  <div class="row items-center justify-end">
+                    <q-btn v-close-popup label="Close" color="primary" flat />
+                  </div>
+                </q-date>
+              </q-popup-proxy>
+            </q-icon>
+          </template>
+        </q-input>
+      </div>
+      <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-1 col-xs-12">
+        屆滿日期<br />
+        <div>{{ memberInfo.d_expired_1 }}</div>
       </div>
     </q-card-section>
   </q-card>
@@ -243,6 +243,7 @@ import {
   ADD_MEMBER_AND_RELATION_FROM_ID_UPDATE_RELATED_YOUTH_STATUS_WITH_PAYMENT
 } from "/src/graphQueries/Member/mutation.js";
 import {useSubscription, useQuery} from "@vue/apollo-composable"
+import ageUtil from "src/lib/calculateAge.js"
 
 let awaitServerResponse = ref(0)
 const waitingAsync = computed(() => awaitServerResponse > 0 ? true : false)
@@ -361,7 +362,7 @@ function capitalize() {
     personalInfo.value.c_name_other = arr.join(" ");
   }
 }
-
+/*
 function calculateAge(value) {
   if (qdate.isValid(value)) {
     let now = new Date();
@@ -376,7 +377,7 @@ function calculateAge(value) {
     }
   }
 }
-
+*/
 
 /* async function getNameFromMemberID(c_mem_ids, index) {
   if (c_mem_ids != "") {
@@ -416,16 +417,18 @@ export default {
         }).then((data) => {
           const getNameFromID = data.data.Member;
           if (getNameFromID.length > 0) {
-          this.relationTable[index].targetName = getNameFromID[0].c_name
-            ? getNameFromID[0].c_name
-            : getNameFromID[0].c_name_other;
-          this.relationTable[index].b_mem_type1 =
-            getNameFromID[0].b_mem_type1;
-          this.relationTable[index].age = this.calculateAge(getNameFromID[0].d_birth)
-        } else {
-          this.relationTable[index].targetName = "沒有此會員";
-          this.relationTable[index].age = null;
-        }
+            this.relationTable[index].targetName = getNameFromID[0].c_name
+              ? getNameFromID[0].c_name
+              : getNameFromID[0].c_name_other;
+            this.relationTable[index].b_mem_type1 =
+              getNameFromID[0].b_mem_type1;
+            this.relationTable[index].age = ageUtil.calculateAge(getNameFromID[0].d_birth)
+            this.relationTable[index].d_birth = getNameFromID[0].d_birth
+            this.updateType1Expire();
+          } else {
+            this.relationTable[index].targetName = "沒有此會員";
+            this.relationTable[index].age = null;
+          }
         });
       }
     },
@@ -602,7 +605,7 @@ export default {
         });
       this.awaitServerResponse--;
     },
-    updateType1Expire() {
+    async updateType1Expire() {
       // console.log(this.memberInfo.d_enter_1 + ":" + qdate.isValid(this.memberInfo.d_enter_1))
       if (
         is.object(this.memberInfo.c_udf_1) &&
@@ -623,23 +626,50 @@ export default {
             this.memberInfo.d_expired_1 = "3000/01/01";
             break;
           case "青年義工會員":
-            this.memberInfo.d_expired_1 = qdate.formatDate(
-              qdate.subtractFromDate(
-                qdate.addToDate(this.personalInfo.d_birth, { years: 25 }),
-                { days: 1 }
-              ),
-              "YYYY/MM/DD"
-            );
+            if (!this.personalInfo.d_birth) {
+              this.memberInfo.d_expired_1 = "請輸入出生日期"
+            } else {
+              if (ageUtil.calculateAge(this.personalInfo.d_birth) >= 25) {
+                this.memberInfo.d_expired_1 = "已超過25歲"
+              } else {
+                this.memberInfo.d_expired_1 = qdate.formatDate(
+                  qdate.subtractFromDate(
+                    qdate.addToDate(this.personalInfo.d_birth, { years: 25 }),
+                    { days: 1 }
+                  ),
+                  "YYYY/MM/DD"
+                )
+              }
+            }
+            
             break;
           case "青年家人義工":
             // to be updated after membership relation
-            this.memberInfo.d_expired_1 = qdate.formatDate(
-              qdate.subtractFromDate(
-                qdate.addToDate(this.personalInfo.d_birth, { years: 14 }),
-                { days: 1 }
-              ),
-              "YYYY/MM/DD"
-            );
+            console.log(JSON.stringify(this.relationTable))
+            
+            // set a temp expiry date, loop all related members
+            let expiryDate = 0;
+
+            if (this.relationTable.length > 0) {
+              this.relationTable.forEach((data) => {
+                if (ageUtil.calculateAge(data.d_birth) <= 24 && ageUtil.calculateAge(data.d_birth) >= 15) {
+                  let tempExpiryDate = qdate.formatDate(
+                                        qdate.subtractFromDate(
+                                          qdate.addToDate(data.d_birth, { years: 25 }),
+                                          { days: 1 }
+                                        ),
+                                        "YYYY/MM/DD"
+                                      );
+                    
+                  if (expiryDate == 0 || expiryDate < tempExpiryDate) {
+                    console.log("tempExpiryDate:" + tempExpiryDate)
+                    expiryDate = tempExpiryDate
+                  }
+                }
+              })
+            }
+           
+            this.memberInfo.d_expired_1 = expiryDate == 0? "沒有關聯青年會員": expiryDate
             break;
         }
       } else this.memberInfo.d_expired_1 = "";

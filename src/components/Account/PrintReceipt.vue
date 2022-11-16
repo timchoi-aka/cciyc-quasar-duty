@@ -11,7 +11,7 @@
       @row-click="(event, row, index) => setReceipt(row)"
       />
     
-    <div v-if="Object.keys(modalObject).length > 0" class="row q-ma-md-none q-pa-md-none col-3 bg-grey-3 justify-center" style="font-size: 0.1rem;">
+    <div v-if="Object.keys(modalObject).length > 0" class="row q-ma-md-none q-pa-md-none col-3 bg-grey-3 justify-center">
       <div class="bg-primary row col-12" style="min-height: 50px; max-height: 50px;">
         <q-btn icon="print" flat class="bg-primary text-white col-shrink" v-print="printObj">
           <q-tooltip class="bg-white text-primary">列印</q-tooltip>  
@@ -22,45 +22,54 @@
         </q-btn>
       </div>
       
-      <div id="printMe" class="row col-12 wrap justify-center q-my-none bg-white self-start" style="width: 80mm; margin: 0; overflow: hidden; border: 1px solid">
-        <div class="row col-12"><span class="text-bold">長洲鄉事委員會青年綜合服務中心</span></div>
-        <div class="row col-12">CHEUNG CHAU RURAL COMMITTEE INTEGRATED YOUTH CENTRE</div>
-        <div class="row col-12">地址 Address: 長洲東灣道 Tung Wan Road, Cheung Chau</div>
-        <div class="row col-12"><span class="q-mx-sm">電話 Tel: 2981 1484</span><span class="q-mx-sm">yc@cciyc.com</span><span class="q-mx-sm">www.cciyc.com</span></div>
-        <div class="row col-12"><span class="text-bold">正式收據 OFFICIAL RECEIPT</span></div>
-        <div class="row col-12"><span class="text-center"><div>收據編號</div><div>Receipt No:</div></span><span class="col-shrink self-center">{{modalObject.c_receipt_no}}</span></div>
-        <div class="row col-12"><span class="q-mx-lg text-center">日期 Date: {{qdate.formatDate(modalObject.d_create, "DD/MM/YYYY")}}</span><span class="q-mx-lg text-center">Copy: {{modalObject.i_prints}}</span></div>
+      <div id="printMe" class="row col-12 justify-center bg-white self-start print-area">
+        <div class="row self-center text-bold q-my-none">長洲鄉事委員會青年綜合服務中心</div>
+        <div class="column q-my-none"><div class="self-center q-my-none">CHEUNG CHAU RURAL COMMITTEE</div><div class="self-center q-my-none">INTEGRATED YOUTH CENTRE</div></div>
+        <div class="row self-center q-my-none">
+          <div class="q-mr-xs">
+            <div>地址:</div>
+            <div>Address:</div>
+          </div>
+          <div>
+            <div>長洲東灣道</div>
+            <div>Tung Wan Road, Cheung Chau</div>
+          </div>
+        </div>
+        <div class="row"><span class="q-mr-xs"><q-icon name="phone"/>2981 1484</span><span class="q-mr-xs"><q-icon name="email"/>yc@cciyc.com</span><span><q-icon name="public"/>cciyc.com</span></div>
+        <div class="row self-center text-bold">正式收據 OFFICIAL RECEIPT</div>
+        <div class="row text-left">收據編號 Receipt No: {{modalObject.c_receipt_no}}</div>
+        <div class="row"><span class="q-mx-lg text-center">日期 Date: {{qdate.formatDate(modalObject.d_create, "DD/MM/YYYY")}}</span><span class="q-mx-lg text-center">Copy: {{modalObject.i_prints}}</span></div>
         <div class="row col-12">
-          <span class="col-shrink">
+          <span class="col-4 q-ml-md">
             <div>茲收到</div>
             <div>Received From</div>
           </span>
-          <span class="col-shrink self-center">{{modalObject.c_name}}</span>
+          <span class="col-7 self-center">{{modalObject.c_name}}</span>
         </div>
         <div class="row col-12">
-          <span class="col-shrink">
+          <span class="col-6 q-ml-md">
             <div>港幣</div>
             <div>the sum of HK dollars</div>
           </span>
-          <span class="col-shrink self-center">{{modalObject.u_price_after_discount}}</span>
+          <span class="col-5 self-center">{{modalObject.u_price_after_discount}}</span>
         </div>
         <div class="row col-12">
-          <span class="col-shrink">
+          <span class="col-5 q-ml-md">
             <div>支付</div>
             <div>being payment for</div>
           </span>
-          <span class="col-shrink self-center">{{modalObject.c_desc}}</span>
+          <span class="col-6 self-center">{{modalObject.c_desc}}</span>
         </div>
         <div class="row col-12">
-          <span class="col-shrink">
+          <span class="col-3 q-ml-md">
             <div>經手人</div>
             <div>issued by</div>
           </span>
-          <span class="col-shrink self-center">{{modalObject.c_user_id}}</span>
+          <span class="col-8 self-center">{{modalObject.c_user_id}}</span>
         </div>
-        <div class="row col-12">收據字體會退色，若需要保留，請自行影印。</div>
+        <div class="row col-12 q-ml-md">收據字體會退色，若需要保留，請自行影印。</div>
         <div class="row col-12 wrap">The receipt will eventually fade out.  Please make a photocopy for a more lasting document.</div>
-        <div class="row col-12" v-html="showRemark(modalObject.m_remark)"/>
+        <div class="row col-12 q-ml-md" v-html="showRemark(modalObject.m_remark)"/>
       </div>
     </div>
   </div>
@@ -146,17 +155,23 @@ export default {
 </script>
 
 <style>
-/*
-.receipt {
-  width: 30mm;
-  height: 51mm;
+@media screen {
+  .print-area {
+    width: 80mm; 
+    margin: 0; 
+    overflow: hidden; 
+    border: 1px solid
+  }
 }
 
 @media print {
   @page {
-    size: 30mm 50.8mm portrait;
-    margin: 1mm;
-    zoom: 30%;
+    size: 80mm 140mm portrait;
+    margin: 0;
   }
-} */
+  .print-area { 
+    overflow: hidden;
+    border: none;
+  }
+}
 </style>
