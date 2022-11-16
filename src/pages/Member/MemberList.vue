@@ -8,6 +8,7 @@
   <q-dialog
     v-model="printReceiptDisplay"
     full-height
+    full-width
     transition-show="slide-up"
     transition-hide="slide-down"
     class="q-pa-none"

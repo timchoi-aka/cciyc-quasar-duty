@@ -1,5 +1,5 @@
 <template>
-  <div class="column">
+  <div class="row">
     <q-table
       :rows="account"
       :loading="loading"
@@ -7,12 +7,12 @@
       :pagination="defaultPagination"
       color="primary"
       row-key="c_receipt_no"
-      class="col-4"
+      class="col-9"
       @row-click="(event, row, index) => setReceipt(row)"
       />
     
-    <div v-if="Object.keys(modalObject).length > 0" class="q-ma-md-none q-pa-md-none col-8" style="font-size: 0.1rem;">
-      <div class="bg-primary row">
+    <div v-if="Object.keys(modalObject).length > 0" class="row q-ma-md-none q-pa-md-none col-3 bg-grey-3 justify-center" style="font-size: 0.1rem;">
+      <div class="bg-primary row col-12" style="min-height: 50px; max-height: 50px;">
         <q-btn icon="print" flat class="bg-primary text-white col-shrink" v-print="printObj">
           <q-tooltip class="bg-white text-primary">列印</q-tooltip>  
         </q-btn>
@@ -22,7 +22,7 @@
         </q-btn>
       </div>
       
-      <div id="printMe" class="row wrap justify-center q-my-none bg-white" style="width: 80mm; margin: 0; overflow: hidden;">
+      <div id="printMe" class="row col-12 wrap justify-center q-my-none bg-white self-start" style="width: 80mm; margin: 0; overflow: hidden; border: 1px solid">
         <div class="row col-12"><span class="text-bold">長洲鄉事委員會青年綜合服務中心</span></div>
         <div class="row col-12">CHEUNG CHAU RURAL COMMITTEE INTEGRATED YOUTH CENTRE</div>
         <div class="row col-12">地址 Address: 長洲東灣道 Tung Wan Road, Cheung Chau</div>

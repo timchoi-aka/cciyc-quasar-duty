@@ -1,6 +1,29 @@
 <!-- TODO renew membership -->
 <!-- TODO renew print receipt-->
 <template>
+  <!-- renew modal -->
+  <q-dialog v-model="renewDialog">
+    <q-card>
+      <q-card-section class="bg-primary text-white text-h6">
+        {{renewObject.c_mem_id}} - 續會 <span v-if="renewObject.duration == 1">(1年)</span><span v-else>(永久)</span>
+      </q-card-section>
+      <q-card-section class="bg-blue-1 text-h6">
+        <div>姓名: {{renewObject.c_name}}</div>
+        <div>年齡: {{ageUtil.calculateAge(renewObject.d_birth)}}</div>
+        <div>會藉: {{renewObject.c_udf_1}}</div>
+        <div>現時屆滿日期: {{qdate.formatDate(renewObject.d_expired_1, "YYYY年MM月DD日")}}</div>
+      </q-card-section>
+      <q-card-section class="bg-yellow-1 text-h6">
+        <div>新屆滿日期: {{qdate.formatDate(renewObject.new_expired_1, "YYYY年MM月DD日")}}</div>
+        <div>費用: {{renewObject.renewFee}}</div>
+      </q-card-section>
+      <q-card-actions class="row justify-end">
+        <q-btn icon="cancel" class="bg-negative text-white" label="取消" v-close-popup/>
+        <q-btn icon="check" class="bg-secondary text-white" label="確定" v-close-popup="-1" @click="renewMember(renewObject)"/>
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+
   <!-- loading dialog -->
   <q-dialog v-model="waitingAsync" position="bottom">
     <LoadingDialog message="處理中"/>
@@ -37,7 +60,6 @@
     </q-dialog>
 
     <q-card>
-      <!--<q-btn @click="test" label="test"/>-->
       <q-card-section class="bg-primary text-white text-h6">
         <div class="row">
           <div class="col-*">
@@ -79,8 +101,22 @@
             direction="right"
             class="q-ml-xs"
           >
-            <q-fab-action color="positive" @click="renewMember(member.c_mem_id)" icon="mail" label="續會" />
-            <q-fab-action color="negative" @click="quitMember(member.c_mem_id)" icon="alarm" label="退會" />
+            <q-btn-dropdown v-if="member.c_udf_1 != '永久會員'" color="positive" icon="mail" label="續會" >
+              <q-list>
+                <q-item clickable v-close-popup @click="renewMemberModal(member, 1)">
+                  <q-item-section>
+                    <q-item-label>一年</q-item-label>
+                  </q-item-section>
+                </q-item>
+
+                <q-item clickable v-close-popup @click="renewMemberModal(member, 999)">
+                  <q-item-section>
+                    <q-item-label>永久</q-item-label>
+                  </q-item-section>
+                </q-item>
+              </q-list>
+            </q-btn-dropdown>
+            <q-fab-action square color="negative" @click="quitMember(member.c_mem_id)" icon="alarm" label="退會" />
           </q-fab>
           <q-space/>
         </div>
@@ -230,10 +266,10 @@ import { defineComponent, computed, ref } from "vue";
 import { useStore } from "vuex";
 import LoadingDialog from "components/LoadingDialog.vue"
 import { date as qdate, is} from "quasar";
-import { DELETE_MEMBER_BY_ID, UPDATE_RELATED_YOUTH_MEMBER_STATUS, QUIT_MEMBER_BY_ID, UPDATE_MEMBER_BY_ID, INSERT_RELATION, UPDATE_RELATION, DELETE_RELATION } from "/src/graphQueries/Member/mutation.js"
-import { GET_RELATED_MEMBER_FROM_ID, GET_NAME_FROM_IDS, GET_MEMBER_BASIC_AND_RELATED_MEMBER_FROM_IDS } from "/src/graphQueries/Member/query.js"
+import { DELETE_MEMBER_BY_ID, UPDATE_RELATED_YOUTH_MEMBER_STATUS, QUIT_MEMBER_BY_ID, UPDATE_MEMBER_BY_ID, INSERT_RELATION, UPDATE_RELATION, DELETE_RELATION, RENEW_MEMBER_FROM_ID_WITH_PAYMENT } from "/src/graphQueries/Member/mutation.js"
+import { GET_RELATED_MEMBER_FROM_ID, GET_NAME_FROM_IDS, GET_MEMBER_BASIC_AND_RELATED_MEMBER_FROM_IDS, LATEST_RECEIPT_NO } from "/src/graphQueries/Member/query.js"
 import ageUtil from "src/lib/calculateAge.js"
-import gql from "graphql-tag";
+import {useSubscription} from "@vue/apollo-composable"
 
 export default defineComponent({
   name: "MemberDetail",
@@ -267,6 +303,13 @@ export default defineComponent({
   setup() {
     const $store = useStore();
     const isDebug = false;
+    const renewDialog = ref(false)
+    const renewObject = ref({})
+    
+    const { result: ReceiptData } = useSubscription(
+      LATEST_RECEIPT_NO,
+    );
+    
     function debug(args) {
       if (isDebug) {
         console.debug(args)
@@ -278,54 +321,21 @@ export default defineComponent({
       isSystemAdmin: computed(() => $store.getters["userModule/getSystemAdmin"]),
       isCenterIC: computed(() => $store.getters["userModule/getCenterIC"]),
       Membershipfab: ref(false),
+      latestReceiptNO: computed(() => {
+        if (ReceiptData.value) {
+          let token = ReceiptData.value.tbl_account[0].c_receipt_no.split("-")
+          let receiptNo = parseInt(token[1])
+          receiptNo = (receiptNo + 1).toString()
+          while (receiptNo.length < 4) receiptNo = "0" + receiptNo
+          return token[0] + "-" + receiptNo
+        } else return null
+      }),
       debug,
+      renewDialog,
+      renewObject,
     }
   },
   methods: {
-    async test() {
-      let r1 = await this.$apollo.query({
-        query: gql`
-          query {
-            Member (limit: 5, offset: 1) {
-              c_mem_id
-            }
-          }`,
-        //fetchPolicy: 'network-only'
-      })
-      console.log(JSON.stringify(r1));
-      let r2 = await this.$apollo.query({
-        query: gql`
-          query {
-            Member(where: {c_mem_id: {_eq: "4080"}}) {
-              c_name
-            }
-          }`,
-        //fetchPolicy: 'network-only'
-      })
-      console.log(JSON.stringify(r2))
-      let r3 = await this.$apollo.mutate({
-        mutation: gql`
-          mutation {
-            update_Member(where: {c_mem_id: {_eq: "4080"}}, _set: {c_name: "Test8"}) {
-              returning {
-                c_name
-              }
-            }
-          }`,
-        //fetchPolicy: 'network-only'
-      })
-      console.log(JSON.stringify(r3))
-      let r4 = await this.$apollo.query({
-        query: gql`
-          query {
-            Member(where: {c_mem_id: {_eq: "4080"}}) {
-              c_name
-            }
-          }`,
-        fetchPolicy: 'network-only'
-      })
-      console.log(JSON.stringify(r4))
-    },
     async getNameFromMemberID(value, index) {
       if (value != "") {
         this.$apollo.query({
@@ -640,29 +650,83 @@ export default defineComponent({
         this.awaitServerResponse--
       })
     },
-    async renewMember(c_mem_id) {
-
-      this.$q.notify({ message: "會員: " + c_mem_id + "續會. （未完成）續會日期：" + qdate.formatDate(Date.now(), "YYYY年MM月DD日")});
-      // assume renew for 1 year
-      const expiry_date = qdate.formatDate(
-              qdate.subtractFromDate(
-                qdate.addToDate(this.memberInfo.d_enter_1, { years: 1 }),
-                { days: 1 }
-              ),
-              "YYYY/MM/DD"
-            )
+    async renewMember(renewObject) {
+      const remark = renewObject.duration == 1? "繳 付：至" + qdate.formatDate(renewObject.new_expired_1, "YYYY年MM月") + "之會費\r\n屆滿日期:" + qdate.formatDate(renewObject.new_expired_1, "DD/MM/YYYY") : "繳 付：永久會員會費"
+      const renewDuration = renewObject.duration == 1? "(1年) " : "(永久) "
+      const logObject = {
+        "username": this.username,
+        "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+        "module": "會員系統",
+        "action": "會員續會" + renewDuration + renewObject.c_mem_id + " 會藉: " + renewObject.c_udf_1 + " 新屆滿日期: " + qdate.formatDate(renewObject.new_expired_1, "YYYY年MM月DD日") + " 費用: " + renewObject.renewFee,
+      }
+      const accountObject = {
+        c_receipt_no: this.latestReceiptNO,
+        d_create: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+        i_receipt_type: 1, //type 1 = membership fee
+        c_desc: renewObject.duration == 1? "會員續會費" : "永久會員(會員升級)續會費",
+        c_type: "續會員費",
+        u_discount: 0,
+        u_price_after_discount: renewObject.renewFee,
+        c_cash_type: "Cash",
+        c_cheque_no: "",
+        m_remark: remark,
+        c_mem_id: renewObject.c_mem_id,
+        c_user_id: this.username,
+        c_name: renewObject.c_name,
+        b_cssa: false,
+        b_refund: false,
+        b_OtherIncome: false,
+        b_clear: false,
+        d_clear: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+        i_prints: 0,
+      }
+      const memberObject = {
+        c_udf_1: renewObject.duration == 1? renewObject.c_udf_1 : "永久會員",
+        d_expired_1: renewObject.new_expired_1,
+        c_update_user: this.username,
+        d_update: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+        d_write: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+      }
+      this.$apollo.mutate({
+        mutation: RENEW_MEMBER_FROM_ID_WITH_PAYMENT, 
+        variables: {
+          c_mem_id: renewObject.c_mem_id,
+          logObject: logObject,
+          memberObject: memberObject,
+          accountObject: accountObject,
+        }
+      }).then((data) => {
+        this.$q.notify({ message: "會員: " + data.data.update_Member_by_pk.c_mem_id + "續會成功. 續會日期：" + qdate.formatDate(Date.now(), "YYYY年MM月DD日")});
+      })
       /*
-      let data_RENEW_MEMBERSHIP = await this.$apollo.query({
-        query: RENEW_MEMBERSHIP,
+      let data_RENEW_MEMBERSHIP = await this.$apollo.mutate({
+        mutation: RENEW_MEMBERSHIP,
         variables: {
           "c_mem_id": c_mem_id,
           "d_renew_1": qdate.formatDate(Date.now(), "YYYY年MM月DD日"),
           "d_expired_1": expiry_date
         }
+      })*/
+      // console.log("data_RENEW_MEMBERSHIP:" + JSON.stringify(data_RENEW_MEMBERSHIP));
+    },
+    renewMemberModal(member, duration) {
+      this.renewDialog = true;
+      // assume renew for 1 year
+      const expiryDateOneYear = qdate.subtractFromDate(
+          qdate.addToDate(member.d_expired_1, { years: 1 }),
+          { days: 1 }
+        )
+        
+      this.renewObject = ref({
+        c_mem_id: member.c_mem_id,
+        duration: duration,
+        c_name: member.c_name,
+        d_birth: member.d_birth,
+        c_udf_1: member.c_udf_1,
+        d_expired_1: member.d_expired_1,
+        new_expired_1: duration == 1? expiryDateOneYear : qdate.formatDate(new Date("3000/01/01"), "YYYY-MM-DDTHH:mm:ss"),
+        renewFee: duration == 1? 35 : 100
       })
-      console.log("data_RENEW_MEMBERSHIP:" + JSON.stringify(data_RENEW_MEMBERSHIP));
-      */
-
     },
     async updateYouthRelatedMember(mem_id, excluded_mem_id = "") {
       // query and update mem_type_10 based on mem_id

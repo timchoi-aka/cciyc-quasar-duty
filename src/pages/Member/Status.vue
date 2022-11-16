@@ -14,11 +14,11 @@ export default {
     return {
       development: {
         "新增會員": true,
-        "新增會員-列印收據": false,
+        "新增會員-列印收據": true,
         "修改會員資料": true,
         "退會": true,
-        "續會": false,
-        "續會列印收據": false,
+        "續會": true,
+        "續會列印收據": true,
         "刪除會員": true,
         "搜尋會員": true,
       }

@@ -32,12 +32,15 @@ export const ADD_MEMBER_FROM_ID = gql`
   }`
 
 export const ADD_MEMBER_FROM_ID_WITH_PAYMENT = gql`
-  mutation addMemberFromID ($logObject: Log_insert_input! = {}, $memberObject: Member_insert_input = {}, $accountObject: tbl_account_insert_input = {}) 
+  mutation addMemberFromID (
+    $logObject: Log_insert_input! = {}, 
+    $memberObject: Member_insert_input = {}, 
+    $accountObject: tbl_account_insert_input = {}
+  ) 
   {
-    insert_Member_one(object: $memberObject)
-      {
+    insert_Member_one(object: $memberObject) {
         c_mem_id
-      }
+    }
     insert_Log_one(object: $logObject) {
       log_id
     }
@@ -45,59 +48,39 @@ export const ADD_MEMBER_FROM_ID_WITH_PAYMENT = gql`
       c_receipt_no
     }
   }`
-  /*
-   mutation addMemberFromID (
-    $c_mem_id: String!,
-    $c_name: String
-    $c_name_other: String,
-    $c_sex: String,
-    $c_tel: String,
-    $c_mobile: String,
-    $c_user_id: String
-    $d_birth: datetime2,
-    $b_mem_type1: Boolean,
-    $c_udf_1: String,
-    $c_update_user: String,
-    $d_enter_1: datetime2,
-    $d_expired_1: datetime2,
-    $d_update: datetime2,
-    $d_write: datetime2,
-    $m_addscom: String,
-    $c_email: String,
-  ) 
-  {
-    insert_Member_one(object: {
-      c_mem_id: $c_mem_id,
-      c_name: $c_name,
-      c_name_other: $c_name_other,
-      c_sex: $c_sex,
-      c_tel: $c_tel,
-      c_mobile: $c_mobile,
-      m_addscom: $m_addscom,
-      c_email: $c_email,
-      d_birth: $d_birth,
-      b_mem_type1: $b_mem_type1,
-      c_udf_1: $c_udf_1,
-      c_update_user: $c_update_user,
-      d_enter_1: $d_enter_1,
-      d_expired_1: $d_expired_1,
-      d_update: $d_update,
-      d_write: $d_write,
-    })
-      {
+
+  export const RENEW_MEMBER_FROM_ID_WITH_PAYMENT = gql`
+    mutation addMemberFromID (
+      $c_mem_id: String!
+      $logObject: Log_insert_input! = {}, 
+      $memberObject:  Member_set_input = {}, 
+      $accountObject: tbl_account_insert_input = {}
+    ) 
+    {
+      update_Member_by_pk(pk_columns: {c_mem_id: $c_mem_id}, _set: $memberObject) {
         c_mem_id
       }
-  }*/
+      insert_Log_one(object: $logObject) {
+        log_id
+      }
+      insert_tbl_account_one(object: $accountObject) {
+        c_receipt_no
+      }
+    }`
+  
   export const ADD_MEMBER_AND_RELATION_FROM_ID = gql`
     mutation addMemberFromID (
+      $logObject: Log_insert_input! = {}, 
       $memberObject: Member_insert_input = {}
       $relationObjects: [Relation_insert_input!] = {},
     ) 
     {
-      insert_Member_one(object: $memberObject)
-        {
-          c_mem_id
-        }
+      insert_Member_one(object: $memberObject) {
+        c_mem_id
+      }
+      insert_Log_one(object: $logObject) {
+        log_id
+      }
       insert_Relation(objects: $relationObjects) {
         returning {
           c_mem_id_1
@@ -109,21 +92,24 @@ export const ADD_MEMBER_FROM_ID_WITH_PAYMENT = gql`
 
 export const ADD_MEMBER_AND_RELATION_FROM_ID_WITH_PAYMENT = gql`
   mutation addMemberFromID (
+    $logObject: Log_insert_input! = {}, 
     $memberObject: Member_insert_input = {}
     $relationObjects: [Relation_insert_input!] = {},
     $accountObject: tbl_account_insert_input = {}
   ) 
   {
-    insert_Member_one(object: $memberObject)
-      {
-        c_mem_id
-      }
+    insert_Member_one(object: $memberObject) {
+      c_mem_id
+    }
     insert_Relation(objects: $relationObjects) {
       returning {
         c_mem_id_1
         c_mem_id_2
         relation
       }
+    }
+    insert_Log_one(object: $logObject) {
+      log_id
     }
     insert_tbl_account_one(object: $accountObject) {
       c_receipt_no
@@ -132,22 +118,25 @@ export const ADD_MEMBER_AND_RELATION_FROM_ID_WITH_PAYMENT = gql`
 
 export const ADD_MEMBER_AND_RELATION_FROM_ID_UPDATE_RELATED_YOUTH_STATUS = gql`
   mutation addMemberFromID (
+    $logObject: Log_insert_input! = {}, 
     $memberObject: Member_insert_input = {}
     $relationObjects: [Relation_insert_input!] = {},
     $related_ids: [String!] = [],
   ) 
   {
-    insert_Member_one(object: $memberObject)
-      {
-        c_mem_id
-      }
+    insert_Member_one(object: $memberObject) {
+      c_mem_id
+    }
     insert_Relation(objects: $relationObjects) {
       returning {
         c_mem_id_1
         c_mem_id_2
         relation
       }
-    },
+    }
+    insert_Log_one(object: $logObject) {
+      log_id
+    }
     update_Member(where: {c_mem_id: {_in: $related_ids}}, _set: {b_mem_type10: true}) {
       affected_rows
     }
@@ -155,25 +144,28 @@ export const ADD_MEMBER_AND_RELATION_FROM_ID_UPDATE_RELATED_YOUTH_STATUS = gql`
 
   export const ADD_MEMBER_AND_RELATION_FROM_ID_UPDATE_RELATED_YOUTH_STATUS_WITH_PAYMENT = gql`
     mutation addMemberFromID (
+      $logObject: Log_insert_input! = {}, 
       $memberObject: Member_insert_input = {}
       $relationObjects: [Relation_insert_input!] = {},
       $related_ids: [String!] = [],
       $accountObject: tbl_account_insert_input = {}
     ) 
     {
-      insert_Member_one(object: $memberObject)
-        {
-          c_mem_id
-        }
+      insert_Member_one(object: $memberObject) {
+        c_mem_id
+      }
       insert_Relation(objects: $relationObjects) {
         returning {
           c_mem_id_1
           c_mem_id_2
           relation
         }
-      },
+      }
       update_Member(where: {c_mem_id: {_in: $related_ids}}, _set: {b_mem_type10: true}) {
         affected_rows
+      }
+      insert_Log_one(object: $logObject) {
+        log_id
       }
       insert_tbl_account_one(object: $accountObject) {
         c_receipt_no
