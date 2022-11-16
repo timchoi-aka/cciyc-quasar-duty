@@ -644,9 +644,6 @@ export default {
             
             break;
           case "青年家人義工":
-            // to be updated after membership relation
-            console.log(JSON.stringify(this.relationTable))
-            
             // set a temp expiry date, loop all related members
             let expiryDate = 0;
 
@@ -662,7 +659,6 @@ export default {
                                       );
                     
                   if (expiryDate == 0 || expiryDate < tempExpiryDate) {
-                    console.log("tempExpiryDate:" + tempExpiryDate)
                     expiryDate = tempExpiryDate
                   }
                 }
