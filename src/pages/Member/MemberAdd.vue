@@ -262,18 +262,18 @@ const { result: ReceiptData } = useSubscription(
   LATEST_RECEIPT_NO,
 );
 
-/*
 let GET_NAME_FROM_IDS_variables = ref([])
-const { result: MemberName } = useQuery(
+const { result: MemberName, onResult: GET_NAME_FROM_IDS_onResult } = useQuery(
   GET_NAME_FROM_IDS,
   () => ({
-    c_mem_id: GET_NAME_FROM_IDS_variables
+    c_mem_ids: GET_NAME_FROM_IDS_variables.value
   })
-)*/
+)
 
 const username = computed(() => $store.getters["userModule/getUsername"])
 const latestMemberID = computed(() => MemberData.value? parseInt(MemberData.value.Member[0].c_mem_id)+1: [])
-// const MemberNameFromID = computed(() => MemberName.value?.Member[0]??[])
+// const MemberFromID = computed(() => MemberName.value && MemberName.value.Member.length > 0? MemberName.value.Member : [])
+
 const latestReceiptNO = computed(() => {
   if (ReceiptData.value) {
     let token = ReceiptData.value.tbl_account[0].c_receipt_no.split("-")
@@ -362,51 +362,37 @@ function capitalize() {
     personalInfo.value.c_name_other = arr.join(" ");
   }
 }
+
 /*
-function calculateAge(value) {
-  if (qdate.isValid(value)) {
-    let now = new Date();
-    let birth = new Date(value);
-    let birthyear = birth.getFullYear();
-    birth = qdate.adjustDate(birth, { year: now.getFullYear() });
-    let offset = qdate.getDateDiff(now, birth, "days") < 0 ? -1 : 0;
-    if (birthyear == now.getFullYear()) {
-      return 0;
-    } else {
-      return qdate.getDateDiff(now, value, "years") + offset;
-    }
+async function getNameFromMemberID(c_mem_ids, index) {
+  if (c_mem_ids != "") {
+    GET_NAME_FROM_IDS_variables.value = [c_mem_ids]
+    GET_NAME_FROM_IDS_onResult((result) => {
+      
+      console.log("index: " + index + " c_mem_ids: " + c_mem_ids + " result: " + JSON.stringify(result.data.Member))
+      const getNameFromID = result.data.Member
+
+      if (getNameFromID.length > 0) {
+        this.relationTable[index].targetName = getNameFromID[0].c_name
+          ? getNameFromID[index].c_name
+          : getNameFromID[index].c_name_other;
+        this.relationTable[index].b_mem_type1 = getNameFromID[0].b_mem_type1;
+        this.relationTable[index].age = ageUtil.calculateAge(getNameFromID[0].d_birth)
+      } else {
+        this.relationTable[index].targetName = "沒有此會員";
+        this.relationTable[index].age = null;
+      }
+    })
   }
 }
 */
-
-/* async function getNameFromMemberID(c_mem_ids, index) {
-  if (c_mem_ids != "") {
-    GET_NAME_FROM_IDS_variables.value = [c_mem_ids]
-    
-    const getNameFromID = MemberName?.Member??[];
-
-    if (getNameFromID.length > 0) {
-      this.relationTable[index].targetName = getNameFromID[0].c_name
-        ? getNameFromID[0].c_name
-        : getNameFromID[0].c_name_other;
-      this.relationTable[index].b_mem_type1 =
-        getNameFromID[0].b_mem_type1;
-      this.relationTable[index].age = this.calculateAge(getNameFromID[0].d_birth)
-    } else {
-      this.relationTable[index].targetName = "沒有此會員";
-      this.relationTable[index].age = null;
-    }
-  }
-} */
 </script>
 
 <script>
 
 export default {
   name: "MemberAdd",
- 
   methods: {
-    
     async getNameFromMemberID(value, index) {
       if (value != "") {
         this.$apollo.query({
@@ -571,7 +557,7 @@ export default {
           }
 
           // initialize data
-          this.personalInfo = {
+          this.personalInfo = ({
             c_name: "",
             c_name_other: "",
             c_sex: "",
@@ -581,9 +567,9 @@ export default {
             c_email: "",
             m_addscom: "",
             age: "",
-          };
+          });
 
-          this.memberInfo = {
+          this.memberInfo = ref({
             b_mem_type1: false,
             b_mem_type10: false,
             c_udf_1: "",
@@ -592,27 +578,27 @@ export default {
             d_expired_1: "",
             d_update: qdate.formatDate(Date.now(), "YYYY/MM/DD"),
             d_write: qdate.formatDate(Date.now(), "YYYY/MM/DD"),
-          };
+          });
 
-          this.relationTable = [
+          this.relationTable = ref([
             {
               c_mem_id_1: "",
               c_mem_id_2: "",
               targetName: "",
               relation: "",
             },
-          ];
+          ]);
         });
       this.awaitServerResponse--;
     },
     async updateType1Expire() {
       // console.log(this.memberInfo.d_enter_1 + ":" + qdate.isValid(this.memberInfo.d_enter_1))
+      console.log("udf_1:" + this.memberInfo.c_udf_1)
       if (
-        this.memberInfo.c_udf_1 && 
-        is.object(this.memberInfo.c_udf_1) &&
-        qdate.isValid(this.memberInfo.d_enter_1)
+        is.object(this.memberInfo.c_udf_1.value) &&
+        qdate.isValid(this.memberInfo.value.d_enter_1)
       ) {
-        switch (this.memberInfo.c_udf_1.value) {
+        switch (this.memberInfo.value.c_udf_1.value) {
           case "個人會員":
             this.memberInfo.d_expired_1 = qdate.formatDate(
               qdate.subtractFromDate(
