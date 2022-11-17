@@ -363,6 +363,71 @@ function capitalize() {
   }
 }
 
+function updateType1Expire() {
+  if (
+    is.object(memberInfo.value.c_udf_1) &&
+    qdate.isValid(memberInfo.value.d_enter_1)
+  ) {
+    switch (memberInfo.value.c_udf_1.value) {
+      case "個人會員":
+        memberInfo.value.d_expired_1 = qdate.formatDate(
+            qdate.subtractFromDate(
+              qdate.addToDate(memberInfo.value.d_enter_1, { years: 1 }),
+              { days: 1 }
+            ),
+            "YYYY/MM/DD"
+          );
+        break;
+      case "永久會員":
+      case "社區義工":
+        memberInfo.value.d_expired_1 = "3000/01/01";
+        break;
+      case "青年義工會員":
+        if (!personalInfo.value.d_birth) {
+          memberInfo.value.d_expired_1 = "請輸入出生日期"
+        } else {
+          if (ageUtil.calculateAge(personalInfo.value.d_birth) >= 25) {
+            memberInfo.value.d_expired_1 = "已超過25歲"
+          } else {
+            memberInfo.value.d_expired_1 = qdate.formatDate(
+              qdate.subtractFromDate(
+                qdate.addToDate(personalInfo.value.d_birth, { years: 25 }),
+                { days: 1 }
+              ),
+              "YYYY/MM/DD"
+            )
+          }
+        }
+        
+        break;
+      case "青年家人義工":
+        // set a temp expiry date, loop all related members
+        let expiryDate = 0;
+
+        if (relationTable.value.length > 0) {
+          relationTable.value.forEach((data) => {
+            if (ageUtil.calculateAge(data.d_birth) <= 24 && ageUtil.calculateAge(data.d_birth) >= 15) {
+              let tempExpiryDate = qdate.formatDate(
+                                    qdate.subtractFromDate(
+                                      qdate.addToDate(data.d_birth, { years: 25 }),
+                                      { days: 1 }
+                                    ),
+                                    "YYYY/MM/DD"
+                                  );
+                
+              if (expiryDate == 0 || expiryDate < tempExpiryDate) {
+                expiryDate = tempExpiryDate
+              }
+            }
+          })
+        }
+        
+        memberInfo.value.d_expired_1 = expiryDate == 0? "沒有關聯青年會員": expiryDate
+        break;
+    }
+  } else memberInfo.value.d_expired_1 = "";
+}
+
 /*
 async function getNameFromMemberID(c_mem_ids, index) {
   if (c_mem_ids != "") {
@@ -591,6 +656,7 @@ export default {
         });
       this.awaitServerResponse--;
     },
+    /*
     async updateType1Expire() {
       console.log(JSON.stringify(this.memberInfo))
       if (
@@ -655,7 +721,7 @@ export default {
             break;
         }
       } else this.memberInfo.d_expired_1 = "";
-    },
-  },
+    },*/
+  }, 
 };
 </script>
