@@ -592,6 +592,7 @@ export default {
       this.awaitServerResponse--;
     },
     async updateType1Expire() {
+      console.log(JSON.stringify(this.memberInfo))
       if (
         is.object(this.memberInfo.c_udf_1) &&
         qdate.isValid(this.memberInfo.d_enter_1)
