@@ -557,7 +557,7 @@ export default {
           }
 
           // initialize data
-          this.personalInfo = ({
+          this.personalInfo = ref({
             c_name: "",
             c_name_other: "",
             c_sex: "",
@@ -592,21 +592,19 @@ export default {
       this.awaitServerResponse--;
     },
     async updateType1Expire() {
-      // console.log(this.memberInfo.d_enter_1 + ":" + qdate.isValid(this.memberInfo.d_enter_1))
-      console.log("udf_1:" + this.memberInfo.value.c_udf_1)
       if (
-        is.object(this.memberInfo.c_udf_1.value) &&
-        qdate.isValid(this.memberInfo.value.d_enter_1)
+        is.object(this.memberInfo.c_udf_1) &&
+        qdate.isValid(this.memberInfo.d_enter_1)
       ) {
-        switch (this.memberInfo.value.c_udf_1.value) {
+        switch (this.memberInfo.c_udf_1.value) {
           case "個人會員":
             this.memberInfo.d_expired_1 = qdate.formatDate(
-              qdate.subtractFromDate(
-                qdate.addToDate(this.memberInfo.d_enter_1, { years: 1 }),
-                { days: 1 }
-              ),
-              "YYYY/MM/DD"
-            );
+                qdate.subtractFromDate(
+                  qdate.addToDate(this.memberInfo.d_enter_1, { years: 1 }),
+                  { days: 1 }
+                ),
+                "YYYY/MM/DD"
+              );
             break;
           case "永久會員":
           case "社區義工":
