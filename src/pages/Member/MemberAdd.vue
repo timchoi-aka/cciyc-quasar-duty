@@ -608,6 +608,7 @@ export default {
     async updateType1Expire() {
       // console.log(this.memberInfo.d_enter_1 + ":" + qdate.isValid(this.memberInfo.d_enter_1))
       if (
+        this.memberInfo.c_udf_1 && 
         is.object(this.memberInfo.c_udf_1) &&
         qdate.isValid(this.memberInfo.d_enter_1)
       ) {

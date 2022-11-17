@@ -471,10 +471,22 @@ export default defineComponent({
     async updateRelation(newRelation, changeRelation, deleteRelation) {
       // add relation
       if (newRelation.length > 0) {
+        let relatedMemberID = ""
+        newRelation.forEach((data) => {
+          relatedMemberID = relatedMemberID + data.c_mem_id_2 + " "
+        })
+        const logObject = {
+          "username": this.username,
+          "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+          "module": "會員系統",
+          "action": "新增 " + this.member.c_mem_id + " 關聯會員-" + relatedMemberID
+        }
+        
         await this.$apollo.mutate({
           mutation: INSERT_RELATION,
           variables: {
             "newObjects": newRelation,
+            logObject: logObject,
           },
         })
       }
@@ -482,6 +494,12 @@ export default defineComponent({
       // change relation
       if (changeRelation.length > 0) {
         for (const index in changeRelation) {
+          const logObject = {
+            "username": this.username,
+            "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+            "module": "會員系統",
+            "action": "修改 " + this.member.c_mem_id + " 關聯會員-" + changeRelation[index].c_mem_id_2 + "(" + changeRelation[index].relation + ")"
+          }
           const uuid = changeRelation[index].uuid
           const object = {
             c_mem_id_1: changeRelation[index].c_mem_id_1,
@@ -492,8 +510,9 @@ export default defineComponent({
           await this.$apollo.mutate({
             mutation: UPDATE_RELATION,
             variables: {
-              "uuid": uuid,
-              "changeObject": object,
+              uuid: uuid,
+              changeObject: object,
+              logObject: logObject,
             },
           })
         }
@@ -501,10 +520,23 @@ export default defineComponent({
 
       // delete relation
       if (deleteRelation.length > 0) {
+        let removeMemberID = ""
+        deleteRelation.forEach((rel) => {
+          let i = this.relationTable.findIndex((element) => element.uuid == rel)
+          removeMemberID = removeMemberID + this.relationTable[i].c_mem_id + " "
+        })
+        
+        const logObject = {
+          "username": this.username,
+          "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+          "module": "會員系統",
+          "action": "刪除 " + this.member.c_mem_id + " 的關聯會員-" + removeMemberID
+        }
         await this.$apollo.mutate({
           mutation: DELETE_RELATION,
           variables: {
-            "deleteObjects": deleteRelation,
+            deleteObjects: deleteRelation,
+            logObject: logObject,
           },
         })
       }
