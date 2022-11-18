@@ -20,7 +20,10 @@ export const DELETE_MEMBER_BY_ID = gql`
   }`
 
 export const ADD_MEMBER_FROM_ID = gql`
-  mutation addMemberFromID ($logObject: Log_insert_input! = {}, $memberObject: Member_insert_input = {}) 
+  mutation addMemberFromID (
+    $logObject: Log_insert_input! = {}, 
+    $memberObject: Member_insert_input = {}
+  ) 
   {
     insert_Member_one(object: $memberObject)
       {
@@ -121,7 +124,7 @@ export const ADD_MEMBER_AND_RELATION_FROM_ID_UPDATE_RELATED_YOUTH_STATUS = gql`
     $logObject: Log_insert_input! = {}, 
     $memberObject: Member_insert_input = {}
     $relationObjects: [Relation_insert_input!] = {},
-    $related_ids: [String!] = [],
+    $related_ids: [String] = [],
   ) 
   {
     insert_Member_one(object: $memberObject) {
