@@ -260,7 +260,7 @@ const latestReceiptNO = computed(() => {
 })
 
 const membershipFee = ref({
-  "個人": "$60",
+  "個人": "$35",
   "永久": "$135",
   "青年義工(<25歲)": "免費",
   "青年家人義工(>25歲)": "免費",
