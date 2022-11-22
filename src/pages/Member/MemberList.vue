@@ -240,8 +240,8 @@ import { computed } from "vue";
 import { useStore } from "vuex";
 import { date as qdate } from "quasar";
 import MemberDetail from "components/Member/MemberDetail.vue";
-import { MEMBER_GET_ALL, GET_MEMBER_RECEIPTS_BY_PK } from "/src/graphQueries/Member/query.js";
-import { useSubscription } from "@vue/apollo-composable";
+import { MEMBER_GET_ALL } from "/src/graphQueries/Member/query.js";
+import { useSubscription } from "@vue/apollo-composable"
 import LoadingDialog from "components/LoadingDialog.vue"
 import PrintReceipt from "components/Account/PrintReceipt.vue"
 

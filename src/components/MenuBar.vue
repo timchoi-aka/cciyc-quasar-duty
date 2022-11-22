@@ -39,6 +39,27 @@
         />
         -->
     </q-tabs>
+    <q-tabs v-if="username && module == 'event'" inline-label class="desktop-only" align="left">
+        <q-route-tab to="/event/active" icon="public" label="活動進行中" />
+        <q-route-tab to="/event/search" icon="public" label="搜尋活動" />
+        <!--
+
+        <q-route-tab v-if="!isTmp" to="/holiday" icon="festival" label="假期系統" />
+        <q-route-tab v-if="!isTmp" to="/overtime" icon="schedule" label="超時系統" />
+        <q-route-tab
+            v-if="isUserManagement"
+            to="/user"
+            icon="account_circle"
+            label="用戶管理"
+        />
+        <q-route-tab
+            v-if="isSystemAdmin"
+            to="/system-admin"
+            icon="build"
+            label="系統管理"
+        />
+        -->
+    </q-tabs>
 </template>
 
 <script>

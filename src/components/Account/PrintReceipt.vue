@@ -1,16 +1,22 @@
 <template>
   <div class="row">
-    <q-table
-      :rows="account"
-      :loading="loading"
-      :columns="columns"
-      :pagination="defaultPagination"
-      color="primary"
-      row-key="c_receipt_no"
-      class="col-9"
-      @row-click="(event, row, index) => setReceipt(row)"
-      />
-    
+    <div class="col-9">
+      <div class="bg-primary row col-12" style="min-height: 50px; max-height: 50px;">
+          <q-btn class="bg-primary text-white col-shrink q-mx-md" dense flat icon="close" v-close-popup>
+            <q-tooltip class="bg-white text-primary">關閉</q-tooltip>
+          </q-btn>
+        </div>
+      <q-table
+        :rows="account"
+        :loading="loading"
+        :columns="columns"
+        :pagination="defaultPagination"
+        color="primary"
+        row-key="c_receipt_no"
+        class="fit"
+        @row-click="(event, row, index) => setReceipt(row)"
+        />
+    </div>
     <div v-if="Object.keys(modalObject).length > 0" class="row q-ma-md-none q-pa-md-none col-3 bg-grey-3 justify-center">
       <div class="bg-primary row col-12" style="min-height: 50px; max-height: 50px;">
         <q-btn icon="print" flat class="bg-primary text-white col-shrink" v-print="printObj">
@@ -38,7 +44,7 @@
         <div class="row"><span class="q-mr-xs"><q-icon name="phone"/>2981 1484</span><span class="q-mr-xs"><q-icon name="email"/>yc@cciyc.com</span><span><q-icon name="public"/>cciyc.com</span></div>
         <div class="row self-center text-bold">正式收據 OFFICIAL RECEIPT</div>
         <div class="row text-left">收據編號 Receipt No: {{modalObject.c_receipt_no}}</div>
-        <div class="row"><span class="q-mx-lg text-center">日期 Date: {{qdate.formatDate(modalObject.d_create, "DD/MM/YYYY")}}</span><span class="q-mx-lg text-center">Copy: {{modalObject.i_prints}}</span></div>
+        <div class="row"><span class="q-mx-md text-center">日期 Date: {{qdate.formatDate(modalObject.d_create, "DD/MM/YYYY")}}</span><span class="q-mx-md text-center">Copy: {{modalObject.i_prints}}</span></div>
         <div class="row col-12">
           <span class="col-4 q-ml-md">
             <div>茲收到</div>
@@ -157,7 +163,8 @@ export default {
 <style>
 @media screen {
   .print-area {
-    width: 80mm; 
+    width: 70mm; 
+    height: 140mm;
     margin: 0; 
     overflow: hidden; 
     border: 1px solid
@@ -166,11 +173,12 @@ export default {
 
 @media print {
   @page {
-    size: 80mm 140mm portrait;
+    size: 70mm 140mm portrait;
     margin: 0;
+    overflow: hidden;
+    scale: 90%;
   }
   .print-area { 
-    overflow: hidden;
     border: none;
   }
 }

@@ -1,13 +1,9 @@
 import { boot } from 'quasar/wrappers'
-import { ApolloClient, createHttpLink, InMemoryCache, ApolloLink, concat, split } from '@apollo/client/core'
-import { getMainDefinition } from "@apollo/client/utilities"
+import { ApolloClient, createHttpLink, InMemoryCache, ApolloLink, concat, from } from '@apollo/client/core'
 import { logErrorMessages } from "@vue/apollo-util"
 import { onError } from "@apollo/client/link/error"
 import { getClientOptions } from 'src/apollo'
 import { createApolloProvider } from '@vue/apollo-option'
-import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
-import { createClient } from "graphql-ws";
-import { FirebaseAuth } from "boot/firebase"
 import { ApolloClients } from '@vue/apollo-composable'
 
 export default boot(
@@ -31,56 +27,17 @@ export default boot(
       uri: 'https://cciycgw.eastasia.cloudapp.azure.com/v1/graphql/' ,
     })
 
-    // new graphql-ws link
-    const wsLink = new GraphQLWsLink(
-      createClient({
-        url: "wss://cciycgw.eastasia.cloudapp.azure.com/v1/graphql",
-        connectionParams: async () => {
-          const token = await FirebaseAuth.currentUser.getIdToken();
-          return {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          };
-        },
-      }),
-    );
-    
     const errorLink = onError((error) => {
       if (process.env.NODE_ENV !== "production") {
-          logErrorMessages(error)
+        logErrorMessages(error)
       }
     })
-/* 
-InMemoryCache-options
-{
-  typePolicies: {
-    Member: {
-      keyFields: ["c_mem_id"],
-    },
-  },
-}
-*/
+
     const apolloClient = new ApolloClient({
       cache: new InMemoryCache(),
-      link: split(
-        ({ query }) => {
-            const definition = getMainDefinition(query)
-            // console.log(definition)
-            return (
-                definition.kind === "OperationDefinition" &&
-                definition.operation === "subscription"
-            )
-        },
-        wsLink,
-        concat(authMiddleware, apiLink)
-      ),
+      link: from([errorLink, concat(authMiddleware, apiLink)]),
       defaultOptions: {
-        //fetchPolicy: 'cache-and-network',
-        //nextFetchPolicy: 'cache-and-network',
-        //fetchPolicy: 'network-only',
-        //nextFetchPolicy: 'network-only'
-        fetchPolicy: 'network-only',
+        fetchPolicy: 'cache-and-network',
       },
     })
     
@@ -97,24 +54,16 @@ InMemoryCache-options
        
         $query: {
           loadingKey: 'loading',
-          //fetchPolicy: 'cache-and-network',
-          //nextFetchPolicy: 'cache-and-network',
-          //fetchPolicy: 'network-only',
-          //nextFetchPolicy: 'network-only'
-          fetchPolicy: 'network-only',
+          fetchPolicy: 'cache-and-network',
           watchQuery: {
-            nextFetchPolicy: 'network-only', 
+            nextFetchPolicy: 'cache-and-network', 
           },
         },
         $mutate: {
           loadingKey: 'loading',
-          //fetchPolicy: 'cache-and-network',
-          //nextFetchPolicy: 'cache-and-network',
-          //fetchPolicy: 'network-only',
-          //nextFetchPolicy: 'network-only'
-          fetchPolicy: 'network-only',
+          fetchPolicy: 'cache-and-network',
           watchQuery: {
-            nextFetchPolicy: 'network-only', 
+            nextFetchPolicy: 'cache-and-network', 
           },
         }
         

@@ -27,6 +27,20 @@ const routes = [
     ]
   },
   {
+    path: '/event',
+    component: () => import('src/pages/Event/Event.vue'), meta: {requiresAuth: true},
+    children: [
+      {
+        path: 'active',
+        component: () => import('src/pages/Event/EventActiveList.vue'), meta: {requiresAuth: true},
+      },
+      {
+        path: 'search',
+        component: () => import('src/pages/Event/EventSearch.vue'), meta: {requiresAuth: true},
+      },
+    ]
+  },
+  {
     path: '/duty',
     component: () => import('src/pages/Duty.vue'), meta: {requiresAuth: true},
     children: [
