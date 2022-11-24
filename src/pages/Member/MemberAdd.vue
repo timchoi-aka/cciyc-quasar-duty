@@ -208,7 +208,7 @@ import { useStore } from "vuex";
 import { date as qdate, is, useQuasar } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
 import MemberRelated from "components/Member/MemberRelated.vue"
-import { GET_NAME_FROM_IDS, LATEST_MEMBER_ID, LATEST_RECEIPT_NO } from "/src/graphQueries/Member/query.js";
+import { LATEST_MEMBER_ID, LATEST_RECEIPT_NO } from "/src/graphQueries/Member/query.js";
 import {
   ADD_MEMBER_FROM_ID,
   ADD_MEMBER_FROM_ID_WITH_PAYMENT,

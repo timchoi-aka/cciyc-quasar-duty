@@ -17,6 +17,10 @@ const routes = [
         component: () => import('src/pages/Member/MemberAdd.vue'), meta: {requiresAuth: true},
       },
       {
+        path: 'log',
+        component: () => import('src/pages/Member/LogViewer.vue'), meta: {requiresAuth: true},
+      },
+      {
         path: 'admin',
         component: () => import('src/pages/Member/MemberAdmin.vue'), meta: {requiresAuth: true},
       },
@@ -37,6 +41,14 @@ const routes = [
       {
         path: 'search',
         component: () => import('src/pages/Event/EventSearch.vue'), meta: {requiresAuth: true},
+      },
+      {
+        path: 'log',
+        component: () => import('src/pages/Event/LogViewer.vue'), meta: {requiresAuth: true},
+      },
+      {
+        path: 'status',
+        component: () => import('src/pages/Event/Status.vue'), meta: {requiresAuth: true},
       },
     ]
   },

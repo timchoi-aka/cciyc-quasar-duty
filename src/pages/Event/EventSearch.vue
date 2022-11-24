@@ -14,8 +14,8 @@
         @reset="clearSearch"
       >
       <div class="row">
-        <q-btn class="col-6 bg-secondary text-white" square icon="search" label="搜尋" flat @click="submitSearch"/>
-        <q-btn class="col-6 bg-negative text-white" square icon="restart_alt" label="重設" flat @click="clearSearch"/>
+        <q-btn type="submit" class="col-6 bg-secondary text-white" square icon="search" label="搜尋" flat @click="submitSearch"/>
+        <q-btn type="reset" class="col-6 bg-negative text-white" square icon="restart_alt" label="重設" flat @click="clearSearch"/>
       </div>
       <div class="column">
         <div><q-input clearable label="活動編號" v-model="search.c_act_code"/></div>
@@ -39,6 +39,7 @@
       row-key="c_act_code"
       :loading="loading"
       binary-state-sort
+      no-data-label="沒有找到活動"
       @row-click="showDetail"
       />
   </q-page>
@@ -51,12 +52,14 @@ import { useStore } from "vuex";
 import { EVENT_SEARCH } from "/src/graphQueries/Event/query.js";
 import { usersCollection} from "boot/firebase";
 import EventDetail from "components/Event/EventDetail.vue";
+import { useQuasar } from "quasar";
 
 const userDoc = await usersCollection
   .where("privilege.systemAdmin", "==", false)
   .where("privilege.tmp", "!=", true)
   .get()
 
+const $q = useQuasar()
 
 const UserList = computed(() => {
   let result = []
@@ -195,7 +198,7 @@ function submitSearch() {
   if (search.value.c_status) searchCondition.value.condition.c_status = {"_eq" : search.value.c_status} 
   if (search.value.c_acc_type) searchCondition.value.condition.c_acc_type = {"_eq" : search.value.c_acc_type} 
   if (search.value.c_group1) searchCondition.value.condition.c_group1 = {"_eq" : search.value.c_group1} 
-  console.log(searchCondition.value)
+  //console.log(searchCondition.value)
   refetch()
 }
 
@@ -226,9 +229,16 @@ function newUser(val, done) {
   }
 }
 // actual query
-const { result: eventList, loading, refetch, onError } = useQuery(EVENT_SEARCH, searchCondition.value);
+const { result: eventList, loading, refetch, onError: EventListError } = useQuery(EVENT_SEARCH, searchCondition.value);
 
-onError((error) => {
-  console.log("error in module:" + JSON.stringify(error))
+EventListError((error) => {
+  // console.log("error in module:" + JSON.stringify(error))
+  if (error.graphQLErrors[0].extensions.code == "invalid-jwt") {
+    userProfileLogout()
+      .then(() => {
+        $q.notify({ message: "系統逾時，自動登出." });
+      })
+      .catch((error) => console.log("error", error));
+  }
 })
 </script>

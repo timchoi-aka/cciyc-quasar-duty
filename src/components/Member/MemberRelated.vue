@@ -66,7 +66,7 @@ const relatedMember = ref({
 
 const relationOptions = ["父母子女", "兄弟姐妹", "其他親人"]
 
-let variables = ref([])
+let variables = ref([""])
 const { onResult } = useQuery(
   GET_NAME_FROM_IDS,
   () => ({

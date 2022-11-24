@@ -96,27 +96,12 @@
       <q-table
         :rows="Stat"
         :columns="statTableColumn"
+        no-data-label="沒有統計數據"
         />
     </q-tab-panel>
 
     <q-tab-panel name="PlanEvaluation">
-      <q-splitter
-        v-model="splitterModel"
-        class="fit">
-          <template v-slot:before>
-            <div class="q-pa-md text-h6 bg-secondary text-white">計劃</div>
-            <div class="row fit">
-              <div>開始日期: {{}}</div>
-
-            </div>
-            
-          </template>
-          <template v-slot:after>
-            <div class="q-pa-md text-h6 bg-warning text-white">檢討</div>
-              
-            
-          </template>
-      </q-splitter>
+      <EventEvaluation :EventID="EventID"/>
     </q-tab-panel>
   </q-tab-panels>
     
@@ -127,15 +112,15 @@
 import { computed, ref } from "vue";
 import { useStore } from "vuex";
 import LoadingDialog from "components/LoadingDialog.vue"
-import { date as qdate, is} from "quasar";
-import { EVENT_BY_PK, EVENT_FEE_BY_PK, EVENT_STAT_BY_PK } from "/src/graphQueries/Event/query.js"
+import { date as qdate, is, useQuasar} from "quasar";
+import { EVENT_BY_PK, EVENT_FEE_BY_PK, EVENT_STAT_BY_PK, EVENT_EVALUATION_BY_ACT_CODE } from "/src/graphQueries/Event/query.js"
 import {useQuery} from "@vue/apollo-composable"
+import EventEvaluation from "components/Event/EventEvalation.vue"
 
-const splitterModel = ref(50) // default split at 50%
 const props = defineProps({
   EventID: String, 
 })
-
+const $q = useQuasar()
 const $store = useStore();
 const isDebug = false;
 const activeTab = ref("BasicInfo")
@@ -217,23 +202,25 @@ const statTableColumn = ref([
     headerClasses: "bg-grey-2",
   },
 ])
-const { result: EventData } = useQuery(
+const { result: EventData, onError: EventDataError } = useQuery(
   EVENT_BY_PK,
   () => ({
     c_act_code: props.EventID
   }));
 
-const { result: EventFee } = useQuery(
+const { result: EventFee, onError: EventFeeError } = useQuery(
   EVENT_FEE_BY_PK,
   () => ({
     c_act_code: props.EventID
   }));
 
-const { result: EventStat } = useQuery(
+const { result: EventStat, onError: EventStatError } = useQuery(
   EVENT_STAT_BY_PK,
   () => ({
     c_act_code: props.EventID
   }));
+
+
 const Event = computed(() => EventData.value?.HTX_Event_by_pk??[])
 const Fee = computed(() => EventFee.value?.tbl_act_fee??[])
 const Stat = computed(() => EventStat.value?.tbl_act_session??[])
@@ -243,6 +230,37 @@ function debug(args) {
     console.debug(args)
   }
 }
-   
-   
+
+EventDataError((error) => {
+  // console.log("error in module:" + JSON.stringify(error))
+  if (error.graphQLErrors[0].extensions.code == "invalid-jwt") {
+    userProfileLogout()
+      .then(() => {
+        $q.notify({ message: "系統逾時，自動登出." });
+      })
+      .catch((error) => console.log("error", error));
+  }
+})
+
+EventFeeError((error) => {
+  // console.log("error in module:" + JSON.stringify(error))
+  if (error.graphQLErrors[0].extensions.code == "invalid-jwt") {
+    userProfileLogout()
+      .then(() => {
+        $q.notify({ message: "系統逾時，自動登出." });
+      })
+      .catch((error) => console.log("error", error));
+  }
+})
+
+EventStatError((error) => {
+  // console.log("error in module:" + JSON.stringify(error))
+  if (error.graphQLErrors[0].extensions.code == "invalid-jwt") {
+    userProfileLogout()
+      .then(() => {
+        $q.notify({ message: "系統逾時，自動登出." });
+      })
+      .catch((error) => console.log("error", error));
+  }
+})
 </script>

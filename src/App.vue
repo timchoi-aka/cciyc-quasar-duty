@@ -63,10 +63,10 @@
     
     <!-- right drawer -->
     <q-drawer :width="100" v-model="rightDrawerOpen" side="right" overlay elevated class="column justify-around" behavior="mobile">
-        <q-btn v-close-popup class="col-grow" name="duty" icon="event" label="編更" @click="setCurrentModule('duty')"/>
-        <q-btn v-close-popup class="col-grow" name="member" icon="public" label="會員" @click="setCurrentModule('member')"/>
-        <q-btn v-close-popup class="col-grow" name="event" icon="festival" label="活動" @click="setCurrentModule('event')"/>
-        <q-btn v-close-popup class="col-grow" name="finance" icon="money" label="財務" @click="setCurrentModule('finance')"/>
+        <q-btn v-close-popup class="col-grow" name="duty" icon="event" label="編更" to="/duty"/>
+        <q-btn v-close-popup class="col-grow" name="member" icon="public" label="會員" to="/member"/>
+        <q-btn v-close-popup class="col-grow" name="event" icon="festival" label="活動" to="/event"/>
+        <q-btn v-close-popup class="col-grow" name="finance" icon="money" label="財務" to="/finance"/>
     </q-drawer>
 
     <q-page-container>

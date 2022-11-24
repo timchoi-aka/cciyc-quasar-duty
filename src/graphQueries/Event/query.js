@@ -86,6 +86,67 @@ query EVENT_STAT_BY_PK($c_act_code: String) {
   }
 }
 `
+export const EVENT_EVALUATION_BY_ACT_CODE = gql`
+query EVENT_EVALUATION_BY_ACT_CODE($c_act_code: String!) {
+  HTX_Event_by_pk(c_act_code: $c_act_code) {
+    c_act_name
+    c_dest
+    c_nature
+    c_group1
+    c_group2
+    c_type
+    c_respon2
+    Event_to_Evaluation {
+      Evaluation_to_Account {
+        type
+        eval_uuid
+        amount
+      }
+      attendance
+      c_act_code
+      eval_attend_headcount_children
+      eval_attend_headcount_others
+      eval_attend_headcount_parent
+      eval_attend_headcount_youth
+      eval_attend_session_children
+      eval_attend_session_others
+      eval_attend_session_parent
+      eval_end_date
+      eval_attend_session_youth
+      eval_end_time
+      eval_sessions
+      eval_start_date
+      eval_start_time
+      eval_volunteer_count
+      ic
+      ic_date
+      objective
+      objective_achieved
+      objective_achieved_reason
+      objective_followup
+      objective_detail
+      objective_review_method
+      plan_attend_headcount_children
+      plan_attend_headcount_others
+      plan_attend_headcount_parent
+      plan_attend_headcount_youth
+      plan_attend_session_children
+      plan_attend_session_others
+      plan_attend_session_parent
+      plan_attend_session_youth
+      plan_end_date
+      plan_end_time
+      plan_start_date
+      plan_start_time
+      plan_sessions
+      staff_name
+      submit_date
+      supervisor
+      supervisor_date
+      uuid
+    }
+  }
+}`
 
 export const EVENT_BY_PK = gql`
 query Event($c_act_code: String!) {

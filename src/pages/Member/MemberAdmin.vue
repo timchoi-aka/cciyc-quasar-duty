@@ -8,14 +8,13 @@
   <q-list highlight separator dense>
     <q-item clickable v-for="(item, index) in updateYouthRelatedMemberList" :key="index" @click="updateYouthRelatedMember(item)">{{item}}</q-item>
   </q-list>
-  <LogViewer/>
+  
 </template>
 
 <script>
 import { MIGRATE_RELATION, GET_MEMBER_BASIC_AND_RELATED_MEMBER_FROM_IDS, GET_NAME_FROM_IDS } from "/src/graphQueries/Member/query.js";
 import { gql } from "graphql-tag"
 import LoadingDialog from "components/LoadingDialog.vue";
-import LogViewer from "components/Member/LogViewer.vue"
 import { ref, computed } from "vue";
 import ageUtil from "src/lib/calculateAge.js"
 import { date as qdate } from "quasar";
@@ -36,7 +35,7 @@ export default {
     },
   },
   components: {
-    LoadingDialog, LogViewer
+    LoadingDialog
   },
   setup() {
     const $store = useStore();

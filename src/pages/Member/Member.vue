@@ -1,5 +1,8 @@
 <template>
-    <router-view/>
+  <router-view/>
 </template>
-<script>
+<script setup>
+import { useStore } from "vuex";
+const $store = useStore();
+$store.dispatch("currentModule/setCurrentModule", "member");
 </script>

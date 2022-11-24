@@ -1,6 +1,7 @@
 <template>
-  <q-page>
-    <q-page-sticky style="z-index: 1" position="top" expand>
+  <div>
+    <router-view style="margin-top: 70px;"/>
+    <q-page-sticky position="top" expand>
       <q-tabs
         dense
         class="text-black bg-light-blue-2 fit"
@@ -13,9 +14,7 @@
         <q-route-tab v-if="!isTmp" to="/duty/print" icon="print" label="列印更表" />
       </q-tabs>
     </q-page-sticky>
-    <q-separator class="q-mt-xl" />
-    <router-view class="q-mt-md q-mb-xl" />
-  </q-page>
+  </div>
 </template>
 
 <script>
@@ -34,6 +33,7 @@ export default defineComponent({
   },
   setup() {
     const $store = useStore();
+    $store.dispatch("currentModule/setCurrentModule", "duty");
 
     return {
       isTmp: computed(() => $store.getters["userModule/getTmp"]),
@@ -42,4 +42,3 @@ export default defineComponent({
 });
 </script>
 
-<style scoped></style>

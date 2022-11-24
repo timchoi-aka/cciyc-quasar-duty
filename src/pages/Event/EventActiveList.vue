@@ -39,6 +39,7 @@ import { computed, ref, onMounted } from "vue";
 import { EVENT_GET_ALL_ACTIVE } from "/src/graphQueries/Event/query.js";
 import { useQuery } from "@vue/apollo-composable";
 import { useStore } from "vuex";
+import { useQuasar } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
 import EventDetail from "components/Event/EventDetail.vue";
 
@@ -46,12 +47,13 @@ import EventDetail from "components/Event/EventDetail.vue";
 const $store = useStore();
 $store.dispatch("currentModule/setCurrentModule", "event");
 
+const $q = useQuasar()
 const awaitServerResponse = ref(0)
 const initialData = ref()
 const selectedEventID = ref("")
 // load graphql subscription on event list
 // const { result: eventCount } = useSubscription(EVENT_GET_COUNT);
-const { result: eventList, loading, fetchMore } = useQuery(EVENT_GET_ALL_ACTIVE);
+const { result: eventList, loading, fetchMore, onError: EventListError } = useQuery(EVENT_GET_ALL_ACTIVE);
 const eventDetailDialog = ref(false)
 
 // computed variables
@@ -250,4 +252,15 @@ async function onRequest(props) {
   pagination.value.descending = descending
   console.log("pagination: " + JSON.stringify(pagination.value))
 }
+
+EventListError((error) => {
+  // console.log("error in module:" + JSON.stringify(error))
+  if (error.graphQLErrors[0].extensions.code == "invalid-jwt") {
+    userProfileLogout()
+      .then(() => {
+        $q.notify({ message: "系統逾時，自動登出." });
+      })
+      .catch((error) => console.log("error", error));
+  }
+})
 </script>

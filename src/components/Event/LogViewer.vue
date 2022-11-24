@@ -16,7 +16,7 @@ import { computed, ref } from "vue"
 const {result: data} = useSubscription(
   gql`
     subscription getLog {
-      Log(order_by: {datetime: desc}, where: {module: {_eq: "會員系統"}}) {
+      Log(order_by: {datetime: desc}, where: {module: {_eq: "活動系統"}}) {
         action
         datetime
         module
@@ -52,7 +52,7 @@ const columns = [
     label: "動作",
     field: "action",
     style: "font-size: 1vw; text-align: left;",
-    headerStyle: "font-size: 1vw; text-align: center; width: 10vw; ",
+    headerStyle: "font-size: 1vw; text-align: center;",
     headerClasses: "bg-grey-2",
   },
 ]
