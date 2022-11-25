@@ -75,6 +75,7 @@ const selectedEventID = ref("")
 // save current module
 const $store = useStore();
 $store.dispatch("currentModule/setCurrentModule", "event");
+const userProfileLogout = () => $store.dispatch("userModule/logout")
 
 const searchCondition = ref({
   //condition: {}

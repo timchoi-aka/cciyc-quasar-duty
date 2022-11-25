@@ -1,4 +1,5 @@
 <template>
+  {{PlanEval}}
   <!-- loading dialog -->
   <q-dialog v-model="waitingAsync" position="bottom">
     <LoadingDialog message="處理中"/>
@@ -52,8 +53,13 @@
             <div class="col-10" v-if="editPlan">
               <TimeComponent v-model="Plan.plan_start_time"/>
             </div>
-            <div class="col-10" v-else>{{qdate.formatDate(PlanEval.plan_start_time, "HH:mm")}}</div>
-          <div class="fit q-my-sm">結束時間: {{PlanEval.plan_end_time}}</div>
+            <div class="col-10" v-else>{{qdate.formatDate(PlanEval.plan_start_time, "hh:mm")}}</div>
+            <!--<div class="col-10" v-else>{{PlanEval.plan_start_time}}</div>-->
+          <div class="col-2 q-my-sm">結束時間: </div>
+            <div class="col-10" v-if="editPlan">
+              <TimeComponent v-model="Plan.plan_end_time"/>
+            </div>
+            <div class="col-10" v-else>{{qdate.formatDate(PlanEval.plan_end_time, "HH:mm")}}</div>
           <div class="fit q-my-sm">節數: {{PlanEval.plan_sessions}}</div>
         </div>
         
@@ -106,7 +112,7 @@ const props = defineProps({
 })
 
 const $store = useStore();
-const userProfileLogout = computed(() => $store.dispatch("userModule/logout"))
+const userProfileLogout = () => $store.dispatch("userModule/logout")
 const username = computed(() => $store.getters["userModule/getUsername"])
 
 const { result: EventEvaluation, onError: PlanEvaluationError, refetch } = useQuery(
@@ -165,7 +171,10 @@ function saveEditBasic() {
 }
 
 function purifyRecord() {
-  Plan.value.plan_start_date = Plan.value.plan_start_date == ""? null: Plan.value.plan_start_date
+  Plan.value.plan_start_date = Plan.value.plan_start_date == ""? null: qdate.formatDate(Plan.value.plan_start_date, "YYYY-MM-DD")
+  Plan.value.plan_end_date = Plan.value.plan_end_date == ""? null: qdate.formatDate(Plan.value.plan_end_date, "YYYY-MM-DD")
+  Plan.value.plan_start_time = Plan.value.plan_start_time == ""? null: Plan.value.plan_start_time
+  Plan.value.plan_end_time = Plan.value.plan_end_time == ""? null: Plan.value.plan_end_time
 }
 
 function saveRecord() {

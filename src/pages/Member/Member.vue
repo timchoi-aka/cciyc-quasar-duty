@@ -1,5 +1,7 @@
 <template>
-  <router-view/>
+  <q-page>
+    <router-view/>
+  </q-page>
 </template>
 <script setup>
 import { useStore } from "vuex";

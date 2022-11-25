@@ -122,6 +122,8 @@ const props = defineProps({
 })
 const $q = useQuasar()
 const $store = useStore();
+const userProfileLogout = () => $store.dispatch("userModule/logout")
+
 const isDebug = false;
 const activeTab = ref("BasicInfo")
 

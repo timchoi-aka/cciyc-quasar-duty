@@ -46,6 +46,7 @@ import EventDetail from "components/Event/EventDetail.vue";
 // save current module
 const $store = useStore();
 $store.dispatch("currentModule/setCurrentModule", "event");
+const userProfileLogout = () => $store.dispatch("userModule/logout")
 
 const $q = useQuasar()
 const awaitServerResponse = ref(0)

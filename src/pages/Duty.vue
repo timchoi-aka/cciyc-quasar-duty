@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <q-page>
     <router-view style="margin-top: 70px;"/>
     <q-page-sticky position="top" expand>
       <q-tabs
@@ -14,7 +14,7 @@
         <q-route-tab v-if="!isTmp" to="/duty/print" icon="print" label="列印更表" />
       </q-tabs>
     </q-page-sticky>
-  </div>
+  </q-page>
 </template>
 
 <script>
