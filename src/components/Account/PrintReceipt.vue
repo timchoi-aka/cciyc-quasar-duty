@@ -178,7 +178,7 @@ export default {
 
 @media print {
   @page {
-    size: 68mm 100mm portrait;
+    size: 68mm 120mm portrait;
     margin: 0;
     overflow: hidden;
     scale: 50%;
