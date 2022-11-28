@@ -2,6 +2,7 @@
   <q-input 
     mask="date"
     hint="YYYY-MM-DD" 
+    filled
     :model-value="props.modelValue"
     hide-hint
     @update:model-value="(value) => $emit('update:modelValue', value)">

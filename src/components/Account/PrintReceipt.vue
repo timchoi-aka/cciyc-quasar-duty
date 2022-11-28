@@ -1,4 +1,9 @@
 <template>
+  <!-- loading dialog -->
+  <q-dialog v-model="waitingAsync" position="bottom">
+    <LoadingDialog message="處理中"/>
+  </q-dialog>
+
   <div class="row">
     <div class="col-7">
       <div class="bg-primary row col-12" style="min-height: 50px; max-height: 50px;">
@@ -13,7 +18,6 @@
         :pagination="defaultPagination"
         color="primary"
         row-key="c_receipt_no"
-        class="fit"
         @row-click="(event, row, index) => setReceipt(row)"
         />
     </div>
@@ -76,29 +80,65 @@
 </template>
 
 <script setup>
-import { useQuery } from "@vue/apollo-composable";
+import { useQuery, useMutation } from "@vue/apollo-composable";
 import { computed, ref } from "vue"
 import { GET_MEMBER_RECEIPTS_BY_PK } from "src/graphQueries/Member/query"
-import { date as qdate } from "quasar"
+import { ADD_RECEIPT_PRINT_COUNT } from "src/graphQueries/Account/mutation.js"
+import { date as qdate, useQuasar } from "quasar"
+import LoadingDialog from "components/LoadingDialog.vue"
+import { useStore } from "vuex";
 
 let modalObject = ref({})
 let account = ref([])
+const awaitServerResponse = ref(0)
+const waitingAsync = computed(() => awaitServerResponse > 0)
+const $q = useQuasar()
+const $store = useStore();
+const username = computed(() => $store.getters["userModule/getUsername"])
+const userProfileLogout = () => $store.dispatch("userModule/logout")
 
 const props = defineProps({
   MemberID: String
 })
 
-const {result, loading} = useQuery(GET_MEMBER_RECEIPTS_BY_PK, {
+const {result, loading, refetch} = useQuery(GET_MEMBER_RECEIPTS_BY_PK, {
   "c_mem_id": props.MemberID
+})
+
+const { mutate: addReceiptPrintCount, onDone: addReceiptPrintCount_Completed, onError: addReceiptPrintCount_Error } = useMutation(ADD_RECEIPT_PRINT_COUNT)
+
+addReceiptPrintCount_Error((error) => {
+  notifyClientError(error)
+})
+
+addReceiptPrintCount_Completed((result) => {
+  awaitServerResponse.value--
+  refetch()
 })
 
 account = computed(() => result.value?.Member_by_pk.MemberAccount??[])
 
 const printObj = {
   id: "printMe",
-  preview: true,
+  preview: false,
   previewTitle: "列印預覽", // The title of the preview window. The default is 打印预览
   popTitle: "收據",
+  openCallback (vue) {
+    
+    const logObject = ref({
+      "username": username,
+      "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+      "module": "會計系統",
+      "action": "重新列印收據 " + modalObject.value.c_receipt_no,
+    })
+    
+    awaitServerResponse.value++
+    addReceiptPrintCount({
+      logObject: logObject.value,
+      c_receipt_no: modalObject.value.c_receipt_no,
+      i_prints: parseInt(modalObject.value.i_prints)+1
+    })
+  },
 }
 
 const columns = [
@@ -107,27 +147,42 @@ const columns = [
     label: "日期",
     field: "d_create",
     sortable: true,
-    format: (val) => qdate.formatDate(val, "YYYY年M月D日")
+    format: (val) => qdate.formatDate(val, "YYYY年M月D日"),
+    style: "font-size: 1rem",
+    headerStyle: "font-size: 1rem"
   },
   {
     name: "c_desc",
     label: "項目",
     field: "c_desc",
+    style: "font-size: 1rem",
+    headerStyle: "font-size: 1rem"
   },
   {
     name: "c_receipt_no",
     label: "收據號碼",
     field: "c_receipt_no",
+    style: "font-size: 1rem",
+    headerStyle: "font-size: 1rem"
   },
   {
     name: "u_price_after_discount",
     label: "費用",
     field: "u_price_after_discount",
+    style: "font-size: 1rem",
+    headerStyle: "font-size: 1rem"
+  },
+  {
+    name: "i_prints",
+    label: "列印次數",
+    field: "i_prints",
+    style: "font-size: 1rem",
+    headerStyle: "font-size: 1rem"
   },
 ]
 
 const defaultPagination = {
-  rowsPerPage: 5,
+  rowsPerPage: 10,
   sortBy: "d_create",
   descending: true,
 }
@@ -140,6 +195,16 @@ function showRemark(rem) {
   return rem ? rem.replaceAll("\r\n", "<br/>").replaceAll("\r", "<br/>").replaceAll("\n", "<br/>") : ""
 }
 
+
+function notifyClientError(error) {
+  if (error.graphQLErrors[0].extensions.code == "invalid-jwt") {
+    userProfileLogout()
+      .then(() => {
+        $q.notify({ message: "系統逾時，自動登出." });
+      })
+      .catch((error) => console.log("error", error));
+  }
+}
 </script>
 
 

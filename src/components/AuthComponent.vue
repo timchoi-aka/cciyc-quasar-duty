@@ -23,6 +23,10 @@
         -->
       </div>
     </template>
+    
+    <template class="flex flex-center" v-if="isCapacitor">
+      Capacitor specific items (to be developed)
+    </template>
   </div>
 </template>
 
@@ -30,6 +34,7 @@
 import { computed } from "vue";
 import { useStore } from "vuex";
 import LoadingDialog from "components/LoadingDialog.vue";
+import { useQuasar } from "quasar"
 
 export default {
   name: "AuthComponent",
@@ -43,13 +48,14 @@ export default {
   },
   setup() {
     const $store = useStore();
-
+    const $q = useQuasar();
     return {
       username: computed(() => $store.getters["userModule/getUsername"]),
       login: () => $store.dispatch("userModule/login"),
       desktopLogin: () => $store.dispatch("userModule/desktopLogin"),
       saveProfile: () => $store.dispatch("userModule/saveProfile"),
       setCurrentModule: ((mod) => $store.dispatch("currentModule/setCurrentModule", mod)),
+      isCapacitor: computed(()=>$q.platform.is.capacitor)
     };
   },
   computed: {

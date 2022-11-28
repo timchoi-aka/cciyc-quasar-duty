@@ -9,13 +9,14 @@ import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { createClient } from "graphql-ws";
 import { FirebaseAuth } from "boot/firebase"
 import { ApolloClients } from '@vue/apollo-composable'
+import { setContext } from "@apollo/client/link/context"
 
 export default boot(
   async ({ app }) => {
     // Default client.
     const options = /* await */ getClientOptions(/* {app, router ...} */)    
   
-    // authentication middleware (for query / mutation)
+    // authentication middleware (for query / mutation) (local token) obsoleted now
     const authMiddleware = new ApolloLink((operation, forward) => {
       // add the authorization to the headers
       const token = sessionStorage.getItem('access-token');
@@ -23,9 +24,21 @@ export default boot(
         headers: {
           authorization: token ? `Bearer ${token}` : "",
         },
-      });
+      })
       return forward(operation);
     });
+
+    // authentication middleware (for query / mutation) async firebase token
+    const asyncAuthMiddleware = setContext(operation => 
+      // add the authorization to the headers
+      FirebaseAuth.currentUser.getIdToken().then((token) => {
+        return {
+          headers: {
+            authorization: token ? `Bearer ${token}` : "",
+          }
+        }
+      })
+    );
 
     // new graphql-ws link (for subscription)
     const wsLink = new GraphQLWsLink(
@@ -44,14 +57,13 @@ export default boot(
 
     // http link 
     const apiLink = createHttpLink({ 
-      uri: 'https://cciycgw.eastasia.cloudapp.azure.com/v1/graphql/' ,
+      uri: 'https://cciycgw.eastasia.cloudapp.azure.com/v1/graphql/',
     })
 
     // error link
     const errorLink = onError((error) => {
       if (process.env.NODE_ENV !== "production") {
         logErrorMessages(error)
-        console.log(JSON.stringify(error))
       }
     })
 
@@ -65,7 +77,7 @@ export default boot(
           operation === 'subscription'
       },
       wsLink, // subscription to graphqlwslink
-      concat(authMiddleware, apiLink) // other queries concat with middleware
+      concat(asyncAuthMiddleware, apiLink) // other queries concat with middleware
     )
 
     // declare apollo client, using inMemoryCache,

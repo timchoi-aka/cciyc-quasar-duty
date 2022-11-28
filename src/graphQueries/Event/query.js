@@ -84,8 +84,28 @@ query EVENT_STAT_BY_PK($c_act_code: String) {
     i_people_count_c
     d_act
   }
-}
-`
+}`
+
+export const EVALUATION_ACCOUNT = gql`
+  query EvaluationAccount($type: String = "", $planeval: String = "", $eval_uuid: uniqueidentifier = "00000000-0000-0000-0000-000000000000") {
+    Event_Evaluation_Account(where: {_and: {type: {_eq: $type}, planeval: {_eq: $planeval}, eval_uuid: {_eq: $eval_uuid}}}) {
+      account_uuid
+      amount
+      c_act_code
+      description
+      eval_uuid
+      planeval
+      type
+    }
+    Event_Evaluation_Account_aggregate(where: {_and: {type: {_eq: $type}, planeval: {_eq: $planeval}, eval_uuid: {_eq: $eval_uuid}}}) {
+      aggregate {
+        sum {
+          amount
+        }
+      }
+    }
+  }`
+
 export const EVENT_EVALUATION_BY_ACT_CODE = gql`
 query EVENT_EVALUATION_BY_ACT_CODE($c_act_code: String!) {
   HTX_Event_by_pk(c_act_code: $c_act_code) {
@@ -97,11 +117,6 @@ query EVENT_EVALUATION_BY_ACT_CODE($c_act_code: String!) {
     c_type
     c_respon2
     Event_to_Evaluation {
-      Evaluation_to_Account {
-        type
-        eval_uuid
-        amount
-      }
       attendance
       c_act_code
       eval_attend_headcount_children

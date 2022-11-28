@@ -29,6 +29,11 @@ export async function desktopLogin({commit}) {
   this.$router.push('/').catch(()=>{});
 }
 
+export async function refreshToken({ commit }) {
+  let token = await FirebaseAuth.currentUser.getIdToken();
+  sessionStorage.setItem("access-token", token);
+}
+
 export async function login({ commit }) {
   // sign user in
   const { user } = await FirebaseAuth.signInWithPopup(GoogleAuthProvider);

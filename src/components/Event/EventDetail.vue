@@ -19,12 +19,23 @@
     transition-next="jump-up"
   >
     <q-tab-panel name="BasicInfo" class="row fit text-h6"> 
-      <div class="row fit">
-        <span class="col-3">活動編號: {{props.EventID}}</span>
-        <span class="col-4">活動名稱(中文): {{Event.c_act_name}}</span>
-        <q-space/>
-        <span class="col-4">活動名稱(英文): {{Event.c_act_nameen}}</span>
-      </div>
+      <q-card class="fit" bordered flat>
+        <q-card-section class="row fit bg-grey-3">
+          <span class="col-2 column">
+            <div class="col">活動編號:</div>
+            <div class="col">{{props.EventID}}</div>
+          </span>
+          <span class="col-10 column">
+            <div class="col">活動名稱(中文): {{Event.c_act_name}}</div>
+            <div class="col">活動名稱(英文): {{Event.c_act_nameen}}</div>
+          </span>
+        </q-card-section>
+
+        <q-card-section>
+
+        </q-card-section>
+      </q-card>
+     
       <div class="row fit">
         <span class="col-3">會計類別： {{Event.c_acc_type}}</span>
         <span class="col-3">狀況: {{Event.c_status}}</span>
@@ -123,6 +134,7 @@ const props = defineProps({
 const $q = useQuasar()
 const $store = useStore();
 const userProfileLogout = () => $store.dispatch("userModule/logout")
+const refreshToken = () => $store.dispatch("userModule/refreshToken")
 
 const isDebug = false;
 const activeTab = ref("BasicInfo")
@@ -258,11 +270,13 @@ EventFeeError((error) => {
 EventStatError((error) => {
   // console.log("error in module:" + JSON.stringify(error))
   if (error.graphQLErrors[0].extensions.code == "invalid-jwt") {
-    userProfileLogout()
+    refreshToken() //userProfileLogout()
       .then(() => {
-        $q.notify({ message: "系統逾時，自動登出." });
+        //$q.notify({ message: "系統逾時，自動登出." });
+        $q.notify({ message: "系統逾時，已重新連接." });
       })
       .catch((error) => console.log("error", error));
   }
 })
 </script>
+
