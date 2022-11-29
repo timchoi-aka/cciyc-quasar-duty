@@ -9,22 +9,15 @@
 </template>
 
 <script setup>
-import { gql } from "graphql-tag"
 import { useSubscription } from "@vue/apollo-composable";
 import { computed, ref } from "vue"
+import { GET_LOG } from "/src/graphQueries/Log/query.js"
 
-const {result: data} = useSubscription(
-  gql`
-    subscription getLog {
-      Log(order_by: {datetime: desc}, where: {module: {_eq: "活動系統"}}) {
-        action
-        datetime
-        module
-        username
-      }
-    }`
-)
-     
+const {result: data} = useSubscription(GET_LOG, 
+  {
+    module: "活動系統"
+  })
+
 const logdata = computed(() => data.value?.Log??[])
 const pagination = ref({
   rowsPerPage: 100,

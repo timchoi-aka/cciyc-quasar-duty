@@ -325,13 +325,14 @@ export default {
       awaitServerResponse: 0,
       proxyDate: "",
       users: [],
-      rankInputOptions: ["IC", "SWA", "WW", "OA", "WM2", "TMP"],
+      rankInputOptions: ["IC", "SWA", "WW", "OA", "WM2", "GA", "TMP"],
       rankInputMap: {
         IC: "ic",
         SWA: "swa",
         WW: "ww",
         OA: "oa",
         WM2: "wm2",
+        GA: "ga",
         TMP: "tmp",
       },
       rankInputReverseMap: {
@@ -340,6 +341,7 @@ export default {
         ww: "WW",
         oa: "OA",
         wm2: "WM2",
+        ga: "GA",
         tmp: "TMP",
       },
       pagination: {

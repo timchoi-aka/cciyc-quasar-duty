@@ -10,7 +10,7 @@ subscription EVENT_GET_COUNT {
 }`
 
 export const EVENT_GET_ALL_WITH_LIMIT  = gql`
-  query getEvent($offset: Int!, $limit: Int!) {
+  query getEventWithOffset($offset: Int!, $limit: Int!) {
     HTX_Event(order_by: {c_act_code: desc}, offset: $offset, limit: $limit) {
       c_act_code
     }
@@ -32,7 +32,7 @@ export const EVENT_GET_ALL = gql`
   }`
 
 export const EVENT_GET_ALL_ACTIVE = gql`
-  query getEvent {
+  query getActiveEvent {
     HTX_Event(order_by: {c_act_code: desc}, offset: 1, where: {c_status: {_eq: "未完成"}}) {
       c_act_code
       c_act_name
@@ -164,7 +164,7 @@ query EVENT_EVALUATION_BY_ACT_CODE($c_act_code: String!) {
 }`
 
 export const EVENT_BY_PK = gql`
-query Event($c_act_code: String!) {
+query Event_by_pk($c_act_code: String!) {
   HTX_Event_by_pk(c_act_code: $c_act_code) {
     EventClassID
     Gen_m_remark

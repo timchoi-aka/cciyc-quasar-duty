@@ -35,7 +35,7 @@ export const ADD_MEMBER_FROM_ID = gql`
   }`
 
 export const ADD_MEMBER_FROM_ID_WITH_PAYMENT = gql`
-  mutation addMemberFromID (
+  mutation addMemberFromIDWithPayment (
     $logObject: Log_insert_input! = {}, 
     $memberObject: Member_insert_input = {}, 
     $accountObject: tbl_account_insert_input = {}
@@ -53,7 +53,7 @@ export const ADD_MEMBER_FROM_ID_WITH_PAYMENT = gql`
   }`
 
   export const RENEW_MEMBER_FROM_ID_WITH_PAYMENT = gql`
-    mutation addMemberFromID (
+    mutation renewMemberFromIDWithPayment (
       $c_mem_id: String!
       $logObject: Log_insert_input! = {}, 
       $memberObject:  Member_set_input = {}, 
@@ -72,7 +72,7 @@ export const ADD_MEMBER_FROM_ID_WITH_PAYMENT = gql`
     }`
   
   export const ADD_MEMBER_AND_RELATION_FROM_ID = gql`
-    mutation addMemberFromID (
+    mutation addMemberAndRelationFromID (
       $logObject: Log_insert_input! = {}, 
       $memberObject: Member_insert_input = {}
       $relationObjects: [Relation_insert_input!] = {},
@@ -94,7 +94,7 @@ export const ADD_MEMBER_FROM_ID_WITH_PAYMENT = gql`
     }`
 
 export const ADD_MEMBER_AND_RELATION_FROM_ID_WITH_PAYMENT = gql`
-  mutation addMemberFromID (
+  mutation addMemberAndRelationFromIDWithPayment (
     $logObject: Log_insert_input! = {}, 
     $memberObject: Member_insert_input = {}
     $relationObjects: [Relation_insert_input!] = {},
@@ -120,7 +120,7 @@ export const ADD_MEMBER_AND_RELATION_FROM_ID_WITH_PAYMENT = gql`
   }`
 
 export const ADD_MEMBER_AND_RELATION_FROM_ID_UPDATE_RELATED_YOUTH_STATUS = gql`
-  mutation addMemberFromID (
+  mutation addMemberAndRelationFromIDUpdateRelatedYouthStatus (
     $logObject: Log_insert_input! = {}, 
     $memberObject: Member_insert_input = {}
     $relationObjects: [Relation_insert_input!] = {},
@@ -146,7 +146,7 @@ export const ADD_MEMBER_AND_RELATION_FROM_ID_UPDATE_RELATED_YOUTH_STATUS = gql`
   }`
 
   export const ADD_MEMBER_AND_RELATION_FROM_ID_UPDATE_RELATED_YOUTH_STATUS_WITH_PAYMENT = gql`
-    mutation addMemberFromID (
+    mutation addMemberAndRelationFromIDUpdateRelatedYouthStatusWithPayment (
       $logObject: Log_insert_input! = {}, 
       $memberObject: Member_insert_input = {}
       $relationObjects: [Relation_insert_input!] = {},
@@ -210,7 +210,7 @@ export const QUIT_MEMBER_BY_ID = gql`
 `
 
 export const UPDATE_MEMBER_BY_ID = gql`
-  mutation updateMember(
+  mutation updateMemberByID(
     $c_mem_id: String!, 
     $object: Member_set_input = {}, 
     $logObject: Log_insert_input! = {}, 
@@ -226,7 +226,7 @@ export const UPDATE_MEMBER_BY_ID = gql`
   `
 
 export const INSERT_RELATION = gql`
-  mutation updateMember(
+  mutation insertRelation(
     $newObjects: [Relation_insert_input] = {},
     $logObject: Log_insert_input! = {}
   ) {
@@ -241,7 +241,7 @@ export const INSERT_RELATION = gql`
   }`
 
 export const UPDATE_RELATION = gql`
-  mutation updateMember(
+  mutation updateRelation(
     $uuid: uniqueidentifier!, 
     $changeObject: Relation_set_input = {},
     $logObject: Log_insert_input! = {}, 
@@ -255,7 +255,7 @@ export const UPDATE_RELATION = gql`
   }`
   
 export const DELETE_RELATION = gql`
-  mutation updateMember(
+  mutation deleteRelation(
     $deleteObjects: [uniqueidentifier!],
     $logObject: Log_insert_input! = {}
   ) {
