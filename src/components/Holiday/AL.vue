@@ -179,6 +179,7 @@ const userListener = usersCollection
           // check if user has left the company
           // put the user to the valid staff if he's still working
           let validStaff = true
+          if (qdate.getDateDiff(doc.data().dateOfEntry.toDate(), queryStartDate.value) > 0) validStaff = false
           if (doc.data().dateOfExit) {
             if (qdate.getDateDiff(doc.data().dateOfExit.toDate(), queryStartDate.value) < 0) validStaff = false
           }
