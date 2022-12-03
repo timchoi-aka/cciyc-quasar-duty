@@ -197,13 +197,11 @@ function showRemark(rem) {
 
 
 function notifyClientError(error) {
-  if (error.graphQLErrors[0].extensions.code == "invalid-jwt") {
-    userProfileLogout()
-      .then(() => {
-        $q.notify({ message: "系統逾時，自動登出." });
-      })
-      .catch((error) => console.log("error", error));
-  }
+  userProfileLogout()
+    .then(() => {
+      $q.notify({ message: "系統錯誤，請重新登入." });
+    })
+    .catch((error) => console.log("error", error));
 }
 </script>
 

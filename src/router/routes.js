@@ -43,6 +43,10 @@ const routes = [
         component: () => import('src/pages/Event/EventSearch.vue'), meta: {requiresAuth: true},
       },
       {
+        path: 'add',
+        component: () => import('src/pages/Event/AddEvent.vue'), meta: {requiresAuth: true},
+      },
+      {
         path: 'log',
         component: () => import('src/pages/Event/LogViewer.vue'), meta: {requiresAuth: true},
       },

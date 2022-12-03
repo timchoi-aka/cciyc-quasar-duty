@@ -3,7 +3,7 @@
       type="time"
       :model-value="props.modelValue"
       filled
-      hint="HH:mm (24小時)" 
+      hint="HH:mm AM/PM (12小時)" 
       @update:model-value="(value) => $emit('update:modelValue', value)">
         <template v-slot:append>
           <q-icon name="schedule" class="cursor-pointer">
@@ -13,7 +13,6 @@
               transition-hide="scale"
             >
               <q-time
-                format24h
                 :model-value="props.modelValue"
                 @update:model-value="(value) => $emit('update:modelValue', value)">
                 <div class="row items-center justify-end">

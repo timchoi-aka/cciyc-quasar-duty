@@ -9,6 +9,13 @@ subscription EVENT_GET_COUNT {
   }
 }`
 
+export const EVENT_GET_LATEST_ACT_CODE = gql`
+subscription EVENT_GET_LATEST_ACT_CODE {
+  HTX_Event(order_by: {c_act_code: desc}, offset: 1, limit: 1) {
+    c_act_code
+  }
+}`
+
 export const EVENT_GET_ALL_WITH_LIMIT  = gql`
   query getEventWithOffset($offset: Int!, $limit: Int!) {
     HTX_Event(order_by: {c_act_code: desc}, offset: $offset, limit: $limit) {
@@ -31,9 +38,18 @@ export const EVENT_GET_ALL = gql`
     }
   }`
 
+export const EVENT_FEE_BY_ACT_CODE = gql`
+  query eventFeeByActCode($c_act_code: String = "") {
+    tbl_act_fee(where: {c_act_code: {_eq: $c_act_code}}) {
+      c_act_code
+      c_type
+      u_fee
+    }
+  }`
+
 export const EVENT_GET_ALL_ACTIVE = gql`
   query getActiveEvent {
-    HTX_Event(order_by: {c_act_code: desc}, offset: 1, where: {c_status: {_eq: "未完成"}}) {
+    HTX_Event(order_by: {c_act_code: desc}, where: {c_status: {_eq: "未完成"}}) {
       c_act_code
       c_act_name
       c_nature
@@ -59,15 +75,6 @@ query Event($condition: HTX_Event_bool_exp = {c_act_code: {_eq: ""}}) {
     c_group1
     c_group2
     c_acc_type
-  }
-}`
-
-export const EVENT_FEE_BY_PK = gql`
-query EVENT_FEE_BY_PK($c_act_code: String) {
-  tbl_act_fee(where: {c_act_code: {_eq: $c_act_code}}) {
-    c_act_code
-    c_type
-    u_fee
   }
 }`
 

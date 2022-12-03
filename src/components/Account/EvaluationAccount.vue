@@ -44,7 +44,6 @@ const edit = ref(false)
 const editObject = ref({})
 const removeRecord = ref([])
 const awaitServerResponse = ref(0)
-const waitingAsync = computed(() => awaitServerResponse > 0)
 const $q = useQuasar()
 
 // props
@@ -73,6 +72,7 @@ const $store = useStore();
 const username = computed(() => $store.getters["userModule/getUsername"])
 const account = computed(() => result.value?.Event_Evaluation_Account??[])
 const total = computed(() => result.value?.Event_Evaluation_Account_aggregate.aggregate.sum.amount??0)
+const waitingAsync = computed(() => awaitServerResponse > 0)
 
 // functions
 function addObject() {

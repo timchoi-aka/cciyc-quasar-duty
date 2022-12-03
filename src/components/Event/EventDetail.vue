@@ -23,10 +23,7 @@
     </q-tab-panel>
 
     <q-tab-panel name="FeeSetting" class="text-h6">
-      <div>收費模式:</div>
-      <q-list>
-        <q-item v-for="item in Fee" :key="item">{{item.c_type}} - {{item.u_fee}}</q-item>
-      </q-list>
+      <EventFee :c_act_code="props.EventID"/>
     </q-tab-panel>
 
     <q-tab-panel name="Stat">
@@ -51,25 +48,23 @@ import { computed, ref } from "vue";
 import { useStore } from "vuex";
 import LoadingDialog from "components/LoadingDialog.vue"
 import { date as qdate, is, useQuasar} from "quasar";
-import { EVENT_BY_PK, EVENT_FEE_BY_PK, EVENT_STAT_BY_PK, EVENT_EVALUATION_BY_ACT_CODE } from "/src/graphQueries/Event/query.js"
+import { EVENT_BY_PK, EVENT_STAT_BY_PK, EVENT_EVALUATION_BY_ACT_CODE } from "/src/graphQueries/Event/query.js"
 import {useQuery} from "@vue/apollo-composable"
 import EventEvaluation from "components/Event/EventEvalation.vue"
 import EventContent from "components/Event/EventContent.vue"
+import EventFee from "components/Event/EventFee.vue"
 
+// props
 const props = defineProps({
   EventID: String, 
 })
+
+// variables
 const $q = useQuasar()
 const $store = useStore();
-const userProfileLogout = () => $store.dispatch("userModule/logout")
-const refreshToken = () => $store.dispatch("userModule/refreshToken")
-
 const isDebug = false;
 const activeTab = ref("BasicInfo")
 
-// computed
-const waitingAsync = computed(() => this.awaitServerResponse > 0)
-const username = computed(() => $store.getters["userModule/getUsername"])
 const statTableColumn = ref([
   {
     name: "d_act",
@@ -144,14 +139,10 @@ const statTableColumn = ref([
     headerClasses: "bg-grey-2",
   },
 ])
+
+// query
 const { result: EventData, onError: EventDataError } = useQuery(
   EVENT_BY_PK,
-  () => ({
-    c_act_code: props.EventID
-  }));
-
-const { result: EventFee, onError: EventFeeError } = useQuery(
-  EVENT_FEE_BY_PK,
   () => ({
     c_act_code: props.EventID
   }));
@@ -162,49 +153,36 @@ const { result: EventStat, onError: EventStatError } = useQuery(
     c_act_code: props.EventID
   }));
 
-
+// computed
+const waitingAsync = computed(() => this.awaitServerResponse > 0)
+const username = computed(() => $store.getters["userModule/getUsername"])
+const userProfileLogout = () => $store.dispatch("userModule/logout")
 const Event = computed(() => EventData.value?.HTX_Event_by_pk??[])
-const Fee = computed(() => EventFee.value?.tbl_act_fee??[])
 const Stat = computed(() => EventStat.value?.tbl_act_session??[])
 
+// functions
 function debug(args) {
   if (isDebug) {
     console.debug(args)
   }
 }
 
-EventDataError((error) => {
-  // console.log("error in module:" + JSON.stringify(error))
-  if (error.graphQLErrors[0].extensions.code == "invalid-jwt") {
-    userProfileLogout()
-      .then(() => {
-        $q.notify({ message: "系統逾時，自動登出." });
-      })
-      .catch((error) => console.log("error", error));
-  }
-})
-
-EventFeeError((error) => {
-  // console.log("error in module:" + JSON.stringify(error))
-  if (error.graphQLErrors[0].extensions.code == "invalid-jwt") {
-    userProfileLogout()
-      .then(() => {
-        $q.notify({ message: "系統逾時，自動登出." });
-      })
-      .catch((error) => console.log("error", error));
-  }
+// callback error
+EventDataError((error) => {  
+  notifyClientError(error)
 })
 
 EventStatError((error) => {
-  // console.log("error in module:" + JSON.stringify(error))
-  if (error.graphQLErrors[0].extensions.code == "invalid-jwt") {
-    refreshToken() //userProfileLogout()
-      .then(() => {
-        //$q.notify({ message: "系統逾時，自動登出." });
-        $q.notify({ message: "系統逾時，已重新連接." });
-      })
-      .catch((error) => console.log("error", error));
-  }
+  notifyClientError(error)
 })
+
+// UI functions
+function notifyClientError(error) {
+  userProfileLogout()
+    .then(() => {
+      $q.notify({ message: "系統錯誤，請重新登入." });
+    })
+    .catch((error) => console.log("error", error));
+}
 </script>
 

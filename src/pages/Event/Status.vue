@@ -11,11 +11,11 @@
 import { ref } from "vue"
 
 const development = ref({
-  "新增活動": false,
+  "新增活動": true,
   "報名活動": false,
   "列印收據": false,
   "修改活動資料": false,
-  "刪除活動": false,
+  "刪除活動": true,
   "計劃/檢討": true,
   "審批計劃/檢討": false,
   "統計報表": false,

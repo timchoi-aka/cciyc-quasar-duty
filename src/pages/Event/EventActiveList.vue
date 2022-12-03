@@ -54,7 +54,7 @@ const initialData = ref()
 const selectedEventID = ref("")
 // load graphql subscription on event list
 // const { result: eventCount } = useSubscription(EVENT_GET_COUNT);
-const { result: eventList, loading, fetchMore, onError: EventListError } = useQuery(EVENT_GET_ALL_ACTIVE);
+const { result: eventList, loading, fetchMore, onError: EventListError, refetch } = useQuery(EVENT_GET_ALL_ACTIVE);
 const eventDetailDialog = ref(false)
 
 // computed variables
@@ -164,6 +164,7 @@ function getRowsNumberCount(filter) {
 
 onMounted(() => {
   initialData.value.requestServerInteraction()
+  refetch()
 })
 
 /*
