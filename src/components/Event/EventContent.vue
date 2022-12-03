@@ -17,9 +17,9 @@
     </q-card>
   </q-dialog>
 
-  <q-card bordered flat class="q-pa-none q-ma-none text-h6">
+  <q-card bordered flat class="q-pa-none q-ma-none text-h6 fit">
     <q-card-section class="row bg-grey-2 q-pl-none q-pt-none q-pb-lg">
-      <q-chip class="col-12 bg-grey-4" size="lg">基本資料
+      <q-chip class="col-12 bg-grey-4" size="xl">基本資料
         <q-btn v-if="!edit" icon="edit" class="text-primary" flat @click="startEdit">
           <q-tooltip class="bg-white text-primary">修改</q-tooltip>
         </q-btn>
@@ -33,14 +33,14 @@
           <q-tooltip class="bg-white text-negative">刪除</q-tooltip>
         </q-btn>
       </q-chip>
-      <div class="row q-gutter-lg q-ml-sm">
-        <span class="col-2 column">
-          <div class="col">活動編號:</div>
-          <div class="col">{{props.c_act_code}}</div>
+      <div class="row q-gutter-lg q-ml-sm col-12 justify-start">
+        <span class="col-2 row">
+          <div class="col-12">活動編號:</div>
+          <div class="col-12">{{props.c_act_code}}</div>
         </span>
-        <span class="col-9 row">
-          <div class="col-12 row"><span class="col-4">活動名稱(中文): </span><q-input class="col-8 text-h6" filled v-if="edit" type="text" v-model="editObject.c_act_name"/><span class="col-8" v-else>{{Event.c_act_name}}</span></div>
-          <div class="col-12 row q-mt-sm"><span class="col-4">活動名稱(英文): </span><q-input class="col-8 text-h6" filled v-if="edit" type="text" v-model="editObject.c_act_nameen"/><span class="col-8" v-else>{{Event.c_act_nameen}}</span></div>
+        <span class="col-9 row justify-start">
+          <div class="col-12 row"><span class="col-2">活動名稱(中文): </span><q-input v-if="edit" filled type="text" class="col-10 text-h6" v-model="editObject.c_act_name"/><span class="text-h6 col-10" v-else>{{Event.c_act_name}}</span></div>
+          <div class="col-12 row q-mt-sm"><span class="col-2">活動名稱(英文): </span><q-input class="col-10 text-h6" filled v-if="edit" type="text" v-model="editObject.c_act_nameen"/><span class="text-h6 col-10" v-else>{{Event.c_act_nameen}}</span></div>
         </span>
       </div>
     </q-card-section>
@@ -155,6 +155,11 @@ const Event = computed(() => EventData.value?.HTX_Event_by_pk??[])
 const userProfileLogout = () => $store.dispatch("userModule/logout")
 
 // functions
+/**
+ * Start editing content
+ * clone the value to an edit object
+ * @returns {any}
+ */
 function startEdit() {
   for (const [key, value] of Object.entries(Event.value)) {
     editObject.value[key] = value

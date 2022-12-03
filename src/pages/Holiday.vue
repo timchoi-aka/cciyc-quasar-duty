@@ -14,7 +14,7 @@
         align="justify"
       >
         <q-route-tab to="/holiday/al-view" icon="celebration" label="年假表" />
-        <q-route-tab to="/holiday/sal-view" icon="local_activity" label="特別年假" />
+        <q-route-tab v-if="isSAL || isCenterIC" to="/holiday/sal-view" icon="local_activity" label="特別年假" />
         <q-route-tab to="/holiday/al-apply" icon="edit_calendar" label="申請假期">
           <q-badge color="red" floating
             >{{ ALBalance }}<span v-if="isSAL">+{{ SALBalance }}</span></q-badge
@@ -178,6 +178,7 @@ export default defineComponent({
       isLeaveManage: computed(() => $store.getters["userModule/getLeaveManage"]),
       isLeaveApprove: computed(() => $store.getters["userModule/getLeaveApprove"]),
       isSAL: computed(() => $store.getters["userModule/getSAL"]),
+      isCenterIC: computed(() => $store.getters["userModule/getCenterIC"]),
       SALBalance: computed(() => $store.getters["userModule/getSALBalance"]),
     };
   },

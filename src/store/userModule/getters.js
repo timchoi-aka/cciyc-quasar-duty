@@ -160,6 +160,14 @@ export function getUAT(state) {
   }
 }
 
+export function getProbation(state) {
+  if (Object.keys(state.userProfile).length) {
+    return state.userProfile.privilege.probation? true: false
+  } else {
+    return null;
+  }
+}
+
 export function getHasuraClaim(state) {
   if (Object.keys(state.userProfile).length) {
     return state.userProfile.customClaims;
