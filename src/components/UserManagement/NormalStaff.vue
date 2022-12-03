@@ -230,6 +230,18 @@
         </q-td>
       </template>
 
+      <!-- template of column "probation" -->
+      <template v-slot:body-cell-privilege_probation="props">
+        <q-td :props="props">
+          <q-btn
+            round
+            :color="props.value ? 'positive' : 'negative'"
+            :label="props.value ? '有' : '沒有'"
+            @click="changeProbation(props.key)"
+          />
+        </q-td>
+      </template>
+
       <!-- template of column "rank" -->
       <template v-slot:body-cell-rank="props">
         <q-td :props="props">
@@ -406,6 +418,14 @@ export default {
           style: "font-size: 1.2vw; text-align: center; width: 3vw; max-width: 3vw;",
         },
         {
+          name: "privilege_probation",
+          label: "試用",
+          field: "privilege_probation",
+          headerStyle:
+            "font-size: 1.5vw; text-align: center; width: 3vw; max-width: 3vw;",
+          style: "font-size: 1.2vw; text-align: center; width: 3vw; max-width: 3vw;",
+        },
+        {
           name: "order",
           label: "排序",
           field: "order",
@@ -529,6 +549,19 @@ export default {
         this.awaitServerResponse--;
       });
     },
+    async changeProbation(uid) {
+      // call https functions to change leaveApprove privilege
+      const toggleProbation = FirebaseFunctions.httpsCallable(
+        "user-toggleProbation"
+      );
+      this.awaitServerResponse++;
+      toggleProbation(uid).then((result) => {
+        this.users[
+          this.users.findIndex((value) => value.uid == uid)
+        ].privilege_probation = result.data;
+        this.awaitServerResponse--;
+      });
+    },
     async changeSal(uid) {
       // call https functions to change sal privilege
       const toggleSal = FirebaseFunctions.httpsCallable("user-toggleSal");
@@ -596,6 +629,7 @@ export default {
         privilege_sal: d.privilege.sal,
         privilege_scheduleModify: d.privilege.scheduleModify,
         privilege_userManagement: d.privilege.userManagement,
+        privilege_probation: d.privilege.probation? d.privilege.probation: false,
         order: d.order,
         dateOfEntry: d.dateOfEntry,
         dateOfExit: d.dateOfExit,
