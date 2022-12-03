@@ -97,6 +97,15 @@
                   @click="changeUserManagement(props.key)"
                 />
               </div>
+              <div class="col-xs-2 justify-center" style="text-align: center">
+                <div class="text-caption">試用</div>
+                <q-btn
+                  round
+                  :color="props.row.privilege_probation ? 'positive' : 'negative'"
+                  :label="props.row.privilege_probation ? '有' : '沒有'"
+                  @click="changeProbation(props.key)"
+                />
+              </div>
             </q-card-section>
             <q-separator inet class="q-mt-sm" />
             <q-card-section
