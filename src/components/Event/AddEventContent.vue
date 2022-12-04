@@ -14,7 +14,7 @@
         確定新增活動？
       </q-card-section>
       <q-card-actions>
-        <q-btn icon="check" label="確定" class="bg-positive text-white" v-close-popup="1" @click="save"/>
+        <q-btn icon="check" label="確定" class="bg-positive text-white" v-close-popup="-1" @click="save"/>
         <q-btn icon="cancel" label="取消" class="bg-negative text-white" v-close-popup/>
       </q-card-actions>
     </q-card>
@@ -197,16 +197,12 @@ const { mutate: addEvent, onDone: addEvent_Completed, onError: addEvent_Error } 
 const userDoc = await usersCollection
   .where("privilege.systemAdmin", "==", false)
   .where("privilege.tmp", "!=", true)
+  .where("enable", "==", true)
   .get()
 const username = computed(() => $store.getters["userModule/getUsername"])
-const UserList = computed(() => {
-  let result = []
-  userDoc.forEach((doc) => {
-    if (doc.data().enable) result.push(doc.data().name)
-  })
-  return result;
-})
+const UserList = computed(() => userDoc.docs? userDoc.docs.map(a => a.data().name): [])
 const waitingAsync = computed(() => awaitServerResponse > 0)
+const userProfileLogout = () => $store.dispatch("userModule/logout")
 
 //function
 function save() {
@@ -218,7 +214,7 @@ function save() {
     "username": username,
     "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     "module": "活動系統",
-    "action": "新增活動: " + props.c_act_code + "。新資料:" + JSON.stringify(editObject.value, null, 2)
+    "action": "新增活動: " + props.c_act_code + "。新資料:" + JSON.stringify(serverObject.value, null, 2)
   })
   
   awaitServerResponse.value++
@@ -281,6 +277,14 @@ function notifyClientSuccess(result) {
   })
 }
 
+function notifyClientError(error) {
+  userProfileLogout()
+    .then(() => {
+      $q.notify({ message: "系統錯誤，請重新登入." });
+    })
+    .catch((error) => console.log("error", error));
+}
+
 // callback success
 addEvent_Completed((result) => {
   notifyClientSuccess(result.data.insert_HTX_Event_one.c_act_code)
@@ -288,6 +292,6 @@ addEvent_Completed((result) => {
 
 // callback error
 addEvent_Error((error) => {
-  console.log(error)
+  notifyClientError(error)
 })
 </script>

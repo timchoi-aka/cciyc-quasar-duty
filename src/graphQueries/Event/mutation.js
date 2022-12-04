@@ -12,6 +12,51 @@ export const ADD_EVENT = gql`
       log_id
     }
   }`
+ 
+export const DELETE_EVENT_STAT = gql`
+  mutation deleteEventStat(
+    $delete_cActCode: [String!] = "", 
+    $delete_dAct: [String!] = "",
+    $logObject: Log_insert_input! = {}, 
+  ) {
+    delete_tbl_act_session(where: {c_act_code: {_in: $delete_cActCode}, d_act: {_in: $delete_dAct}}) {
+      affected_rows
+    }
+    insert_Log_one(object: $logObject) {
+      log_id
+    }
+  }
+`
+export const UPDATE_EVENT_STAT_BY_PK = gql`
+  mutation updateEventStatByPK(
+    $logObject: Log_insert_input! = {}, 
+    $objects: [tbl_act_session_insert_input!] = {}
+    ) {
+    insert_tbl_act_session(
+      objects: $objects, if_matched: {match_columns: [c_act_code, d_act], update_columns: [i_number, i_number_a, i_number_b, i_number_c, i_people_count, i_people_count_a, i_people_count_b, i_people_count_c]}) {
+      affected_rows
+      returning {
+        c_act_code
+      }
+    }
+    insert_Log_one(object: $logObject) {
+      log_id
+    }
+  }`
+
+export const UPDATE_EVENT_BY_PK = gql`
+  mutation updateEventByPK(
+    $logObject: Log_insert_input! = {}, 
+    $c_act_code: String = "", 
+    $object: HTX_Event_set_input = {}
+    ) {
+    update_HTX_Event_by_pk(pk_columns: {c_act_code: $c_act_code}, _set: $object) {
+      c_act_code
+    }
+    insert_Log_one(object: $logObject) {
+      log_id
+    }
+  }`
 
 export const UPDATE_EVENT_FEE = gql`
   mutation updateEventFee(
@@ -29,15 +74,18 @@ export const UPDATE_EVENT_FEE = gql`
       log_id
     }
   }`
-
+  
 export const DELETE_EVENT_FEE = gql`
   mutation deleteEventFee(
     $logObject: Log_insert_input! = {}, 
-    $c_act_code: String = "", 
-    $c_type: String = ""
+    $c_act_code: [String!] = "", 
+    $c_type: [String!] = ""
     ) {
-    delete_tbl_act_fee_by_pk(c_act_code: $c_act_code, c_type: $c_type) {
-      c_type
+    delete_tbl_act_fee(where: {c_act_code: {_in: $c_act_code}, c_type: {_in: $c_type}}) {
+      returning {
+        c_type
+        u_fee
+      }
     }
     insert_Log_one(object: $logObject) {
       log_id

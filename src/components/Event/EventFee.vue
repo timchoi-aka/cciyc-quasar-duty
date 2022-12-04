@@ -18,8 +18,9 @@
     <div v-for="item in Fee" class="text-h6">
       <q-chip size="lg" class="bg-warning">{{item.c_type}}</q-chip> HK${{item.u_fee}}
     </div>
+    <div v-if="(Fee.length == 0)" class="text-h6">沒有記錄</div>
   </div>
-  <div v-if="(edit && editItem.length > 0)" class="h6">
+  <div v-if="(edit && editItem.length > 0)" class="text-h6">
     <div v-for="(value, index) in editItem" class="row q-gutter-md">
       <q-input v-if="!editItem[index].delete" class="col-3" filled label="類別" type="text" v-model="editItem[index].c_type"/>
       <q-input v-if="!editItem[index].delete" class="col-3" filled label="費用" type="number(2)" v-model="editItem[index].u_fee"/>
@@ -32,6 +33,7 @@
       <q-input class="col-3" filled label="費用" type="number(2)" v-model="newitem[index].u_fee"/>
     </div>
   </div>
+  <div v-if="edit && (newitem.length + editItem.length == 0)" class="text-h6">沒有記錄</div>
 </template>
 
 <script setup>
@@ -113,36 +115,42 @@ function save() {
       })
     })
   }
-  const logObject = ref({
-    "username": username,
-    "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-    "module": "活動系統",
-    "action": "修改活動" + props.c_act_code + "收費。資料:" + JSON.stringify(updateObject, null, 2)
-  })
   
-  updateFee({
-    logObject: logObject.value,
-    objects: updateObject
-  })
+  if (updateObject.length > 0) {
+    const logObject = ref({
+      "username": username,
+      "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+      "module": "活動系統",
+      "action": "修改活動" + props.c_act_code + "收費。資料:" + JSON.stringify(updateObject, null, 2)
+    })
+    
+    updateFee({
+      logObject: logObject.value,
+      objects: updateObject
+    })
 
-  editItem.value = []
-  newitem.value = []
-  edit.value = false
+    editItem.value = []
+    newitem.value = []
+    edit.value = false
+  }
 
   if (deleteItem.value.length > 0) {
-    deleteItem.value.forEach((item) => {
-      const logObject = ref({
-        "username": username,
-        "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-        "module": "活動系統",
-        "action": "刪除" + item.c_act_code + " 收費項目:" + item.c_type + " 費用:" + item.u_fee
-      })
-      deleteFee({
-        logObject: logObject.value,
-        c_act_code: item.c_act_code,
-        c_type: item.c_type
-      })
+    const logObject = ref({
+      "username": username,
+      "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+      "module": "活動系統",
+      "action": "刪除" + props.c_act_code + " 內容:" + JSON.stringify(deleteItem.value, null, 2)
     })
+      
+    deleteFee({
+      logObject: logObject.value,
+      c_act_code: deleteItem.value.map(a => a.c_act_code),
+      c_type: deleteItem.value.map(a => a.c_type)
+    })
+    deleteItem.value = []
+    editItem.value = []
+    newitem.value = []
+    edit.value = false
   }
 }
 
@@ -153,6 +161,10 @@ function deleteRow(index) {
 
 // callbacks
 updateFee_Completed((result) => {
+  refetch()
+})
+
+deleteFee_Completed((result) => {
   refetch()
 })
 

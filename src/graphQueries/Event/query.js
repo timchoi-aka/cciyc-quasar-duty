@@ -81,6 +81,7 @@ query Event($condition: HTX_Event_bool_exp = {c_act_code: {_eq: ""}}) {
 export const EVENT_STAT_BY_PK = gql`
 query EVENT_STAT_BY_PK($c_act_code: String) {
   tbl_act_session(where: {c_act_code: {_eq: $c_act_code}}) {
+    c_act_code
     i_number
     i_number_a
     i_number_b

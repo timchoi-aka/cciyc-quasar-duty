@@ -28,11 +28,7 @@
 
     <q-tab-panel name="Stat">
       <div>統計數據:</div>
-      <q-table
-        :rows="Stat"
-        :columns="statTableColumn"
-        no-data-label="沒有統計數據"
-        />
+      <EventStat :c_act_code="props.EventID"/>
     </q-tab-panel>
 
     <q-tab-panel name="PlanEvaluation">
@@ -46,13 +42,13 @@
 <script setup>
 import { computed, ref } from "vue";
 import { useStore } from "vuex";
-import LoadingDialog from "components/LoadingDialog.vue"
-import { date as qdate, is, useQuasar} from "quasar";
-import { EVENT_BY_PK, EVENT_STAT_BY_PK, EVENT_EVALUATION_BY_ACT_CODE } from "/src/graphQueries/Event/query.js"
-import {useQuery} from "@vue/apollo-composable"
+import { useQuasar} from "quasar";
+import { EVENT_BY_PK} from "/src/graphQueries/Event/query.js"
+import { useQuery } from "@vue/apollo-composable"
 import EventEvaluation from "components/Event/EventEvalation.vue"
 import EventContent from "components/Event/EventContent.vue"
 import EventFee from "components/Event/EventFee.vue"
+import EventStat from "components/Event/EventStat.vue"
 
 // props
 const props = defineProps({
@@ -65,90 +61,9 @@ const $store = useStore();
 const isDebug = false;
 const activeTab = ref("BasicInfo")
 
-const statTableColumn = ref([
-  {
-    name: "d_act",
-    label: "月份",
-    field: "d_act",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "i_number",
-    label: "青年節數",
-    field: "i_number",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "i_people_count",
-    label: "青年人次",
-    field: "i_people_count",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "i_number_a",
-    label: "兒童節數",
-    field: "i_number_a",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "i_people_count_a",
-    label: "兒童人次",
-    field: "i_people_count_a",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "i_number_b",
-    label: "家長節數",
-    field: "i_number_b",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "i_people_count_b",
-    label: "家長人次",
-    field: "i_people_count_b",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "i_number_c",
-    label: "社區人士節數",
-    field: "i_number_c",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "i_people_count_c",
-    label: "社區人士人次",
-    field: "i_people_count_c",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-])
-
 // query
 const { result: EventData, onError: EventDataError } = useQuery(
   EVENT_BY_PK,
-  () => ({
-    c_act_code: props.EventID
-  }));
-
-const { result: EventStat, onError: EventStatError } = useQuery(
-  EVENT_STAT_BY_PK,
   () => ({
     c_act_code: props.EventID
   }));
@@ -158,7 +73,7 @@ const waitingAsync = computed(() => this.awaitServerResponse > 0)
 const username = computed(() => $store.getters["userModule/getUsername"])
 const userProfileLogout = () => $store.dispatch("userModule/logout")
 const Event = computed(() => EventData.value?.HTX_Event_by_pk??[])
-const Stat = computed(() => EventStat.value?.tbl_act_session??[])
+
 
 // functions
 function debug(args) {
@@ -169,10 +84,6 @@ function debug(args) {
 
 // callback error
 EventDataError((error) => {  
-  notifyClientError(error)
-})
-
-EventStatError((error) => {
   notifyClientError(error)
 })
 

@@ -35,34 +35,29 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from "vue";
+import { computed, ref } from "vue";
 import { EVENT_GET_ALL_ACTIVE } from "/src/graphQueries/Event/query.js";
-import { useQuery } from "@vue/apollo-composable";
+import { useSubscription } from "@vue/apollo-composable";
 import { useStore } from "vuex";
 import { useQuasar } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
 import EventDetail from "components/Event/EventDetail.vue";
 
-// save current module
+// variables
 const $store = useStore();
-$store.dispatch("currentModule/setCurrentModule", "event");
-const userProfileLogout = () => $store.dispatch("userModule/logout")
-
 const $q = useQuasar()
 const awaitServerResponse = ref(0)
 const initialData = ref()
 const selectedEventID = ref("")
-// load graphql subscription on event list
-// const { result: eventCount } = useSubscription(EVENT_GET_COUNT);
-const { result: eventList, loading, fetchMore, onError: EventListError, refetch } = useQuery(EVENT_GET_ALL_ACTIVE);
 const eventDetailDialog = ref(false)
 
+// graphql subscriptions
+const { result: eventList, loading, fetchMore, onError: EventListError } = useSubscription(EVENT_GET_ALL_ACTIVE);
+
 // computed variables
-const uid = computed(() => $store.getters["userModule/getUID"])
 const EventList = computed(() => eventList.value?.HTX_Event??[])
 const waitingAsync = computed(() => awaitServerResponse > 0 ? true : false)
-// const dataCount = computed(() => eventCount.value? JSON.parse(eventCount.value.HTX_Event_aggregate).aggregate.count:0)
-const dataRows = ref([])
+const userProfileLogout = () => $store.dispatch("userModule/logout")
 
 // table config
 const pagination = ref({
@@ -148,6 +143,9 @@ const eventListColumns = ref([
   },
 ])
 
+// setCurrentModule to Event
+$store.dispatch("currentModule/setCurrentModule", "event");
+
 // functions
 function getRowsNumberCount(filter) {
   if (!filter) {
@@ -162,107 +160,22 @@ function getRowsNumberCount(filter) {
   return count
 }
 
-onMounted(() => {
-  initialData.value.requestServerInteraction()
-  refetch()
-})
-
-/*
-onResult((result) => {
-  //console.log(JSON.stringify(result))
-  // get initial data from server (1st page)
-  if (!initialData.value) 
-    initialData.value = result.data.HTX_Event
-})
-*/
-
-// emulate ajax call
-// SELECT * FROM ... WHERE...LIMIT...
-async function fetchFromServer(startRow, count, filter, sortBy, descending) {
-  console.log("inFetchFromServer:" + startRow + ":" + count + ":" + filter + ":" + sortBy + ":" + descending)
-  /*
-  const data = filter
-    ? originalRows.filter(row => row.name.includes(filter))
-    : originalRows.slice()
-
-  // handle sortBy
-  if (sortBy) {
-    const sortFn = sortBy === 'desc'
-      ? (descending
-          ? (a, b) => (a.name > b.name ? -1 : a.name < b.name ? 1 : 0)
-          : (a, b) => (a.name > b.name ? 1 : a.name < b.name ? -1 : 0)
-        )
-      : (descending
-          ? (a, b) => (parseFloat(b[ sortBy ]) - parseFloat(a[ sortBy ]))
-          : (a, b) => (parseFloat(a[ sortBy ]) - parseFloat(b[ sortBy ]))
-        )
-    data.sort(sortFn)
-  }
-
-  return data.slice(startRow, startRow + count)
-  */
-  return fetchMore({
-    variables: {
-      offset: startRow,
-      limit: count,
-    },
-    updateQuery: (previousResult, { fetchMoreResult }) => {
-      // No new feed posts
-      if (!fetchMoreResult) return previousResult
-      //console.log("previousResult:" + JSON.stringify(previousResult))
-      //console.log("fetchMoreResult:" + JSON.stringify(fetchMoreResult))
-      // Concat previous feed with new feed posts
-      return {
-        HTX_Event: [
-          ...previousResult.HTX_Event,
-          ...fetchMoreResult.HTX_Event,
-        ],
-      }
-    },
-  })
-}
-
 function showDetail(evt, row, index) {
   eventDetailDialog.value = true
   selectedEventID.value = row.c_act_code
 }
 
-async function onRequest(props) {
-  console.log("props:" + JSON.stringify(props))
-  const { page, rowsPerPage, sortBy, descending } = props.pagination
-  const filter = props.filter
-  console.log("dataCount:" + dataCount)
-  //pagination.value.rowsNumber = getRowsNumberCount(filter)
-  pagination.value.rowsNumber = 4615
-
-  // get all rows if "All" (0) is selected
-  const fetchCount = rowsPerPage === 0 ? pagination.value.rowsNumber : rowsPerPage
-
-  // calculate starting row of data
-  const startRow = (page - 1) * rowsPerPage + 1 //offset event 9999
-
-  // fetch data from "server"
-  const returnedData = await fetchFromServer(startRow, fetchCount, filter, sortBy, descending)
-  //console.log("returnedData:" + JSON.stringify(returnedData))
-  // clear out existing data and add new
-  dataRows.value.splice(0, dataRows.value.length, ...returnedData.data.HTX_Event)
-
-  // don't forget to update local pagination object
-  pagination.value.page = page
-  pagination.value.rowsPerPage = rowsPerPage
-  pagination.value.sortBy = sortBy
-  pagination.value.descending = descending
-  console.log("pagination: " + JSON.stringify(pagination.value))
+// UI Functions
+function notifyClientError(error) {
+  userProfileLogout()
+    .then(() => {
+      $q.notify({ message: "系統錯誤，請重新登入." });
+    })
+    .catch((error) => console.log("error", error));
 }
 
+// callbacks
 EventListError((error) => {
-  // console.log("error in module:" + JSON.stringify(error))
-  if (error.graphQLErrors[0].extensions.code == "invalid-jwt") {
-    userProfileLogout()
-      .then(() => {
-        $q.notify({ message: "系統逾時，自動登出." });
-      })
-      .catch((error) => console.log("error", error));
-  }
+  notifyClientError(error)
 })
 </script>
