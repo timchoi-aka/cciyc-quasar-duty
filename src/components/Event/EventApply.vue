@@ -1,0 +1,391 @@
+<template>
+  <!-- print receipt modal -->
+  <q-dialog
+    v-model="printReceiptDisplay"
+    class="q-pa-none"
+    >
+    <Receipt :c_receipt_no="printReceiptNumber"/>
+  </q-dialog>
+
+  <div class="row fit">
+    <q-chip size="lg" class="bg-yellow">報名期限：{{Event.d_sale_start}} - {{Event.d_sale_end}}</q-chip>
+    <q-btn @click="ApplicationQueue.push({c_mem_id: '', u_fee: 0, c_name: '', remark: '', c_sex: '', i_age: '', c_tel: ''})" label="新增報名" dense icon="celebration" class="q-ml-md bg-positive text-white" size="lg" v-if="(qdate.isBetweenDates(Date.now(), qdate.extractDate(Event.d_sale_start, 'D/M/YYYY'), qdate.extractDate(Event.d_sale_end, 'D/M/YYYY'), { inclusiveFrom: true, inclusiveTo: true }) && ApplicationQueue.length == 0)"/>
+    <q-btn @click="submitApplication" label="儲存" dense icon="save" class="q-ml-md bg-primary text-white" size="lg" v-if="(ApplicationQueue.length > 0)"/>
+    <q-btn @click="ApplicationQueue.splice(0,1)" label="取消" dense icon="replay" class="q-ml-md bg-negative text-white" size="lg" v-if="(ApplicationQueue.length > 0)"/>
+    <div class="q-ml-md">剩餘名額：{{(parseInt(Event.i_quota_max) - ApplyHistory.length)}}</div>
+  </div>
+  <div v-if="(ApplicationQueue.length > 0)">
+    <div class="row bg-blue-2">
+      <div class="col-1">會員號碼</div><div v-if="!Event.b_freeofcharge" class="col-1">收費</div><div class="col-4">備註</div><div class="col-1">姓名</div><div class="col-1">年齡</div><div class="col-2">會藉</div><div class="col-2">屆滿日期</div>
+    </div>
+    <div v-for="(item, index) in ApplicationQueue" class="row">
+      <q-input class="col-1" type="text" mask="####" v-model="item.c_mem_id" :rules="[val => !ApplyHistory.map(a => a.c_mem_id).includes(val) || val + '已報名']"/>
+      <q-select v-if="!Event.b_freeofcharge" use-input input-debounce="0" :options="Fee" class="col-1" v-model="item.u_fee" :display-value="`${item.u_fee? item.u_fee.label + ' - ' + item.u_fee.value : ''}`" @new-value="newFee">
+        <template v-slot:option="scope">
+          <q-item v-bind="scope.itemProps">
+            <q-item-section>
+              <q-item-label>{{ scope.opt.label }} - {{scope.opt.value}}</q-item-label>
+            </q-item-section>
+          </q-item>
+        </template>
+      </q-select>
+      <q-input class="col-4" type="text" v-model="item.remark"/>
+      <MemberInfoByID v-model="ApplicationQueue[index]"/>
+    </div>
+  </div>
+  <q-table 
+    :rows="ApplyHistory"
+    :columns="columns"
+    :pagination="pagination"
+  >
+  <template v-slot:body-cell-c_receipt_no="props">
+    <q-td :props="props">
+      <q-btn v-if="props.row.c_receipt_no" icon="print" color="positive" @click="printReceipt(props.row.c_receipt_no)" size="md" padding="none" outline/>
+      {{props.row.c_receipt_no}}
+    </q-td>
+  </template>
+  </q-table>
+</template>
+
+<script setup>
+import { computed, ref } from "vue";
+import { useStore } from "vuex";
+import { useQuasar, date as qdate} from "quasar";
+import { EVENT_APPLY_BY_ACT_CODE, EVENT_BY_PK, EVENT_FEE_BY_ACT_CODE } from "/src/graphQueries/Event/query.js"
+import { LATEST_RECEIPT_NO } from "/src/graphQueries/Member/query.js"
+import { EVENT_REGISTRATION, FREE_EVENT_REGISTRATION } from "/src/graphQueries/Event/mutation.js"
+import { useQuery, useMutation, useSubscription } from "@vue/apollo-composable"
+import Receipt from "components/Account/Receipt.vue"
+import MemberInfoByID from "src/components/Member/MemberInfoByID.vue"
+
+// props
+const props = defineProps({
+  c_act_code: String, 
+})
+
+// variables
+const $q = useQuasar()
+const $store = useStore();
+const edit = ref(false)
+const newitem = ref([])
+const editItem = ref([])
+const deleteItem = ref([])
+const printReceiptDisplay = ref(false)
+const printReceiptNumber = ref("")
+const ApplicationQueue = ref([])
+
+// query
+const { result: EventData, onError: EventDataError } = useQuery(
+  EVENT_BY_PK,
+  () => ({
+    c_act_code: props.c_act_code
+  }));
+
+const { onResult: EventFee_Completed, onError: EventFeeError } = useQuery(
+  EVENT_FEE_BY_ACT_CODE,
+  () => ({
+    c_act_code: props.c_act_code
+  }));
+
+const { result, onError: EventApplyError, refetch } = useSubscription(
+  EVENT_APPLY_BY_ACT_CODE,
+  () => ({
+    c_act_code: props.c_act_code
+  }));
+
+const { result: ReceiptData } = useSubscription(
+    LATEST_RECEIPT_NO,
+  );
+
+const { mutate: eventRegistration, onDone: eventRegistration_Completed, onError: eventRegistration_Error } = useMutation(EVENT_REGISTRATION)
+const { mutate: freeEventRegistration, onDone: freeEventRegistration_Completed, onError: freeEventRegistration_Error } = useMutation(FREE_EVENT_REGISTRATION)
+/*
+const { mutate: deleteFee, onDone: deleteFee_Completed, onError: deleteFee_Error } = useMutation(DELETE_EVENT_FEE)
+*/
+// computed
+const username = computed(() => $store.getters["userModule/getUsername"])
+const ApplyHistory = computed(() => result.value?.tbl_act_reg??[])
+const Event = computed(() => EventData.value?.HTX_Event_by_pk??[])
+const Fee = ref([])
+const userProfileLogout = () => $store.dispatch("userModule/logout")
+const latestReceiptNO = computed(() => {
+  if (ReceiptData.value) {
+    let token = ReceiptData.value.tbl_account[0].c_receipt_no.split("-")
+    let receiptNo = parseInt(token[1])
+    receiptNo = (receiptNo + 1).toString()
+    while (receiptNo.length < 4) receiptNo = "0" + receiptNo
+    return token[0] + "-" + receiptNo
+  } else return null
+})
+
+const columns = ref([
+  {
+    name: "c_receipt_no",
+    label: "收據",
+    field: "c_receipt_no",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "c_mem_id",
+    label: "會員號碼",
+    field: "c_mem_id",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "c_name",
+    label: "姓名",
+    field: "c_name",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "c_sex",
+    label: "性別",
+    field: "c_sex",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "c_tel",
+    label: "電話",
+    field: "c_tel",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "i_age",
+    label: "年齡",
+    field: "i_age",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "c_type",
+    label: "收費類別",
+    field: "c_type",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "c_user_id",
+    label: "經手人",
+    field: "c_user_id",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "d_reg",
+    label: "報名日期",
+    field: "d_reg",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+    format: (val) => qdate.formatDate(val, "YYYY年M月D日", {
+                  daysShort: ['日', '一', '二', '三', '四', '五', '六'],
+                })
+  },
+  {
+    name: "b_refund",
+    label: "退款",
+    field: "b_refund",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+    format: (val) => val? "有" : "無"
+  },
+  {
+    name: "d_refund",
+    label: "退款日期",
+    field: "d_refund",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+    format: (val) => qdate.formatDate(val, "YYYY年M月D日", {
+                  daysShort: ['日', '一', '二', '三', '四', '五', '六'],
+                })
+  },
+])
+
+const pagination = ref({
+  rowsPerPage: 30,
+  sortBy: "d_act",
+  descending: true,
+})
+
+// functions
+/*
+服務資料 Service Detail
+日期 Date：24/08/2022
+時間 Time：18:15 - 19:15
+*/
+function submitApplication() {  
+  let remark = ""
+  ApplicationQueue.value.forEach((item) => {
+    remark = "服務資料 Service Detail\r\n"
+    if (Event.value.d_date_from && Event.value.d_date_to) remark += "日期 Date：" + qdate.formatDate(qdate.extractDate(Event.value.d_date_from, "D/M/YYYY"), "YYYY年M月D日") + " 至 " + qdate.formatDate(qdate.extractDate(Event.value.d_date_to, "D/M/YYYY"), "YYYY年M月D日")
+    if (Event.value.c_week) remark += " 逢星期" + Event.value.c_week
+    remark += "\r\n"
+    if (Event.value.d_time_from && Event.value.d_time_to) remark += "時間 Time：" + Event.value.d_time_from.trim() + " - " + Event.value.d_time_to.trim()
+    
+    const logObject = ref({
+      "username": username,
+      "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+      "module": "活動系統",
+      "action": "會員" + item.c_mem_id + " 報名活動 " + props.c_act_code.trim() + Event.value.b_freeofcharge? "": " 費用: " + item.u_fee.value,
+    })
+
+    const accountObject = ref({
+      c_receipt_no: latestReceiptNO,
+      d_create: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+      i_receipt_type: 2, //type 2 = activity fee
+      c_desc: Event.value.c_act_name? Event.value.c_act_name.trim() :"",
+      c_act_code: props.c_act_code.trim(),
+      c_type: Event.value.c_type? Event.value.c_type.trim(): "",
+      u_discount: 0,
+      u_price_after_discount: parseFloat(item.u_fee.value),
+      c_cash_type: "Cash",
+      c_cheque_no: "",
+      m_remark: remark,
+      c_mem_id: item.c_mem_id? item.c_mem_id.trim(): "",
+      c_user_id: username,
+      c_name: item.c_name? item.c_name.trim(): "",
+      b_cssa: false,
+      b_refund: false,
+      b_OtherIncome: false,
+      b_clear: false,
+      d_clear: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+      i_prints: 0,
+    })
+    const regObject = ref({
+      c_mem_id: item.c_mem_id,
+      c_act_code: props.c_act_code.trim(),
+      c_receipt_no: Event.value.b_freeofcharge? null: latestReceiptNO,
+      c_type: Event.value.b_freeofcharge? null: item.u_fee.label,
+      c_remarks: item.remarks,
+      c_bus: null,
+      i_bus_no: 0,
+      c_tbl: null,
+      i_tbl_no: 0,
+      d_reg: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+      c_period: null,
+      c_user_id: username,
+      b_refund: false,
+      d_refund: null,
+      c_name: item.c_name,
+      c_sex: item.c_sex,
+      i_age: item.i_age,
+      c_tel: item.c_tel
+    })
+    /*
+    console.log("remark:" + remark)
+    console.log("logObject:" + JSON.stringify(logObject.value))
+    console.log("accountObject:" + JSON.stringify(accountObject.value))
+    console.log("regObject: " + JSON.stringify(regObject.value))
+    */
+    if (Event.value.b_freeofcharge) {
+      freeEventRegistration({
+        logObject: logObject.value,
+        regObject: regObject.value,
+      })
+    } else {
+      eventRegistration({
+        logObject: logObject.value,
+        regObject: regObject.value,
+        accountObject: accountObject.value
+      })
+    }
+  })
+}
+
+function newFee(val, done) {
+  if (val.length > 0) {
+    let i = Fee.value.findIndex((element) => element.value == val)
+    if (i == -1) {
+      Fee.value.push({
+        label: "特別收費",
+        value: val
+      })
+      done(Fee.value[Fee.value.length -1], 'toggle')
+    } else {
+      done(Fee.value[i], 'toggle')
+    }
+    
+  }
+}
+
+function printReceipt(c_receipt_no) {
+  printReceiptDisplay.value = true;
+  printReceiptNumber.value = c_receipt_no;
+}
+// callbacks success
+EventFee_Completed((result) => {
+  result.data.tbl_act_fee.forEach((item) => {
+    Fee.value.push({
+      label: item.c_type,
+      value: parseInt(item.u_fee)
+    })
+  })
+})
+
+eventRegistration_Completed((result) => {
+  $q.notify({ message: "會員: " + result.data.insert_tbl_act_reg_one.c_name + "報名活動" + result.data.insert_tbl_act_reg_one.c_act_code + "成功。收費 HK$" + result.data.insert_tbl_account_one.u_price_after_discount });
+  ApplicationQueue.value.splice(0,1)
+})
+
+freeEventRegistration_Completed((result) => {
+  $q.notify({ message: "會員: " + result.data.insert_tbl_act_reg_one.c_name + "報名活動" + result.data.insert_tbl_act_reg_one.c_act_code + "成功。" });
+  ApplicationQueue.value.splice(0,1)
+})
+// callbacks error
+EventFeeError((error) => {
+  notifyClientError(error)
+})
+
+EventDataError((error) => {
+  notifyClientError(error)
+})
+
+EventApplyError((error) => {
+  notifyClientError(error)
+})
+/*
+updateApply_Completed((result) => {
+  refetch()
+})
+
+deleteApply_Completed((result) => {
+  refetch()
+})
+
+updateApply_Error((error) => {
+  notifyClientError(error)
+})
+
+
+deleteApply_Error((error) => {
+  notifyClientError(error)
+})
+
+EventApplyError((error) => {
+  notifyClientError(error)
+})
+*/
+// UI function
+function notifyClientError(error) {
+  userProfileLogout()
+    .then(() => {
+      $q.notify({ message: "系統錯誤，請重新登入." });
+    })
+    .catch((error) => console.log("error", error));
+}
+</script>

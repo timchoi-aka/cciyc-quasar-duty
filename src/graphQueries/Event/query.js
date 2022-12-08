@@ -78,6 +78,72 @@ query Event($condition: HTX_Event_bool_exp = {c_act_code: {_eq: ""}}) {
   }
 }`
 
+export const MY_EVENT_FAVOURATE = gql`
+  query EventFavourate($c_act_code: String = "", $username: String = "") {
+    Event_Favourate_by_pk(c_act_code: $c_act_code, username: $username) {
+      c_act_code
+    }
+  }`
+
+export const MY_FAV = gql`
+subscription MyFav($username: String = "") {
+  Event_Favourate(where: {username: {_eq: $username}}) {
+    Favourate_to_Event {
+      b_finish
+      c_act_code
+      c_act_name
+      c_act_nameen
+      c_acc_type
+      c_dest
+      c_nature
+      c_respon
+      c_respon2
+      c_type
+      c_status
+      c_group1
+      c_group2
+      c_worker
+      c_worker2
+      d_date_from
+      d_date_to
+      d_sale_start
+      d_sale_end
+      d_finish_goal
+    }
+  }
+}`
+
+
+export const MY_EVENT_SEARCH = gql`
+subscription myEvent($condition: HTX_Event_bool_exp = {c_act_code: {_eq: ""}}) {
+  HTX_Event(order_by: {c_act_code: desc}, where: $condition) {
+    b_finish
+    c_act_code
+    c_act_name
+    c_act_nameen
+    c_acc_type
+    c_dest
+    c_nature
+    c_respon
+    c_respon2
+    c_type
+    c_status
+    c_group1
+    c_group2
+    c_worker
+    c_worker2
+    d_date_from
+    d_date_to
+    d_sale_start
+    d_sale_end
+    d_finish_goal
+    Event_to_Evaluation {
+      submit_date
+      uuid
+    }
+  }
+}`
+
 export const EVENT_STAT_BY_PK = gql`
 query EVENT_STAT_BY_PK($c_act_code: String) {
   tbl_act_session(where: {c_act_code: {_eq: $c_act_code}}) {
@@ -93,6 +159,27 @@ query EVENT_STAT_BY_PK($c_act_code: String) {
     d_act
   }
 }`
+
+export const EVENT_APPLY_BY_ACT_CODE = gql`
+subscription EVENT_APPLY_BY_ACT_CODE($c_act_code: String = "") {
+  tbl_act_reg(where: {c_act_code: {_eq: $c_act_code}}) {
+    i_age
+    d_reg
+    d_refund
+    c_user_id
+    c_type
+    c_tel
+    c_sex
+    c_remarks
+    ID
+    b_refund
+    c_act_code
+    c_mem_id
+    c_name
+    c_receipt_no
+  }
+}`
+
 
 export const EVALUATION_ACCOUNT = gql`
   query EvaluationAccount($type: String = "", $planeval: String = "", $eval_uuid: uniqueidentifier = "00000000-0000-0000-0000-000000000000") {

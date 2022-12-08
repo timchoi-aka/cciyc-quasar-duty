@@ -1,5 +1,40 @@
 import { gql } from "graphql-tag"
 
+export const EVENT_REGISTRATION = gql`
+  mutation EventRegistration(
+    $logObject: Log_insert_input! = {}, 
+    $regObject: tbl_act_reg_insert_input = {},
+    $accountObject: tbl_account_insert_input = {}
+    ) {
+      insert_tbl_act_reg_one(object: $regObject) {
+        ID
+        c_name
+        c_act_code
+      }
+      insert_Log_one(object: $logObject) {
+        log_id
+      }
+      insert_tbl_account_one(object: $accountObject) {
+        c_receipt_no
+        u_price_after_discount
+      }
+    }`
+
+export const FREE_EVENT_REGISTRATION = gql`
+  mutation FreeEventRegistration(
+    $logObject: Log_insert_input! = {}, 
+    $regObject: tbl_act_reg_insert_input = {},
+    ) {
+      insert_tbl_act_reg_one(object: $regObject) {
+        ID
+        c_name
+        c_act_code
+      }
+      insert_Log_one(object: $logObject) {
+        log_id
+      }
+    }`
+
 export const ADD_EVENT = gql`
   mutation addEvent(
     $logObject: Log_insert_input! = {}, 
@@ -74,7 +109,21 @@ export const UPDATE_EVENT_FEE = gql`
       log_id
     }
   }`
-  
+
+export const ADD_FAVOURATE = gql`
+  mutation addFavourate($c_act_code: String = "", $username: String = "") {
+    insert_Event_Favourate_one(object: {c_act_code: $c_act_code, username: $username}) {
+      c_act_code
+    }
+  }`
+
+export const REMOVE_FAVOURATE = gql`
+  mutation removeFavourate($c_act_code: String = "", $username: String = "") {
+    delete_Event_Favourate_by_pk(c_act_code: $c_act_code, username: $username) {
+      c_act_code
+    }
+  }`
+
 export const DELETE_EVENT_FEE = gql`
   mutation deleteEventFee(
     $logObject: Log_insert_input! = {}, 

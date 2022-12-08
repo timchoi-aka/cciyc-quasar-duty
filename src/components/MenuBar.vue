@@ -41,6 +41,7 @@
         -->
     </q-tabs>
     <q-tabs v-if="username && module == 'event'" inline-label class="desktop-only" align="left">
+        <q-route-tab to="/event/my-event" icon="public" label="我的活動" />
         <q-route-tab to="/event/active" icon="public" label="活動進行中" />
         <q-route-tab to="/event/search" icon="public" label="搜尋活動" />
         <q-route-tab to="/event/add" icon="public" label="新增活動" />

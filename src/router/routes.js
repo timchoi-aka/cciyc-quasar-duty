@@ -35,6 +35,10 @@ const routes = [
     component: () => import('src/pages/Event/Event.vue'), meta: {requiresAuth: true},
     children: [
       {
+        path: 'my-event',
+        component: () => import('src/pages/Event/MyEvent.vue'), meta: {requiresAuth: true},
+      },
+      {
         path: 'active',
         component: () => import('src/pages/Event/EventActiveList.vue'), meta: {requiresAuth: true},
       },
