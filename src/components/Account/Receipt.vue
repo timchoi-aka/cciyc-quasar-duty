@@ -23,7 +23,7 @@
         <q-tooltip class="bg-white text-primary">列印</q-tooltip>  
       </q-btn>
       <q-space/>
-      <q-btn label="退款" icon="currency_exchange" class="bg-negative text-white" flat @click="(refundDialog = true)"/>
+      <q-btn v-if="!Receipt.b_refund" label="退款" icon="currency_exchange" class="bg-negative text-white" flat @click="(refundDialog = true)"/>
       <q-space/>
       <q-btn class="bg-primary text-white col-shrink" dense flat icon="close" v-close-popup>
         <q-tooltip class="bg-white text-primary">關閉</q-tooltip>

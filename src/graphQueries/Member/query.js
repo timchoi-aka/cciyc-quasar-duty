@@ -1,5 +1,15 @@
 import { gql } from "graphql-tag"
 
+export const ALL_MEMBER_ID_AND_NAME = gql`
+  query allMemberIDAndName {
+    Member {
+      c_mem_id
+      c_name
+      c_name_other
+      c_sex
+    }
+  }`
+
 export const LATEST_MEMBER_ID = gql`
   subscription getLatestMemberID {
     Member(limit: 1, order_by: {c_mem_id: desc}, offset: 1) {

@@ -44,6 +44,12 @@
       {{props.row.c_receipt_no}}
     </q-td>
   </template>
+  <template v-slot:body-cell-b_refund="props">
+    <q-td :props="props">
+      <q-btn v-if="!props.row.b_refund" icon="currency_exchange" color="negative" @click="refundReceipt(props.row.c_receipt_no)" size="md" padding="none" outline/>
+      <div v-else>已退款</div>
+    </q-td>
+  </template>
   </q-table>
 </template>
 
@@ -201,7 +207,6 @@ const columns = ref([
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
-    format: (val) => val? "有" : "無"
   },
   {
     name: "d_refund",
@@ -321,6 +326,10 @@ function newFee(val, done) {
     }
     
   }
+}
+
+function refundReceipt(c_receipt_no) {
+  console.log("refund clicked")
 }
 
 function printReceipt(c_receipt_no) {

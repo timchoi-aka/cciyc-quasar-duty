@@ -7,7 +7,6 @@
 
   <!-- personal info qcard -->
   <q-card class="q-ma-md-md q-ma-xs-none q-ma-sm-sm">
-    
     <q-card-section class="q-pa-md-md q-pa-sm-sm q-pa-xs-xs text-h6 bg-blue-1"
       >新會員個人資料<span v-if="!loading">(編號：{{latestMemberID}})</span>
     </q-card-section>
