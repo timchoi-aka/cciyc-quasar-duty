@@ -87,7 +87,7 @@ export default boot(
       //link: from([errorLink, concat(authMiddleware, link)]),
       link: from([errorLink, link]),
       defaultOptions: {
-        fetchPolicy: 'cache-and-network',
+        fetchPolicy: 'network-only',
       },
     })
     
@@ -102,16 +102,16 @@ export default boot(
       defaultOptions: {
         $query: {
           loadingKey: 'loading',
-          fetchPolicy: 'cache-and-network',
+          fetchPolicy: 'network-only',
           watchQuery: {
-            nextFetchPolicy: 'cache-and-network', 
+            nextFetchPolicy: 'network-only', 
           },
         },
         $mutate: {
           loadingKey: 'loading',
-          fetchPolicy: 'cache-and-network',
+          fetchPolicy: 'network-only',
           watchQuery: {
-            nextFetchPolicy: 'cache-and-network', 
+            nextFetchPolicy: 'network-only', 
           },
         }
       },

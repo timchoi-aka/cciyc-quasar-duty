@@ -1,5 +1,5 @@
 <template>
-  <div class="col-1">{{Member.c_name? Member.c_name : "無此人"}}</div><div class="col-1">{{ageUtil.calculateAge(Member.d_birth)}}</div><div class="col-2">{{Member.c_udf_1}}</div><div class="col-2">{{Member.d_expired_1?qdate.formatDate(Member.d_expired_1, "YYYY年M月D日"):""}}</div>
+  <div class="col-1 text-body1">{{Member.c_name? Member.c_name : "無此人"}}</div><div class="col-1 text-body1">{{ageUtil.calculateAge(Member.d_birth)}}</div><div class="col-2 text-body1">{{Member.c_udf_1}}</div><div class="col-2 text-body1">{{Member.d_expired_1?qdate.formatDate(Member.d_expired_1, "YYYY年M月D日"):""}}</div>
 </template>
 
 <script setup>
@@ -30,7 +30,7 @@ const { result, onResult } = useQuery(
     }
   }`,
   () => ({
-    c_mem_id: props.modelValue.c_mem_id
+    c_mem_id: props.modelValue? props.modelValue.c_mem_id? props.modelValue.c_mem_id : "" : ""
   }));
 
 const Member = computed(() => result.value?.Member_by_pk??{})
@@ -44,6 +44,17 @@ onResult((result) => {
       c_sex: result.data.Member_by_pk.c_sex,
       c_tel: result.data.Member_by_pk.c_tel,
       i_age: ageUtil.calculateAge(result.data.Member_by_pk.d_birth),
+      d_expired_1: result.data.Member_by_pk.d_expired_1
+    })
+  } else {
+    emit('update:modelValue', {
+      c_mem_id: props.modelValue.c_mem_id,
+      u_fee: props.modelValue.u_fee,
+      c_name: "無此人",
+      c_sex: "",
+      c_tel: "",
+      i_age: 0,
+      d_expired_1: null
     })
   }
 })

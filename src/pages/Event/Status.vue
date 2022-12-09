@@ -13,6 +13,7 @@ import { ref } from "vue"
 const development = ref({
   "新增活動": true,
   "報名活動": true,
+  "取消報名活動": true,
   "列印收據": true,
   "修改活動資料": true,
   "刪除活動": true,
@@ -23,6 +24,6 @@ const development = ref({
   "搜尋活動": true,
   "我的活動": true,
   "Dashboard": false,
-  "活動退款": false,
+  "活動退款": true,
 })
 </script>

@@ -1,30 +1,6 @@
 <template>
   <div class="row">
-    <q-select
-      dense
-      filled
-      class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none"
-      use-input
-      input-debounce="0"
-      :options="NameOptions"
-      @filter="nameFilter"
-      @update:model-value="(value) => getNameFromMemberID(value)"
-      v-model="relatedMember.c_mem_id_2"
-    >
-      <template v-slot:option="scope">
-        <q-item v-bind="scope.itemProps">
-          <q-item-section>
-            <q-item-label>{{ scope.opt.value }} - {{scope.opt.c_name? scope.opt.c_name: scope.opt.c_name_other}} ({{scope.opt.c_sex}})</q-item-label>
-          </q-item-section>
-        </q-item>
-      </template>
-      <template v-slot:selected>
-        <div v-if="relatedMember.c_mem_id_2">{{ relatedMember.c_mem_id_2.value }}</div>  
-      </template>
-      <template v-slot:no-option>          
-        沒有結果    
-      </template>
-    </q-select>
+    <MemberSelection v-model="relatedMember.c_mem_id_2" @update:model-value="(value) => getNameFromMemberID(value)"/>
     <q-select
       dense
       filled
@@ -58,17 +34,20 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue"
-import { GET_NAME_FROM_IDS, ALL_MEMBER_ID_AND_NAME } from "/src/graphQueries/Member/query.js";
+import { ref } from "vue"
+import { GET_NAME_FROM_IDS } from "/src/graphQueries/Member/query.js";
 import ageUtil from "src/lib/calculateAge.js"
+import MemberSelection from "components/Member/MemberSelection.vue"
 import { useQuery } from "@vue/apollo-composable"
 import { is } from "quasar";
 
+// props and emits
 const emit = defineEmits(['updateMember'])
 const props = defineProps({
   MemberID: String,
 })
 
+// variables
 const relatedMember = ref({
   c_mem_id_1: "",
   c_mem_id_2: "",
@@ -80,19 +59,17 @@ const relatedMember = ref({
 })
 
 const relationOptions = ["父母子女", "兄弟姐妹", "其他親人"]
-const NameOptions = ref([])
-const OriginalNameOptions = ref([])
-
 const variables = ref([""])
+
+// query
 const { onResult } = useQuery(
   GET_NAME_FROM_IDS,
   () => ({
     c_mem_ids: variables.value
   })
 )
-const { onResult: NameResult } = useQuery(ALL_MEMBER_ID_AND_NAME)
 
-
+// query callback
 onResult((data) => {      
   const result = data.data.Member[0]
   if (is.object(result)) {
@@ -112,36 +89,7 @@ onResult((data) => {
   emit("updateMember", relatedMember.value)
 })
 
-NameResult((data) => {
-  data.data.Member.forEach((d) => {
-    NameOptions.value.push({
-      value: d.c_mem_id,
-      c_name: d.c_name,
-      c_name_other: d.c_name_other,
-      c_sex: d.c_sex
-    })
-  })
-
-  OriginalNameOptions.value = NameOptions.value
-})
-
-function nameFilter(val, update) {
-  if (val === '') {
-    update(() => {
-      NameOptions.value = OriginalNameOptions.value
-    })
-    return
-  }
-
-  update(() => {
-    NameOptions.value = NameOptions.value.filter(v => 
-      (v.value? v.value.indexOf(val) > -1 : false) ||
-      (v.c_name? v.c_name.indexOf(val) > -1 : false) ||
-      (v.c_name_other? v.c_name_other.indexOf(val) > -1 : false)
-    )
-  })
-}
-
+// function
 function reset() {
   relatedMember.value = {
     c_mem_id_2: "",
@@ -152,7 +100,9 @@ function reset() {
     b_mem_type1: false,
   }
 }
+
 function getNameFromMemberID(c_mem_ids) {
-  if (c_mem_ids) variables.value = [c_mem_ids.value]
+  if (c_mem_ids) variables.value = [c_mem_ids]
+  else variables.value = ''
 }
 </script>

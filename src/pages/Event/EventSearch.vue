@@ -54,21 +54,17 @@ import { usersCollection} from "boot/firebase";
 import EventDetail from "components/Event/EventDetail.vue";
 import { useQuasar } from "quasar";
 
-const userDoc = await usersCollection
+const UserList = ref([])
+usersCollection
   .where("privilege.systemAdmin", "==", false)
   .where("privilege.tmp", "!=", true)
-  .get()
+  .get().then((userDoc) => {
+    userDoc.forEach((doc) => {
+      if (doc.data().enable) UserList.value.push(doc.data().name)
+    })
+  })
 
 const $q = useQuasar()
-
-const UserList = computed(() => {
-  let result = []
-  userDoc.forEach((doc) => {
-    if (doc.data().enable) result.push(doc.data().name)
-  })
-  return result;
-})
-
 const userList = ref(UserList.value)
 const eventDetailDialog = ref(false)
 const selectedEventID = ref("")

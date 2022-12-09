@@ -30,7 +30,7 @@
       <div class="row q-gutter-lg q-ml-sm">
         <span class="col-2 column">
           <div class="col">活動編號:</div>
-          <div class="col">{{props.c_act_code}}</div>
+          <div class="col">{{props.modelValue}}</div>
         </span>
         <span class="col-9 row">
           <div class="col-12 row"><span class="col-3">活動名稱(中文): </span><q-input class="col-9 text-h6" filled type="text" v-model="editObject.c_act_name"/></div>
@@ -132,7 +132,7 @@ import dateUtil from "/src/lib/date.js"
 
 // props
 const props = defineProps({
-  c_act_code: String, 
+  modelValue: String, 
 })
 
 // variables
@@ -193,14 +193,17 @@ const dest = ref([
 // query
 const { mutate: addEvent, onDone: addEvent_Completed, onError: addEvent_Error } = useMutation(ADD_EVENT)
 
+const UserList = ref([])
 // computed
-const userDoc = await usersCollection
+usersCollection
   .where("privilege.systemAdmin", "==", false)
   .where("privilege.tmp", "!=", true)
   .where("enable", "==", true)
-  .get()
+  .get().then((userDoc) => {
+    UserList.value = userDoc.docs.map(a => a.data().name)
+  })
 const username = computed(() => $store.getters["userModule/getUsername"])
-const UserList = computed(() => userDoc.docs? userDoc.docs.map(a => a.data().name): [])
+//const UserList = computed(() => userDoc.docs? userDoc.docs.map(a => a.data().name): [])
 const waitingAsync = computed(() => awaitServerResponse > 0)
 const userProfileLogout = () => $store.dispatch("userModule/logout")
 
@@ -214,7 +217,7 @@ function save() {
     "username": username,
     "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     "module": "活動系統",
-    "action": "新增活動: " + props.c_act_code + "。新資料:" + JSON.stringify(serverObject.value, null, 2)
+    "action": "新增活動: " + props.modelValue + "。新資料:" + JSON.stringify(serverObject.value, null, 2)
   })
   
   awaitServerResponse.value++
@@ -226,7 +229,7 @@ function save() {
 }
 
 function purityData() {
-  serverObject.value.c_act_code = props.c_act_code.trim()
+  serverObject.value.c_act_code = props.modelValue.trim()
   serverObject.value.IsShow = serverObject.value.IsShow? 1: 0
   serverObject.value.EventClassID = whojoin_class.value[serverObject.value.c_group1]
   serverObject.value.i_quota_max = serverObject.value.i_quota_max? parseInt(serverObject.value.i_quota_max): 0
@@ -273,7 +276,7 @@ function notifyClientSuccess(result) {
   serverObject.value = {}
   awaitServerResponse.value--  
   $q.notify({
-    message: "新增活動" + props.c_act_code + "完成。",
+    message: "新增活動" + props.modelValue + "完成。",
   })
 }
 

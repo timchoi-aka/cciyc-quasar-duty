@@ -6,33 +6,88 @@
     >
     <Receipt :c_receipt_no="printReceiptNumber"/>
   </q-dialog>
+  
+  <!-- validation -->
+  <q-dialog
+    v-model="validateDisplay"
+    class="q-pa-none"
+    >
+    <q-card>
+      <q-card-section class="bg-primary text-white text-h6">
+        確定報名？
+      </q-card-section>  
+      <q-card-section class="text-h6">
+        <div v-if="ApplyHistory.filter(v => !v.b_refund).map(v => v.c_mem_id).includes(ApplicationQueue[0].c_mem_id)">
+          {{ApplicationQueue[0].c_mem_id}}已經報名！
+        </div>
+        <div v-if="(qdate.getDateDiff(Date.now(), ApplicationQueue[0].d_expired_1) > 0)">
+          {{ApplicationQueue[0].c_mem_id}}會藉已過期！
+        </div>
+      </q-card-section>
+      <q-card-actions>
+        <q-space/>
+        <q-btn v-close-popup @click="submitApplication" label="儲存" dense icon="save" class="q-ml-md bg-primary text-white" size="lg"/>
+        <q-btn v-close-popup label="取消" dense icon="replay" class="q-ml-md bg-negative text-white" size="lg"/>
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
 
-  <div class="row fit">
-    <q-chip size="lg" class="bg-yellow">報名期限：{{Event.d_sale_start}} - {{Event.d_sale_end}}</q-chip>
-    <q-btn @click="ApplicationQueue.push({c_mem_id: '', u_fee: 0, c_name: '', remark: '', c_sex: '', i_age: '', c_tel: ''})" label="新增報名" dense icon="celebration" class="q-ml-md bg-positive text-white" size="lg" v-if="(qdate.isBetweenDates(Date.now(), qdate.extractDate(Event.d_sale_start, 'D/M/YYYY'), qdate.extractDate(Event.d_sale_end, 'D/M/YYYY'), { inclusiveFrom: true, inclusiveTo: true }) && ApplicationQueue.length == 0)"/>
-    <q-btn @click="submitApplication" label="儲存" dense icon="save" class="q-ml-md bg-primary text-white" size="lg" v-if="(ApplicationQueue.length > 0)"/>
-    <q-btn @click="ApplicationQueue.splice(0,1)" label="取消" dense icon="replay" class="q-ml-md bg-negative text-white" size="lg" v-if="(ApplicationQueue.length > 0)"/>
-    <div class="q-ml-md">剩餘名額：{{(parseInt(Event.i_quota_max) - ApplyHistory.length)}}</div>
-  </div>
-  <div v-if="(ApplicationQueue.length > 0)">
-    <div class="row bg-blue-2">
-      <div class="col-1">會員號碼</div><div v-if="!Event.b_freeofcharge" class="col-1">收費</div><div class="col-4">備註</div><div class="col-1">姓名</div><div class="col-1">年齡</div><div class="col-2">會藉</div><div class="col-2">屆滿日期</div>
+  <!-- unregister confirm -->
+  <q-dialog
+    v-model="unregisterDisplay"
+    class="q-pa-none"
+    >
+    <q-card>
+      <q-card-section class="bg-primary text-white text-h6">
+        確定取消報名？
+      </q-card-section>  
+      <q-card-section>
+        <div>會員編號：{{unregisterItem.c_mem_id}}</div>
+        <div>姓名：{{unregisterItem.c_name}}</div>
+        <div>活動編號：{{unregisterItem.c_act_code}}</div>
+      </q-card-section>
+      <q-card-actions>
+        <q-space/>
+        <q-btn v-close-popup @click="unregister" label="儲存" dense icon="save" class="q-ml-md bg-primary text-white" size="lg"/>
+        <q-btn v-close-popup label="取消" dense icon="replay" class="q-ml-md bg-negative text-white" size="lg"/>
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+
+  <!-- add new user form -->
+  <q-form autocorrect="off"
+          autocapitalize="off"
+          autocomplete="off"
+          spellcheck="false"
+          @submit="startValidation" 
+          @reset="ApplicationQueue.splice(0,1)">
+    <div class="row fit">
+      <q-chip size="lg" class="bg-yellow">報名期限：{{Event.d_sale_start}} - {{Event.d_sale_end}}</q-chip>
+      <q-btn @click="ApplicationQueue.push({c_mem_id: '', u_fee: 0, c_name: '', remark: '', c_sex: '', i_age: '', c_tel: '', d_expired_1: ''})" label="新增報名" dense icon="celebration" class="q-ml-md bg-positive text-white" size="lg" v-if="(qdate.isBetweenDates(Date.now(), qdate.extractDate(Event.d_sale_start, 'D/M/YYYY'), qdate.extractDate(Event.d_sale_end, 'D/M/YYYY'), { inclusiveFrom: true, inclusiveTo: true }) && ApplicationQueue.length == 0)"/>
+      <q-btn type="submit" label="儲存" dense icon="save" class="q-ml-md bg-primary text-white" size="lg" v-if="(ApplicationQueue.length > 0)"/>
+      <q-btn type="reset" label="取消" dense icon="replay" class="q-ml-md bg-negative text-white" size="lg" v-if="(ApplicationQueue.length > 0)"/>
+      <div class="q-ml-md">剩餘名額：{{(parseInt(Event.i_quota_max) - ApplyHistory.filter(v => !v.b_refund).length)}}</div>
     </div>
-    <div v-for="(item, index) in ApplicationQueue" class="row">
-      <q-input class="col-1" type="text" mask="####" v-model="item.c_mem_id" :rules="[val => !ApplyHistory.map(a => a.c_mem_id).includes(val) || val + '已報名']"/>
-      <q-select v-if="!Event.b_freeofcharge" use-input input-debounce="0" :options="Fee" class="col-1" v-model="item.u_fee" :display-value="`${item.u_fee? item.u_fee.label + ' - ' + item.u_fee.value : ''}`" @new-value="newFee">
-        <template v-slot:option="scope">
-          <q-item v-bind="scope.itemProps">
-            <q-item-section>
-              <q-item-label>{{ scope.opt.label }} - {{scope.opt.value}}</q-item-label>
-            </q-item-section>
-          </q-item>
-        </template>
-      </q-select>
-      <q-input class="col-4" type="text" v-model="item.remark"/>
-      <MemberInfoByID v-model="ApplicationQueue[index]"/>
+    <div v-if="(ApplicationQueue.length > 0)">
+      <div class="row bg-blue-2">
+        <div class="col-2">會員號碼</div><div v-if="!Event.b_freeofcharge" class="col-1">收費</div><div class="col-3">備註</div><div class="col-1">姓名</div><div class="col-1">年齡</div><div class="col-2">會藉</div><div class="col-2">屆滿日期</div>
+      </div>
+      <div v-for="(item, index) in ApplicationQueue" class="row">
+        <div class="col-2"><MemberSelection v-model="item.c_mem_id"/></div>
+        <q-select v-if="!Event.b_freeofcharge" use-input input-debounce="0" :options="Fee" class="col-1" v-model="item.u_fee" :display-value="`${item.u_fee? item.u_fee.label + ' - ' + item.u_fee.value : ''}`" @new-value="newFee">
+          <template v-slot:option="scope">
+            <q-item v-bind="scope.itemProps">
+              <q-item-section>
+                <q-item-label>{{ scope.opt.label }} - {{scope.opt.value}}</q-item-label>
+              </q-item-section>
+            </q-item>
+          </template>
+        </q-select>
+        <q-input class="col-3" type="text" v-model="item.remark"/>
+        <MemberInfoByID v-model="ApplicationQueue[index]"/>
+      </div>
     </div>
-  </div>
+  </q-form>
   <q-table 
     :rows="ApplyHistory"
     :columns="columns"
@@ -40,14 +95,19 @@
   >
   <template v-slot:body-cell-c_receipt_no="props">
     <q-td :props="props">
-      <q-btn v-if="props.row.c_receipt_no" icon="print" color="positive" @click="printReceipt(props.row.c_receipt_no)" size="md" padding="none" outline/>
+      <q-btn v-if="(props.row.c_receipt_no && !props.row.b_refund)" icon="print" color="positive" @click="printReceipt(props.row.c_receipt_no)" size="md" padding="none" outline>
+        <q-tooltip class="bg-white text-positive">列印收據</q-tooltip>
+      </q-btn>
+      <q-btn v-if="(props.row.c_receipt_no && props.row.b_refund)" icon="print" color="negative" @click="printReceipt(props.row.c_receipt_no)" size="md" padding="none" outline>
+        <q-tooltip class="bg-white text-negative">列印已取消收據</q-tooltip>
+      </q-btn>
       {{props.row.c_receipt_no}}
     </q-td>
   </template>
   <template v-slot:body-cell-b_refund="props">
     <q-td :props="props">
-      <q-btn v-if="!props.row.b_refund" icon="currency_exchange" color="negative" @click="refundReceipt(props.row.c_receipt_no)" size="md" padding="none" outline/>
-      <div v-else>已退款</div>
+      <q-btn v-if="!props.row.b_refund" icon="currency_exchange" color="negative" @click="confirmUnregister(props.row)" size="md" padding="none" outline/>
+      <div v-else>已退出</div>
     </q-td>
   </template>
   </q-table>
@@ -59,10 +119,11 @@ import { useStore } from "vuex";
 import { useQuasar, date as qdate} from "quasar";
 import { EVENT_APPLY_BY_ACT_CODE, EVENT_BY_PK, EVENT_FEE_BY_ACT_CODE } from "/src/graphQueries/Event/query.js"
 import { LATEST_RECEIPT_NO } from "/src/graphQueries/Member/query.js"
-import { EVENT_REGISTRATION, FREE_EVENT_REGISTRATION } from "/src/graphQueries/Event/mutation.js"
+import { EVENT_REGISTRATION, FREE_EVENT_REGISTRATION, EVENT_UNREGISTRATION, FREE_EVENT_UNREGISTRATION } from "/src/graphQueries/Event/mutation.js"
 import { useQuery, useMutation, useSubscription } from "@vue/apollo-composable"
 import Receipt from "components/Account/Receipt.vue"
 import MemberInfoByID from "src/components/Member/MemberInfoByID.vue"
+import MemberSelection from "components/Member/MemberSelection.vue"
 
 // props
 const props = defineProps({
@@ -72,13 +133,12 @@ const props = defineProps({
 // variables
 const $q = useQuasar()
 const $store = useStore();
-const edit = ref(false)
-const newitem = ref([])
-const editItem = ref([])
-const deleteItem = ref([])
 const printReceiptDisplay = ref(false)
 const printReceiptNumber = ref("")
 const ApplicationQueue = ref([])
+const validateDisplay = ref(false)
+const unregisterDisplay = ref(false)
+const unregisterItem = ref({})
 
 // query
 const { result: EventData, onError: EventDataError } = useQuery(
@@ -93,7 +153,7 @@ const { onResult: EventFee_Completed, onError: EventFeeError } = useQuery(
     c_act_code: props.c_act_code
   }));
 
-const { result, onError: EventApplyError, refetch } = useSubscription(
+const { result, onError: EventApplyError } = useSubscription(
   EVENT_APPLY_BY_ACT_CODE,
   () => ({
     c_act_code: props.c_act_code
@@ -105,9 +165,10 @@ const { result: ReceiptData } = useSubscription(
 
 const { mutate: eventRegistration, onDone: eventRegistration_Completed, onError: eventRegistration_Error } = useMutation(EVENT_REGISTRATION)
 const { mutate: freeEventRegistration, onDone: freeEventRegistration_Completed, onError: freeEventRegistration_Error } = useMutation(FREE_EVENT_REGISTRATION)
-/*
-const { mutate: deleteFee, onDone: deleteFee_Completed, onError: deleteFee_Error } = useMutation(DELETE_EVENT_FEE)
-*/
+
+const { mutate: eventUnregistration, onDone: eventUnregistration_Completed, onError: eventUnregistration_Error } = useMutation(EVENT_UNREGISTRATION)
+const { mutate: freeEventUnregistration, onDone: freeEventUnregistration_Completed, onError: freeEventUnregistration_Error } = useMutation(FREE_EVENT_UNREGISTRATION)
+
 // computed
 const username = computed(() => $store.getters["userModule/getUsername"])
 const ApplyHistory = computed(() => result.value?.tbl_act_reg??[])
@@ -270,6 +331,7 @@ function submitApplication() {
       b_clear: false,
       d_clear: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
       i_prints: 0,
+      b_delete: false,
     })
     const regObject = ref({
       c_mem_id: item.c_mem_id,
@@ -289,7 +351,7 @@ function submitApplication() {
       c_name: item.c_name,
       c_sex: item.c_sex,
       i_age: item.i_age,
-      c_tel: item.c_tel
+      c_tel: item.c_tel,
     })
     /*
     console.log("remark:" + remark)
@@ -327,9 +389,58 @@ function newFee(val, done) {
     
   }
 }
+function startValidation() {
+  if (!ApplicationQueue.value[0].c_mem_id) {
+    $q.notify({ message: "請輸入會員號碼！", icon: 'error', color: 'negative', textColor: 'white' })
+    return
+  }
+  
+  if (ApplicationQueue.value[0].c_name == "無此人") {
+    $q.notify({ message: "請輸入正確會員號碼！", icon: 'error', color: 'negative', textColor: 'white' })
+    return
+  }
 
-function refundReceipt(c_receipt_no) {
-  console.log("refund clicked")
+  if (!ApplicationQueue.value[0].u_fee.value) {
+    $q.notify({ message: "請輸入正確收費！", icon: 'error', color: 'negative', textColor: 'white' })
+    return
+  }
+
+  validateDisplay.value = true
+}
+
+function confirmUnregister(object) {
+  unregisterItem.value = object
+  unregisterDisplay.value = true
+}
+
+function unregister() {
+  const logObject = ref({
+    "username": username,
+    "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+    "module": "活動系統",
+    "action": "會員" + unregisterItem.value.c_mem_id + "(" + unregisterItem.value.c_name + ") 取消報名活動 " + unregisterItem.value.c_act_code
+  })
+  
+  const unregObject = ref({
+    b_refund: true,
+    d_refund: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss")
+  })
+
+  if (Event.value.b_freeofcharge) {
+      freeEventUnregistration({
+        logObject: logObject.value,
+        unregObject: unregObject.value,
+        ID: unregisterItem.value.ID
+      })
+    } else {
+      eventUnregistration({
+        logObject: logObject.value,
+        unregObject: unregObject.value,
+        c_receipt_no: unregisterItem.value.c_receipt_no,
+        ID: unregisterItem.value.ID
+      })
+    }
+ 
 }
 
 function printReceipt(c_receipt_no) {
@@ -355,6 +466,17 @@ freeEventRegistration_Completed((result) => {
   $q.notify({ message: "會員: " + result.data.insert_tbl_act_reg_one.c_name + "報名活動" + result.data.insert_tbl_act_reg_one.c_act_code + "成功。" });
   ApplicationQueue.value.splice(0,1)
 })
+
+eventUnregistration_Completed((result) => {
+  unregisterItem.value = {}
+  $q.notify({ message: "會員: " + result.data.update_tbl_act_reg_by_pk.c_mem_id + "(" + result.data.update_tbl_act_reg_by_pk.c_name + ")" + "取消報名活動" + result.data.update_tbl_act_reg_by_pk.c_act_code + "成功。"})
+})
+
+freeEventUnregistration_Completed((result) => {
+  unregisterItem.value = {}
+  $q.notify({ message: "會員: " + result.data.update_tbl_act_reg_by_pk.c_mem_id + "(" + result.data.update_tbl_act_reg_by_pk.c_name + ")" + "取消報名活動" + result.data.update_tbl_act_reg_by_pk.c_act_code + "成功。"})
+})
+
 // callbacks error
 EventFeeError((error) => {
   notifyClientError(error)
@@ -367,28 +489,23 @@ EventDataError((error) => {
 EventApplyError((error) => {
   notifyClientError(error)
 })
-/*
-updateApply_Completed((result) => {
-  refetch()
-})
 
-deleteApply_Completed((result) => {
-  refetch()
-})
-
-updateApply_Error((error) => {
+eventUnregistration_Error((error) => {
   notifyClientError(error)
 })
 
-
-deleteApply_Error((error) => {
+eventRegistration_Error((error) => {
   notifyClientError(error)
 })
 
-EventApplyError((error) => {
+freeEventRegistration_Error((error) => {
   notifyClientError(error)
 })
-*/
+
+freeEventUnregistration_Error((error) => {
+  notifyClientError(error)
+})
+
 // UI function
 function notifyClientError(error) {
   userProfileLogout()

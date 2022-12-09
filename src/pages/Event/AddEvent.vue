@@ -1,28 +1,24 @@
 <template>
-  <AddEventContent :c_act_code="getCode"/>
+  <AddEventContent v-model="eventCode"/>
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
-import { useStore } from "vuex";
+import { ref } from "vue";
 import { useSubscription } from "@vue/apollo-composable";
 import AddEventContent from "components/Event/AddEventContent.vue"
 import { EVENT_GET_LATEST_ACT_CODE } from "/src/graphQueries/Event/query.js"
 
-
 // variables
-const $store = useStore();
+const eventCode = ref("")
 
 // queries
-const { result: eventActCode } = useSubscription(EVENT_GET_LATEST_ACT_CODE)
+const { onResult } = useSubscription(EVENT_GET_LATEST_ACT_CODE)
 
-// computed
-const username = computed(() => $store.getters["userModule/getUsername"])
-const latestActCode = computed(() => eventActCode.value?.HTX_Event[0].c_act_code??[])
-const getCode = computed(() => {
+// callback
+onResult((result) => {
   const thisYear = ((new Date()).getFullYear())
-  let year = latestActCode.value.length > 0? latestActCode.value.split("-")[0] : ""
-  let currentCode = latestActCode.value.length > 0? parseInt(latestActCode.value.split("-")[1]) : ""
+  let year = result.data.HTX_Event[0].c_act_code.split("-")[0]
+  let currentCode = parseInt(result.data.HTX_Event[0].c_act_code.split("-")[1])
   let code = (currentCode + 1).toString()
   while (code.length < 4) code = "0" + code
   if (year != thisYear) {
@@ -30,7 +26,7 @@ const getCode = computed(() => {
     code = "0001"
   }
   if (year && code)
-    return year + "-" + code
-  else return null
+    eventCode.value = year + "-" + code
+  else return eventCode.value = ""
 })
 </script>

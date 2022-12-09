@@ -1,6 +1,10 @@
 <template>
   <q-page>
-    <Suspense><router-view/></Suspense>
+    <router-view v-slot="{ Component }">
+      <keep-alive>
+        <component :is="Component" />
+      </keep-alive>
+    </router-view>
   </q-page>
 </template>
 <script setup>
