@@ -1,6 +1,6 @@
 <template>
   <div class="row">
-    <MemberSelection v-model="relatedMember.c_mem_id_2" @update:model-value="(value) => getNameFromMemberID(value)"/>
+    <MemberSelection :key="props.MemberID" v-model="relatedMember.c_mem_id_2" @update:model-value="(value) => getNameFromMemberID(value)"/>
     <q-select
       dense
       filled

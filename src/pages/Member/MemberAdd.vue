@@ -465,10 +465,7 @@ function updateType1Expire() {
     switch (memberInfo.value.c_udf_1.value) {
       case "個人會員":
         memberInfo.value.d_expired_1 = qdate.formatDate(
-            qdate.subtractFromDate(
-              qdate.addToDate(memberInfo.value.d_enter_1, { years: 1 }),
-              { days: 1 }
-            ),
+            qdate.addToDate(memberInfo.value.d_enter_1, { years: 1 }),
             "YYYY/MM/DD"
           );
         break;
@@ -484,10 +481,7 @@ function updateType1Expire() {
             memberInfo.value.d_expired_1 = "已超過25歲"
           } else {
             memberInfo.value.d_expired_1 = qdate.formatDate(
-              qdate.subtractFromDate(
-                qdate.addToDate(personalInfo.value.d_birth, { years: 25 }),
-                { days: 1 }
-              ),
+              qdate.addToDate(personalInfo.value.d_birth, { years: 25 }),
               "YYYY/MM/DD"
             )
           }
@@ -537,6 +531,32 @@ function addMember() {
   let receiptDescription = ref("")
   let price = ref(0)
   let remark = ref("")
+  const related_ids = ref([])
+
+  let relationValid = true
+  relationTable.value.forEach((rel) => {
+    if (rel.targetName != "" && rel.targetName != "沒有此會員") {
+      if (rel.relation) {
+        memberRelation.value.push({
+          c_mem_id_1: latestMemberID,
+          c_mem_id_2: rel.c_mem_id_2,
+          relation: rel.relation,
+        })
+        related_ids.value.push(rel.c_mem_id_2)
+      } else {
+        $q.notify({
+          message: "請輸入關聯會員關係！",
+          color: "negative",
+          textColor: "white",
+          icon: "error"
+        })
+        relationValid = false
+      }
+    }
+  }); 
+
+  if (!relationValid) return
+
   switch(memberInfo.value.c_udf_1.value) {
     case "永久會員":
       receiptDescription.value = "永久會員會費"
@@ -549,18 +569,6 @@ function addMember() {
       remark.value = "繳 付：至" + qdate.formatDate(memberInfo.value.d_expired_1, "YYYY年MM月") + "之會費\r\n屆滿日期:" + qdate.formatDate(memberInfo.value.d_expired_1, "DD/MM/YYYY")
       break
   }
-
-  const related_ids = ref([])
-  relationTable.value.forEach((rel) => {
-    if (rel.targetName != "" && rel.targetName != "沒有此會員") {
-      memberRelation.value.push({
-        c_mem_id_1: latestMemberID,
-        c_mem_id_2: rel.c_mem_id_2,
-        relation: rel.relation,
-      })
-      related_ids.value.push(rel.c_mem_id_2)
-    }
-  }); 
 
   const updateObject = ref({
     c_mem_id: latestMemberID,
