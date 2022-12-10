@@ -94,6 +94,18 @@
     </q-card-section>
   </q-card>
 
+  <!-- emergency -->
+  <q-card class="q-ma-md-md q-ma-xs-none q-ma-sm-sm">
+    <q-card-section class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md text-h6 bg-red-1">
+      緊急聯絡人資料
+    </q-card-section>
+    <q-card-section class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md">
+      <div class="col-12 row"><span class="col-4">緊急聯絡人: </span><span class="col-8"><q-input filled v-model="personalInfo.c_emer_name"/></span></div>
+      <div class="col-12 row"><span class="col-4">關係: </span><span class="col-8"><q-input filled v-model="personalInfo.c_emer_rel"/></span></div>
+      <div class="col-12 row"><span class="col-4">電話: </span><span class="col-8"><q-input filled v-model="personalInfo.c_emer_tel1_1" mask="########"/></span></div>
+    </q-card-section>
+  </q-card>
+
   <!-- related member -->
   <q-card class="q-ma-md-md q-ma-xs-none q-ma-sm-sm">
     <q-card-section class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md text-h6 bg-yellow-1">
@@ -312,6 +324,9 @@ let personalInfo = ref({
   c_email: "",
   m_addscom: "",
   age: "",
+  c_emer_name: "",
+  c_emer_rel: "",
+  c_emer_tel1_1: "",
 })
 
 let memberInfo = ref({
@@ -418,6 +433,9 @@ function postCallback(data) {
     c_email: "",
     m_addscom: "",
     age: "",
+    c_emer_name: "",
+    c_emer_rel: "",
+    c_emer_tel1_1: "",
   }
 
   memberInfo.value = {
@@ -533,7 +551,8 @@ function addMember() {
   let remark = ref("")
   const related_ids = ref([])
 
-  let relationValid = true
+  // error check before submit
+  let valid = true
   relationTable.value.forEach((rel) => {
     if (rel.targetName != "" && rel.targetName != "沒有此會員") {
       if (rel.relation) {
@@ -550,12 +569,31 @@ function addMember() {
           textColor: "white",
           icon: "error"
         })
-        relationValid = false
+        valid = false
       }
     }
   }); 
 
-  if (!relationValid) return
+  if(!personalInfo.value.d_birth) {
+    $q.notify({
+      message: "請輸入出生日期！",
+      color: "negative",
+      textColor: "white",
+      icon: "error"
+    })
+    valid = false
+  }
+
+  if(!memberInfo.value.c_udf_1) {
+    $q.notify({
+      message: "請輸入會藉！",
+      color: "negative",
+      textColor: "white",
+      icon: "error"
+    })
+    valid = false
+  }
+  if (!valid) return
 
   switch(memberInfo.value.c_udf_1.value) {
     case "永久會員":
@@ -588,6 +626,9 @@ function addMember() {
     d_expired_1: memberInfo.value.d_expired_1,
     d_update: memberInfo.value.d_update,
     d_write: memberInfo.value.d_write,
+    c_emer_name: personalInfo.value.c_emer_name,
+    c_emer_rel: personalInfo.value.c_emer_rel,
+    c_emer_tel1_1: personalInfo.value.c_emer_tel1_1,
   })
 
   const logObject = ref({
