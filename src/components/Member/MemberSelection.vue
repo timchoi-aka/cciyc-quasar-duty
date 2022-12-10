@@ -95,8 +95,8 @@ function nameFilter(val, update) {
     NameOptions.value = OriginalNameOptions.value
     NameOptions.value = NameOptions.value.filter(v => 
       (v.value? v.value.indexOf(val) > -1 : false) ||
-      (v.c_name? v.c_name.indexOf(val) > -1 : false) ||
-      (v.c_name_other? v.c_name_other.indexOf(val) > -1 : false)
+      (v.c_name? v.c_name.toLowerCase().indexOf(val.toLowerCase()) > -1 : false) ||
+      (v.c_name_other? v.c_name_other.toLowerCase().indexOf(val.toLowerCase()) > -1 : false)
     )
   })
 }

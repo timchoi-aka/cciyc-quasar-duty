@@ -133,7 +133,7 @@
                 { label: '女', value: '女' },
               ]"
             />
-          </span><span v-else>{{member.c_name_other}}</span></div>
+          </span><span v-else>{{member.c_sex}}</span></div>
         <div class="col-12 row"><span class="col-3">出生日期: </span>
           <span v-if="editState" class="col-9">
             <q-input filled v-model="edit_member.d_birth" mask="date" hint="YYYY/MM/DD" :rules="['date']">

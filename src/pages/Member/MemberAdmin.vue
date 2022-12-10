@@ -3,15 +3,11 @@
   <q-dialog v-model="waitingAsync" position="bottom">
     <LoadingDialog message="處理中" />
   </q-dialog>
-  <q-btn @click="migrateRelation" label="Migrate Relation"/>
-  <q-btn @click="updateRelationState" label="Update Relation State"/>
-  <q-list highlight separator dense>
-    <q-item clickable v-for="(item, index) in updateYouthRelatedMemberList" :key="index" @click="updateYouthRelatedMember(item)">{{item}}</q-item>
-  </q-list>
-  
+  <q-btn class="q-mt-md q-mx-md" :disable="migrated_relations.length == 0" @click="startMigrateRelation" label="Migrate Relation"/>
+  <q-btn class="q-mt-md q-mx-md" :disable="Members.length == 0" @click="updateYouthRelatedMember" label="Update Youth Relation"/>
 </template>
 
-<script>
+<script setup>
 import { MIGRATE_RELATION, GET_MEMBER_BASIC_AND_RELATED_MEMBER_FROM_IDS, GET_NAME_FROM_IDS } from "/src/graphQueries/Member/query.js";
 import { gql } from "graphql-tag"
 import LoadingDialog from "components/LoadingDialog.vue";
@@ -20,148 +16,154 @@ import ageUtil from "src/lib/calculateAge.js"
 import { date as qdate } from "quasar";
 import { UPDATE_RELATED_YOUTH_MEMBER_STATUS } from "/src/graphQueries/Member/mutation.js"
 import { useStore } from "vuex";
+import { useQuery, useMutation } from "@vue/apollo-composable"
 
-export default {
-  name: "Member Admin Module",
-  data() {
-    return {
-      updateYouthRelatedMemberList: [],
-      qdate: qdate,
+// variables
+const $store = useStore()
+const awaitServerResponse = ref(0)
+const migrated_relations = ref([])
+
+// query   
+const { onResult: onRelationResult } = useQuery(MIGRATE_RELATION)
+const { mutate: migrateRelation, onDone: migrateRelation_Completed, onError: migrateRelation_Error } = useMutation(gql`
+  mutation migrateRelation(
+    $migrated_relations: [Relation_insert_input!] = {}
+    ) {
+    insert_Relation(objects: $migrated_relations) {
+      affected_rows
     }
-  },
-  computed: {
-    waitingAsync() {
-      return this.awaitServerResponse > 0 ? true : false;
-    },
-  },
-  components: {
-    LoadingDialog
-  },
-  setup() {
-    const $store = useStore();
+  }
+`)
+
+const { result: activeMembers } = useQuery(gql`
+  query getActiveMember {
+    Member(where: {b_mem_type1: {_eq: true}}) {
+      c_mem_id
+    }
+  }`)
+
+const { mutate: updateYouthStatus, onDone: updateYouthStatus_Completed, onError: updateYouthStatus_Error } = useMutation(gql`
+  mutation updateYouthStatus(
+    $memberObjects: [Member_insert_input!] = {},
+    $logObject: Log_insert_input! = {}, 
+    ) {
+    insert_Member(objects: $memberObjects, if_matched: {match_columns: c_mem_id, update_columns: b_mem_type10}) {
+      affected_rows
+    }
+    insert_Log_one(object: $logObject) {
+      log_id
+    }
+  }`)
+
+// computed
+const waitingAsync = computed(() => awaitServerResponse.value > 0)
+const username = computed(() => $store.getters["userModule/getUsername"])  
+const ActiveMembers = computed(() => activeMembers.value?.Member.map(a => a.c_mem_id)??[''])
+const Members = ref([])
+const Relations = ref([])
+
+const { onResult } = useQuery(GET_MEMBER_BASIC_AND_RELATED_MEMBER_FROM_IDS, 
+  () => ({
+    c_mem_ids: ActiveMembers.value
+  }))
+
+onRelationResult((result) => {
+  result.data.Member.forEach((mem) => {
+    if (mem.c_mem_relative_memid) {
+      migrated_relations.value.push({
+        c_mem_id_1: mem.c_mem_id? mem.c_mem_id: "",
+        c_mem_id_2: mem.c_mem_relative_memid? mem.c_mem_relative_memid: "",
+        relation: mem.c_mem_relation? mem.c_mem_relation: ""
+      })
+    }
+  })
+})
+
+// functions
+function startMigrateRelation() {
+  migrateRelation({
+    migrated_relations: migrated_relations.value,
+  })   
+}
     
-    return {
-      username: computed(() => $store.getters["userModule/getUsername"]),
-      awaitServerResponse: ref(0),   
-    }
-  },
-  mounted() {
-  },  
-  methods: {
-    async migrateRelation() {
-      this.$apollo.query({
-        query: MIGRATE_RELATION,
-      }).then((data) => {
-        const member = data.data.Member;
-        let migrated_relations = [];
-        member.forEach((mem) => {
-          if (mem.c_mem_relative_memid != null) {
-            migrated_relations.push({
-              c_mem_id_1: mem.c_mem_id? mem.c_mem_id: "",
-              c_mem_id_2: mem.c_mem_relative_memid? mem.c_mem_relative_memid: "",
-              relation: mem.c_mem_relation? mem.c_mem_relation: ""
-            })
-          }
-        })
-        
-        this.$apollo.mutate({
-          mutation: gql`
-            mutation migrateRelation($migrated_relations: [Relation_insert_input!] = {}) {
-              insert_Relation(objects: $migrated_relations) {
-                affected_rows
-              }
-            }
-          `,
-          variables: {
-            migrated_relations: migrated_relations,
-          }
-        }).then((data) => {
-          console.log(JSON.stringify(data))
-        })
-      })
-    },
-    async updateRelationState() {
-      // query active members
-      this.$apollo.query({
-        query: gql`
-          query getActiveMember {
-            Member(where: {b_mem_type1: {_eq: true}}) {
-              c_mem_id
-            }
-          }
-        `
-      }).then((data) => {
-        let activeMember = data.data.Member.map(({c_mem_id})=>c_mem_id);
-        //this.updateYouthRelatedMemberList = activeMember;
-        
-        for (const mem of activeMember) {
-          //console.log(mem)
-          this.updateYouthRelatedMember(mem);  
-        }
-      })
-    },
-    async updateYouthRelatedMember(mem_id) {
-      // query and update mem_type_10 based on mem_id
-      // 1) query mem_info and query related members
-      // 2) loop through related members see if there is any youth
-      // 3) update this mem_type_10 based on (2)
+function updateYouthRelatedMember() {
+  let youthLog = ""
+  let memberObject = []
+  // loop both members in Relations
+  // find their index, and age in Members
+  // if both members in Relations are found
+  //    calculate their ages
+  //    if member is youth, update Members.b_mem_type10 in Relations
+  // update Members object to server
+  Relations.value.forEach((rel) => {
+    let mem1Index = Members.value.findIndex((element) => element.c_mem_id == rel.c_mem_id_1)
+    let mem2Index = Members.value.findIndex((element) => element.c_mem_id == rel.c_mem_id_2)
+    
+    if (mem1Index != -1 && mem2Index != -1) {
+      let age1 = ageUtil.calculateAge(Members.value[mem1Index].d_birth)
+      let age2 = ageUtil.calculateAge(Members.value[mem2Index].d_birth)
       
-      this.awaitServerResponse++;
-      let isYouthRelatedMember = false;
+      if (age1 >= 15 && age1 <= 24) {
+        memberObject.push({
+          c_mem_id: Members.value[mem2Index].c_mem_id,
+          b_mem_type10: true
+        })
+        youthLog += Members.value[mem2Index].c_mem_id + ", "
+      }
 
-      this.$apollo.query({
-        query: GET_MEMBER_BASIC_AND_RELATED_MEMBER_FROM_IDS,
-        variables: {
-          c_mem_ids: [mem_id],
-        },
-      }).then((data) => {
-        //console.log(JSON.stringify(data))
-        const memberResponse = data.data.Member;
-        const RelationResponse = data.data.Relation;
-        if (RelationResponse.length > 0) {
-          let relation = [];
-          RelationResponse.forEach((rel) => {
-            if (rel.c_mem_id_1 == mem_id) {
-              relation.push(rel.c_mem_id_2)
-            } else {
-              relation.push(rel.c_mem_id_1)
-            }
-          })
-          
-          this.$apollo.query({
-            query: GET_NAME_FROM_IDS,
-            variables: {
-              c_mem_ids: relation
-            }
-          }).then((data) => {
-            let memberResponse = data.data.Member;
-            let i = memberResponse.findIndex((element) => element.b_mem_type1 && ageUtil.calculateAge(element.d_birth) >= 15 && ageUtil.calculateAge(element.d_birth) <= 24)
-            
-            i != -1 ? isYouthRelatedMember = true: isYouthRelatedMember = false;
-            if (isYouthRelatedMember) {
-              this.$apollo.mutate({
-                mutation: UPDATE_RELATED_YOUTH_MEMBER_STATUS,
-                variables: {
-                  "c_mem_ids": [mem_id],
-                  "logObject": {
-                    "username": this.username + "(自動系統管理)",
-                    "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-                    "module": "會員系統",
-                    "action": "設定 " + mem_id + " 為青年家人會員。"
-                  }
-                }
-              }).then((data) => {
-                this.awaitServerResponse--;
-              })
-            } else {
-              this.awaitServerResponse--;
-            }
-          })
-        }  else {
-          this.awaitServerResponse--;
-        }
-      })
-    },
-  },
+      if (age2 >= 15 && age2 <= 24) {
+        memberObject.push({
+          c_mem_id: Members.value[mem1Index].c_mem_id,
+          b_mem_type10: true
+        })
+        youthLog += Members.value[mem1Index].c_mem_id + ", "
+      }
+    }
+  })
+  
+  // remove duplicates
+  memberObject = memberObject.filter((value, index, self) =>
+    index === self.findIndex((t) => (
+      t.c_mem_id === value.c_mem_id && t.b_mem_type10 === value.b_mem_type10
+    ))
+  )
+
+  const logObject = ref({
+    "username": username.value + "(自動系統管理)",
+    "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+    "module": "會員系統",
+    "action": "以下會員被設定為青年家人會員：" + youthLog
+  })
+       
+  console.log("data length: " + memberObject.length)
+  
+  awaitServerResponse.value++
+  updateYouthStatus({
+    memberObjects: memberObject,
+    logObject: logObject.value
+  })
 };
+// callback
+migrateRelation_Completed((result) => {
+  console.log(JSON.stringify(result))
+})
+
+migrateRelation_Error((error) => {
+  console.log(JSON.stringify(error))
+})
+
+updateYouthStatus_Error((error) => {
+  awaitServerResponse.value--
+  console.log(JSON.stringify(error))
+})
+
+updateYouthStatus_Completed((result) => {
+  awaitServerResponse.value--
+  console.log(result)
+})
+
+onResult((result) => {
+  Members.value = JSON.parse(JSON.stringify(result.data.Member))
+  Relations.value = JSON.parse(JSON.stringify(result.data.Relation))
+})
 </script>
