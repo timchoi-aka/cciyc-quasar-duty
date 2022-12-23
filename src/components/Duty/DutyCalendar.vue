@@ -392,7 +392,7 @@ function getHoliday(date) {
   if (i == -1) {
     return "";
   } else {
-    return this.publicHoliday[i].summary;
+    return publicHoliday.value[i].summary;
   }
 }
  
