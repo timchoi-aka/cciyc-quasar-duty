@@ -49,7 +49,6 @@ const { result: eventCount } = useSubscription(EVENT_GET_COUNT);
 const { result: eventList, loading, fetchMore, onError: EventGetAllError } = useQuery(EVENT_GET_ALL);
 
 // computed variables
-const uid = computed(() => $store.getters["userModule/getUID"])
 const EventList = computed(() => eventList.value?.HTX_Event??[])
 const waitingAsync = computed(() => awaitServerResponse > 0 ? true : false)
 const dataCount = computed(() => eventCount.value? JSON.parse(eventCount.value.HTX_Event_aggregate).aggregate.count:0)

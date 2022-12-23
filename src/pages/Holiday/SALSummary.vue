@@ -50,33 +50,22 @@
   </q-page>
 </template>
 
-<script>
+<script setup>
 import SpecialAnnualLeave from "components/Holiday/SAL";
 import { date as qdate } from "quasar";
 
-export default {
-  name: "SpecialAnnualLeaveView",
-  components: {
-    SpecialAnnualLeave,
-  },
-  data() {
-    return {
-      qdate: qdate,
-      renderDate: new Date(),
-    };
-  },
-  methods: {
-    changeRenderMonth(month) {
-      let targetDate = qdate.addToDate(this.renderDate, { months: month });
-      if (targetDate < new Date("2021/04/01")) {
-        this.renderDate = new Date("2021/04/01"); //system begin
-      } else {
-        this.renderDate = targetDate;
-      }
-    },
-  },
-  mounted() {},
-};
+// variable
+const renderDate = ref(new Date())
+   
+// function
+function changeRenderMonth(month) {
+  let targetDate = qdate.addToDate(renderDate.value, { months: month });
+  if (targetDate < new Date("2021/04/01")) {
+    renderDate.value = new Date("2021/04/01"); //system begin
+  } else {
+    renderDate.value = targetDate;
+  }
+}
 </script>
 
 <style scoped>

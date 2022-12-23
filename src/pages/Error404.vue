@@ -6,7 +6,7 @@
       </div>
 
       <div class="text-h2" style="opacity:.4">
-        Oops. Nothing here...
+        未能找到網頁...
       </div>
 
       <q-btn
@@ -15,17 +15,12 @@
         text-color="blue"
         unelevated
         to="/"
-        label="Go Home"
+        label="返回主頁"
         no-caps
       />
     </div>
   </div>
 </template>
 
-<script>
-import { defineComponent } from 'vue'
-
-export default defineComponent({
-  name: 'Error404'
-})
+<script setup>
 </script>

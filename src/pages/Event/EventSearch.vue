@@ -50,19 +50,22 @@ import { computed, ref } from "vue";
 import { useQuery } from "@vue/apollo-composable";
 import { useStore } from "vuex";
 import { EVENT_SEARCH } from "/src/graphQueries/Event/query.js";
-import { usersCollection} from "boot/firebase";
+import { usersCollection } from "boot/firebase";
 import EventDetail from "components/Event/EventDetail.vue";
 import { useQuasar } from "quasar";
+import { getDocs, query, where } from "@firebase/firestore";
 
 const UserList = ref([])
-usersCollection
-  .where("privilege.systemAdmin", "==", false)
-  .where("privilege.tmp", "!=", true)
-  .get().then((userDoc) => {
-    userDoc.forEach((doc) => {
-      if (doc.data().enable) UserList.value.push(doc.data().name)
-    })
+const userQuery = query(usersCollection,
+  where("privilege.systemAdmin", "==", false),
+  where("privilege.tmp", "!=", true)
+)
+ 
+getDocs(userQuery).then((userDoc) => {
+  userDoc.forEach((doc) => {
+    if (doc.data().enable) UserList.value.push(doc.data().name)
   })
+})
 
 const $q = useQuasar()
 const userList = ref(UserList.value)

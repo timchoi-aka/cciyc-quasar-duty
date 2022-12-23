@@ -81,6 +81,7 @@ query Event($condition: HTX_Event_bool_exp = {c_act_code: {_eq: ""}}) {
 export const MY_EVENT_FAVOURATE = gql`
   query EventFavourate($c_act_code: String = "", $username: String = "") {
     Event_Favourate_by_pk(c_act_code: $c_act_code, username: $username) {
+      username
       c_act_code
     }
   }`
@@ -88,6 +89,8 @@ export const MY_EVENT_FAVOURATE = gql`
 export const MY_FAV = gql`
 subscription MyFav($username: String = "") {
   Event_Favourate(where: {username: {_eq: $username}}) {
+    username
+    c_act_code
     Favourate_to_Event {
       b_finish
       c_act_code
@@ -204,6 +207,7 @@ export const EVALUATION_ACCOUNT = gql`
 export const EVENT_EVALUATION_BY_ACT_CODE = gql`
 query EVENT_EVALUATION_BY_ACT_CODE($c_act_code: String!) {
   HTX_Event_by_pk(c_act_code: $c_act_code) {
+    c_act_code
     c_act_name
     c_dest
     c_nature
@@ -261,6 +265,7 @@ query EVENT_EVALUATION_BY_ACT_CODE($c_act_code: String!) {
 export const EVENT_BY_PK = gql`
 query Event_by_pk($c_act_code: String!) {
   HTX_Event_by_pk(c_act_code: $c_act_code) {
+    c_act_code
     EventClassID
     Gen_m_remark
     IsShow

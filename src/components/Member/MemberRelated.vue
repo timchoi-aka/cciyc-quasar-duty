@@ -1,16 +1,21 @@
 <template>
   <div class="row">
-    <MemberSelection :key="props.MemberID" v-model="relatedMember.c_mem_id_2" @update:model-value="(value) => getNameFromMemberID(value)"/>
+    <div class="col-3" v-if="relatedMember.c_mem_id_1 == props.MemberID">
+      <MemberSelection :key="props.MemberID" v-model="relatedMember.c_mem_id_2" @update:model-value="(value) => getNameFromMemberID(value)"/>
+    </div>
+    <div class="col-3" v-else>
+      <MemberSelection :key="props.MemberID" v-model="relatedMember.c_mem_id_1" @update:model-value="(value) => getNameFromMemberID(value)"/>
+    </div>
     <q-select
       dense
       filled
       class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none"
       v-model="relatedMember.relation"
       :options="relationOptions"
-      @update:model-value="$emit('updateMember', relatedMember)"
+      @update:model-value="$emit('update:modelValue', relatedMember)"
     />
     <span class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none">
-      {{ relatedMember.targetName }}
+      {{ relatedMember.name }}
       <span v-if="relatedMember.age != null">({{relatedMember.age}})</span>
     </span>
     <span class="col-1 col-xs-1 q-mr-md-md q-mr-sm-sm q-mr-xs-none">
@@ -26,83 +31,97 @@
         square
         flat
         class="text-negative"
-        icon="clear"
+        icon="replay"
         @click="reset"
-      />
+      >
+        <q-tooltip class="bg-white text-red">重置</q-tooltip>
+      </q-btn>
     </span>
   </div>
 </template>
 
 <script setup>
 import { ref } from "vue"
-import { GET_NAME_FROM_IDS } from "/src/graphQueries/Member/query.js";
+import { GET_NAME_FROM_ID } from "/src/graphQueries/Member/query.js";
 import ageUtil from "src/lib/calculateAge.js"
 import MemberSelection from "components/Member/MemberSelection.vue"
 import { useQuery } from "@vue/apollo-composable"
 import { is } from "quasar";
 
 // props and emits
-const emit = defineEmits(['updateMember'])
+const emit = defineEmits(['updateMember', "update:modelValue"])
 const props = defineProps({
   MemberID: String,
+  modelValue: Object,
 })
 
 // variables
 const relatedMember = ref({
-  c_mem_id_1: "",
-  c_mem_id_2: "",
-  relation: "",
-  targetName: "",
-  age: null,
-  d_birth: "",
-  b_mem_type1: false,
+  c_mem_id_1: props.modelValue.c_mem_id_1? props.modelValue.c_mem_id_1: "",
+  c_mem_id_2: props.modelValue.c_mem_id_2? props.modelValue.c_mem_id_2: "",
+  relation: props.modelValue.relation? props.modelValue.relation: "",
+  name: props.modelValue.name? props.modelValue.name: "",
+  age: props.modelValue.age? props.modelValue.age: null,
+  d_birth: props.modelValue.d_birth? props.modelValue.d_birth: null,
+  b_mem_type1: props.modelValue.b_mem_type1? props.modelValue.b_mem_type1: false,
+  uuid: props.modelValue.uuid? props.modelValue.uuid: "",
+  delete: props.modelValue.delete? props.modelValue.delete: false
 })
-
+const originalValue = ref({})
 const relationOptions = ["父母子女", "兄弟姐妹", "其他親人"]
-const variables = ref([""])
+const variables = props.modelValue.c_mem_id_1 == props.MemberID? ref(props.modelValue.c_mem_id_2): props.modelValue.c_mem_id_2 == props.MemberID? ref(props.modelValue.c_mem_id_1): ref("")
 
 // query
 const { onResult } = useQuery(
-  GET_NAME_FROM_IDS,
+  GET_NAME_FROM_ID,
   () => ({
-    c_mem_ids: variables.value
+    c_mem_id: variables.value
   })
 )
 
 // query callback
-onResult((data) => {      
-  const result = data.data.Member[0]
-  if (is.object(result)) {
-    relatedMember.value.c_mem_id_1 = props.MemberID
-    relatedMember.value.targetName = result.c_name
+onResult((data) => {     
+  const result = data.data.Member_by_pk
+  
+  if (!is.object(result)) {
+    relatedMember.value.c_mem_id_1 = relatedMember.value.c_mem_id_1 == props.MemberID.trim()? props.MemberID.trim(): ""
+    relatedMember.value.c_mem_id_2 = relatedMember.value.c_mem_id_2 == props.MemberID.trim()? props.MemberID.trim(): ""
+    relatedMember.value.name = "沒有此會員"
+    relatedMember.value.b_mem_type1 = false
+    relatedMember.value.age = null
+    relatedMember.value.d_birth = null
+    return
+  }
+
+  if (result.c_mem_id != props.MemberID) {
+    relatedMember.value.c_mem_id_1 = relatedMember.value.c_mem_id_1.trim() == props.MemberID.trim()? props.MemberID.trim(): result.c_mem_id
+    relatedMember.value.c_mem_id_2 = relatedMember.value.c_mem_id_2.trim() == props.MemberID.trim()? props.MemberID.trim(): result.c_mem_id
+    relatedMember.value.name = result.c_name
       ? result.c_name
       : result.c_name_other
     relatedMember.value.b_mem_type1 = result.b_mem_type1
     relatedMember.value.age = ageUtil.calculateAge(result.d_birth)
     relatedMember.value.d_birth = result.d_birth
-  } else {
-    relatedMember.value.targetName = "沒有此會員"
+  } else { // selected member same as this member or not exist
+    relatedMember.value.name = "沒有此會員"
     relatedMember.value.age = null
     relatedMember.value.d_birth = null
-  }
+  } 
   
-  emit("updateMember", relatedMember.value)
+  if (Object.keys(originalValue.value).length == 0) {
+    originalValue.value = JSON.parse(JSON.stringify(relatedMember.value))
+  }
+  emit('update:modelValue', relatedMember.value)
 })
 
 // function
 function reset() {
-  relatedMember.value = {
-    c_mem_id_2: "",
-    relation: "",
-    targetName: "",
-    age: null,
-    d_birth: "",
-    b_mem_type1: false,
-  }
+  relatedMember.value = JSON.parse(JSON.stringify(originalValue.value))
+  emit('update:modelValue', relatedMember.value)
 }
 
-function getNameFromMemberID(c_mem_ids) {
-  if (c_mem_ids) variables.value = [c_mem_ids]
+function getNameFromMemberID(c_mem_id) {
+  if (c_mem_id) variables.value = c_mem_id
   else variables.value = ''
 }
 </script>

@@ -150,6 +150,7 @@ export const UPDATE_EVENT_FEE = gql`
 export const ADD_FAVOURATE = gql`
   mutation addFavourate($c_act_code: String = "", $username: String = "") {
     insert_Event_Favourate_one(object: {c_act_code: $c_act_code, username: $username}) {
+      username
       c_act_code
     }
   }`
@@ -157,6 +158,7 @@ export const ADD_FAVOURATE = gql`
 export const REMOVE_FAVOURATE = gql`
   mutation removeFavourate($c_act_code: String = "", $username: String = "") {
     delete_Event_Favourate_by_pk(c_act_code: $c_act_code, username: $username) {
+      username
       c_act_code
     }
   }`

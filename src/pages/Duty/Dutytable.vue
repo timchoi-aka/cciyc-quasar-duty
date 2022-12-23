@@ -108,42 +108,27 @@
       />
     </div>
 
-    <DutyCalendar
-      class="q-mx-sm"
-      v-bind:renderDate="renderDate"
-      :allowModify="true"
-      :printOnly="false"
-      :key="renderDate.getDate()"
-    />
+    <div class="q-mx-sm">
+      <DutyCalendar
+        :renderDate="renderDate"
+        :allowModify="true"
+        :printOnly="false"
+        :key="renderDate"
+      />
+    </div>
   </q-page>
 </template>
 
-<script>
+<script setup>
 import DutyCalendar from "components/Duty/DutyCalendar";
-import { defineComponent } from "vue";
 import { date as qdate } from "quasar";
+import { ref } from "vue"
 
-export default defineComponent({
-  name: "Dutytable",
-  components: {
-    DutyCalendar,
-  },
-  computed: {
-    //...mapState(["userProfile"]),
-  },
-  data() {
-    return {
-      qdate: qdate,
-      renderDate: new Date(),
-    };
-  },
-  methods: {
-    changeRenderDate(days) {
-      this.renderDate = qdate.addToDate(this.renderDate, { days: days });
-    },
-  },
-  mounted() {},
-});
+// variables
+const renderDate = ref(new Date())
+
+// function
+function changeRenderDate(days) {
+  renderDate.value = qdate.addToDate(renderDate.value, { days: days });
+}
 </script>
-
-<style scoped></style>

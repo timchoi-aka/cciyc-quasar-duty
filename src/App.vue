@@ -75,98 +75,77 @@
   </q-layout>
 </template>
 
-<script>
+<script setup>
 import EssentialLink from "components/EssentialLink.vue";
 import MenuBar from "components/MenuBar.vue";
-import { defineComponent, ref, computed } from "vue";
+import { ref, computed } from "vue";
 import { useStore } from "vuex";
+import { useQuasar } from "quasar"
 
-export default defineComponent({
-  name: "App",
+// variables
+const leftDrawerOpen = ref(false);
+const rightDrawerOpen = ref(false);
+const $store = useStore();
+const $q = useQuasar();
+
+// computed
+// getters
+const uid = computed(() => $store.getters["userModule/getUID"])
+const username = computed(() => $store.getters["userModule/getUsername"])
+const photoURL = computed(() => $store.getters["userModule/getPhotoURL"])
+const UAT = computed(() => $store.getters["userModule/getUAT"])
+const isTmp = computed(() => $store.getters["userModule/getTmp"])
+const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"])
+const isUserManagement = computed(() => $store.getters["userModule/getUserManagement"])
+// dispatch
+const userProfileLogout = () => $store.dispatch("userModule/logout")
+const toggleLeftDrawer = () => leftDrawerOpen.value = !leftDrawerOpen.value
+const toggleRightDrawer = () => rightDrawerOpen.value = !rightDrawerOpen.value
   
-  components: {
-    EssentialLink,
-    MenuBar,
-  }, 
-  setup() {
-    const leftDrawerOpen = ref(false);
-    const rightDrawerOpen = ref(false);
-    const $store = useStore();
-    let currentModule = $store.getters["currentModule/getCurrentModule"];
+// functions
+function logout() {
+  userProfileLogout().then(() => {
+    $q.notify({ message: "登出成功." });
+  })
+  .catch((error) => console.log("error", error));
+}
 
-    return {
-      uid: computed(() => $store.getters["userModule/getUID"]),
-      username: computed(() => $store.getters["userModule/getUsername"]),
-      photoURL: computed(() => $store.getters["userModule/getPhotoURL"]),
-      UAT: computed(() => $store.getters["userModule/getUAT"]),
-      userProfileLogout: () => $store.dispatch("userModule/logout"),
-      updateProfile: (user) => $store.dispatch("userModule/updateProfile", user),
-      setCurrentModule: ((mod) => $store.dispatch("currentModule/setCurrentModule", mod)),
-      getCurrentModule: computed(() => $store.getters["currentModule/getCurrentModule"]),
-      leftDrawerOpen,
-      rightDrawerOpen,
-      currentModule,
-      toggleLeftDrawer() {
-        leftDrawerOpen.value = !leftDrawerOpen.value;
-      },
-      toggleRightDrawer() {
-        rightDrawerOpen.value = !rightDrawerOpen.value;
-      },
-    };
+// links
+const linksList = ref([
+  {
+    title: "編更系統",
+    caption: "編更，活動，列印",
+    icon: "calendar_month",
+    link: "/duty",
+    enable: true,
   },
-  methods: {
-    logout() {
-      this.userListener();
-      this.userProfileLogout()
-        .then(() => {
-          this.$q.notify({ message: "登出成功." });
-        })
-        .catch((error) => console.log("error", error));
-    },
+  {
+    title: "假期系統",
+    caption: "年假，申請，審批",
+    icon: "festival",
+    link: "/holiday",
+    enable: !isTmp.value,
   },
-  data() {
-    return {
-      userListener: Function(),
-      linksList: [
-        {
-          title: "編更系統",
-          caption: "編更，活動，列印",
-          icon: "calendar_month",
-          link: "/duty",
-          enable: true,
-        },
-        {
-          title: "假期系統",
-          caption: "年假，申請，審批",
-          icon: "festival",
-          link: "/holiday",
-          enable: !this.isTmp,
-        },
-        {
-          title: "超時系統",
-          caption: "超時，申請，審批",
-          icon: "schedule",
-          link: "/overtime",
-          enable: !this.isTmp,
-        },
-        {
-          title: "用戶管理",
-          caption: "權限，臨時員工",
-          icon: "account_circle",
-          link: "/user",
-          enable: this.isUserManagement,
-        },
-        {
-          title: "系統管理",
-          caption: "系統管理員專用",
-          icon: "build",
-          link: "/system-admin",
-          enable: this.isSystemAdmin,
-        },
-      ],
-    };
+  {
+    title: "超時系統",
+    caption: "超時，申請，審批",
+    icon: "schedule",
+    link: "/overtime",
+    enable: !isTmp.value,
   },
-});
+  {
+    title: "用戶管理",
+    caption: "權限，臨時員工",
+    icon: "account_circle",
+    link: "/user",
+    enable: isUserManagement.value,
+  },
+  {
+    title: "系統管理",
+    caption: "系統管理員專用",
+    icon: "build",
+    link: "/system-admin",
+    enable: isSystemAdmin.value,
+  },
+])
 </script>
-
-<style scoped></style>

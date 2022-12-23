@@ -116,10 +116,16 @@
           icon="add"
           @click="
             relationTable.push({
-              c_mem_id_1: '',
+              
+              c_mem_id_1: latestMemberID,
               c_mem_id_2: '',
-              targetName: '',
               relation: '',
+              name: '',
+              age: 0,
+              d_birth: '',
+              b_mem_type1: false,
+              uuid: '',
+              delete: false,
             })
           "
         />
@@ -139,9 +145,9 @@
         <span class="col-1 col-xs-1 q-mr-md-md q-mr-sm-sm q-mr-xs-none">會藉</span>
         <q-space/>
       </div>
-
+      
       <div v-for="(relation, index) in relationTable" :key="index" class="row fit">
-        <MemberRelated :key="latestMemberID" class="row fit" :MemberID="latestMemberID" @update-member="(value) => updateRelationTable(index, value)"/>
+        <MemberRelated :key="latestMemberID" v-model="relationTable[index]" :MemberID="latestMemberID" class="row fit"/>
       </div>
     </q-card-section>
   </q-card>
@@ -306,11 +312,16 @@ const udf1List = [
 ]
 
 let relationTable = ref([
-  {
-    c_mem_id_1: "",
+  { 
+    c_mem_id_1: latestMemberID,
     c_mem_id_2: "",
-    targetName: "",
     relation: "",
+    name: "",
+    age: 0,
+    d_birth: "",
+    b_mem_type1: false,
+    uuid: "",
+    delete: false,
   },
 ])
 
@@ -450,12 +461,17 @@ function postCallback(data) {
   }
 
   relationTable.value = [
-    {
-      c_mem_id_1: "",
+    { 
+      c_mem_id_1: latestMemberID,
       c_mem_id_2: "",
-      targetName: "",
       relation: "",
-    }
+      name: "",
+      age: 0,
+      d_birth: "",
+      b_mem_type1: false,
+      uuid: "",
+      delete: false,
+    },
   ]
   awaitServerResponse--;
 }
@@ -554,7 +570,7 @@ function addMember() {
   // error check before submit
   let valid = true
   relationTable.value.forEach((rel) => {
-    if (rel.targetName != "" && rel.targetName != "沒有此會員") {
+    if (rel.name != "" && rel.name != "沒有此會員") {
       if (rel.relation) {
         memberRelation.value.push({
           c_mem_id_1: latestMemberID,

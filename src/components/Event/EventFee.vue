@@ -183,10 +183,12 @@ EventFeeError((error) => {
 
 // UI function
 function notifyClientError(error) {
-  userProfileLogout()
+  /*userProfileLogout()
     .then(() => {
       $q.notify({ message: "系統錯誤，請重新登入." });
     })
     .catch((error) => console.log("error", error));
+    */
+    console.log("error", error)
 }
 </script>

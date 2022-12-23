@@ -11,13 +11,14 @@ import { FirebaseAuth } from "boot/firebase"
 import { ApolloClients } from '@vue/apollo-composable'
 import { setContext } from "@apollo/client/link/context"
 
+
 export default boot(
   async ({ app }) => {
     // Default client.
-    const options = /* await */ getClientOptions(/* {app, router ...} */)    
+    //const options = /* await */ getClientOptions(/* {app, router ...} */)    
   
     // authentication middleware (for query / mutation) (local token) obsoleted now
-    const authMiddleware = new ApolloLink((operation, forward) => {
+    /*const authMiddleware = new ApolloLink((operation, forward) => {
       // add the authorization to the headers
       const token = sessionStorage.getItem('access-token');
       operation.setContext({
@@ -27,6 +28,7 @@ export default boot(
       })
       return forward(operation);
     });
+    */
 
     // authentication middleware (for query / mutation) async firebase token
     const asyncAuthMiddleware = setContext(operation => 
@@ -45,6 +47,7 @@ export default boot(
       createClient({
         url: "wss://cciycgw.eastasia.cloudapp.azure.com/v1/graphql",
         connectionParams: async () => {
+          //const token = sessionStorage.getItem("access-token")
           const token = await FirebaseAuth.currentUser.getIdToken();
           return {
             headers: {
@@ -83,7 +86,43 @@ export default boot(
     // declare apollo client, using inMemoryCache,
     // first link = errorLink, termination link = link
     const apolloClient = new ApolloClient({
-      cache: new InMemoryCache(),
+      cache: new InMemoryCache({
+        typePolicies: {
+          Member: {
+            keyFields: ["c_mem_id"],
+          },
+          Log: {
+            keyFields: ["log_id"],
+          },
+          Relation: {
+            keyFields: ["c_mem_id_1", "c_mem_id_2"],
+          },
+          tbl_account: {
+            keyFields: ["c_receipt_no"],
+          },
+          HTX_Event: {
+            keyFields: ["c_act_code"],
+          },
+          Event_Evaluation: {
+            keyFields: ["uuid"],
+          },
+          Event_Evaluation_Account: {
+            keyFields: ["account_uuid"],
+          },
+          Event_Favourate: {
+            keyFields: ["username", "c_act_code"],
+          },
+          tbl_act_fee: {
+            keyFields: ["c_act_code", "c_type"],
+          },
+          tbl_act_reg: {
+            keyFields: ["ID"],
+          },
+          tbl_act_session: {
+            keyFields: ["c_act_code", "d_act"],
+          }
+        }
+      }),
       //link: from([errorLink, concat(authMiddleware, link)]),
       link: from([errorLink, link]),
       defaultOptions: {
@@ -103,16 +142,10 @@ export default boot(
         $query: {
           loadingKey: 'loading',
           fetchPolicy: 'network-only',
-          watchQuery: {
-            nextFetchPolicy: 'network-only', 
-          },
         },
         $mutate: {
           loadingKey: 'loading',
           fetchPolicy: 'network-only',
-          watchQuery: {
-            nextFetchPolicy: 'network-only', 
-          },
         }
       },
     })

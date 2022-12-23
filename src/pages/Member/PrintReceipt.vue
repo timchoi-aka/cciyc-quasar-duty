@@ -1,13 +1,11 @@
 <teamplate>
-{{memberID}}
+{{props.memberID}}
 
 </teamplate>
 
-<script>
-export default {
-  name: "PrintReceipt",
-  props: {
-    memberID: String,
-  }
-}
+<script setup>
+
+const props = defineProps({
+  memberID: String,
+})
 </script>

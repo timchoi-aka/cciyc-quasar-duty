@@ -58,11 +58,15 @@ const routes = [
         path: 'status',
         component: () => import('src/pages/Event/Status.vue'), meta: {requiresAuth: true},
       },
+      {
+        path: 'test',
+        component: () => import('src/pages/Test.vue'), meta: {requiresAuth: true},
+      },
     ]
   },
   {
     path: '/duty',
-    component: () => import('src/pages/Duty.vue'), meta: {requiresAuth: true},
+    component: () => import('src/pages/DutyHome.vue'), meta: {requiresAuth: true},
     children: [
       {
         path: 'dutytable',
@@ -80,7 +84,7 @@ const routes = [
   },
   {
     path: '/holiday',
-    component: () => import('src/pages/Holiday.vue'), meta: {requiresAuth: true},
+    component: () => import('src/pages/HolidayHome.vue'), meta: {requiresAuth: true},
     children: [
       {  path: 'al-view',
       component: () => import('src/pages/Holiday/ALSummary.vue'), meta: {requiresAuth: true }},
@@ -96,7 +100,7 @@ const routes = [
   },
   {
     path: '/overtime',
-    component: () => import('src/pages/Overtime.vue'), meta: {requiresAuth: true},
+    component: () => import('src/pages/OvertimeHome.vue'), meta: {requiresAuth: true},
     children: [
       {  path: 'ot-view',
       component: () => import('src/pages/Overtime/OTSummary.vue'), meta: {requiresAuth: true }},

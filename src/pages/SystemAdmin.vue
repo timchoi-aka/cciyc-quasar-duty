@@ -8,151 +8,154 @@
   <q-btn disabled @click="getApprovedHoliday" label="getApprovedHoliday"></q-btn>
   <q-btn @click="calculateLeaveBalance" label="calculateLeaveBalance"></q-btn>
   <q-btn @click="addSALDeadline" label="addSALDeadline"></q-btn>
-  <q-btn @click="addCustomClaims" label="testAxios"></q-btn>
+  <q-btn @click="addCustomClaims" label="Add Custom Claims"></q-btn>
 </template>
 
-<script>
-import { defineComponent, computed } from "vue";
+<script setup>
+import { ref, computed } from "vue";
 import { useStore } from "vuex";
-import Firebase, {
+import {
   usersCollection,
   leaveCollection,
   scheduleCollection,
   FirebaseFunctions,
   FirebaseAuth,
-  getAuth,
 } from "boot/firebase";
 import { date as qdate } from "quasar";
+import { httpsCallable } from "firebase/functions";
+import { getDocs, query, where } from "@firebase/firestore";
 
-export default defineComponent({
-  name: "SystemAdmin",
-  data() {
-    return {};
-  },
-  setup() {
-    const $store = useStore();
+// variables
+const $store = useStore(); 
 
-    return {
-      hasuraClaim: computed(() => $store.getters["userModule/getHasuraClaim"]),
-      uid: computed(() => $store.getters["userModule/getUID"]),
-    };
-  },
-  methods: {
-    addSALDeadline() {
-      const addSALDeadline = FirebaseFunctions.httpsCallable(
-        "systemAdmin-addSALDeadline"
-      );
-      addSALDeadline()
-        .then((result) => {
-          console.log(JSON.stringify(result));
-        })
-        .catch((err) => {
-          console.err(JSON.stringify(err));
-        });
-    },
-    calculateLeaveBalance() {
-      const calculate = FirebaseFunctions.httpsCallable(
-        "systemAdmin-calculateLeaveBalance"
-      );
-      calculate()
-        .then((result) => {
-          console.log(JSON.stringify(result));
-        })
-        .catch((err) => {
-          console.err(JSON.stringify(err));
-        });
-    },
-    migrateOTBalance() {
-      const migrate = FirebaseFunctions.httpsCallable("systemAdmin-migrateOTBalance");
-      migrate()
-        .then((result) => {
-          console.log(JSON.stringify(result));
-        })
-        .catch((err) => {
-          console.err(JSON.stringify(err));
-        });
-    },
-    upgradeUserProfile() {
-      const upgrade = FirebaseFunctions.httpsCallable("systemAdmin-upgradeUserObject");
-      upgrade()
-        .then((result) => {
-          console.log(JSON.stringify(result));
-        })
-        .catch((err) => {
-          console.err(JSON.stringify(err));
-        });
-    },
-    updateLeaveBalance() {
-      const update = FirebaseFunctions.httpsCallable("systemAdmin-updateLeaveBalance");
-      update()
-        .then((result) => {
-          console.log(JSON.stringify(result));
-        })
-        .catch((err) => {
-          console.err(JSON.stringify(err));
-        });
-    },
-    housekeepSchedule() {
-      const housekeep = FirebaseFunctions.httpsCallable("systemAdmin-housekeepSchedule");
-      housekeep()
-        .then((result) => {
-          console.log(JSON.stringify(result));
-        })
-        .catch((err) => {
-          console.err(JSON.stringify(err));
-        });
-    },
-    addNewRank() {
-      const addRank = FirebaseFunctions.httpsCallable("systemAdmin-addNewRank");
-      addRank({
-        rank: "tmp",
-        t1: 0,
-        t2: 0,
-        t3: 0,
-        t4: 0,
-        t5: 0,
-      })
-        .then((result) => {
-          console.log(JSON.stringify(result));
-        })
-        .catch((err) => {
-          console.err(JSON.stringify(err));
-        });
-    },
-    findDanglingHoliday() {
-      const findDangling = FirebaseFunctions.httpsCallable(
-        "systemAdmin-findDanglingHoliday"
-      );
-      findDangling()
-        .then((result) => {
-          console.log(JSON.stringify(result));
-        })
-        .catch((err) => {
-          console.err(JSON.stringify(err));
-        });
-    },
-    async getApprovedHoliday() {
-      const leaveDoc = await leaveCollection
-        .where("status", "==", "批准")
-        .where("uid", "==", "egoz4VCb3kSA2NwwT8CyiVSYkv83")
-        .where("type", "==", "AL")
-        .orderBy("date")
-        .get();
+// computed
+const hasuraClaim = computed(() => $store.getters["userModule/getHasuraClaim"])
+const uid = computed(() => $store.getters["userModule/getUID"])
+   
+function addSALDeadline() {
+  const addSALDL = httpsCallable(FirebaseFunctions,
+    "systemAdmin-addSALDeadline"
+  );
+  addSALDL()
+    .then((result) => {
+      console.log(JSON.stringify(result));
+    })
+    .catch((err) => {
+      console.err(JSON.stringify(err));
+    });
+}
 
-      leaveDoc.forEach((doc) => {
-        console.log(
-          qdate.formatDate(doc.data().date, "YYYY-MM-DD") + "[" + doc.data().slot + "]"
-        );
-        console.log(JSON.stringify(doc.data()));
-      });
-      console.log("total: " + leaveDoc.docs.length);
-    },
-    async addCustomClaims() {
-      const setCustomClaims = FirebaseFunctions.httpsCallable("systemAdmin-setCustomClaims");
-      setCustomClaims().then((result) => {
-         console.log(result);
-      })  
-    }
-  },
-});
+function calculateLeaveBalance() {
+  const calculate = httpsCallable(FirebaseFunctions,
+    "systemAdmin-calculateLeaveBalance"
+  );
+  calculate()
+    .then((result) => {
+      console.log(JSON.stringify(result));
+    })
+    .catch((err) => {
+      console.err(JSON.stringify(err));
+    });
+}
+
+function migrateOTBalance() {
+  const migrate = httpsCallable(FirebaseFunctions, "systemAdmin-migrateOTBalance");
+  migrate()
+    .then((result) => {
+      console.log(JSON.stringify(result));
+    })
+    .catch((err) => {
+      console.err(JSON.stringify(err));
+    });
+}
+ 
+function upgradeUserProfile() {
+  const upgrade = httpsCallable(FirebaseFunctions, "systemAdmin-upgradeUserObject");
+  upgrade()
+    .then((result) => {
+      console.log(JSON.stringify(result));
+    })
+    .catch((err) => {
+      console.err(JSON.stringify(err));
+    });
+}
+
+function updateLeaveBalance() {
+  const update = httpsCallable(FirebaseFunctions, "systemAdmin-updateLeaveBalance");
+  update()
+    .then((result) => {
+      console.log(JSON.stringify(result));
+    })
+    .catch((err) => {
+      console.err(JSON.stringify(err));
+    });
+}
+
+function housekeepSchedule() {
+  const housekeep = httpsCallable(FirebaseFunctions, "systemAdmin-housekeepSchedule");
+  housekeep()
+    .then((result) => {
+      console.log(JSON.stringify(result));
+    })
+    .catch((err) => {
+      console.err(JSON.stringify(err));
+    });
+}
+
+function addNewRank() {
+  const addRank = httpsCallable(FirebaseFunctions, "systemAdmin-addNewRank");
+  addRank({
+    rank: "tmp",
+    t1: 0,
+    t2: 0,
+    t3: 0,
+    t4: 0,
+    t5: 0,
+  })
+    .then((result) => {
+      console.log(JSON.stringify(result));
+    })
+    .catch((err) => {
+      console.err(JSON.stringify(err));
+    });
+}
+
+function findDanglingHoliday() {
+  const findDangling = httpsCallable(FirebaseFunctions, 
+    "systemAdmin-findDanglingHoliday"
+  );
+  findDangling()
+    .then((result) => {
+      console.log(JSON.stringify(result));
+    })
+    .catch((err) => {
+      console.err(JSON.stringify(err));
+    });
+}
+
+async function getApprovedHoliday() {
+  const leaveDocQuery = query(leaveCollection,
+    where("status", "==", "批准"),
+    where("uid", "==", "egoz4VCb3kSA2NwwT8CyiVSYkv83"),
+    where("type", "==", "AL"),
+    orderBy("date")
+  )
+  
+  const leaveDoc = await getDocs(leaveDocQuery)
+
+  leaveDoc.forEach((doc) => {
+    console.log(
+      qdate.formatDate(doc.data().date, "YYYY-MM-DD") + "[" + doc.data().slot + "]"
+    );
+    console.log(JSON.stringify(doc.data()));
+  });
+  console.log("total: " + leaveDoc.docs.length);
+}
+
+async function addCustomClaims() {
+  const setCustomClaims = httpsCallable(FirebaseFunctions, "systemAdmin-setCustomClaims");
+  setCustomClaims().then((result) => {
+      console.log(result);
+  })  
+}
 </script>

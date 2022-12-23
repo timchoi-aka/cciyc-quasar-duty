@@ -268,6 +268,32 @@ exports.toggleProbation = functions.region("asia-east2").https.onCall(async (dat
   });
 });
 
+exports.toggleParttime = functions.region("asia-east2").https.onCall(async (data, context) => {
+  const loginUserDoc = FireDB
+      .collection("users")
+      .doc(context.auth.uid);
+  const loginUser = await loginUserDoc.get();
+  const loginUserData = loginUser.data();
+  if (loginUserData.privilege.userManagement != true) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only user management admin can change user privilege",
+    );
+  }
+
+  const changeUserDoc = FireDB.collection("users").doc(data);
+  const changeUser = await changeUserDoc.get();
+  const changeUserData = changeUser.data();
+  const newPrivilege = changeUserData.parttime? !changeUserData.parttime: true;
+  return await changeUserDoc.update({
+    "parttime": newPrivilege,
+  }).then(() => {
+    console.log("USER: " +
+    changeUserData.name + "[parttime]:" + newPrivilege);
+    return newPrivilege;
+  });
+});
+
 exports.toggleLeaveApprove = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
       .collection("users")
@@ -395,27 +421,39 @@ exports.changeOrder = functions.region("asia-east2").https.onCall(async (data, c
       .get();
 
   let changeUserData2;
-  changeUserDoc2.forEach((doc) => {
-    changeUserData2 = doc.data();
-  });
+  if (!changeUserDoc2.empty) {
+    changeUserDoc2.forEach((doc) => {
+      changeUserData2 = doc.data();
+    });
+  } else changeUserData2 = null;
 
   return await changeUserDoc1.update({
     "order": order1,
   }).then(() => {
-    FireDB.collection("users").doc(changeUserData2.uid).update({
-      "order": changeUserData1.order,
-    });
+    if (changeUserData2) {
+      FireDB.collection("users").doc(changeUserData2.uid).update({
+        "order": changeUserData1.order,
+      });
+    }
   }).then(() => {
     console.log("USER: " +
     changeUserData1.name + "[order]:" + order1);
-    console.log("USER: " +
-    changeUserData2.name + "[order]:" + changeUserData1.order);
-    return {
-      uid1: changeUserData1.uid,
-      uid2: changeUserData2.uid,
-      order1: order1,
-      order2: changeUserData1.order,
-    };
+
+    if (changeUserData2) {
+      console.log("USER: " +
+      changeUserData2.name + "[order]:" + changeUserData1.order);
+      return {
+        uid1: changeUserData1.uid,
+        uid2: changeUserData2.uid,
+        order1: order1,
+        order2: changeUserData1.order,
+      };
+    } else {
+      return {
+        uid1: changeUserData1.uid,
+        order1: order1,
+      };
+    }
   });
 });
 
@@ -491,6 +529,46 @@ exports.changeDateOfExit = functions.region("asia-east2").https.onCall(async (da
     return {
       uid: changeUserData.uid,
       dateOfExit: data.dateOfExit,
+    };
+  });
+});
+
+exports.changeDateOfEntry = functions.region("asia-east2").https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated users can add requests",
+    );
+  }
+
+  const loginUserDoc = FireDB
+      .collection("users")
+      .doc(context.auth.uid);
+  const loginUser = await loginUserDoc.get();
+  const loginUserData = loginUser.data();
+  if (loginUserData.privilege.userManagement != true) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only user management admin can change user privilege",
+    );
+  }
+
+  const changeUserDoc = FireDB.collection("users").doc(data.uid);
+  const changeUser = await changeUserDoc.get();
+  const changeUserData = changeUser.data();
+
+  const entryTimestamp = Timestamp.fromDate(new Date(data.dateOfEntry));
+  const dateOfEntry = new Date(data.dateOfEntry);
+  dateOfEntry.setTime(dateOfEntry.getTime() + 8 * 60 * 60 * 1000);
+
+  return await changeUserDoc.update({
+    "dateOfEntry": entryTimestamp,
+  }).then(() => {
+    console.log("USER: " +
+    loginUserData.name + " 修改了 " + changeUserData.name + "[入職日期]:" + formatDate(dateOfEntry, "-", "YYYYMMDD"));
+    return {
+      uid: changeUserData.uid,
+      dateOfEntry: data.dateOfEntry,
     };
   });
 });

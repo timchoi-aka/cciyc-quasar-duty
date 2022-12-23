@@ -11,17 +11,15 @@
         track-color="grey-3"
         center-color="grey-3"
         class="q-ma-md col float-right vertical-middle"
-        >{{ message }}</q-circular-progress
+        >{{ props.message }}</q-circular-progress
       >
     </q-card-section>
   </q-card>
 </template>
 
-<script>
-export default {
-  name: "LoadingDialog",
-  props: {
-    message: String,
-  },
-};
+<script setup>
+
+const props = defineProps({
+  message: String,
+})
 </script>

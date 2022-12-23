@@ -1,17 +1,17 @@
 <template>
   <q-page>
-    <div v-if="renderDate >= new Date('2027/04/01')" class="q-ml-md text-h5">
+    <div v-if="props.renderDate >= new Date('2027/04/01')" class="q-ml-md text-h5">
       <span
         class="text-h5"
-        v-html="qdate.formatDate(renderDate, 'YYYY-MM-DD')"
+        v-html="qdate.formatDate(props.renderDate, 'YYYY-MM-DD')"
       />特別年假制度完結
     </div>
     <q-table
-      v-if="renderDate < new Date('2027/04/01')"
+      v-else
       dense
       flat
       class="q-mb-lg"
-      :title="renderDate.getFullYear() + '年特別年假表'"
+      :title="props.renderDate.getFullYear() + '年特別年假表'"
       :rows="tableData"
       :columns="tableFields"
       :pagination="defaultPagination"
@@ -27,9 +27,9 @@
           :class="['nameColumn', getHoliday(props.row.Date) != '' ? 'isHoliday' : '']"
         >
           {{ props.value }}
-          <q-popup-proxy class="bg-red-2" v-if="getHoliday(props.row.Date) != ''">{{
+          <q-tooltip class="bg-red-2 text-black text-body1" v-if="getHoliday(props.row.Date)">{{
             getHoliday(props.row.Date)
-          }}</q-popup-proxy>
+          }}</q-tooltip>
         </q-td>
       </template>
 
@@ -49,143 +49,107 @@
   </q-page>
 </template>
 
-<script>
-import { scheduleCollection, usersCollection } from "boot/firebase";
-import { date as qdate } from "quasar";
-import holiday from "assets/holiday.json";
+<script setup>
+import { scheduleCollection, usersCollection } from "boot/firebase"
+import { date as qdate } from "quasar"
+import holiday from "assets/holiday.json"
+import { ref, computed } from "vue"
+import { where, orderBy, query, getDocs } from "@firebase/firestore"
 
-export default {
-  name: "AnnualLeave",
-  props: {
-    renderDate: Date,
+const props = defineProps({
+  renderDate: Date
+})
+
+// variables
+const tableData = ref([])
+
+// table config
+const tableFields = ref([
+  {
+    name: "Date",
+    field: "Date",
+    label: "日期",
+    style: "font-size: 2.5vw; text-align: center",
+    headerStyle: "font-size: 2.5vw; text-align: center;",
+    headerClasses: "bg-grey-2",
+    format: (val) =>
+      qdate.formatDate(val, "M月D日(ddd)", {
+        daysShort: ["日", "一", "二", "三", "四", "五", "六"],
+      }),
   },
-  computed: {
-    publicHoliday: function () {
-      var ph = [];
-      holiday.vcalendar[0].vevent.forEach((record) => {
-        ph.push({
-          date: new Date(
-            Date.UTC(
-              record.dtstart[0].substring(0, 4),
-              new Number(record.dtstart[0].substring(4, 6)) - 1,
-              record.dtstart[0].substring(6, 8),
-              0,
-              0,
-              0
-            )
-          ),
-          summary: record.summary,
-        });
+])
+
+const defaultPagination = ref({
+  rowsPerPage: 40,
+})
+
+// computed
+const publicHoliday = computed(() => holiday? holiday.vcalendar[0].vevent.map(({dtstart, summary}) => ({date: dtstart[0], summary: summary})): [])
+     
+// functions
+function totalAnnualLeaveDays(name) {
+  if (name == "Date") return "總數";
+  if (tableData.value.length == 0) return "";
+  let sum = tableData.value.reduce((a, b) => ({ [name]: a[name] + b[name] }));
+  return sum[name];
+}
+   
+function getHoliday(date) {
+  let i = publicHoliday.value.findIndex(
+    (element) =>
+      element.date == qdate.formatDate(date, "YYYYMMDD")
+  );
+  if (i == -1) {
+    return "";
+  } else {
+    return publicHoliday.value[i].summary;
+  }
+}
+  
+
+// setup date scope
+let startOfMonth = qdate.startOfDate(props.renderDate, 'month')
+let endOfMonth = qdate.endOfDate(props.renderDate, 'month')
+
+// query definitions
+const userDocQuery = query(usersCollection,
+  where("privilege.systemAdmin", "==", false),
+  where("privilege.sal", "==", true),
+  orderBy("order")
+)
+
+const scheduleDocQuery = query(scheduleCollection,
+  where("date", ">=", startOfMonth),
+  where("date", "<=", endOfMonth),
+  where("type", "==", "SAL")
+)
+
+// load users data
+getDocs(userDocQuery).then((userDoc) => {
+  // build users list and uidMapping
+  let uidMap = []
+  userDoc.forEach((doc) => {
+    // build tableFields
+    if (doc.data().salDeadline && startOfMonth < doc.data().salDeadline.toDate()) {
+      tableFields.value.push({
+        name: doc.id,
+        field: doc.id,
+        label: doc.data().name,
+        style: "font-size: 2.5vw; text-align: center",
+        headerStyle: "font-size: 2.5vw; text-align: center;",
+        headerClasses: "bg-grey-2",
       });
-      return ph;
-    },
-  },
-  data() {
-    return {
-      qdate: qdate,
-      tableFields: [
-        {
-          name: "Date",
-          field: "Date",
-          label: "日期",
-          style: "font-size: 2.5vw; text-align: center",
-          headerStyle: "font-size: 2.5vw; text-align: center;",
-          headerClasses: "bg-grey-2",
-          format: (val) =>
-            qdate.formatDate(val, "M月D日(ddd)", {
-              daysShort: ["日", "一", "二", "三", "四", "五", "六"],
-            }),
-        },
-      ],
-      tableData: [],
-      date: [],
-      uidMap: [],
-      defaultPagination: {
-        rowsPerPage: 40,
-      },
-    };
-  },
-  methods: {
-    totalAnnualLeaveDays(name) {
-      let index = this.uidMap.findIndex((element) => element.uid == name);
-      if (index == -1) return "總數";
-      if (this.tableData.length == 0) return "";
-      let sum = this.tableData.reduce((a, b) => ({ [name]: a[name] + b[name] }));
-      return sum[name];
-    },
-    printableDate(date) {
-      let d = new Date(Number(Date.parse(date)));
-      let result = d.getMonth() + 1 + "月" + d.getDate() + "日";
-      return result;
-    },
-    getHoliday(date) {
-      let i = this.publicHoliday.findIndex(
-        (element) =>
-          qdate.formatDate(element.date, "DDMMYYYY") == qdate.formatDate(date, "DDMMYYYY")
-      );
-      if (i == -1) {
-        return "";
-      } else {
-        return this.publicHoliday[i].summary;
-      }
-    },
-  },
-  async mounted() {
-    // setup date scope
-    let startOfMonth = new Date(
-      this.renderDate.getFullYear(),
-      this.renderDate.getMonth(),
-      1,
-      8,
-      0,
-      0
-    );
-    let endOfMonth = new Date(
-      this.renderDate.getFullYear(),
-      this.renderDate.getMonth() + 1,
-      0,
-      8,
-      0,
-      0
-    );
-    let queryStartDate = startOfMonth;
-    let queryEndDate = new Date(endOfMonth.getTime() + 86399000); // offset 23:59:59
+    }
 
-    // load users data
-    const userDoc = await usersCollection
-      .where("privilege.systemAdmin", "==", false)
-      .where("privilege.sal", "==", true)
-      .orderBy("order")
-      .get();
-
-    // build users list and uidMapping
-    userDoc.forEach((doc) => {
-      // build tableFields
-      if (doc.data().salDeadline && queryStartDate < doc.data().salDeadline.toDate()) {
-        this.tableFields.push({
-          name: doc.id,
-          field: doc.id,
-          label: doc.data().name,
-          style: "font-size: 2.5vw; text-align: center",
-          headerStyle: "font-size: 2.5vw; text-align: center;",
-          headerClasses: "bg-grey-2",
-        });
-      }
-
-      // build uidMap
-      this.uidMap.push({
-        uid: doc.id,
-        name: doc.data().name,
-      });
+    // build uidMap
+    uidMap.push({
+      uid: doc.id,
+      name: doc.data().name,
     });
+  });
 
-    // load AL date within this month
-    const scheduleDoc = await scheduleCollection
-      .where("date", ">=", queryStartDate)
-      .where("date", "<=", queryEndDate)
-      .where("type", "==", "SAL")
-      .get();
-
+  // load AL date within this month
+  getDocs(scheduleDocQuery).then((scheduleDoc) => {
     const schedules = [];
     scheduleDoc.forEach((doc) => {
       const d = doc.data();
@@ -194,35 +158,26 @@ export default {
     });
 
     // load days of the month and user name into table, initialize to 0 ALs
-    for (let i = 1; i <= 31; i++) {
+    for (let curDate = startOfMonth; curDate <= endOfMonth; curDate = qdate.addToDate(curDate, {"day":1})) {
       let rowData = {};
-      let curDate = new Date(
-        this.renderDate.getFullYear(),
-        this.renderDate.getMonth(),
-        i
-      );
-      if (curDate > endOfMonth) break;
       rowData.Date = curDate;
-      // this.tableData.push({
-      //  Date: this.printableDate(curDate),
-      // });
-      this.uidMap.forEach((user) => {
+      
+      uidMap.forEach((user) => {
         const uid = user.uid;
         const curDateCount = schedules.reduce(
           (sum, value) =>
-            this.printableDate(value.date) == this.printableDate(curDate) &&
+            qdate.formatDate(value.date, "YYYYMMDD") == qdate.formatDate(curDate, "YYYYMMDD") &&
             value.uid == user.uid
               ? sum + 0.5
               : sum,
           0
         );
-        // this.tableData[this.tableData.length - 1][uid] = curDateCount;
         rowData[uid] = curDateCount;
       });
-      this.tableData.push(rowData);
+      tableData.value.push(rowData);
     }
-  },
-};
+  })
+})
 </script>
 
 <style lang="scss" scoped>

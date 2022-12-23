@@ -150,7 +150,7 @@ exports.modifyActivity = functions.region("asia-east2").https.onCall(async (data
 
   // console.log("dateMapping: " + JSON.stringify(newEventDateMapping));
 
-  console.log(
+  const log =
       "ACTIVITIES: " +
       userName +
       " modified activity id " +
@@ -158,8 +158,8 @@ exports.modifyActivity = functions.region("asia-east2").https.onCall(async (data
       ", name " +
       data.name +
       ", event dates : " +
-      JSON.stringify(eventDate),
-  );
+      JSON.stringify(eventDate);
+
   return activityCollection.doc(data.docid).set({
     id: data.id,
     name: data.name,
@@ -168,6 +168,8 @@ exports.modifyActivity = functions.region("asia-east2").https.onCall(async (data
     date: newEventDateMapping,
     uid: context.auth.uid,
     userName: data.userName,
+  }).then((result) => {
+    return console.log(log);
   });
 });
 
@@ -405,16 +407,14 @@ exports.addActivity = functions.region("asia-east2").https.onCall(async (data, c
   // grab collections pointers
   const activityCollection = FireDB.collection("activity");
 
-  console.log(
-      "ACTIVITIES: " +
+  const log = "ACTIVITIES: " +
       data.userName +
       " added activity id " +
       data.id +
       ", name " +
       data.name +
       ", event dates : " +
-      JSON.stringify(data.firestoreDate),
-  );
+      JSON.stringify(data.firestoreDate);
 
   // store activity record to activity collection
   return activityCollection.add({
@@ -425,5 +425,7 @@ exports.addActivity = functions.region("asia-east2").https.onCall(async (data, c
     date: eventDate,
     uid: context.auth.uid,
     userName: data.userName,
+  }).then((result) => {
+    return console.log(log);
   });
 });

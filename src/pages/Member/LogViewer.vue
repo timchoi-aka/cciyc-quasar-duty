@@ -1,7 +1,7 @@
 <template>
-    <LogViewer/>
+  <LogViewer module="會員系統"/>
 </template>
 
 <script setup>
-import LogViewer from "components/Member/LogViewer.vue"
+import LogViewer from "components/LogViewer.vue"
 </script>

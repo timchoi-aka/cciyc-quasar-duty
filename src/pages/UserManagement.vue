@@ -17,15 +17,7 @@
   </q-page>
 </template>
 
-<script>
-import { defineComponent } from "vue";
-
-export default defineComponent({
-  name: "UserManagement",
-  async mounted() {
-    this.$router.push("/user/normal").catch(() => {});
-  },
-});
+<script setup>
 </script>
 
 <style scoped></style>

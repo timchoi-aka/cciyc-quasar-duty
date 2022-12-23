@@ -46,11 +46,8 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { ref, computed } from "vue";
 import { useStore } from "vuex";
-import { useQuasar} from "quasar";
-import { EVENT_BY_PK} from "/src/graphQueries/Event/query.js"
-import { useQuery } from "@vue/apollo-composable"
 import EventEvaluation from "components/Event/EventEvalation.vue"
 import EventContent from "components/Event/EventContent.vue"
 import EventFee from "components/Event/EventFee.vue"
@@ -64,44 +61,9 @@ const props = defineProps({
 })
 
 // variables
-const $q = useQuasar()
-const $store = useStore();
-const isDebug = false;
 const activeTab = ref("BasicInfo")
-
-// query
-const { result: EventData, onError: EventDataError } = useQuery(
-  EVENT_BY_PK,
-  () => ({
-    c_act_code: props.EventID
-  }));
+const $store = useStore();
 
 // computed
-const waitingAsync = computed(() => this.awaitServerResponse > 0)
-const username = computed(() => $store.getters["userModule/getUsername"])
-const userProfileLogout = () => $store.dispatch("userModule/logout")
-const Event = computed(() => EventData.value?.HTX_Event_by_pk??[])
-
-
-// functions
-function debug(args) {
-  if (isDebug) {
-    console.debug(args)
-  }
-}
-
-// callback error
-EventDataError((error) => {  
-  notifyClientError(error)
-})
-
-// UI functions
-function notifyClientError(error) {
-  userProfileLogout()
-    .then(() => {
-      $q.notify({ message: "系統錯誤，請重新登入." });
-    })
-    .catch((error) => console.log("error", error));
-}
-</script>
+const username = computed(() => $store.getters["userModule/getUsername"])</script>
 

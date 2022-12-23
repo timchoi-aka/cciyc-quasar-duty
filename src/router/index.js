@@ -1,7 +1,7 @@
 import { route } from 'quasar/wrappers'
 import { createRouter, createMemoryHistory, createWebHistory, createWebHashHistory } from 'vue-router'
 import routes from './routes'
-import firebase from 'firebase/compat/app';
+import { getCurrentUser } from "boot/firebase"
 
 /*
  * If not building with SSR mode, you can
@@ -30,8 +30,9 @@ export default route(function (/* { store, ssrContext } */) {
   Router.beforeEach(async (to, from, next) => {
     const auth = to.matched.some(x => x.meta.requiresAuth)
     // const auth = to.meta.requiresAuth
-    if (auth && !await firebase.getCurrentUser()) {
-      next('/login');
+    // if (auth && !await firebase.getCurrentUser()) {
+    if (auth && !await getCurrentUser()) {
+      next('/');
     } else {
       next();
     }

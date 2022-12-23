@@ -31,75 +31,71 @@
   </q-page>
 </template>
 
-<script>
+<script setup>
 import OT from "components/Overtime/OTSummary";
-import print from "vue3-print-nb";
 import { useStore } from "vuex";
 import { computed, ref } from "vue";
 import { usersCollection } from "boot/firebase";
+import { query, where, orderBy, getDocs } from "firebase/firestore"
 
-export default {
-  name: "OTView",
-  components: {
-    OT,
-  },
-  directives: {
-    print,
-  },
-  data() {
-    return {
-      selectedUser: [],
-      reportUID: this.uid,
-      reportName: this.username,
-      staffOption: {
-        value: "",
-        label: "",
-      },
-      printObj: {
-        id: "printMe",
-        preview: true,
-        previewTitle: "列印預覽",
-        popTitle: "CCIYC 超時補假結餘總表",
-        extraCss:
-          "https://cdn.bootcdn.net/ajax/libs/animate.css/4.1.1/animate.compat.css, https://cdn.bootcdn.net/ajax/libs/hover.css/2.3.1/css/hover-min.css,",
-        extraHead: '<meta http-equiv="Content-Language" content="en"/>',
-      },
-      userList: [
-        {
-          value: "",
-          label: "",
-        },
-      ],
-    };
-  },
-  methods: {},
-  computed: {},
-  async mounted() {
-    const userDoc = await usersCollection
-      .where("enable", "==", true)
-      .where("rank", "!=", "tmp")
-      .orderBy("rank")
-      .get();
-    userDoc.forEach((user) => {
-      if (!user.data().privilege.systemAdmin) {
-        this.userList.push({
-          value: user.data().uid,
-          label: user.data().name,
-        });
-      }
-    });
-  },
-  setup() {
-    const $store = useStore();
+// variables
+const $store = useStore();
+const selectedUser = ref([])
 
-    return {
-      isLeaveManage: computed(() => $store.getters["userModule/getLeaveManage"]),
-      isLeaveApprove: computed(() => $store.getters["userModule/getLeaveApprove"]),
-      uid: computed(() => $store.getters["userModule/getUID"]),
-      username: computed(() => $store.getters["userModule/getUsername"]),
-    };
+const staffOption = ref({
+  value: "",
+  label: "",
+})
+      
+const printObj = ref({
+  id: "printMe",
+  preview: true,
+  previewTitle: "列印預覽",
+  popTitle: "CCIYC 超時補假結餘總表"
+})
+
+const userList = ref([
+  {
+    value: "",
+    label: "",
   },
-};
+])
+
+// computed
+const isLeaveManage = computed(() => $store.getters["userModule/getLeaveManage"])
+const isLeaveApprove = computed(() => $store.getters["userModule/getLeaveApprove"])
+const uid = computed(() => $store.getters["userModule/getUID"])
+const username = computed(() => $store.getters["userModule/getUsername"])
+  
+const reportUID = ref(uid.value)
+const reportName = ref(username.value)
+
+const userQuery = query(usersCollection,
+  where("enable", "==", true),
+  where("privilege.tmp", "==", false),
+  where("enable", "==", true),
+  orderBy("order")
+)
+   
+getDocs(userQuery).then((userDoc) => {
+  userDoc.forEach((user) => {
+    if (!user.data().privilege.systemAdmin) {
+      userList.value.push({
+        value: user.data().uid,
+        label: user.data().name,
+      });
+    }
+  });
+})
 </script>
 
+<script>
+import print from "vue3-print-nb";
+
+export default {
+  directives: {
+    print
+  }
+}
+</script>
 <style scoped></style>

@@ -17,28 +17,13 @@
   </q-page>
 </template>
 
-<script>
+<script setup>
 import { useStore } from "vuex";
-import { defineComponent, computed } from "vue";
+import { computed } from "vue";
 
-export default defineComponent({
-  name: "Holiday",
-  data() {
-    return {
-      renderDate: new Date(),
-    };
-  },
-  async mounted() {
-    this.$router.push("/duty/dutytable").catch(() => {});
-  },
-  setup() {
-    const $store = useStore();
-    $store.dispatch("currentModule/setCurrentModule", "duty");
+const $store = useStore();
+$store.dispatch("currentModule/setCurrentModule", "duty");
 
-    return {
-      isTmp: computed(() => $store.getters["userModule/getTmp"]),
-    };
-  },
-});
+const isTmp = computed(() => $store.getters["userModule/getTmp"]) 
 </script>
 

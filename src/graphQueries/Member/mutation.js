@@ -208,19 +208,35 @@ export const QUIT_MEMBER_BY_ID = gql`
     }
   }
 `
+/*
 
+    */
 export const UPDATE_MEMBER_BY_ID = gql`
   mutation updateMemberByID(
     $c_mem_id: String!, 
     $object: Member_set_input = {}, 
     $logObject: Log_insert_input! = {}, 
-    $relationObjects: [Relation_insert_input!] = {}
+    $deleteObjects: [uniqueidentifier!] = ["00000000-0000-0000-0000-000000000000"],
+    $upsertObjects: [Relation_insert_input!] = [{
+    	uuid: "00000000-0000-0000-0000-000000000000",
+    	c_mem_id_1: "",
+    	c_mem_id_2: "",
+    	relation: ""
+  	}]
   ) {
     update_Member_by_pk(pk_columns: {c_mem_id: $c_mem_id}, _set: $object) {
       c_mem_id
     }
     insert_Log_one(object: $logObject) {
       log_id
+    }
+    insert_Relation(
+      objects: $upsertObjects, if_matched: {match_columns: uuid, update_columns: [c_mem_id_1, c_mem_id_2, relation]}
+    ) {
+      affected_rows
+    }
+    delete_Relation(where: {uuid: {_in: $deleteObjects}}) {
+      affected_rows
     }
   }
   `

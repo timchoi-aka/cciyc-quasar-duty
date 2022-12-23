@@ -7,7 +7,7 @@ export /* async */ function getClientOptions(/* {app, router, ...} */ options) {
         uri:
           process.env.GRAPHQL_URI ||
           // Change to your graphql endpoint.
-          'https://example.com/graphql',
+          'https://cciycgw.eastasia.cloudapp.azure.com/v1/graphql/',
       }),
       cache: new InMemoryCache(),
     },

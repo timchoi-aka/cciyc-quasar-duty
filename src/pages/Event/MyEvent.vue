@@ -240,7 +240,7 @@ function notifyClientError(error) {
     .then(() => {
       $q.notify({ message: "系統錯誤，請重新登入." });
     })
-    .catch((error) => console.log("error", error));
+    .catch((error) => console.log("error", error));   
 }
 
 // callbacks

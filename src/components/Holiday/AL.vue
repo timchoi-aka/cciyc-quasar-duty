@@ -4,7 +4,7 @@
       dense
       flat
       :title="renderDate.getFullYear() + '年年假表'"
-      :rows="Data"
+      :rows="tableData"
       :columns="tableFields"
       :pagination="defaultPagination"
       :hide-bottom="true"
@@ -16,23 +16,14 @@
       <template v-slot:body-cell-Date="props">
         <q-td
           style="font-size: 2vw; text-align: center"
-          v-if="$q.screen.lt.sm"
+          
           :class="[getHoliday(props.row.Date) ? 'isHoliday' : '']"
         >
-          <div v-html="qdate.formatDate(props.row.Date, 'MM/DD')" />
-          <q-popup-proxy class="bg-red-2" v-if="getHoliday(props.row.Date)">{{
+          <div v-if="$q.screen.lt.sm" v-html="qdate.formatDate(props.row.Date, 'MM/DD')" />
+          <div v-else>{{ props.value }}</div>
+          <q-tooltip class="bg-red-2 text-body1 text-black" v-if="getHoliday(props.row.Date)">{{
             getHoliday(props.row.Date)
-          }}</q-popup-proxy>
-        </q-td>
-        <q-td
-          style="font-size: 2vw; text-align: center"
-          v-else
-          :class="['nameColumn', getHoliday(props.row.Date) ? 'isHoliday' : '']"
-        >
-          {{ props.value }}
-          <q-popup-proxy class="bg-red-2" v-if="getHoliday(props.row.Date)">{{
-            getHoliday(props.row.Date)
-          }}</q-popup-proxy>
+          }}</q-tooltip>
         </q-td>
       </template>
 
@@ -58,6 +49,7 @@ import { computed, onUnmounted, ref } from "vue";
 import { date as qdate } from "quasar";
 import holiday from "assets/holiday.json";
 import { useStore } from "vuex";
+import { query, where, orderBy, onSnapshot, getDocs } from "firebase/firestore"
 
 // props
 const props = defineProps({
@@ -66,68 +58,42 @@ const props = defineProps({
 
 // variables
 const $store = useStore();
+const scheduleListener = ref()
+const tableData = ref([])
+
+// table config
+const tableFields = ref([{
+  name: "Date",
+  field: "Date",
+  label: "日期",
+  headerStyle: "font-size: 2vw; text-align: center;",
+  headerClasses: "bg-grey-2 q-pa-none",
+  classes: "q-pa-none",
+  format: (val) => qdate.formatDate(val, "M月D日(ddd)", {
+            daysShort: ['日', '一', '二', '三', '四', '五', '六'],
+          }),
+}])
+
 const defaultPagination = ref({
   rowsPerPage: 40,
 })
-const tableFields = ref([{
-        name: "Date",
-        field: "Date",
-        label: "日期",
-        headerStyle: "font-size: 2vw; text-align: center;",
-        headerClasses: "bg-grey-2 q-pa-none",
-        classes: "q-pa-none",
-        format: (val) => qdate.formatDate(val, "MM月DD日(ddd)", {
-                  daysShort: ['日', '一', '二', '三', '四', '五', '六'],
-                }),
-      }])
-const Data = ref([])
-const uidMap = ref([])
-//const startOfMonth = ref(new Date(props.renderDate.getFullYear(),props.renderDate.getMonth(),1,8,0,0))
-const startOfMonth = ref(qdate.startOfDate(props.renderDate, 'month'))
-const endOfMonth = ref(qdate.endOfDate(props.renderDate, 'month'))
-const queryStartDate = ref(startOfMonth.value)
-const queryEndDate = ref(endOfMonth.value)
 
 // computed
 const isProbation = computed(() => $store?.getters["userModule/getProbation"]??false)
 const uid = computed(() => $store.getters["userModule/getUID"])
-
-const publicHoliday = computed(() => {
-  var ph = [];
-  holiday.vcalendar[0].vevent.forEach((record) => {
-    ph.push({
-      date: dateStringToDate(record.dtstart[0]),
-      summary: record.summary,
-    });
-  });
-  return ph;
-})
-
+const publicHoliday = computed(() => holiday? holiday.vcalendar[0].vevent.map(({dtstart, summary}) => ({date: dtstart[0], summary: summary})): [])
 
 // functions
-function dateStringToDate(dateString) {
-  return new Date(
-    Date.UTC(
-      dateString.substring(0, 4),
-      new Number(dateString.substring(4, 6)) - 1,
-      dateString.substring(6, 8),
-      0,
-      0,
-      0
-    )
-  )
-}
 function totalAnnualLeaveDays(name) {
-  let index = uidMap.value.findIndex((element) => element.uid == name);
-  if (index == -1) return "總數";
-  if (Data.value.length == 0) return "";
-  let sum = Data.value.reduce((a, b) => ({ [name]: a[name] + b[name] }));
+  if (name == "Date") return "總數";
+  if (tableData.value.length == 0) return "";
+  let sum = tableData.value.reduce((a, b) => ({ [name]: a[name] + b[name] }));
   return sum[name];
 }
 
 function getHoliday(date) {
   let i = publicHoliday.value.findIndex(
-    (element) => element.date.getTime() == date.getTime()
+    (element) => element.date == qdate.formatDate(date, "YYYYMMDD")
   );
   if (i == -1) {
     return "";
@@ -137,124 +103,128 @@ function getHoliday(date) {
 }
 
 onUnmounted(() => {
-  userListener();
+  scheduleListener.value? scheduleListener.value(): ''
 })
 
+// query definitions
+const userQuery = query(usersCollection,
+  where("privilege.systemAdmin", "==", false),
+  where("enable", "==", true),
+  where("rank", "!=", "tmp"),
+  orderBy("rank"),
+  orderBy("order")
+)
+  
 // load users data
-const userListener = usersCollection
-.where("privilege.systemAdmin", "==", false)
-.where("enable", "==", true)
-.where("rank", "!=", "tmp")
-.orderBy("rank")
-.orderBy("order")
-.onSnapshot((userDoc) => {
-  // load AL date within this month
-  scheduleCollection
-    .where("date", ">=", queryStartDate.value)
-    .where("date", "<=", queryEndDate.value)
-    .where("type", "==", "AL")
-    .onSnapshot((scheduleDoc) => {
-      var tableData = [];
-      let users = [];
-      uidMap.value = [];
+getDocs(userQuery).then((userDoc) => {
+  var rows = [];
+  let users = [];
+  let uidMap = [];
+  const startOfMonth = qdate.startOfDate(props.renderDate, 'month')
+  const endOfMonth = qdate.endOfDate(props.renderDate, 'month')
 
-      // build users list and uidMapping
-      userDoc.forEach((doc) => {
-        // user under probation can only view their own AL
-        if (isProbation.value) {
-          if (uid.value == doc.id) {
-            users.push({
-              uid: doc.id,
-              name: doc.data().name,
-              email: doc.data().email,
-            });
-
-            uidMap.value.push({
-              uid: doc.id,
-              name: doc.data().name,
-              order: doc.data().order,
-            });
-          }
-        } else {
-          // check if user has left the company
-          // put the user to the valid staff if he's still working
-          let validStaff = true
-          if (qdate.getDateDiff(doc.data().dateOfEntry.toDate(), queryStartDate.value) > 0) validStaff = false
-          if (doc.data().dateOfExit) {
-            if (qdate.getDateDiff(doc.data().dateOfExit.toDate(), queryStartDate.value) < 0) validStaff = false
-          }
-          if (validStaff) {
-            users.push({
-              uid: doc.id,
-              name: doc.data().name,
-              email: doc.data().email,
-            });
-
-            uidMap.value.push({
-              uid: doc.id,
-              name: doc.data().name,
-              order: doc.data().order,
-            });
-          }
-        }
-      });
-
-      // sort users by order
-      uidMap.value.sort((a, b) => parseInt(a.order) - parseInt(b.order));
-
-      // put the users into table columns
-      uidMap.value.forEach((user) => {
-        tableFields.value.push({
-          name: user.uid,
-          label: user.name,
-          field: user.uid,
-          style: "font-size: 2vw; text-align: center;",
-          headerStyle: "font-size: 2vw; text-align: center;",
-          headerClasses: "bg-grey-2 q-pa-none",
-          classes: "q-pa-none",
+  // build users list and uidMapping
+  userDoc.forEach((doc) => {
+    // user under probation can only view their own AL
+    if (isProbation.value) {
+      if (uid.value == doc.id) {
+        users.push({
+          uid: doc.id,
+          name: doc.data().name,
+          email: doc.data().email,
         });
-      });
 
-      // load days of the month and user name into table, initialize to 0 ALs
-      for (let curDate = startOfMonth.value; curDate < endOfMonth.value; curDate = qdate.addToDate(curDate, {day: 1})) {
-        tableData.push({
-          Date: curDate
-        })
-
-        users.forEach((user) => {
-          tableData[tableData.length - 1][user.uid] = 0;
+        uidMap.push({
+          uid: doc.id,
+          name: doc.data().name,
+          order: doc.data().order,
         });
       }
-     
-      // load schedule data into AL items array
-      let items = [];
-      scheduleDoc.forEach((doc) => {
-        let i = items.findIndex((element) => element.docid == doc.id);
-        if (i == -1) {
-          items.push({
-            date: doc.data().date.toDate(),
-            uid: doc.data().uid,
-            type: doc.data().type,
-            docid: doc.id,
-          });
-        }
-      });
+    } else {
+      // check if user has left the company
+      // put the user to the valid staff if he's still working
+      let validStaff = true
+      if (qdate.getDateDiff(doc.data().dateOfEntry.toDate(), startOfMonth) > 0) validStaff = false
+      if (doc.data().dateOfExit) {
+        if (qdate.getDateDiff(doc.data().dateOfExit.toDate(), endOfMonth) < 0) validStaff = false
+      }
+      if (validStaff) {
+        users.push({
+          uid: doc.id,
+          name: doc.data().name,
+          email: doc.data().email,
+        });
 
-      // add up AL items array and update table
-      items.forEach((item) => {
-        let i = tableData.findIndex(
-          (row) =>
-            qdate.formatDate(row.Date, "YYYYMMDD") ==
-            qdate.formatDate(item.date, "YYYYMMDD")
-        );
+        uidMap.push({
+          uid: doc.id,
+          name: doc.data().name,
+          order: doc.data().order,
+        });
+      }
+    }
+  });
 
-        if (i == -1) return;
-        let thisCount = Number.parseFloat(tableData[i][item.uid]) + 0.5;
-        tableData[i][item.uid] = thisCount;
-      });
+  // sort users by order
+  uidMap.sort((a, b) => parseInt(a.order) - parseInt(b.order));
 
-      Data.value = tableData;
+  // put the users into table columns
+  uidMap.forEach((user) => {
+    tableFields.value.push({
+      name: user.uid,
+      label: user.name,
+      field: user.uid,
+      style: "font-size: 2vw; text-align: center;",
+      headerStyle: "font-size: 2vw; text-align: center;",
+      headerClasses: "bg-grey-2 q-pa-none",
+      classes: "q-pa-none",
     });
+  });
+
+  // load days of the month and user name into table, initialize to 0 ALs
+  for (let curDate = startOfMonth; curDate < endOfMonth; curDate = qdate.addToDate(curDate, {day: 1})) {
+    rows.push({
+      Date: curDate
+    })
+
+    users.forEach((user) => {
+      rows[rows.length - 1][user.uid] = 0;
+    });
+  }
+  
+  const scheduleQuery = query(scheduleCollection, 
+    where("date", ">=", startOfMonth),
+    where("date", "<=", endOfMonth),
+    where("type", "==", "AL")
+  )
+
+  scheduleListener.value = onSnapshot(scheduleQuery, (scheduleDoc) => {
+    // load schedule data into AL items array
+    let items = [];
+    scheduleDoc.forEach((doc) => {
+      let i = items.findIndex((element) => element.docid == doc.id);
+      if (i == -1) {
+        items.push({
+          date: doc.data().date.toDate(),
+          uid: doc.data().uid,
+          type: doc.data().type,
+          docid: doc.id,
+        });
+      }
+    });
+    
+    // add up AL items array and update table
+    items.forEach((item) => {
+      let i = rows.findIndex(
+        (row) =>
+          qdate.formatDate(row.Date, "YYYYMMDD") ==
+          qdate.formatDate(item.date, "YYYYMMDD")
+      )
+      if (i == -1) return;
+      // add 0.5 to holiday count on each record
+      rows[i][item.uid] = Number.parseFloat(rows[i][item.uid]) + 0.5;
+    });
+    tableData.value = rows;
+  });
 });
 </script>
 

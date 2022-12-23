@@ -31,58 +31,39 @@
   </q-markup-table>
 </template>
 
-<script>
+<script setup>
 import holiday from "assets/holiday.json";
-import date from "src/lib/date.js";
-import dateHeader from "src/lib/dateHeader.js";
-import { useQuasar } from "quasar";
+import dateUtil from "src/lib/date.js";
+//import dateHeader from "src/lib/dateHeader.js";
+import { useQuasar, date as qdate } from "quasar";
+import { computed } from "vue"
 
-export default {
-  name: "Footer",
-  props: {
-    renderDate: Date,
-  },
-  data() {
-    return {
-      columns: [],
-    };
-  },
-  mounted() {
-    this.columns.push(...this.generateTableColumns(this.renderDate, false));
-  },
-  created() {
-    this.formatDate = date.formatDate.bind(this);
-    this.generateTableColumns = dateHeader.generateTableColumns.bind(this);
-  },
-  setup() {
-    const $q = useQuasar();
-  },
-  computed: {
-    publicHoliday: function () {
-      var ph = [];
-      holiday.vcalendar[0].vevent.forEach((record) => {
-        ph.push({
-          date: record.dtstart[0],
-          summary: record.summary,
-        });
-      });
-      return ph;
-    },
-    numberOfHoliday: function () {
-      var result = 0;
-      this.columns.forEach((date) => {
-        let i = this.publicHoliday.findIndex(
-          (element) => element.date == this.formatDate(date.name, "", "YYYYMMDD")
-        );
-        if (i != -1) result++;
-      });
-      return result;
-    },
-    numberOfWorkingSessions: function () {
-      return 11 - 2 * this.numberOfHoliday;
-    },
-  },
-};
+// props
+const props = defineProps({
+  renderDate: Date
+})
+
+// variables
+const $q = useQuasar();
+
+// computed
+const columns = computed(() => [...dateUtil.generateTableColumns(props.renderDate)])
+const publicHoliday = computed(() => holiday? holiday.vcalendar[0].vevent.map(({dtstart, summary}) => ({date: dtstart[0], summary: summary})): [])    
+    
+  
+const numberOfHoliday = computed(() => {
+  var result = 0;
+  if (columns.value) {
+    [...dateUtil.generateTableColumns(props.renderDate, false)].forEach((date) => {
+      let i = publicHoliday.value.findIndex(
+        (element) => element.date == qdate.formatDate(date.name, "YYYYMMDD")
+      );
+      if (i != -1) result++
+    })
+    return result
+  } else return 0
+})
+const numberOfWorkingSessions = computed(() => 11 - 2 * numberOfHoliday.value)
 </script>
 
 <style lang="scss" scoped>

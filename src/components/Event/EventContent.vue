@@ -155,6 +155,7 @@ import DateComponent from "components/Basic/DateComponent.vue"
 import TimeComponent from "components/Basic/TimeComponent.vue"
 import LoadingDialog from "components/LoadingDialog.vue"
 import { usersCollection} from "boot/firebase";
+import { getDocs, query, where } from "firebase/firestore";
 
 // props
 const props = defineProps({
@@ -231,13 +232,21 @@ const { mutate: delEvent, onDone: delEvent_Completed, onError: delEvent_Error } 
 const { mutate: updateEvent, onDone: updateEvent_Completed, onError: updateEvent_Error } = useMutation(UPDATE_EVENT_BY_PK)
 
 // computed
-const userDoc = await usersCollection
-  .where("privilege.systemAdmin", "==", false)
-  .where("privilege.tmp", "!=", true)
-  .where("enable", "==", true)
-  .get()
+const userDocQuery = query(usersCollection,
+  where("privilege.systemAdmin", "==", false),
+  where("privilege.tmp", "!=", true),
+  where("enable", "==", true)
+)
+
+const UserList = ref([])
+
+getDocs(userDocQuery).then((docs) =>
+  docs.forEach((doc) => {
+    UserList.value.push(doc.data().name)
+  })
+)
+
 const username = computed(() => $store.getters["userModule/getUsername"])
-const UserList = computed(() => userDoc.docs? userDoc.docs.map(a => a.data().name): [])
 const Event = computed(() => EventData.value?.HTX_Event_by_pk??[])
 const userProfileLogout = () => $store.dispatch("userModule/logout")
 const waitingAsync = computed(() => awaitServerResponse > 0)

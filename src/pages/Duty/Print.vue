@@ -114,68 +114,62 @@
     <div id="printMe" class="q-ml-xs row justify-left q-pa-none">
       <div class="col-12 text-center text-h5">CCIYC - STAFF DUTY SCHEDULE</div>
 
-      <DutyCalendar
-        class="q-ma-none q-pa-none"
-        v-bind:renderDate="renderDate"
-        :allowModify="false"
-        :printOnly="true"
-        :key="renderDate.getTime()"
-      />
+      <div class="q-ma-none q-pa-none">
+        <DutyCalendar
+          :renderDate="renderDate"
+          :allowModify="false"
+          :printOnly="true"
+          :key="renderDate"
+        />
+      </div>
+      
+      <div class="q-ma-none q-pa-none">
+        <ActivityCalendar
+          :renderDate="renderDate"
+          :printHeader="false"
+          :key="renderDate"
+        />
+      </div>
 
-      <ActivityCalendar
-        class="q-ma-none q-pa-none"
-        v-bind:renderDate="renderDate"
-        v-bind:printHeader="false"
-        :key="renderDate.getDate()"
-      />
-
-      <Footer
-        class="q-mt-none q-py-none q-mb-lg"
-        v-bind:renderDate="renderDate"
-        :key="renderDate.getTime() + renderDate.getDate()"
-      />
+      <div class="q-mt-none q-py-none q-mb-lg">
+        <Footer
+          :renderDate="renderDate"
+          :key="renderDate"
+        />
+      </div>
     </div>
   </q-page>
 </template>
 
-<script>
-import ActivityCalendar from "components/Duty/ActivityCalendar";
-import DutyCalendar from "components/Duty/DutyCalendar";
-import print from "vue3-print-nb";
-import Footer from "components/Duty/Footer";
-import { date as qdate } from "quasar";
+<script setup>
+import DutyCalendar from "components/Duty/DutyCalendar"
+import ActivityCalendar from "components/Duty/ActivityCalendar"
+import Footer from "components/Duty/Footer"
+import { date as qdate } from "quasar"
+import { ref } from "vue"
 
+// variables
+const renderDate = ref(new Date())
+const printObj = ref({
+  id: "printMe",
+  preview: true,
+  previewTitle: "列印預覽", // The title of the preview window. The default is 打印预览
+  popTitle: "CCIYC Duty Table",
+})
+
+// function
+function changeRenderDate(days) {
+  renderDate.value = qdate.addToDate(renderDate.value, { days: days });
+}
+</script>
+
+<script>
+import print from "vue3-print-nb";
 export default {
-  name: "Print",
-  components: {
-    ActivityCalendar,
-    DutyCalendar,
-    Footer,
-  },
   directives: {
-    print,
-  },
-  data() {
-    return {
-      qdate: qdate,
-      renderDate: new Date(Number(Date.now())),
-      printObj: {
-        id: "printMe",
-        preview: true,
-        previewTitle: "列印預覽", // The title of the preview window. The default is 打印预览
-        popTitle: "CCIYC Duty Table",
-        extraCss:
-          "https://cdn.bootcdn.net/ajax/libs/animate.css/4.1.1/animate.compat.css, https://cdn.bootcdn.net/ajax/libs/hover.css/2.3.1/css/hover-min.css,",
-        extraHead: '<meta http-equiv="Content-Language" content="en"/>',
-      },
-    };
-  },
-  methods: {
-    changeRenderDate(days) {
-      this.renderDate = qdate.addToDate(this.renderDate, { days: days });
-    },
-  },
-};
+    print
+  }
+}
 </script>
 
 <style scoped>

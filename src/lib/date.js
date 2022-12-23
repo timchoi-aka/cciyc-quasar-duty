@@ -1,3 +1,5 @@
+import { date as qdate } from 'quasar'
+
 function formatDate(date, delim, format) {
   const d = new Date(Date.parse(date));
   const month = "" + (d.getMonth() + 1);
@@ -26,7 +28,7 @@ function daysOfWeek(date) {
 }
 
 function mergeDateSlot(date, slot) {
-  return this.formatDate(date, "-", "YYYYMMDD") + "|" + slot;
+  return qdate.formatDate(date, "YYYY-MM-DD") + "|" + slot;
 }
 
 function splitDateSlot(dateslot) {
@@ -46,10 +48,55 @@ function tConvert(time) {
   return time.join (''); // return adjusted time or original string
 }
 
+
+
+function generateTableColumns(renderDate, withSlot = true) {
+  // build column headers
+  // find offset to sunday
+  let columns = [];
+  let d = new Date(renderDate)
+
+  var diff = 0 - d.getDay();
+
+  const slot = ["slot_a", "slot_b", "slot_c"];
+
+  // fill up this week's dates
+  for (let i = 0; i < 7; i++) {
+    let day = new Date(
+      d.getFullYear(),
+      d.getMonth(),
+      d.getDate() + diff + i,
+      0,
+      0,
+      0
+    );
+
+    if (i == 6) day.setTime(day.getTime() + 82800000 + 3540000 + 59000); // adjust last date to 23:59:59
+
+    if (withSlot) {
+      for (let j = 0; j < 3; j++) {
+        columns.push({
+          name: mergeDateSlot(day, slot[j]),
+          label: mergeDateSlot(day, slot[j]),
+          field: mergeDateSlot(day, slot[j]),
+        });
+      }
+    } else {
+      columns.push({
+        name: qdate.formatDate(day, "YYYY-MM-DD"),
+        label: qdate.formatDate(day, "YYYY-MM-DD"),
+        field: qdate.formatDate(day, "YYYY-MM-DD"),
+      });
+    }
+  }
+  return columns
+}
+
 export default {
   formatDate,
   daysOfWeek,
   mergeDateSlot,
   splitDateSlot,
   tConvert,
+  generateTableColumns
 }

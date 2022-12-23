@@ -129,6 +129,7 @@ import { ADD_EVENT } from "/src/graphQueries/Event/mutation.js"
 import { useMutation } from "@vue/apollo-composable"
 import LoadingDialog from "components/LoadingDialog.vue"
 import dateUtil from "/src/lib/date.js"
+import { getDocs, query, where } from "@firebase/firestore"
 
 // props
 const props = defineProps({
@@ -195,13 +196,16 @@ const { mutate: addEvent, onDone: addEvent_Completed, onError: addEvent_Error } 
 
 const UserList = ref([])
 // computed
-usersCollection
-  .where("privilege.systemAdmin", "==", false)
-  .where("privilege.tmp", "!=", true)
-  .where("enable", "==", true)
-  .get().then((userDoc) => {
-    UserList.value = userDoc.docs.map(a => a.data().name)
-  })
+const usersQuery = query(usersCollection,
+  where("privilege.systemAdmin", "==", false),
+  where("privilege.tmp", "!=", true),
+  where("enable", "==", true),
+)
+
+getDocs(usersQuery).then((userDoc) => {
+  UserList.value = userDoc.docs.map(a => a.data().name)
+})
+
 const username = computed(() => $store.getters["userModule/getUsername"])
 //const UserList = computed(() => userDoc.docs? userDoc.docs.map(a => a.data().name): [])
 const waitingAsync = computed(() => awaitServerResponse > 0)

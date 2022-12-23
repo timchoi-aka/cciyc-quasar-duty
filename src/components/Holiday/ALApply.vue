@@ -1,41 +1,7 @@
 <template>
   <!-- loading dialog -->
   <q-dialog v-model="waitingAsync" position="bottom">
-    <LoadingDialog message="讀取資料中"/>
-  </q-dialog>
-
-  <!-- All staff annual balance dialog -->
-  <q-dialog v-model="showAllStaffAnnualBalance" full-width>
-    <q-card class="q-pa-none">
-      <q-card-section class="text-h4 bg-primary text-white q-px-md row">
-        <div class="col-shrink">全體員工假期結餘表</div>
-        <q-space />
-        <div class="col-shrink">
-          <q-btn
-            icon="cancel"
-            flat
-            text-color="white"
-            @click="showAllStaffAnnualBalance = !showAllStaffAnnualBalance"
-          />
-        </div>
-      </q-card-section>
-
-      <q-card-section>
-        <q-table
-          class="col"
-          dense
-          flat
-          :rows="allStaffAnnualLeaveList"
-          :columns="allStaffAnnualLeaveColumns"
-          :pagination="defaultPagination"
-          :hide-bottom="true"
-          separator="cell"
-          color="primary"
-          row-key="uid"
-        >
-        </q-table>
-      </q-card-section>
-    </q-card>
+    <LoadingDialog message="儲存中"/>
   </q-dialog>
 
   <!-- confirm dialog -->
@@ -186,9 +152,9 @@
   <q-page-sticky position="bottom-left" :offset="[30, 80]" style="z-index: 1">
     <q-fab
       v-if="
-        this.applicationList.length +
-          this.deleteApplicationList.length +
-          this.changeApplicationList.length !=
+        applicationList.length +
+          deleteApplicationList.length +
+          changeApplicationList.length !=
         0
       "
       label="申請"
@@ -227,85 +193,8 @@
     />
   </q-page-sticky>
 
-  <!-- toolbar -->
-  <div class="full-width row justify-between q-px-sm">
-    <div class="col-md-4 col-lg-4 col-xl-4 col-xs-12 col-sm-6 q-my-sm">
-      <q-btn
-        size="lg"
-        outline
-        color="primary"
-        v-on:click="changeRenderYear(-1)"
-        class="q-mx-sm q-pa-sm"
-      >
-        上年
-      </q-btn>
-
-      <q-btn
-        size="lg"
-        class="q-mx-sm q-pa-sm"
-        outline
-        color="primary"
-        v-on:click="changeRenderYear(1)"
-      >
-        下年
-      </q-btn>
-
-      <q-btn
-        v-if="isLeaveApprove"
-        size="lg"
-        class="q-mx-sm q-pa-sm"
-        outline
-        color="primary"
-        v-on:click="getAllStaffAnnualBalance"
-      >
-        全體結餘
-      </q-btn>
-    </div>
-    <q-space class="col" />
-    <div class="row col-md-5 col-lg-5 col-xl-5 col-sm-6 col-xs-12">
-      <div class="q-mr-sm col">
-        本月結餘
-        <q-knob
-          :min="0"
-          :max="100"
-          readonly
-          v-model="al_balance"
-          show-value
-          :thickness="0.22"
-          color="primary"
-          track-color="grey-3"
-        />
-      </div>
-      <div class="q-mr-sm col">
-        年度結餘
-        <q-knob
-          :min="0"
-          :max="100"
-          readonly
-          v-model="al_YearBalance"
-          show-value
-          :thickness="0.22"
-          color="primary"
-          track-color="grey-3"
-        />
-      </div>
-      <div v-if="isSAL" class="col">
-        特別結餘
-        <q-knob
-          :min="0"
-          readonly
-          v-model="sal_balance"
-          show-value
-          :thickness="0.22"
-          color="primary"
-          track-color="grey-3"
-        />
-      </div>
-    </div>
-  </div>
-
   <!-- holidayTable -->
-  <div class="row q-mt-sm">
+  <div class="row">
     <q-expansion-item
       v-for="month in renderYear"
       :key="month"
@@ -321,7 +210,7 @@
         flat
         :rows="rows"
         :columns="columns"
-        :pagination="defaultPagination"
+        :pagination="pagination"
         :hide-bottom="true"
         :filter="month"
         :filter-method="customFilter"
@@ -449,768 +338,476 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import {
   scheduleCollection,
   leaveCollection,
   FirebaseFunctions,
-  usersCollection,
-  dashboardCollection,
 } from "boot/firebase";
-
 import { useStore } from "vuex";
-import { ref, defineComponent, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import holiday from "assets/holiday.json";
 import { date as qdate } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
+import { getDocs, query, where } from "@firebase/firestore";
+import { httpsCallable } from "@firebase/functions";
 
-export default defineComponent({
-  name: "ALApply",
-  props: {
-    renderDate: Date,
+
+const props = defineProps({
+  renderDate: Date,
+  renderYearOffset: Number,
+})
+
+const $store = useStore();
+const deleteApplicationList = ref([])
+const originalApplicationList = ref([])
+const changeApplicationList = ref([])
+const applicationList = ref([])
+const renderYear = ref([])
+const confirmDialog = ref(false)
+const awaitServerResponse = ref(0)
+const leaveType = ref("AL")
+const rows = ref([])
+const applicationRemarks = ref("")
+// table config
+const slotMap = ref({
+  slot_a: "早",
+  slot_b: "午",
+  slot_c: "晚",
+})
+
+const leaveMap = ref({
+  AL: "年假",
+  SAL: "特別年假",
+  SL: "病假",
+  SSL: "特別病假",
+})
+
+const leaveColorMap = ref({
+  AL: "red-3",
+  SAL: "blue-3",
+  SL: "warning",
+  SSL: "teal-3",
+})
+
+const columns = ref([
+  {
+    name: "Date",
+    label: "日期",
+    field: "Date",
+    style: "font-size: 2.5vw; text-align: center",
+    headerStyle: "font-size: 2.5vw; text-align: center;",
+    headerClasses: "bg-grey-2 nameColumn",
+    format: (val) =>
+      qdate.formatDate(val, "M月D日(ddd)", {
+        daysShort: ["日", "一", "二", "三", "四", "五", "六"],
+      }),
   },
-  components: {
-    LoadingDialog,
+  {
+    name: "slot_a",
+    label: "早",
+    field: "slot_a",
+    style: "font-size: 2.5vw; text-align: center",
+    headerStyle: "font-size: 2.5vw; text-align: center;",
+    headerClasses: "bg-grey-2",
   },
-  data() {
-    return {
-      al_balance: 0,
-      showAllStaffAnnualBalance: false,
-      allStaffAnnualLeaveList: [],
-      confirmDialog: false,
-      al_YearBalance: 0,
-      applicationRemarks: "",
-      qdate: qdate,
-      renderYear: [],
-      renderYearOffset: 0,
-      leaveType: ref("AL"),
-      applicationList: [],
-      deleteApplicationList: [],
-      changeApplicationList: [],
-      originalApplicationList: [],
-      leaveMap: {
-        AL: "年假",
-        SAL: "特別年假",
-        SL: "病假",
-        SSL: "特別病假",
-      },
-      leaveColorMap: {
-        AL: "red-3",
-        SAL: "blue-3",
-        SL: "warning",
-        SSL: "teal-3",
-      },
+  {
+    name: "slot_b",
+    label: "午",
+    field: "slot_b",
+    style: "font-size: 2.5vw; text-align: center",
+    headerStyle: "font-size: 2.5vw; text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "slot_c",
+    label: "晚",
+    field: "slot_c",
+    style: "font-size: 2.5vw; text-align: center",
+    headerStyle: "font-size: 2.5vw; text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+])
 
-      queryStartDate: {
-        type: Date,
-      },
-      queryEndDate: {
-        type: Date,
-      },
-      awaitServerResponse: 0,
+const pagination = ref({
+  rowsPerPage: 400,
+})
 
-      defaultPagination: {
-        rowsPerPage: 400,
-      },
-      slotMap: {
-        slot_a: "早",
-        slot_b: "午",
-        slot_c: "晚",
-      },
-      allStaffAnnualLeaveColumns: [
-        {
-          name: "name",
-          label: "員工",
-          field: "name",
-          style: "font-size: 2.5vw; text-align: center",
-          headerStyle: "font-size: 2.5vw; text-align: center;",
-          headerClasses: "bg-grey-2",
-        },
-        {
-          name: "alBalance_month",
-          label: "本月年假",
-          field: "alBalance_month",
-          style: "font-size: 2.5vw; text-align: center",
-          headerStyle: "font-size: 2.5vw; text-align: center;",
-          headerClasses: "bg-grey-2",
-        },
-        {
-          name: "alBalance_year",
-          label: "年尾年假",
-          field: "alBalance_year",
-          style: "font-size: 2.5vw; text-align: center",
-          headerStyle: "font-size: 2.5vw; text-align: center;",
-          headerClasses: "bg-grey-2",
-        },
+// computed
+const publicHoliday = computed(() => holiday? holiday.vcalendar[0].vevent.map(({dtstart, summary}) => ({date: dtstart[0], summary: summary})): [])    
+const waitingAsync = computed(() => awaitServerResponse.value > 0)
+const uid = computed(() => $store.getters["userModule/getUID"])
+const username = computed(() => $store.getters["userModule/getUsername"])
+const isSAL = computed(() => $store.getters["userModule/getSAL"])
+const dateOfExit = computed(() => $store.getters["userModule/getDateOfExit"])
 
-        {
-          name: "salBalance_month",
-          label: "特別年假",
-          field: "salBalance_month",
-          style: "font-size: 2.5vw; text-align: center",
-          headerStyle: "font-size: 2.5vw; text-align: center;",
-          headerClasses: "bg-grey-2",
-        },
-        {
-          name: "otBalance_month",
-          label: "超時結餘（小時）",
-          field: "otBalance_month",
-          style: "font-size: 2.5vw; text-align: center",
-          headerStyle: "font-size: 2.5vw; text-align: center;",
-          headerClasses: "bg-grey-2",
-        },
-      ],
-      rows: [],
-      columns: [
-        {
-          name: "Date",
-          label: "日期",
-          field: "Date",
-          style: "font-size: 2.5vw; text-align: center",
-          headerStyle: "font-size: 2.5vw; text-align: center;",
-          headerClasses: "bg-grey-2 nameColumn",
-          format: (val) =>
-            qdate.formatDate(val, "M月D日(ddd)", {
-              daysShort: ["日", "一", "二", "三", "四", "五", "六"],
-            }),
-        },
-        {
-          name: "slot_a",
-          label: "早",
-          field: "slot_a",
-          style: "font-size: 2.5vw; text-align: center",
-          headerStyle: "font-size: 2.5vw; text-align: center;",
-          headerClasses: "bg-grey-2",
-        },
-        {
-          name: "slot_b",
-          label: "午",
-          field: "slot_b",
-          style: "font-size: 2.5vw; text-align: center",
-          headerStyle: "font-size: 2.5vw; text-align: center;",
-          headerClasses: "bg-grey-2",
-        },
-        {
-          name: "slot_c",
-          label: "晚",
-          field: "slot_c",
-          style: "font-size: 2.5vw; text-align: center",
-          headerStyle: "font-size: 2.5vw; text-align: center;",
-          headerClasses: "bg-grey-2",
-        },
-      ],
+    
+// drag and drop event handling
+// store the id of the draggable element
+function onDragStart(e) {
+  e.dataTransfer.setData("text", e.target.id);
+  e.dataTransfer.dropEffect = "move";
+}
+
+function onDragEnter(e) {
+  // don't drop on other draggables
+  if (e.target.draggable !== true) {
+    e.target.classList.add("drag-enter");
+  }
+}
+
+function onDragLeave(e) {
+  e.target.classList.remove("drag-enter");
+}
+function onDragOver(e) {
+  e.preventDefault();
+}
+
+function onDrop(e) {
+  e.preventDefault();
+
+  // don't drop on other draggables
+  if (e.target.draggable === true) {
+    return;
+  }
+
+  const draggedId = e.dataTransfer.getData("text");
+  const draggedEl = document.getElementById(draggedId);
+
+  // check if original parent node
+  if (draggedEl.parentNode === e.target) {
+    e.target.classList.remove("drag-enter");
+    return;
+  }
+
+  /*
+  console.log("date: " + draggedEl.getAttribute("dateValue"));
+  console.log("slot: " + draggedEl.getAttribute("slotValue"));
+  console.log("docid: " + draggedEl.getAttribute("id"));
+  */
+
+  // make the exchange
+  // draggedEl.parentNode.removeChild(draggedEl);
+  // e.target.appendChild(draggedEl);
+  let sourceIndex = rows.value.findIndex(
+    (element) => element.Date == draggedEl.getAttribute("dateValue")
+  );
+  let targetIndex = rows.value.findIndex((element) => element.Date == e.target.id);
+
+  if (rows.value[targetIndex][e.target.slot + ".unapproved"]) {
+    return;
+  }
+  rows.value[targetIndex][e.target.slot + ".unapprovedDocid"] = rows.value[sourceIndex][
+    draggedEl.getAttribute("slotValue") + ".unapprovedDocid"
+  ];
+  rows.value[targetIndex][e.target.slot + ".unapproved"] = rows.value[sourceIndex][
+    draggedEl.getAttribute("slotValue") + ".unapproved"
+  ];
+  rows.value[targetIndex][e.target.slot + ".unapprovedValue"] = rows.value[sourceIndex][
+    draggedEl.getAttribute("slotValue") + ".unapprovedValue"
+  ];
+  delete rows.value[sourceIndex][
+    draggedEl.getAttribute("slotValue") + ".unapprovedDocid"
+  ];
+  delete rows.value[sourceIndex][draggedEl.getAttribute("slotValue") + ".unapproved"];
+  delete rows.value[sourceIndex][
+    draggedEl.getAttribute("slotValue") + ".unapprovedValue"
+  ];
+
+  e.target.classList.remove("drag-enter");
+  let i = originalApplicationList.value.findIndex(
+    (element) => element.docid == draggedId
+  );
+  // add change to changeApplicationList
+  let existIndex = changeApplicationList.value.findIndex(
+    (element) => element.docid == draggedId
+  );
+  if (existIndex >= 0) {
+    changeApplicationList.value[existIndex] = {
+      docid: draggedId,
+      action: "update",
+      date: new Date(e.target.id),
+      slot: e.target.slot,
+      type: originalApplicationList.value[i].type,
+      old: { ...originalApplicationList.value[i] },
     };
-  },
-  methods: {
-    // store the id of the draggable element
-    onDragStart(e) {
-      e.dataTransfer.setData("text", e.target.id);
-      e.dataTransfer.dropEffect = "move";
-    },
-    onDragEnter(e) {
-      // don't drop on other draggables
-      if (e.target.draggable !== true) {
-        e.target.classList.add("drag-enter");
-      }
-    },
-    onDragLeave(e) {
-      e.target.classList.remove("drag-enter");
-    },
-    onDragOver(e) {
-      e.preventDefault();
-    },
-    onDrop(e) {
-      e.preventDefault();
+  } else {
+    changeApplicationList.value.push({
+      docid: draggedId,
+      action: "update",
+      date: new Date(e.target.id),
+      slot: e.target.slot,
+      type: originalApplicationList.value[i].type,
+      old: { ...originalApplicationList.value[i] },
+    });
+  }
+}
 
-      // don't drop on other draggables
-      if (e.target.draggable === true) {
-        return;
-      }
+// other functions
+function removeApplication(date, slot, type) {
+  const docidAttributeName = slot + ".unapprovedDocid";
+  let index = rows.value.findIndex((element) => element.Date == date);
+  let docid = rows.value[index][docidAttributeName];
 
-      const draggedId = e.dataTransfer.getData("text");
-      const draggedEl = document.getElementById(draggedId);
+  let changeIndex = changeApplicationList.value.findIndex(
+    (element) => element.docid == docid
+  );
 
-      // check if original parent node
-      if (draggedEl.parentNode === e.target) {
-        e.target.classList.remove("drag-enter");
-        return;
-      }
+  if (changeIndex >= 0) {
+    deleteApplicationList.value.push({
+      docid: docid,
+      action: "delete",
+      date: changeApplicationList.value[changeIndex].old.date,
+      slot: changeApplicationList.value[changeIndex].old.slot,
+      type: changeApplicationList.value[changeIndex].old.type,
+    });
+    changeApplicationList.value.splice(changeIndex, 1);
+  } else {
+    deleteApplicationList.value.push({
+      docid: docid,
+      action: "delete",
+      date: date,
+      slot: slot,
+      type: type,
+    });
+  }
+  delete rows.value[index][slot + ".unapproved"];
+  delete rows.value[index][slot + ".unapprovedValue"];
+  delete rows.value[index][slot + ".unapprovedDocid"];
+}
 
-      /*
-      console.log("date: " + draggedEl.getAttribute("dateValue"));
-      console.log("slot: " + draggedEl.getAttribute("slotValue"));
-      console.log("docid: " + draggedEl.getAttribute("id"));
-      */
+function confirmHolidayApplication() {
+  let leaveData = [];
+  let now = new Date();
 
-      // make the exchange
-      // draggedEl.parentNode.removeChild(draggedEl);
-      // e.target.appendChild(draggedEl);
-      let sourceIndex = this.rows.findIndex(
-        (element) => element.Date == draggedEl.getAttribute("dateValue")
-      );
-      let targetIndex = this.rows.findIndex((element) => element.Date == e.target.id);
+  let combinedRemarks = [];
+  if (applicationRemarks.value.length > 0)
+    combinedRemarks.push(username.value + ": " + applicationRemarks.value);
 
-      if (this.rows[targetIndex][e.target.slot + ".unapproved"]) {
-        return;
-      }
-      this.rows[targetIndex][e.target.slot + ".unapprovedDocid"] = this.rows[sourceIndex][
-        draggedEl.getAttribute("slotValue") + ".unapprovedDocid"
-      ];
-      this.rows[targetIndex][e.target.slot + ".unapproved"] = this.rows[sourceIndex][
-        draggedEl.getAttribute("slotValue") + ".unapproved"
-      ];
-      this.rows[targetIndex][e.target.slot + ".unapprovedValue"] = this.rows[sourceIndex][
-        draggedEl.getAttribute("slotValue") + ".unapprovedValue"
-      ];
-      delete this.rows[sourceIndex][
-        draggedEl.getAttribute("slotValue") + ".unapprovedDocid"
-      ];
-      delete this.rows[sourceIndex][draggedEl.getAttribute("slotValue") + ".unapproved"];
-      delete this.rows[sourceIndex][
-        draggedEl.getAttribute("slotValue") + ".unapprovedValue"
-      ];
+  // call https functions to modify leave
+  if (changeApplicationList.value.length > 0) {
+    combinedRemarks.push(
+      "修改：" + qdate.formatDate(now, "YYYY年MM月DD日HH時mm分ss秒")
+    );
 
-      e.target.classList.remove("drag-enter");
-      let i = this.originalApplicationList.findIndex(
-        (element) => element.docid == draggedId
-      );
-      // add change to changeApplicationList
-      let existIndex = this.changeApplicationList.findIndex(
-        (element) => element.docid == draggedId
-      );
-      if (existIndex >= 0) {
-        this.changeApplicationList[existIndex] = {
-          docid: draggedId,
-          action: "update",
-          date: new Date(e.target.id),
-          slot: e.target.slot,
-          type: this.originalApplicationList[i].type,
-          old: { ...this.originalApplicationList[i] },
-        };
-      } else {
-        this.changeApplicationList.push({
-          docid: draggedId,
-          action: "update",
-          date: new Date(e.target.id),
-          slot: e.target.slot,
-          type: this.originalApplicationList[i].type,
-          old: { ...this.originalApplicationList[i] },
-        });
-      }
-    },
-    async getAllStaffAnnualBalance() {
-      // this.awaitServerResponse++;
-      const usersDoc = await usersCollection
-        .where("privilege.systemAdmin", "==", false)
-        .where("enable", "==", true)
-        .where("privilege.tmp", "==", false)
-        .orderBy("order")
-        .get();
-      this.allStaffAnnualLeaveList = [];
-      for (let i = 0; i < usersDoc.docs.length; i++) {
-        this.allStaffAnnualLeaveList.push({
-          uid: usersDoc.docs[i].data().uid,
-          name: usersDoc.docs[i].data().name,
-          alBalance_month: await this.updateMonthEndBalance(usersDoc.docs[i].data().uid),
-          salBalance_month: usersDoc.docs[i].data().balance.sal,
-          otBalance_month: usersDoc.docs[i].data().balance.ot,
-        });
-      }
-      this.awaitServerResponse++;
-      for (let i = 0; i < this.allStaffAnnualLeaveList.length; i++) {
-        this.allStaffAnnualLeaveList[i].alBalance_year = await this.updateYearEndBalance(
-          this.allStaffAnnualLeaveList[i].uid
-        );
-      }
-      this.awaitServerResponse--;
-      this.showAllStaffAnnualBalance = true;
-    },
-    removeApplication(date, slot, type) {
-      const docidAttributeName = slot + ".unapprovedDocid";
-      let index = this.rows.findIndex((element) => element.Date == date);
-      let docid = this.rows[index][docidAttributeName];
+    for (let doc of changeApplicationList.value) {
+      doc.remarks = combinedRemarks;
+    }
 
-      let changeIndex = this.changeApplicationList.findIndex(
-        (element) => element.docid == docid
-      );
+    const modifyLeaveByDocid = httpsCallable(FirebaseFunctions,
+      "holiday-modifyLeaveByDocid"
+    );
 
-      if (changeIndex >= 0) {
-        this.deleteApplicationList.push({
-          docid: docid,
-          action: "delete",
-          date: this.changeApplicationList[changeIndex].old.date,
-          slot: this.changeApplicationList[changeIndex].old.slot,
-          type: this.changeApplicationList[changeIndex].old.type,
-        });
-        this.changeApplicationList.splice(changeIndex, 1);
-      } else {
-        this.deleteApplicationList.push({
-          docid: docid,
-          action: "delete",
-          date: date,
-          slot: slot,
-          type: type,
-        });
-      }
-      delete this.rows[index][slot + ".unapproved"];
-      delete this.rows[index][slot + ".unapprovedValue"];
-      delete this.rows[index][slot + ".unapprovedDocid"];
-    },
-    confirmHolidayApplication() {
-      let leaveData = [];
-      let now = new Date();
+    awaitServerResponse.value++;
+    modifyLeaveByDocid(changeApplicationList.value).then(() => {
+      awaitServerResponse.value--;
+      updateTable()
+      changeApplicationList.value = [];
+    });
+  }
 
-      let combinedRemarks = [];
-      if (this.applicationRemarks.length > 0)
-        combinedRemarks.push(this.username + ": " + this.applicationRemarks);
-
-      // call https functions to modify leave
-      if (this.changeApplicationList.length > 0) {
-        combinedRemarks.push(
-          "修改：" + qdate.formatDate(now, "YYYY年MM月DD日HH時mm分ss秒")
-        );
-
-        for (let doc of this.changeApplicationList) {
-          doc.remarks = combinedRemarks;
-        }
-
-        const modifyLeaveByDocid = FirebaseFunctions.httpsCallable(
-          "holiday-modifyLeaveByDocid"
-        );
-
-        this.awaitServerResponse++;
-        modifyLeaveByDocid(this.changeApplicationList).then(() => {
-          this.awaitServerResponse--;
-          this.updateApplicationList();
-          this.changeApplicationList = [];
-        });
-      }
-
-      // call https functions to delete existing applications
-      if (this.deleteApplicationList.length > 0) {
-        const delLeaveByDocid = FirebaseFunctions.httpsCallable(
-          "holiday-delLeaveByDocid"
-        );
-        this.awaitServerResponse++;
-        delLeaveByDocid(this.deleteApplicationList)
-          .then(() => {
-            this.awaitServerResponse--;
-            this.updateApplicationList();
-            this.deleteApplicationList = [];
-          })
-          .catch((error) => {
-            console.log(error);
-          });
-      }
-
-      // call https functions to add leaves
-      if (this.applicationList.length > 0) {
-        combinedRemarks.push(
-          "申請：" + qdate.formatDate(now, "YYYY年MM月DD日HH時mm分ss秒")
-        );
-        this.applicationList.forEach((leave) => {
-          leaveData.push({
-            date: leave.date.toISOString(),
-            type: leave.type,
-            slot: leave.slot,
-            uid: this.uid,
-            name: this.username,
-            validity: true,
-            status: "未批",
-            remarks: combinedRemarks,
-          });
-        });
-
-        const addLeave = FirebaseFunctions.httpsCallable("holiday-addLeave");
-        this.awaitServerResponse++;
-        addLeave(leaveData)
-          .then(() => {
-            this.awaitServerResponse--;
-            this.applicationList = [];
-            this.updateApplicationList();
-            this.refreshHolidayTable();
-          })
-          .catch((error) => {
-            console.log(error.message);
-          });
-      }
-      this.applicationRemarks = "";
-    },
-    customFilter(rows, terms) {
-      return rows.filter(
-        (row) => qdate.formatDate(row.Date, "YYYYMM") == qdate.formatDate(terms, "YYYYMM")
-      );
-    },
-    async updateApplicationList() {
-      this.originalApplicationList = [];
-      let applications = await leaveCollection
-        .where("uid", "==", this.uid)
-        .where("status", "==", "未批")
-        .get();
-
-      applications.forEach((doc) => {
-        if (
-          qdate.isSameDate(
-            doc.data().date,
-            new Date(
-              this.renderDate.getFullYear() + this.renderYearOffset,
-              this.renderDate.getMonth(),
-              this.renderDate.getDay()
-            ),
-            "year"
-          )
-        ) {
-          this.originalApplicationList.push({
-            docid: doc.id,
-            date: doc.data().date,
-            slot: doc.data().slot,
-            type: doc.data().type,
-          });
-        }
+  // call https functions to delete existing applications
+  if (deleteApplicationList.value.length > 0) {
+    const delLeaveByDocid = httpsCallable(FirebaseFunctions,
+      "holiday-delLeaveByDocid"
+    );
+    awaitServerResponse.value++;
+    delLeaveByDocid(deleteApplicationList.value)
+      .then(() => {
+        awaitServerResponse.value--;
+        updateTable()
+        deleteApplicationList.value = [];
+      })
+      .catch((error) => {
+        console.log(error);
       });
-    },
-    applyHoliday(props) {
-      // add the clicked slot to applicationList array
-      let i = this.applicationList.findIndex(
-        (element) => element.date == props.row.Date && element.slot == props.col.name
-      );
+  }
 
-      if (i >= 0) this.applicationList.splice(i, 1);
-      this.applicationList.push({
-        date: props.row.Date,
-        slot: props.col.name,
-        type: this.leaveType,
+  // call https functions to add leaves
+  if (applicationList.value.length > 0) {
+    combinedRemarks.push(
+      "申請：" + qdate.formatDate(now, "YYYY年MM月DD日HH時mm分ss秒")
+    );
+    applicationList.value.forEach((leave) => {
+      leaveData.push({
+        date: leave.date.toISOString(),
+        type: leave.type,
+        slot: leave.slot,
+        uid: uid.value,
+        name: username.value,
+        validity: true,
+        status: "未批",
+        remarks: combinedRemarks,
       });
-    },
-    async changeRenderYear(years) {
-      // proceed year change if it is not before 2021 where system start
-      if (this.renderDate.getFullYear() + this.renderYearOffset + years >= 2021) {
-        // pull up loading screen until server respond
-        this.awaitServerResponse++;
-        this.renderYearOffset += years;
-        this.refreshHolidayTable().then((response) => {
-          this.awaitServerResponse--;
-        });
-      }
-    },
-    getHoliday(date) {
-      let d = qdate.formatDate(date, "YYYYMMDD");
-      let i = this.publicHoliday.findIndex((element) => element.date == d);
-      if (i == -1) {
-        return "";
-      } else {
-        return this.publicHoliday[i].summary;
-      }
-    },
-    async updateMonthEndBalance(uid) {
-      // get user data
-      const userDoc = await usersCollection.doc(uid).get();
-      const rank = userDoc.data().rank;
-      const dateOfExit = userDoc.data().dateOfExit ? userDoc.data().dateOfExit : null;
-      const dateOfEntry = userDoc.data().dateOfEntry;
+    });
 
-      // get leaveConfig
-      const leaveConfigDoc = await dashboardCollection.doc("leaveConfig").get();
-      const leaveConfigData = leaveConfigDoc.data();
-      const tiers = leaveConfigData[rank];
-
-      // get AL starting balance
-      const systemStartBalance = leaveConfigData[uid][0].al;
-
-      // determine month end
-      const now = new Date();
-      let monthEnd = qdate.endOfDate(now, "month");
-
-      // determine data retrieval boundary combining yearEnd and dateOfExit
-      const dataBoundary =
-        dateOfExit && dateOfExit.toDate() < monthEnd
-          ? qdate.subtractFromDate(dateOfExit.toDate(), { milliseconds: 1 })
-          : monthEnd;
-
-      const leaveDocData = await leaveCollection
-        .where("uid", "==", uid)
-        .where("status", "==", "批准")
-        .where("type", "==", "AL")
-        .get();
-      let leaveData = [];
-      leaveDocData.forEach((doc) => {
-        let d = new Date(doc.data().date);
-        if (d - dataBoundary < 0) {
-          leaveData.push(doc);
-        }
+    const addLeave = httpsCallable(FirebaseFunctions, "holiday-addLeave");
+    awaitServerResponse.value++;
+    addLeave(leaveData)
+      .then(() => {
+        awaitServerResponse.value--;
+        updateTable()
+        applicationList.value = [];
+      })
+      .catch((error) => {
+        console.log(error.message);
       });
+  }
+  applicationRemarks.value = "";
+}
 
-      const totalALTaken = leaveData.length / 2;
+function customFilter(rows, terms) {
+  return rows.filter(
+    (row) => qdate.formatDate(row.Date, "YYYYMM") == qdate.formatDate(terms, "YYYYMM")
+  );
+}
 
-      let totalGain = 0;
-      // begin with system start date
-      let systemStart = new Date("2021/04/01");
-      let monthLoop = systemStart;
-      do {
-        const yearServed =
-          qdate.getDateDiff(
-            qdate.endOfDate(monthLoop, "month"),
-            dateOfEntry.toDate(),
-            "month"
-          ) / 12;
 
-        let tier = 0;
-        const tiersConfig = [0, 5, 8, 10, 12];
-        for (let j = tiersConfig.length; j > 0; j--) {
-          if (yearServed >= tiersConfig[j - 1]) {
-            tier = tiers["t" + j];
-            break;
-          }
-        }
-        let perMonthGain = tier / 12;
+function applyHoliday(props) {
+  // add the clicked slot to applicationList array
+  let i = applicationList.value.findIndex(
+    (element) => element.date == props.row.Date && element.slot == props.col.name
+  );
 
-        if (
-          qdate.getDateDiff(this.dataBoundary, monthLoop) <
-          qdate.daysInMonth(monthLoop) - 1
-        ) {
-          perMonthGain = 0;
-        }
-        totalGain += perMonthGain;
-        monthLoop = qdate.addToDate(monthLoop, { month: 1 });
-      } while (qdate.getDateDiff(monthLoop, dataBoundary, "day") < 0);
+  if (i >= 0) applicationList.value.splice(i, 1);
+  applicationList.value.push({
+    date: props.row.Date,
+    slot: props.col.name,
+    type: leaveType.value,
+  });
+}
 
-      return systemStartBalance + totalGain - totalALTaken;
-    },
-    async updateYearEndBalance(uid) {
-      // get user data
-      const userDoc = await usersCollection.doc(uid).get();
-      const rank = userDoc.data().rank;
-      const dateOfExit = userDoc.data().dateOfExit ? userDoc.data().dateOfExit : null;
-      const dateOfEntry = userDoc.data().dateOfEntry;
+function getHoliday(date) {
+  let d = qdate.formatDate(date, "YYYYMMDD");
+  let i = publicHoliday.value.findIndex((element) => element.date == d);
+  if (i == -1) {
+    return "";
+  } else {
+    return publicHoliday.value[i].summary;
+  }
+}
 
-      // get leaveConfig
-      const leaveConfigDoc = await dashboardCollection.doc("leaveConfig").get();
-      const leaveConfigData = leaveConfigDoc.data();
-      const tiers = leaveConfigData[rank];
+// module logic
 
-      // get AL starting balance
-      const systemStartBalance = leaveConfigData[uid][0].al;
+function updateTable() {
+  awaitServerResponse.value++
+  rows.value = []
+  renderYear.value = []
+  originalApplicationList.value = []
+  let queryStartDate = new Date(
+    props.renderDate.getFullYear() + props.renderYearOffset,
+    0,
+    1,
+    8,
+    0,
+    0
+  );
+  let queryYearEndDate = qdate.endOfDate(queryStartDate, "year");
+    
+  let queryEndDate =
+      dateOfExit.value && dateOfExit.value.toDate() < queryYearEndDate
+        ? qdate.subtractFromDate(dateOfExit.value.toDate(), { days: 1 })
+        : queryYearEndDate;
 
-      // determine year end
-      const now = new Date();
-      let yearEnd;
-      if (now.getMonth() < 3) {
-        yearEnd = qdate.buildDate({
-          year: now.getFullYear(),
-          month: 3,
-          days: 31,
-          hours: 23,
-          minutes: 59,
-          seconds: 59,
-          millisecond: 999,
-        });
-      } else {
-        yearEnd = qdate.buildDate({
-          year: now.getFullYear() + 1,
-          month: 3,
-          days: 31,
-          hours: 23,
-          minutes: 59,
-          seconds: 59,
-          millisecond: 999,
-        });
-      }
+  // build months in table      
+  let i = queryStartDate;
+  while (qdate.getDateDiff(queryEndDate, i, "day") > 0) {
+    renderYear.value.push(i);
+    i = qdate.addToDate(i, { months: 1 });
+  }
 
-      // determine data retrieval boundary combining yearEnd and dateOfExit
-      const dataBoundary =
-        dateOfExit && dateOfExit.toDate() < yearEnd
-          ? qdate.subtractFromDate(dateOfExit.toDate(), { milliseconds: 1 })
-          : yearEnd;
+  i = queryStartDate;
+  // build rows with dates
+  while (qdate.getDateDiff(queryEndDate, i, "day") >= 0) {
+    rows.value.push({
+      Date: i,
+    });
+    i = qdate.addToDate(i, { days: 1 });
+  }
 
-      const leaveDocData = await leaveCollection
-        .where("uid", "==", uid)
-        .where("status", "==", "批准")
-        .where("type", "==", "AL")
-        .get();
-      let leaveData = [];
-      leaveDocData.forEach((doc) => {
-        let d = new Date(doc.data().date);
-        if (d - dataBoundary < 0) {
-          leaveData.push(doc);
-        }
-      });
+  const scheduleQuery = query(scheduleCollection,
+    where("date", ">=", queryStartDate),
+    where("date", "<=", queryEndDate),
+    where("uid", "==", uid.value)
+  )
 
-      const totalALTaken = leaveData.length / 2;
-
-      let totalGain = 0;
-      // begin with system start date
-      let systemStart = new Date("2021/04/01");
-      let monthLoop = systemStart;
-      do {
-        const yearServed =
-          qdate.getDateDiff(
-            qdate.endOfDate(monthLoop, "month"),
-            dateOfEntry.toDate(),
-            "month"
-          ) / 12;
-
-        let tier = 0;
-        const tiersConfig = [0, 5, 8, 10, 12];
-        for (let j = tiersConfig.length; j > 0; j--) {
-          if (yearServed >= tiersConfig[j - 1]) {
-            tier = tiers["t" + j];
-            break;
-          }
-        }
-        let perMonthGain = tier / 12;
-
-        if (
-          qdate.getDateDiff(dataBoundary, monthLoop) <
-          qdate.daysInMonth(monthLoop) - 1
-        ) {
-          perMonthGain = 0;
-        }
-        totalGain += perMonthGain;
-        monthLoop = qdate.addToDate(monthLoop, { month: 1 });
-      } while (qdate.getDateDiff(monthLoop, dataBoundary, "day") < 0);
-
-      return systemStartBalance + totalGain - totalALTaken;
-    },
-    async refreshHolidayTable() {
-      this.awaitServerResponse++;
-      this.updateMonthEndBalance(this.uid).then((response) => {
-        this.al_balance = response;
-        this.awaitServerResponse--;
-      });
-      this.renderYear = [];
-      this.rows = [];
-      let queryStartDate = new Date(
-        this.renderDate.getFullYear() + this.renderYearOffset,
-        0,
-        1,
-        8,
-        0,
-        0
-      );
-
-      let queryYearEndDate = qdate.endOfDate(queryStartDate, "year");
-      let queryEndDate =
-        this.dateOfExit && this.dateOfExit.toDate() < queryYearEndDate
-          ? qdate.subtractFromDate(this.dateOfExit.toDate(), { days: 1 })
-          : queryYearEndDate;
-
-      let i = queryStartDate;
-      while (qdate.getDateDiff(queryEndDate, i, "day") > 0) {
-        this.renderYear.push(i);
-        i = qdate.addToDate(i, { months: 1 });
-      }
-
-      i = queryStartDate;
-      // build rows with dates
-      while (qdate.getDateDiff(queryEndDate, i, "day") >= 0) {
-        this.rows.push({
-          Date: i,
-        });
-        i = qdate.addToDate(i, { days: 1 });
-      }
-
-      // load schedule date in the year
-      let schedules = await scheduleCollection
-        .where("date", ">=", queryStartDate)
-        .where("date", "<=", queryEndDate)
-        .where("uid", "==", this.uid)
-        .get();
-
-      schedules.forEach((doc) => {
-        this.rows[
-          this.rows.findIndex(
-            (element) =>
-              qdate.formatDate(element.Date, "YYYYMMDD") ==
-              qdate.formatDate(doc.data().date.toDate(), "YYYYMMDD")
-          )
-        ][doc.data().slot] = doc.data().type;
-      });
-
-      // query all leave records
-      let leaves = await leaveCollection
-        .where("status", "==", "批准")
-        .where("uid", "==", this.uid)
-        .get();
-
-      // attach .approved to the approved slot
-      leaves.forEach((doc) => {
-        let slotApproved = doc.data().slot + ".approved";
-        let i = this.rows.findIndex(
+  // load schedule date in the year
+  getDocs(scheduleQuery).then((schedules)=> {
+    schedules.forEach((doc) => {
+      rows.value[
+        rows.value.findIndex(
           (element) =>
             qdate.formatDate(element.Date, "YYYYMMDD") ==
-            qdate.formatDate(doc.data().date, "YYYYMMDD")
-        );
-        if (i >= 0) {
-          this.rows[i][slotApproved] = true;
-        }
-      });
+            qdate.formatDate(doc.data().date.toDate(), "YYYYMMDD")
+        )
+      ][doc.data().slot] = doc.data().type;
+    });
 
-      this.originalApplicationList.forEach((doc) => {
+    const leaveQuery = query(leaveCollection,
+      where("uid", "==", uid.value)
+    )
+      
+    // get original application list
+    getDocs(leaveQuery).then((applications) => {
+      applications.forEach((doc) => {
+        if (doc.data().status == "未批") {
+          if (
+            qdate.isSameDate(
+              doc.data().date,
+              new Date(
+                props.renderDate.getFullYear() + props.renderYearOffset,
+                props.renderDate.getMonth(),
+                props.renderDate.getDay()
+              ),
+              "year"
+            )
+          ) {
+            originalApplicationList.value.push({
+              docid: doc.id,
+              date: doc.data().date,
+              slot: doc.data().slot,
+              type: doc.data().type,
+            });
+          }
+        } else {
+          let slotApproved = doc.data().slot + ".approved";
+          let i = rows.value.findIndex(
+            (element) =>
+              qdate.formatDate(element.Date, "YYYYMMDD") ==
+              qdate.formatDate(doc.data().date, "YYYYMMDD")
+          );
+          if (i >= 0) {
+            rows.value[i][slotApproved] = true;
+          }
+        }
+      })
+
+      originalApplicationList.value.forEach((doc) => {
         let slotUnapproved = doc.slot + ".unapproved";
         let slotValue = doc.slot + ".unapprovedValue";
         let docidValue = doc.slot + ".unapprovedDocid";
 
         // console.log("docdate: " + qdate.formatDate(doc.date, "YYYYMMDD"));
-        let i = this.rows.findIndex(
+        let i = rows.value.findIndex(
           (element) =>
             qdate.formatDate(element.Date, "YYYYMMDD") ==
             qdate.formatDate(doc.date, "YYYYMMDD")
         );
 
         if (i >= 0) {
-          this.rows[i][slotUnapproved] = true;
-          this.rows[i][slotValue] = doc.type;
-          this.rows[i][docidValue] = doc.docid;
+          rows.value[i][slotUnapproved] = true;
+          rows.value[i][slotValue] = doc.type;
+          rows.value[i][docidValue] = doc.docid;
         }
-      });
-    },
-  },
-  async mounted() {
-    this.awaitServerResponse++;
-    this.updateApplicationList().then((response) => {
-      this.awaitServerResponse--;
-    });
-    this.awaitServerResponse++;
-    this.refreshHolidayTable().then((response) => {
-      this.awaitServerResponse--;
-    });
-    this.awaitServerResponse++;
-    this.updateYearEndBalance(this.uid).then((response) => {
-      this.al_YearBalance = response;
-      this.awaitServerResponse--;
-    });
-  },
-  computed: {
-    publicHoliday: function () {
-      var ph = [];
-      holiday.vcalendar[0].vevent.forEach((record) => {
-        ph.push({
-          date: record.dtstart[0],
-          summary: record.summary,
-        });
-      });
-      return ph;
-    },
-    waitingAsync() {
-      return this.awaitServerResponse > 0 ? true : false;
-    },
-  },
-  setup() {
-    const $store = useStore();
+      })
+      awaitServerResponse.value--
+    })
+  })
+}
 
-    return {
-      uid: computed(() => $store.getters["userModule/getUID"]),
-      username: computed(() => $store.getters["userModule/getUsername"]),
-      // al_balance: computed(() => $store.getters["userModule/getALBalance"]),
-      sal_balance: computed(() => $store.getters["userModule/getSALBalance"]),
-      isSAL: computed(() => $store.getters["userModule/getSAL"]),
-      dateOfExit: computed(() => $store.getters["userModule/getDateOfExit"]),
-      dateOfEntry: computed(() => $store.getters["userModule/getDateOfEntry"]),
-      rank: computed(() => $store.getters["userModule/getRank"]),
-      isLeaveApprove: computed(() => $store.getters["userModule/getLeaveApprove"]),
-    };
-  },
-});
+onMounted(() => {
+  updateTable()
+})
 </script>
 
 <style lang="scss" scoped>

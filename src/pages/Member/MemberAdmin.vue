@@ -8,7 +8,7 @@
 </template>
 
 <script setup>
-import { MIGRATE_RELATION, GET_MEMBER_BASIC_AND_RELATED_MEMBER_FROM_IDS, GET_NAME_FROM_IDS } from "/src/graphQueries/Member/query.js";
+import { MIGRATE_RELATION, GET_MEMBER_BASIC_AND_RELATED_MEMBER_FROM_IDS } from "/src/graphQueries/Member/query.js";
 import { gql } from "graphql-tag"
 import LoadingDialog from "components/LoadingDialog.vue";
 import { ref, computed } from "vue";

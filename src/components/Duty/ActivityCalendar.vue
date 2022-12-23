@@ -8,7 +8,7 @@
       <tr>
         <th class="caption"></th>
         <th class="column-head" v-for="col in columns">
-          {{ formatDate(col.name, "", "月日") }}<br />{{ daysOfWeek(col.name) }}
+          {{ qdate.formatDate(col.name, "M月D日") }}<br />{{ dateUtil.daysOfWeek(col.name) }}
         </th>
       </tr>
     </thead>
@@ -180,191 +180,150 @@
   </q-markup-table>
 </template>
 
-<script>
+<script setup>
 import { FirebaseFunctions, activityCollection } from "boot/firebase";
-import date from "src/lib/date.js";
-import dateHeader from "src/lib/dateHeader.js";
+import dateUtil from "src/lib/date.js";
+import { httpsCallable } from "firebase/functions";
 import { useStore } from "vuex";
+import { date as qdate } from 'quasar'
 import LoadingDialog from "components/LoadingDialog.vue"
+import { onUnmounted, ref, computed } from "vue";
+import { onSnapshot } from "firebase/firestore";
 
-export default {
-  name: "ActivityCalendar",
-  props: {
-    renderDate: Date,
-    printHeader: Boolean,
-  },
-  computed: {
-    waitingAsync() {
-      return this.awaitServerResponse > 0 ? true : false;
-    },
-  },
-  components: {
-    LoadingDialog,
-  },
-  data() {
-    return {
-      activityListener: Function(),
-      modifyTable: false,
-      awaitServerResponse: 0,
-      columns: [],
-      //   {
-      //     name: "firstCol",
-      //     title: "firstCol",
-      //     field: "firstCol",
-      //   },
-      // ],
-      rows: [],
-      defaultPagination: {
-        rowsPerPage: 20,
-      },
-      modifyObject: {
-        name: "",
-        active: true,
-        venue: false,
-        customName: "",
-        date: Date,
-        docid: "",
-      },
-    };
-  },
-  methods: {
-    async updateCustomName(object, scope) {
-      const value = scope.value;
-      const ob = Object.assign({}, object);
+onUnmounted(() => {
+  activitySnapshot.value()
+})
 
-      // cancel scope first to avoid error after server respond with change and item got removed
-      const cancelScope = new Promise((resolve, reject) => {
-        scope.hide;
-        resolve();
+// props
+const props = defineProps({
+  renderDate: Date,
+  printHeader: Boolean,
+})
+
+// variables
+const $store = useStore();
+const modifyTable = ref(false)
+const rows = ref([])
+const activitySnapshot = ref()
+const defaultPagination = ref({
+  rowsPerPage: 20,
+})
+const modifyObject = ref({
+  name: "",
+  active: true,
+  venue: false,
+  customName: "",
+  date: "",
+  docid: "",
+})
+const awaitServerResponse = ref(0)
+
+// computed
+const waitingAsync = computed(() => awaitServerResponse.value > 0)
+const columns = computed(() => [...dateUtil.generateTableColumns(props.renderDate, false)])
+
+//functions
+async function updateCustomName(object, scope) {
+  const value = scope.value;
+  const ob = Object.assign({}, object);
+
+  // cancel scope first to avoid error after server respond with change and item got removed
+  const cancelScope = new Promise((resolve, reject) => {
+    scope.hide;
+    resolve();
+  });
+
+  cancelScope.then(() => {
+    if (value == ob.name) {
+      ob.customName = "";
+    } else {
+      ob.customName = value;
+    }
+
+    const editActivityCustomName = httpsCallable(FirebaseFunctions, 
+      "activity-editActivityCustomName"
+    );
+    awaitServerResponse.value++;
+    return editActivityCustomName(ob)
+      .then(() => {
+        awaitServerResponse.value--;
+      })
+      .catch((error) => {
+        console.log(error.message);
       });
+  });
+}
 
-      cancelScope.then(() => {
-        if (value == ob.name) {
-          ob.customName = "";
-        } else {
-          ob.customName = value;
-        }
-
-        const editActivityCustomName = FirebaseFunctions.httpsCallable(
-          "activity-editActivityCustomName"
+// load all activities
+activitySnapshot.value = onSnapshot(activityCollection, (snapshot) => {
+  snapshot.docChanges().forEach((change) => {
+    let d = change.doc.data();
+    d.docid = change.doc.id;
+    let dateEntries = d.date;
+    // rows.value.push({})
+    // console.log("dateEntries: " + JSON.stringify(dateEntries));
+    if (change.type == "added") {
+      dateEntries.forEach((docDate) => {
+        let i = columns.value.findIndex(
+          (element) =>
+            element.name == qdate.formatDate(docDate.date.toDate(), "YYYY-MM-DD")
         );
-        this.awaitServerResponse++;
-        return editActivityCustomName(ob)
-          .then(() => {
-            this.awaitServerResponse--;
-          })
-          .catch((error) => {
-            console.log(error.message);
+        if (i != -1) {
+          rows.value.push({
+            docid: d.docid,
+            name: d.name,
+            date: columns.value[i].name,
+            customName: docDate.customName,
+            active: d.active,
+            venue: d.venue,
           });
-      });
-    },
-  },
-  async unmounted() {
-    this.activityListener();
-  },
-  async mounted() {
-    this.columns.push(...this.generateTableColumns(this.renderDate, false));
-
-    // load all activities
-    this.activityListener = activityCollection.onSnapshot((snapshot) => {
-      snapshot.docChanges().forEach((change) => {
-        let d = change.doc.data();
-        d.docid = change.doc.id;
-        let dateEntries = d.date;
-        // this.rows.push({})
-        // console.log("dateEntries: " + JSON.stringify(dateEntries));
-        if (change.type == "added") {
-          dateEntries.forEach((docDate) => {
-            let i = this.columns.findIndex(
-              (element) =>
-                element.name == this.formatDate(docDate.date.toDate(), "-", "YYYYMMDD")
-            );
-            if (i != -1) {
-              this.rows.push({
-                docid: d.docid,
-                name: d.name,
-                date: this.columns[i].name,
-                customName: docDate.customName,
-                active: d.active,
-                venue: d.venue,
-              });
-            }
-          });
-        } else if (change.type == "modified") {
-          // remove all and add new items back
-          // removing
-          let repeat = false;
-          do {
-            repeat = false;
-            this.rows.forEach((row) => {
-              if (row.docid == d.docid) {
-                repeat = true;
-                this.rows.splice(this.rows.indexOf(row), 1);
-              }
-            });
-          } while (repeat);
-
-          // adding
-          dateEntries.forEach((docDate) => {
-            let i = this.columns.findIndex(
-              (element) =>
-                element.name == this.formatDate(docDate.date.toDate(), "-", "YYYYMMDD")
-            );
-            if (i != -1) {
-              this.rows.push({
-                docid: d.docid,
-                name: d.name,
-                date: this.columns[i].name,
-                customName: docDate.customName,
-                active: d.active,
-                venue: d.venue,
-              });
-            }
-          });
-        } else if (change.type == "removed") {
-          let repeat = false;
-          do {
-            repeat = false;
-            this.rows.forEach((row) => {
-              if (row.docid == d.docid) {
-                repeat = true;
-                this.rows.splice(this.rows.indexOf(row), 1);
-              }
-            });
-          } while (repeat);
         }
-
-        /* dateEntries.forEach((docDate) => {
-          dateFields.forEach((fieldDate) => {
-            // if activity date matches datefield, push that event into that date with customName
-            if (fieldDate.toDateString() == docDate.date.toDate().toDateString()) {
-              acts.push({
-                date: docDate.date.toDate(),
-                name: doc.data().name,
-                customName: docDate.customName,
-                active: doc.data().active,
-                venue: doc.data().venue,
-                docid: doc.id,
-              });
-            }
-          });
-        });
-        */
-        //}
       });
-    });
-  },
-  created() {
-    this.daysOfWeek = date.daysOfWeek.bind(this);
-    this.formatDate = date.formatDate.bind(this);
-    this.mergeDateSlot = date.mergeDateSlot.bind(this);
-    this.splitDateSlot = date.splitDateSlot.bind(this);
-    this.generateTableColumns = dateHeader.generateTableColumns.bind(this);
-  },
-  setup() {
-    const $store = useStore();
-  },
-};
+    } else if (change.type == "modified") {
+      // remove all and add new items back
+      // removing
+      let repeat = false;
+      do {
+        repeat = false;
+        rows.value.forEach((row) => {
+          if (row.docid == d.docid) {
+            repeat = true;
+            rows.value.splice(rows.value.indexOf(row), 1);
+          }
+        });
+      } while (repeat);
+
+      // adding
+      dateEntries.forEach((docDate) => {
+        let i = columns.value.findIndex(
+          (element) =>
+            element.name == qdate.formatDate(docDate.date.toDate(), "YYYY-MM-DD")
+        );
+        if (i != -1) {
+          rows.value.push({
+            docid: d.docid,
+            name: d.name,
+            date: columns.value[i].name,
+            customName: docDate.customName,
+            active: d.active,
+            venue: d.venue,
+          });
+        }
+      });
+    } else if (change.type == "removed") {
+      let repeat = false;
+      do {
+        repeat = false;
+        rows.value.forEach((row) => {
+          if (row.docid == d.docid) {
+            repeat = true;
+            rows.value.splice(rows.value.indexOf(row), 1);
+          }
+        });
+      } while (repeat);
+    } 
+  });
+});
 </script>
 
 <style lang="scss" scoped>

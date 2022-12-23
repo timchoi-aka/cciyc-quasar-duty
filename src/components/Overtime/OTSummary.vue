@@ -8,7 +8,7 @@
     <q-table
       dense
       flat
-      :title="'超時補假記錄 - ' + renderName"
+      :title="'超時補假記錄 - ' + props.renderName"
       :rows="tableData"
       :columns="tableFields"
       :pagination="defaultPagination"
@@ -55,150 +55,132 @@
   </div>
 </template>
 
-<script>
-import { OTCollection, dashboardCollection } from "boot/firebase";
-import { computed } from "vue";
+<script setup>
+import { OTCollection, FireDB } from "boot/firebase";
+import { ref, computed } from "vue";
 import { useStore } from "vuex";
 import { date as qdate } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
+import { getDoc, getDocs, query, where, doc } from "@firebase/firestore";
 
-export default {
-  name: "OTSummary",
-  components: {
-    LoadingDialog,
-  },
-  props: {
-    renderUID: String,
-    renderName: String,
-  },
-  data() {
-    return {
-      awaitServerResponse: 0,
-      carryOver: 0,
-      qdate: qdate,
-      tableFields: [
-        {
-          name: "date",
-          field: "date",
-          label: "日期",
-          style: "font-size: 2.5vw; text-align: center",
-          headerStyle: "font-size: 2.5vw; text-align: center;",
-          headerClasses: "bg-grey-2",
-          format: (val) => qdate.formatDate(val, "YYYY年M月DD日"),
-        },
-        {
-          name: "type",
-          field: "type",
-          label: "種類",
-          style: "font-size: 2.5vw; text-align: center",
-          headerStyle: "font-size: 2.5vw; text-align: center;",
-          headerClasses: "bg-grey-2",
-          format: (val) => this.typeMap[val],
-        },
-        {
-          name: "hours",
-          field: "hours",
-          label: "時數",
-          style: "font-size: 2.5vw; text-align: center",
-          headerStyle: "font-size: 2.5vw; text-align: center;",
-          headerClasses: "bg-grey-2",
-        },
-        {
-          name: "remarks",
-          field: "remarks",
-          label: "附註",
-          style: "font-size: 2.5vw; text-align: center",
-          headerStyle: "font-size: 2.5vw; text-align: center;",
-          headerClasses: "bg-grey-2",
-        },
-        {
-          name: "status",
-          field: "status",
-          label: "狀態",
-          style: "font-size: 2.5vw; text-align: center",
-          headerStyle: "font-size: 2.5vw; text-align: center;",
-          headerClasses: "bg-grey-2",
-        },
-      ],
-      tableData: [],
-      typeMap: {
-        OT: "超時",
-        CL: "補假",
-      },
-      defaultPagination: {
-        rowsPerPage: 40,
-        sortBy: "date",
-      },
-    };
-  },
-  setup() {
-    const $store = useStore();
+// props
+const props = defineProps({
+  renderUID: String,
+  renderName: String,
+})
 
-    return {
-      uid: computed(() => $store.getters["userModule/getUID"]),
-    };
+// variables
+const $store = useStore();
+const awaitServerResponse = ref(0)
+const carryOver = ref(0)
+      
+// table config
+const tableFields = ref([
+  {
+    name: "date",
+    field: "date",
+    label: "日期",
+    style: "font-size: 2.5vw; text-align: center",
+    headerStyle: "font-size: 2.5vw; text-align: center;",
+    headerClasses: "bg-grey-2",
+    format: (val) => qdate.formatDate(val, "YYYY年M月DD日"),
   },
-  computed: {
-    waitingAsync() {
-      return this.awaitServerResponse > 0 ? true : false;
-    },
+  {
+    name: "type",
+    field: "type",
+    label: "種類",
+    style: "font-size: 2.5vw; text-align: center",
+    headerStyle: "font-size: 2.5vw; text-align: center;",
+    headerClasses: "bg-grey-2",
+    format: (val) => typeMap.value[val],
   },
-  methods: {
-    OTCarryOver(col) {
-      //console.log(JSON.stringify(col));
-      if (this.tableData.length == 0) return "";
-      if (col.name == "date") return "開始結餘";
-      if (col.name == "hours") return this.carryOver;
-    },
-    OTBalance(col) {
-      //console.log(JSON.stringify(col));
-      if (this.tableData.length == 0) return "";
-      if (col.name == "date") return "結餘";
-      if (col.name == "hours") {
-        let approvedData = this.tableData.filter((row) => {
-          return row.status == "批准";
-        });
-        if (approvedData.length > 0) {
-          let sum = approvedData.reduce((a, b) => ({
-            hours: parseFloat(a.hours) + parseFloat(b.hours),
-          }));
-          return this.carryOver + sum.hours;
-        } else return this.carryOver;
-      }
-    },
+  {
+    name: "hours",
+    field: "hours",
+    label: "時數",
+    style: "font-size: 2.5vw; text-align: center",
+    headerStyle: "font-size: 2.5vw; text-align: center;",
+    headerClasses: "bg-grey-2",
   },
-  async unmounted() {},
-  mounted() {
-    const uid = this.renderUID;
-    let data = [];
-    // load OT history
+  {
+    name: "remarks",
+    field: "remarks",
+    label: "附註",
+    style: "font-size: 2.5vw; text-align: center",
+    headerStyle: "font-size: 2.5vw; text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "status",
+    field: "status",
+    label: "狀態",
+    style: "font-size: 2.5vw; text-align: center",
+    headerStyle: "font-size: 2.5vw; text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+])
+      
+const tableData = ref([])
+const typeMap = ref({
+  OT: "超時",
+  CL: "補假",
+})
+const defaultPagination = ref({
+  rowsPerPage: 40,
+  sortBy: "date",
+})
 
-    OTCollection.where("uid", "==", uid)
-      .where("validity", "==", true)
-      .get()
-      .then((OTDoc) => {
-        OTDoc.forEach((doc) => {
-          data.push({
-            date: doc.data().date,
-            type: doc.data().type,
-            hours: doc.data().hours,
-            remarks: doc.data().remarks,
-            status: doc.data().status,
-          });
-        });
-        this.tableData = data;
-      });
+// computed    
+const waitingAsync = computed(() => awaitServerResponse.value > 0)    
+  
+// functions
+function OTCarryOver(col) {
+  //console.log(JSON.stringify(col));
+  if (tableData.value.length == 0) return "";
+  if (col.name == "date") return "開始結餘";
+  if (col.name == "hours") return carryOver.value;
+}
 
-    // load carryover OT
-    dashboardCollection
-      .doc("otConfig")
-      .get()
-      .then((dashboardDoc) => {
-        let d = dashboardDoc.data();
-        this.carryOver = d[uid] == "undefined" ? 0 : d[uid];
-      });
-  },
-};
+function OTBalance(col) {
+  //console.log(JSON.stringify(col));
+  if (tableData.value.length == 0) return "";
+  if (col.name == "date") return "結餘";
+  if (col.name == "hours") {
+    let approvedData = tableData.value.filter((row) => {
+      return row.status == "批准";
+    });
+    if (approvedData.length > 0) {
+      let sum = approvedData.reduce((a, b) => ({
+        hours: parseFloat(a.hours) + parseFloat(b.hours),
+      }));
+      return carryOver.value + sum.hours;
+    } else return carryOver.value;
+  }
+}
+ 
+
+// load OT history
+const OTQuery = query(OTCollection,
+  where("uid", "==", props.renderUID),
+  where("validity", "==", true)
+)
+
+getDocs(OTQuery).then((OTDoc) => {
+  OTDoc.forEach((doc) => {
+    tableData.value.push({
+      date: doc.data().date,
+      type: doc.data().type,
+      hours: doc.data().hours,
+      remarks: doc.data().remarks,
+      status: doc.data().status,
+    });
+  });
+})
+  
+
+getDoc(doc(FireDB, "dashboard", "otConfig")).then((dashboardDoc) => {
+  carryOver.value = dashboardDoc.data()[props.renderUID] == "undefined" ? 0 : dashboardDoc.data()[props.renderUID];
+})
 </script>
 
 <style lang="scss" scoped>
