@@ -311,6 +311,7 @@ import {
 import { useStore } from "vuex";
 import { ref, computed, onUnmounted } from "vue";
 import dateUtil from "src/lib/date.js";
+import holiday from "assets/holiday.json";
 import { date as qdate } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
 import { getDocs, query, where, orderBy, onSnapshot } from "firebase/firestore";
@@ -591,10 +592,6 @@ onUnmounted(() => {
   leaveSnapshot.value();
   scheduleSnapshot.value();
 })
-</script>
-
-<script>
-import holiday from "assets/holiday.json";
 </script>
 
 <style lang="scss" scoped>
