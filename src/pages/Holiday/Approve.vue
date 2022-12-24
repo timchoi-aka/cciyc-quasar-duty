@@ -212,7 +212,7 @@
             flat
             color="grey"
             label="取消"
-            @click="modifyingRow.value = []"
+            @click="modifyingRow = []"
           />
           <q-btn
             v-close-popup

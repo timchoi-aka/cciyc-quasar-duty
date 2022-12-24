@@ -251,6 +251,7 @@ getDoc(leaveConfig).then((leaveDoc) => {
     // console.log(JSON.stringify("reportUser: " + JSON.stringify(this.reportUser)));
     const reportUserProfile = reportUserDoc.data();
     const tiers = leaveConfigData[reportUserProfile.rank];
+    const isParttime = reportUserDoc.data().parttime? reportUserDoc.data().parttime: false
     // determine yearly start (1/4 of 2021)
     yearStart.value =
         now.getMonth() <= 2
@@ -382,7 +383,7 @@ getDoc(leaveConfig).then((leaveDoc) => {
           }
         }
         //console.log(tier)
-        let perMonthGain = tier / 12;
+        let perMonthGain = isParttime? tier/2/12: tier / 12;
         let lastMonth = false;
         let lastWorkingDate = qdate.addToDate(dateOfExit.value, { days: -1 });
 

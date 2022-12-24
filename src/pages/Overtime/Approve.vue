@@ -271,7 +271,7 @@
             flat
             color="grey"
             label="取消"
-            @click="modifyingRow.value = []"
+            @click="modifyingRow = []"
           />
           <q-btn
             v-close-popup
@@ -309,7 +309,7 @@
         color="warning"
         push
         @click="
-          modifyingRow.value = JSON.parse(JSON.stringify(selectedRow.value));
+          modifyingRow = JSON.parse(JSON.stringify(selectedRow));
           showModificationDialog = !showModificationDialog;
         "
       />
@@ -459,7 +459,7 @@
                       outline
                       label="拒絕"
                       @click="
-                        selectedRow.value.push(props.row);
+                        selectedRow.push(props.row);
                         showRejectDialog = !showRejectDialog;
                       "
                     />
@@ -472,7 +472,7 @@
                     outline
                     label="修改"
                     @click="
-                      modifyingRow.value = [JSON.parse(JSON.stringify(props.row))];
+                      modifyingRow = [JSON.parse(JSON.stringify(props.row))];
                       showModificationDialog = !showModificationDialog;
                     "
                   />
