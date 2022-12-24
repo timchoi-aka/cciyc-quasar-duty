@@ -163,6 +163,7 @@ export const MIGRATE_RELATION = gql`
 export const GET_MEMBER_RECEIPTS_BY_PK = gql`
   query getMemberReceiptsByPK($c_mem_id: String!) {
     Member_by_pk(c_mem_id: $c_mem_id) {
+      c_mem_id
       MemberAccount {
         c_act_code
         c_desc

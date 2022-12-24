@@ -1,12 +1,13 @@
 <template>
   <q-card class="q-pa-none">
-    <q-card-section class="text-h4 bg-primary text-white q-px-md row">
-      <div class="col-shrink">全體員工假期結餘表</div>
+    <q-card-section class="bg-primary text-white q-px-md row">
+      <div :class="[$q.screen.lt.md? 'text-body1': 'text-h4', 'col-shrink']">全體員工假期結餘表</div>
       <q-space />
       <div class="col-shrink">
         <q-btn
           icon="cancel"
           flat
+          dense
           text-color="white"
           v-close-popup
         />

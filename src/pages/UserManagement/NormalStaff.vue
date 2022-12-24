@@ -20,9 +20,9 @@
         <div class="q-pa-sm col-xs-12 col-sm-6 col-md-4 flex">
           <q-card class="q-pa-none">
             <q-card-section class="bg-blue-1 q-mb-md row justify-around items-center">
-              <div class="col-sm-6 text-h5">{{ props.row.name }}</div>
+              <div class="col-sm-6 text-body1">{{ props.row.name }}</div>
               <q-space />
-              <div class="col-sm-6 q-mx-sm text-h5">
+              <div class="col-sm-6 q-mx-sm text-body1">
                 排序{{ props.row.order }}
                 <q-btn
                   :disable="props.row.order == 1"

@@ -1,6 +1,6 @@
 <template>
   <div class="row">
-    <div class="col-7">
+    <div :class="[$q.screen.lt.md? 'col-12' : 'col-7']">
       <div class="bg-primary row col-12" style="min-height: 50px; max-height: 50px;">
           <q-btn class="bg-primary text-white col-shrink q-mx-md" dense flat icon="close" v-close-popup>
             <q-tooltip class="bg-white text-primary">關閉</q-tooltip>
@@ -16,7 +16,7 @@
         @row-click="(event, row, index) => ReceiptNo = row.c_receipt_no"
         />
     </div>
-    <div v-if="ReceiptNo" class="row q-ma-md-none q-pa-md-none col-5 bg-grey-3 justify-center">
+    <div v-if="ReceiptNo" :class="['q-ma-md-none', 'q-pa-md-none', 'bg-grey-3', 'justify-center', $q.screen.lt.md? 'col-12': 'col-5']">
       <Receipt :c_receipt_no="ReceiptNo"/>
     </div>
   </div>
@@ -97,9 +97,7 @@ const defaultPagination = ref({
   sortBy: "d_create",
   descending: true,
 })
-function test(row) {
-  console.log(row)
-}
+
 // UI functions
 function notifyClientError(error) {
   userProfileLogout()

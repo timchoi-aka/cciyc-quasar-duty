@@ -8,6 +8,7 @@
   <q-dialog
     full-height
     full-width
+    :maximized="$q.screen.lt.md"
     v-model="eventDetailDialog"
     z-index="1"
   >
@@ -15,8 +16,35 @@
   </q-dialog>
 
   <div class="row">
+    <!-- favourate -->
+    <div :class="[$q.screen.lt.md? 'col-12':'col-5']">
+      <q-chip class="bg-warning" size="lg" label="我的收藏"/>
+      <q-table
+        class="q-mt-sm"
+        flat
+        bordered
+        @row-click="showDetail"
+        :rows="FavList"
+        :pagination="pagination"
+        :columns="FavColumns"
+      >
+        <!-- applicationInProcess template -->
+        <template v-slot:body-cell-b_applicationInProcess="props">
+          <q-td :props="props">
+            <q-icon class="text-positive" v-if="qdate.isBetweenDates(Date.now(), qdate.extractDate(props.row.d_sale_start, 'D/M/YYYY'), qdate.extractDate(props.row.d_sale_end, 'D/M/YYYY'), { inclusiveFrom: true, inclusiveTo: true })" name="check" />
+            <q-icon v-else name="cancel" class="text-negative"/>
+          </q-td>
+        </template>
+      </q-table>
+      <q-separator/>
+      <div class="row col-12">
+        <q-chip class="bg-negative text-white" size="lg" label="待審批 - 主任only"/>
+      </div>
+      <div class="q-pa-sm">待主任審批的活動檢討</div>
+    </div>
+
     <!-- my events -->
-    <div class="col-7">
+    <div :class="[$q.screen.lt.md? 'col-12':'col-7']">
       <q-chip class="bg-positive text-white q-mr-md" size="lg" label="負責活動"/>
       <q-table
         class="q-mt-sm col-12"
@@ -50,34 +78,9 @@
         </template>
       </q-table>
     </div>
-
-    <!-- favourate -->
-    <div class="col-5">
-      <q-chip class="bg-warning" size="lg" label="我的收藏"/>
-      <q-table
-        class="q-mt-sm"
-        flat
-        bordered
-        @row-click="showDetail"
-        :rows="FavList"
-        :pagination="pagination"
-        :columns="FavColumns"
-      >
-        <!-- applicationInProcess template -->
-        <template v-slot:body-cell-b_applicationInProcess="props">
-          <q-td :props="props">
-            <q-icon class="text-positive" v-if="qdate.isBetweenDates(Date.now(), qdate.extractDate(props.row.d_sale_start, 'D/M/YYYY'), qdate.extractDate(props.row.d_sale_end, 'D/M/YYYY'), { inclusiveFrom: true, inclusiveTo: true })" name="check" />
-            <q-icon v-else name="cancel" class="text-negative"/>
-          </q-td>
-        </template>
-      </q-table>
-    </div>
   </div>
   <div class="q-mt-md col-12">
-    <div class="row col-12">
-      <q-chip class="bg-negative text-white" size="lg" label="待審批 - 主任only"/>
-    </div>
-    待主任審批的活動檢討
+    
   </div>
 </template>
 

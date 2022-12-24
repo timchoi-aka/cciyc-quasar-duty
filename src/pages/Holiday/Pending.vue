@@ -32,40 +32,38 @@
 
         <!-- grid template -->
         <template v-slot:item="props">
-          <div class="col-xs-12 col-sm-6 col-md-4 flex full-width">
-            <q-card class="q-mt-md full-width">
-              <q-card-section
-                ><q-btn
-                  color="red"
-                  class="absolute-top-right"
-                  icon="cancel"
-                  @click="confirmALRemoveByDocid(props.row)"
-                ></q-btn>
-              </q-card-section>
-              <q-card-section class="bg-blue-1 text-body1">
-                <div class="row">
-                  <span>日期:</span>
-                  <span
-                    v-html="
-                      qdate.formatDate(props.row.date, 'YYYY年MM月DD日(ddd)', {
-                        daysShort: ['日', '一', '二', '三', '四', '五', '六'],
-                      })
-                    "
-                  />
-                  <q-space />
-                  <span>時段:</span><span v-html="slotMap[props.row.slot]" />
-                  <q-space />
-                  <span>種類:</span><span v-html="typeMap[props.row.type]" />
-                </div>
-              </q-card-section>
+          <q-card class="q-pa-xs q-mb-xs col-xs-12 col-sm-12 col-md-12">
+            <q-card-section
+              ><q-btn
+                color="red"
+                class="absolute-top-right"
+                icon="cancel"
+                @click="confirmALRemoveByDocid(props.row)"
+              ></q-btn>
+            </q-card-section>
+            <q-card-section class="bg-blue-1 text-body1">
+              <div class="row">
+                <span>日期:</span>
+                <span
+                  v-html="
+                    qdate.formatDate(props.row.date, 'YYYY年MM月DD日(ddd)', {
+                      daysShort: ['日', '一', '二', '三', '四', '五', '六'],
+                    })
+                  "
+                />
+                <q-space />
+                <span>時段:</span><span v-html="slotMap[props.row.slot]" />
+                <q-space />
+                <span>種類:</span><span v-html="typeMap[props.row.type]" />
+              </div>
+            </q-card-section>
 
-              <q-card-section class="text-body1">
-                <div class="col text-left" v-for="remark in props.row.remarks">
-                  {{ remark }}
-                </div>
-              </q-card-section>
-            </q-card>
-          </div>
+            <q-card-section class="text-body1">
+              <div class="col text-left" v-for="remark in props.row.remarks">
+                {{ remark }}
+              </div>
+            </q-card-section>
+          </q-card>
         </template>
       </q-table>
 
@@ -128,11 +126,14 @@
 import { FirebaseFunctions, leaveCollection } from "boot/firebase";
 import { date as qdate } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
-import { computed, ref } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { useStore } from "vuex";
 import { httpsCallable } from "@firebase/functions"
 import { getDocs, query, where } from "@firebase/firestore";
 
+onMounted(() => {
+  fetchAllLeaveRecords()
+})
 
 // variables
 const $store = useStore();
@@ -245,23 +246,25 @@ function confirmALRemoveByDocid(docid) {
     });
 }
 
-// module logic
-const leaveQuery = query(leaveCollection,
-  where("uid", "==", uid.value),
-  where("status", "==", "未批")
-)
+// core logic
+function fetchAllLeaveRecords() {
+  const leaveQuery = query(leaveCollection,
+    where("uid", "==", uid.value),
+    where("status", "==", "未批")
+  )
 
-awaitServerResponse.value++
-getDocs(leaveQuery).then((applications) => {
-  applications.forEach((doc) => {
-    rows.value.push({
-      docid: doc.id,
-      date: doc.data().date,
-      slot: doc.data().slot,
-      type: doc.data().type,
-      remarks: doc.data().remarks,
+  awaitServerResponse.value++
+  getDocs(leaveQuery).then((applications) => {
+    applications.forEach((doc) => {
+      rows.value.push({
+        docid: doc.id,
+        date: doc.data().date,
+        slot: doc.data().slot,
+        type: doc.data().type,
+        remarks: doc.data().remarks,
+      })
     })
+    awaitServerResponse.value--
   })
-  awaitServerResponse.value--
-})
+}
 </script>

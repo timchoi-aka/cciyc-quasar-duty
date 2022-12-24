@@ -120,6 +120,9 @@ export default boot(
           },
           tbl_act_session: {
             keyFields: ["c_act_code", "d_act"],
+          },
+          MemberAccount: {
+            keyFields: ["c_receipt_no"],
           }
         }
       }),

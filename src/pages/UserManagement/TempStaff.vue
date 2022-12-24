@@ -1,5 +1,5 @@
 <template>
-  <q-page>
+  <div class="q-pa-sm">
     <!-- loading dialog -->
     <q-dialog v-model="waitingAsync" position="bottom">
       <LoadingDialog message="儲存中"/>
@@ -96,12 +96,12 @@
     >
       <!-- grid template -->
       <template v-slot:item="props">
-        <div class="q-pa-none col-xs-12 col-sm-6 col-md-4 flex">
+        <div class="q-pa-sm col-xs-12 col-sm-6 col-md-4 flex">
           <q-card class="q-pa-none">
             <q-card-section class="bg-blue-1 q-mb-md row justify-around items-center">
-              <div class="col-sm-6 text-h5">{{ props.row.name }}</div>
+              <div class="col-sm-5 text-body1">{{ props.row.name }}</div>
               <q-space />
-              <div class="col-sm-6 q-mx-sm text-h5">
+              <div class="col-sm-6 q-mx-sm text-body1">
                 排序{{ props.row.order }}
                 <q-btn
                   :disable="props.row.order == 1"
@@ -122,19 +122,18 @@
               </div>
             </q-card-section>
             <q-card-section
-              style="font-size: 1vw"
-              class="row justify-around items-center q-mb-sm"
+              class="row justify-around items-center q-mb-sm q-pa-none"
             >
-              <div class="col-xs-2 justify-center q-mx-xs">
-                <div class="text-body1">帳戶有效</div>
+              <div class="row justify-center q-mx-xs">
+                <div class="text-body1 q-mx-md items-end">帳戶有效</div>
                 <q-btn
-                  round
+                  dense
                   :color="props.row.enable ? 'positive' : 'negative'"
                   :label="props.row.enable ? '有' : '沒有'"
                   @click="changeEnable(props.key)"
                 />
               </div>
-              <div class="col-xs-5 justify-center q-mx-xs text-body2">
+              <div class="row justify-center q-mx-xs text-body1">
                 <div>
                   入職日期：<span
                     v-html="
@@ -312,7 +311,7 @@
         </q-td>
       </template>
     </q-table>
-  </q-page>
+  </div>
 </template>
 
 <script setup>

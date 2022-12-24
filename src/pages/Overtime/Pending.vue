@@ -1,5 +1,5 @@
 <template>
-  <div class="full-width">
+  <q-page class="full-width">
     <!-- sticky button at bottom -->
     <q-page-sticky position="bottom-right" :offset="[20, 20]" style="z-index: 1">
       <q-fab
@@ -50,20 +50,22 @@
     </q-dialog>
 
     <!-- Application Table -->
-    <div class="full-width">
+    <div class="row full-width">
       <!-- header row -->
       <q-table
+        class="col"
         dense
         flat
         selection="multiple"
         v-model:selected="selectedRow"
-        :grid="$q.screen.lt.md"
+        :grid="$q.screen.lt.sm"
         :rows="applicationList"
         :columns="columns"
         :pagination="defaultPagination"
-        :hide-bottom="true"
+        separator="cell"
         color="primary"
         row-key="docid"
+        no-data-label="沒有待審批超時"
       >
         <!-- remarks cell template -->
         <template v-slot:body-cell-remarks="props">
@@ -114,7 +116,7 @@
         </template>
       </q-table>
     </div>
-  </div>
+  </q-page>
 </template>
 
 <script setup>

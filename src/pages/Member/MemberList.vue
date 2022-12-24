@@ -5,7 +5,7 @@
   </q-dialog>
 
   <!-- print receipt modal -->
-  <q-dialog
+  <q-dialog v-if="$q.screen.gt.md"
     v-model="printReceiptModal"
     full-height
     full-width
@@ -15,9 +15,35 @@
     >
     <PrintReceipt :MemberID="printReceiptMember"/>
   </q-dialog>
+
+  <q-dialog v-if="$q.screen.lt.md"
+    v-model="printReceiptModal"
+    maximized
+    full-width
+    persistent
+    transition-show="slide-up"
+    transition-hide="slide-down"
+    class="q-pa-none"
+    >
+    <PrintReceipt :MemberID="printReceiptMember"/>
+  </q-dialog>
+
   <!-- rowDetail modal -->
-  <q-dialog
+  <q-dialog v-if="$q.screen.lt.md"
     v-model="detailModal"
+    persistent
+    maximized
+    full-width
+    transition-show="slide-up"
+    transition-hide="slide-down"
+  >
+    <MemberDetail v-model="showMemberID" />
+  </q-dialog>
+
+  <!-- rowDetail modal -->
+  <q-dialog v-if="$q.screen.gt.md"
+    v-model="detailModal"
+    persistent
     full-height
     transition-show="slide-up"
     transition-hide="slide-down"
