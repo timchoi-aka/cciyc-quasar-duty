@@ -119,6 +119,21 @@ export const ADD_MEMBER_AND_RELATION_FROM_ID_WITH_PAYMENT = gql`
     }
   }`
 
+export const UPDATE_YOUTH_MEMBER_STATUS = gql`
+  mutation updateYouthMemberStatus(
+    $c_mem_id: String = "", 
+    $b_mem_type10: Boolean = false,
+    $d_expired_1: datetime2,
+    $logObject: Log_insert_input! = {}, 
+    ) {
+    update_Member_by_pk(pk_columns: {c_mem_id: $c_mem_id}, _set: {b_mem_type10: $b_mem_type10, d_expired_1: $d_expired_1}) {
+      c_mem_id
+    }
+    insert_Log_one(object: $logObject) {
+      log_id
+    }
+  }  
+`
 export const ADD_MEMBER_AND_RELATION_FROM_ID_UPDATE_RELATED_YOUTH_STATUS = gql`
   mutation addMemberAndRelationFromIDUpdateRelatedYouthStatus (
     $logObject: Log_insert_input! = {}, 
@@ -184,18 +199,23 @@ export const UPDATE_RELATED_YOUTH_MEMBER_STATUS = gql`
       log_id
     }
   }`
+ /*update_Member_by_pk(pk_columns: {c_mem_id: $c_mem_id}, _set: {b_mem_type1: false, d_exit_1: $exitDate}) {
+      c_mem_id
+      b_mem_type1
+      d_exit_1
+    }
 
+ */
 export const QUIT_MEMBER_BY_ID = gql`
-  mutation quitMemberByID ($c_mem_id: String, $logObject: Log_insert_input! = {}, $exitDate: datetime2) {
-    update_Member(where: {c_mem_id: {_eq: $c_mem_id}}, _set: {b_mem_type1: false, d_exit_1: $exitDate}) {
-      returning {
-        c_mem_id
-        b_mem_type1
-        d_exit_1
-      }
+  mutation quitMemberByID (
+    $c_mem_id: String!, 
+    $exitDate: datetime2,
+    $logObject: Log_insert_input! = {}
+    ) {
+      update_Member_by_pk(pk_columns: {c_mem_id: $c_mem_id}, _set: {b_mem_type1: false, d_exit_1: $exitDate}) {
+      c_mem_id
     }
     delete_Relation(where: {_or: [{c_mem_id_1: {_eq: $c_mem_id}}, {c_mem_id_2: {_eq: $c_mem_id}}]}) {
-      affected_rows
       returning {
         uuid
         c_mem_id_1
@@ -234,9 +254,49 @@ export const UPDATE_MEMBER_BY_ID = gql`
       objects: $upsertObjects, if_matched: {match_columns: uuid, update_columns: [c_mem_id_1, c_mem_id_2, relation]}
     ) {
       affected_rows
+      returning {
+        uuid
+        c_mem_id_1
+        c_mem_id_2
+        relation
+        RelationMember1 {
+          c_mem_id
+          b_mem_type1
+          d_birth
+          d_expired_1
+          d_exit_1
+        }
+        RelationMember2 {
+          c_mem_id
+          b_mem_type1
+          d_birth
+          d_expired_1
+          d_exit_1
+        }
+      }
     }
     delete_Relation(where: {uuid: {_in: $deleteObjects}}) {
       affected_rows
+      returning {
+        uuid
+        c_mem_id_1
+        c_mem_id_2
+        relation
+        RelationMember1 {
+          c_mem_id
+          b_mem_type1
+          d_birth
+          d_expired_1
+          d_exit_1
+        }
+        RelationMember2 {
+          c_mem_id
+          b_mem_type1
+          d_birth
+          d_expired_1
+          d_exit_1
+        }
+      }
     }
   }
   `

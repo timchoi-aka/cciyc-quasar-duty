@@ -33,13 +33,13 @@ export default boot(
     // authentication middleware (for query / mutation) async firebase token
     const asyncAuthMiddleware = setContext(operation => 
       // add the authorization to the headers
-      FirebaseAuth.currentUser.getIdToken().then((token) => {
+      FirebaseAuth.currentUser? FirebaseAuth.currentUser.getIdToken().then((token) => {
         return {
           headers: {
             authorization: token ? `Bearer ${token}` : "",
           }
         }
-      })
+      }): ''
     );
 
     // new graphql-ws link (for subscription)
@@ -48,7 +48,7 @@ export default boot(
         url: "wss://cciycgw.eastasia.cloudapp.azure.com/v1/graphql",
         connectionParams: async () => {
           //const token = sessionStorage.getItem("access-token")
-          const token = await FirebaseAuth.currentUser.getIdToken();
+          const token = FirebaseAuth.currentUser? await FirebaseAuth.currentUser.getIdToken(): '';
           return {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -64,6 +64,17 @@ export default boot(
     })
 
     // error link
+    /*const errorLink = onError(({ graphQLErrors, networkError, operation, response }) => {
+      if (graphQLErrors)
+        graphQLErrors.forEach(({ message, locations, path }) =>
+          console.log(
+            `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`
+          )
+        );
+      if (networkError) console.log(`[Network error]: ${networkError} ${operation} ${response}`);
+    });
+    */
+
     const errorLink = onError((error) => {
       if (process.env.NODE_ENV !== "production") {
         logErrorMessages(error)
@@ -86,48 +97,57 @@ export default boot(
     // declare apollo client, using inMemoryCache,
     // first link = errorLink, termination link = link
     const apolloClient = new ApolloClient({
-      cache: new InMemoryCache({
-        typePolicies: {
-          Member: {
-            keyFields: ["c_mem_id"],
-          },
-          Log: {
-            keyFields: ["log_id"],
-          },
-          Relation: {
-            keyFields: ["c_mem_id_1", "c_mem_id_2"],
-          },
-          tbl_account: {
-            keyFields: ["c_receipt_no"],
-          },
-          HTX_Event: {
-            keyFields: ["c_act_code"],
-          },
-          Event_Evaluation: {
-            keyFields: ["uuid"],
-          },
-          Event_Evaluation_Account: {
-            keyFields: ["account_uuid"],
-          },
-          Event_Favourate: {
-            keyFields: ["username", "c_act_code"],
-          },
-          tbl_act_fee: {
-            keyFields: ["c_act_code", "c_type"],
-          },
-          tbl_act_reg: {
-            keyFields: ["ID"],
-          },
-          tbl_act_session: {
-            keyFields: ["c_act_code", "d_act"],
-          },
-          MemberAccount: {
-            keyFields: ["c_receipt_no"],
+      cache: new InMemoryCache(
+        {
+          typePolicies: {
+            Member: {
+              keyFields: ["c_mem_id"],
+            },
+            Log: {
+              keyFields: ["log_id"],
+            },
+            Relation: {
+              keyFields: ["c_mem_id_1", "c_mem_id_2"],
+            },
+            tbl_account: {
+              keyFields: ["c_receipt_no"],
+            },
+            HTX_Event: {
+              keyFields: ["c_act_code"],
+            },
+            Event_Evaluation: {
+              keyFields: ["uuid"],
+            },
+            Event_Evaluation_Account: {
+              keyFields: ["account_uuid"],
+            },
+            Event_Favourate: {
+              keyFields: ["username", "c_act_code"],
+            },
+            tbl_act_fee: {
+              keyFields: ["c_act_code", "c_type"],
+            },
+            tbl_act_reg: {
+              keyFields: ["ID"],
+            },
+            tbl_act_session: {
+              keyFields: ["c_act_code", "d_act"],
+            },
+            MemberAccount: {
+              keyFields: ["c_receipt_no"],
+            },
+            RelationMember1: {
+              keyFields: ["c_mem_id"],
+            },
+            RelationMember2: {
+              keyFields: ["c_mem_id"]
+            }
           }
         }
-      }),
+      ),
       //link: from([errorLink, concat(authMiddleware, link)]),
       link: from([errorLink, link]),
+      //link: link,
       defaultOptions: {
         fetchPolicy: 'network-only',
       },

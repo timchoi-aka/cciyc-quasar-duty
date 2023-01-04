@@ -1,10 +1,10 @@
 <template>
   <div class="row">
     <div class="col-3" v-if="relatedMember.c_mem_id_1 == props.MemberID">
-      <MemberSelection :key="props.MemberID" v-model="relatedMember.c_mem_id_2" @update:model-value="(value) => getNameFromMemberID(value)"/>
+      <MemberSelection :key="props.MemberID" :MemberID="props.MemberID" v-model="relatedMember.c_mem_id_2" @update:model-value="(value) => getNameFromMemberID(value)"/>
     </div>
     <div class="col-3" v-else>
-      <MemberSelection :key="props.MemberID" v-model="relatedMember.c_mem_id_1" @update:model-value="(value) => getNameFromMemberID(value)"/>
+      <MemberSelection :key="props.MemberID" :MemberID="props.MemberID" v-model="relatedMember.c_mem_id_1" @update:model-value="(value) => getNameFromMemberID(value)"/>
     </div>
     <q-select
       dense
@@ -24,7 +24,7 @@
         color="positive"
         name="check"
         />
-      <q-icon v-if="relatedMember.b_mem_type1 == false" color="negative" name="cancel" />
+      <q-icon v-else color="negative" name="cancel" />
     </span>
     <span class="col-1 col-xs-1 q-mr-md-none q-mr-sm-none q-mr-xs-none">
       <q-btn
@@ -46,7 +46,7 @@ import { GET_NAME_FROM_ID } from "/src/graphQueries/Member/query.js";
 import ageUtil from "src/lib/calculateAge.js"
 import MemberSelection from "components/Member/MemberSelection.vue"
 import { useQuery } from "@vue/apollo-composable"
-import { is } from "quasar";
+import { is, date as qdate } from "quasar";
 
 // props and emits
 const emit = defineEmits(['updateMember', "update:modelValue"])
@@ -99,7 +99,7 @@ onResult((data) => {
     relatedMember.value.name = result.c_name
       ? result.c_name
       : result.c_name_other
-    relatedMember.value.b_mem_type1 = result.b_mem_type1
+    relatedMember.value.b_mem_type1 = result.b_mem_type1 && !result.d_exit_1 && qdate.getDateDiff(Date.now(), result.d_expired_1) < 0
     relatedMember.value.age = ageUtil.calculateAge(result.d_birth)
     relatedMember.value.d_birth = result.d_birth
   } else { // selected member same as this member or not exist

@@ -55,8 +55,7 @@
           debounce="500"
           mask="date"
           hint="YYYY/MM/DD"
-          :rules="['date']"
-          @update:model-value="updateAge"
+          :rules="['date']" 
         >
           <template v-slot:append>
             <q-icon name="event" class="cursor-pointer">
@@ -67,7 +66,6 @@
               >
                 <q-date
                   v-model="personalInfo.d_birth"
-                  @update:model-value="updateAge"
                 >
                   <div class="row items-center justify-end">
                     <q-btn v-close-popup label="Close" color="primary" flat />
@@ -81,7 +79,7 @@
 
       <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-4">
         年齡<br />
-        {{ personalInfo.age }}
+        {{ age }}
       </div>
 
       <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-12">
@@ -196,7 +194,7 @@
       </div>
       <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-1 col-xs-12">
         屆滿日期<br />
-        <div>{{ memberInfo.d_expired_1 }}</div>
+        <div>{{ expiryDate }}</div>
       </div>
     </q-card-section>
   </q-card>
@@ -351,6 +349,65 @@ let memberInfo = ref({
   d_write: qdate.formatDate(Date.now(), "YYYY/MM/DD"),
 })
 
+const age = computed(() => personalInfo.value.d_birth ? ageUtil.calculateAge(personalInfo.value.d_birth): 0)
+const expiryDate = computed(() => {
+  if (
+    is.object(memberInfo.value.c_udf_1) &&
+    qdate.isValid(memberInfo.value.d_enter_1)
+  ) {
+    switch (memberInfo.value.c_udf_1.value) {
+      case "個人會員":
+        return qdate.formatDate(
+            qdate.addToDate(memberInfo.value.d_enter_1, { years: 1 }),
+            "YYYY/MM/DD"
+          );
+        break;
+      case "永久會員":
+      case "社區義工":
+        return "3000/01/01";
+        break;
+      case "青年義工會員":
+        if (!personalInfo.value.d_birth) {
+          return "請輸入出生日期"
+        } else {
+          if (ageUtil.calculateAge(personalInfo.value.d_birth) >= 25) {
+            return "已超過25歲"
+          } else {
+            return qdate.formatDate(
+              qdate.addToDate(personalInfo.value.d_birth, { years: 25 }),
+              "YYYY/MM/DD"
+            )
+          }
+        }
+        
+        break;
+      case "青年家人義工":
+        if (ageUtil.calculateAge(personalInfo.value.d_birth) <= 25) {
+          return "未滿25歲"
+        } else {
+          // set a temp expiry date, loop all related members
+          let expiryDate = 0;
+          if (relationTable.value.length > 0) {
+            relationTable.value.forEach((data) => {
+              if (ageUtil.calculateAge(data.d_birth) <= 24 && ageUtil.calculateAge(data.d_birth) >= 15) {
+                let tempExpiryDate = qdate.formatDate(
+                                      qdate.addToDate(data.d_birth, { years: 25 }),
+                                      "YYYY/MM/DD"
+                                    );
+                  
+                if (expiryDate == 0 || expiryDate < tempExpiryDate) {
+                  expiryDate = tempExpiryDate
+                }
+              }
+            })
+          }
+          return expiryDate == 0? "沒有關聯青年會員": expiryDate
+        }
+        break;
+    }
+  } else return "";
+}) 
+
 // callback functions
 addMemberFromID_Completed((result) => {
   postCallback(result)
@@ -486,11 +543,6 @@ function capitalize() {
   }
 }
 
-function updateRelationTable(index, value) {
-  relationTable.value[index] = value
-  updateType1Expire()
-}
-
 function updateType1Expire() {
   if (
     is.object(memberInfo.value.c_udf_1) &&
@@ -532,10 +584,7 @@ function updateType1Expire() {
             relationTable.value.forEach((data) => {
               if (ageUtil.calculateAge(data.d_birth) <= 24 && ageUtil.calculateAge(data.d_birth) >= 15) {
                 let tempExpiryDate = qdate.formatDate(
-                                      qdate.subtractFromDate(
-                                        qdate.addToDate(data.d_birth, { years: 25 }),
-                                        { days: 1 }
-                                      ),
+                                      qdate.addToDate(data.d_birth, { years: 25 }),
                                       "YYYY/MM/DD"
                                     );
                   
@@ -559,7 +608,11 @@ function updateAge(value) {
 
 function addMember() {
   awaitServerResponse++;
-
+  
+  // assign computed value to object
+  memberInfo.value.d_expired_1 = expiryDate.value
+  personalInfo.value.age = age.value
+  
   let queryString;
   let memberRelation = ref([]);
   let receiptDescription = ref("")

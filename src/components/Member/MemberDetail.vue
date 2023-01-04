@@ -1,3 +1,4 @@
+// TODO - update expiry date according to youth member expiry date
 <template>
   <!-- renew dialog -->
   <q-dialog v-model="renewDialog">
@@ -8,10 +9,11 @@
       <q-card-section class="bg-blue-1 text-h6">
         <div>姓名: {{renewObject.c_name}}</div>
         <div>年齡: {{ageUtil.calculateAge(renewObject.d_birth)}}</div>
-        <div>會藉: {{renewObject.c_udf_1}}</div>
+        <div>現時會藉: {{renewObject.old_c_udf_1}}</div>
         <div>現時屆滿日期: {{qdate.formatDate(renewObject.d_expired_1, "YYYY年MM月DD日")}}</div>
       </q-card-section>
       <q-card-section class="bg-yellow-1 text-h6">
+        <div>新會藉: {{ renewObject.c_udf_1 }}</div>
         <div>新屆滿日期: {{qdate.formatDate(renewObject.new_expired_1, "YYYY年MM月DD日")}}</div>
         <div>費用: {{renewObject.renewFee}}</div>
       </q-card-section>
@@ -253,15 +255,26 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, onMounted, watch, reactive } from "vue";
 import { useStore } from "vuex";
 import LoadingDialog from "components/LoadingDialog.vue"
 import { date as qdate, is, useQuasar, uid} from "quasar";
-import { DELETE_MEMBER_BY_ID, UPDATE_RELATED_YOUTH_MEMBER_STATUS, QUIT_MEMBER_BY_ID, UPDATE_MEMBER_BY_ID, INSERT_RELATION, UPDATE_RELATION, DELETE_RELATION, RENEW_MEMBER_FROM_ID_WITH_PAYMENT } from "/src/graphQueries/Member/mutation.js"
-import { GET_RELATED_MEMBER_FROM_ID, LATEST_RECEIPT_NO, GET_MEM_DETAIL_AND_RELATION_BY_PK } from "/src/graphQueries/Member/query.js"
+import { DELETE_MEMBER_BY_ID, UPDATE_RELATED_YOUTH_MEMBER_STATUS, QUIT_MEMBER_BY_ID, UPDATE_MEMBER_BY_ID, UPDATE_YOUTH_MEMBER_STATUS, INSERT_RELATION, UPDATE_RELATION, DELETE_RELATION, RENEW_MEMBER_FROM_ID_WITH_PAYMENT } from "/src/graphQueries/Member/mutation.js"
+import { GET_RELATED_MEMBER_FROM_ID, LATEST_RECEIPT_NO, GET_MEM_DETAIL_AND_RELATION_BY_PK, GET_RELATION_BY_PK,  } from "/src/graphQueries/Member/query.js"
 import ageUtil from "src/lib/calculateAge.js"
 import { useQuery, useSubscription, useMutation } from "@vue/apollo-composable"
 import MemberRelated from "components/Member/MemberRelated.vue"
+import calculateAge from "src/lib/calculateAge.js";
+
+/* 
+onMounted(() => {
+  let testID = "4100"
+  updateYouthMemberStatusByMemberID.value = {
+    c_mem_id: testID
+  }
+})
+*/
+
 
 // props
 const props = defineProps({
@@ -271,7 +284,6 @@ const props = defineProps({
 const $store = useStore()
 const $q = useQuasar()
 const awaitServerResponse = ref(0)
-
 const confirmDeleteModal = ref(false)
 const quitDialog = ref(false)
 const renewDialog = ref(false)
@@ -281,15 +293,37 @@ const queryNameFromID = ref("")
 const editState = ref(false)
 const edit_relationTable = ref([])
 const edit_member = ref({})
+const updateQueue = ref([])
+let loadingState = false
 
 // query
-const { result: ReceiptData } = useSubscription(LATEST_RECEIPT_NO,);
+// const { result: ReceiptData } = useSubscription(LATEST_RECEIPT_NO);
+const ReceiptData = ref([])
 const { result: GetMemDetailAndRelationByPK, refetch } = useQuery(GET_MEM_DETAIL_AND_RELATION_BY_PK, 
   () => ({
     c_mem_id: props.modelValue
   }))
-const { mutate: QuitMember, onDone: QuitMember_Completed, onError: QuitMember_Error } = useMutation(QUIT_MEMBER_BY_ID)
+const { mutate: QuitMember, onDone: QuitMember_Completed, onError: QuitMember_Error } = useMutation(QUIT_MEMBER_BY_ID, { errorPolicy: 'all' })
 const { mutate: UpdateMember, onDone: UpdateMember_Completed, onError: UpdateMember_Error } = useMutation(UPDATE_MEMBER_BY_ID)
+const { mutate: UpdateYouthMemberStatus, onDone: UpdateYouthMemberStatus_Completed, onError: UpdateYouthMemberStatus_Error } = useMutation(UPDATE_YOUTH_MEMBER_STATUS)
+const { onResult: GetRelationByPK_Completed, variables: updateYouthMemberStatusByMemberID, loading: updatingYouthMemberStatus } = useQuery(GET_RELATION_BY_PK, 
+  {
+    c_mem_id: ""
+  }, {
+    fetchPolicy: 'network-only'
+  })
+
+// watcher
+watch(updateQueue.value, (newQueue, oldQueue)  => { 
+  // console.log("newQueue:" + newQueue + " watchStatus:" + loadingState)
+  // console.log("status:" + updatingYouthMemberStatus.value)
+  if (newQueue.length > 0 && !loadingState) {
+    // console.log("updateQueue in watchQueue: " + newQueue)
+    // console.log("start updating " + newQueue[0])
+    loadingState = true
+    updateYouthMemberStatusByMemberID.value = { c_mem_id: newQueue[0] }
+  } 
+})
 
 // computed
 const waitingAsync = computed((() => awaitServerResponse.value > 0 ))
@@ -348,32 +382,6 @@ const relationTable = computed(() => {
   }
 })
 
-
-const relatedMember = computed(() => {
-  let mem = []
-  if (props.modelValue.MemberRelation1.length > 0) {
-    props.modelValue.MemberRelation1.forEach((rel) => {
-      if (rel.c_mem_id_1 == props.modelValue.c_mem_id) {
-        mem.push(rel.c_mem_id_2)
-      }
-      if (rel.c_mem_id_2 == props.modelValue.c_mem_id) {
-        mem.push(rel.c_mem_id_1)
-      }
-    })
-  }
-  if (props.modelValue.MemberRelation2.length > 0) {
-    props.modelValue.MemberRelation2.forEach((rel) => {
-      if (rel.c_mem_id_1 == props.modelValue.c_mem_id) {
-        mem.push(rel.c_mem_id_2)
-      }
-      if (rel.c_mem_id_2 == props.modelValue.c_mem_id) {
-        mem.push(rel.c_mem_id_1)
-      }
-    })
-  }
-  return mem
-})
-
 // functions
 function getNameFromMemberID(value, index) {
   queryNameFromID.value = value
@@ -396,18 +404,19 @@ function cancelEdit() {
   editState.value = false
 }
 
-function quitMember() {
+async function quitMember() {
   awaitServerResponse.value++
   const logObject = ref({
     "username": username.value,
     "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     "module": "會員系統",
-    "action": props.modelValue.c_mem_id + " 退會。"
+    "action": props.modelValue + " 退會。"
   })
-
+  const quitDate = qdate.formatDate(new Date(), "YYYY-MM-DDTHH:mm:ss")
+  
   QuitMember({
-    c_mem_id: props.modelValue.c_mem_id,
-    exitDate: qdate.formatDate(Date.now(), "YYYY-MM-DD"),
+    c_mem_id: "4099",
+    exitDate: quitDate,
     logObject: logObject.value
   })
 }
@@ -504,88 +513,203 @@ function saveRecord() {
 }
 
 function updateRelationTable(index, value) {
-  console.log(index + ":" + JSON.stringify(value))
+  // console.log(index + ":" + JSON.stringify(value))
   edit_relationTable.value[index] = value
-  updateType1Expire()
 }
 
-function updateType1Expire() {
-  if (
-    is.object(edit_member.value.c_udf_1) &&
-    qdate.isValid(edit_member.value.d_enter_1)
-  ) {
-    switch (edit_member.value.c_udf_1.value) {
-      case "個人會員":
-        edit_member.value.d_expired_1 = qdate.formatDate(
-            qdate.addToDate(edit_member.value.d_enter_1, { years: 1 }),
-            "YYYY/MM/DD"
-          );
-        break;
-      case "永久會員":
-      case "社區義工":
-        edit_member.value.d_expired_1 = "3000/01/01";
-        break;
-      case "青年義工會員":
-        if (!edit_member.value.d_birth) {
-          edit_member.value.d_expired_1 = "請輸入出生日期"
-        } else {
-          if (ageUtil.calculateAge(edit_member.value.d_birth) >= 25) {
-            edit_member.value.d_expired_1 = "已超過25歲"
-          } else {
-            edit_member.value.d_expired_1 = qdate.formatDate(
-              qdate.addToDate(edit_member.value.d_birth, { years: 25 }),
-              "YYYY/MM/DD"
-            )
-          }
-        }
-        
-        break;
-      case "青年家人義工":
-        if (ageUtil.calculateAge(edit.member.value.d_birth) <= 25) {
-          edit_member.value.d_expired_1 = "未滿25歲"
-        } else {
-          // set a temp expiry date, loop all related members
-          let expiryDate = 0;
-          if (edit_relationTable.value.length > 0) {
-            edit_relationTable.value.forEach((data) => {
-              if (!edit_relationTable.value.delete && ageUtil.calculateAge(data.d_birth) <= 24 && ageUtil.calculateAge(data.d_birth) >= 15) {
-                let tempExpiryDate = qdate.formatDate(qdate.addToDate(data.d_birth, { years: 25 }),"YYYY/MM/DD");
-                  
-                if (expiryDate == 0 || expiryDate < tempExpiryDate) {
-                  expiryDate = tempExpiryDate
-                }
-              }
-            })
-          }
-          edit_member.value.d_expired_1 = expiryDate == 0? "沒有關聯青年會員": expiryDate
-        }
-        break;
-    }
-  } else edit_member.value.d_expired_1 = "";
-}
- 
-  
 
+
+function logErrorMessage(error) {
+  $q.notify({
+    message: error,
+  })
+}
+
+function renewMemberModal(member, duration) {
+  // assume renew for 1 year
+  const expiryDateOneYear = qdate.addToDate(member.d_expired_1, { years: 1 })
+  let renewFee = 0
+  let new_memberType = ""
+  let expiryDate = ""
+  switch (member.c_udf_1) {
+    case "個人會員":
+      if (duration == 1) {
+        renewFee = 35
+        new_memberType = member.c_udf_1
+        expiryDate = qdate.addToDate(member.d_expired_1, { years: 1 })
+      } else {
+        renewFee = 100
+        new_memberType = "永久會員"
+        expiryDate = qdate.formatDate(new Date("3000/01/01"), "YYYY-MM-DDTHH:mm:ss")
+      }
+      break;
+    case "永久會員":
+      $q.notify({messages: "己經是永久會員"})
+      return
+    case "社區義工":
+      if (duration == 1) {
+        renewFee = 35
+        new_memberType = "個人會員"
+        expiryDate = qdate.addToDate(Date.now(), { years: 1 })
+      } else {
+        renewFee = 135
+        new_memberType = "永久會員"
+        expiryDate = qdate.formatDate(new Date("3000/01/01"), "YYYY-MM-DDTHH:mm:ss")
+      }
+      break;
+    case "青年義工會員":
+      if (duration == 1) {
+        renewFee = 35
+        new_memberType = "個人會員"
+        expiryDate = qdate.addToDate(Date.now(), { years: 1 })
+      } else {
+        renewFee = 135
+        new_memberType = "永久會員"
+        expiryDate = qdate.formatDate(new Date("3000/01/01"), "YYYY-MM-DDTHH:mm:ss")
+      }
+      break;
+    case "青年家人義工":
+      if (duration == 1) {
+        renewFee = 35
+        new_memberType = "個人會員"
+        expiryDate = qdate.addToDate(Date.now(), { years: 1 })
+      } else {
+        renewFee = 135
+        new_memberType = "永久會員"
+        expiryDate = qdate.formatDate(new Date("3000/01/01"), "YYYY-MM-DDTHH:mm:ss")
+      }
+      break;
+  }
+
+  renewObject.value = {
+    c_mem_id: member.c_mem_id,
+    duration: duration,
+    c_name: member.c_name,
+    d_birth: member.d_birth,
+    old_c_udf_1: member.c_udf_1,
+    c_udf_1: new_memberType,
+    d_expired_1: member.d_expired_1,
+    new_expired_1: expiryDate,
+    renewFee: renewFee
+  }
+  renewDialog.value = true;
+}
 
 // callback
+GetRelationByPK_Completed((result) => {
+  //console.log("result returned: " + JSON.stringify(result))
+  if (result.data.Member_by_pk && result.data.Member_by_pk.c_udf_1 == '青年家人義工') {
+    let isYouth = false
+    let currentExpiryDate = Date.now()
+  
+    let rel = [...result.data.Member_by_pk.MemberRelation1, ...result.data.Member_by_pk.MemberRelation2]
+    if (rel.length > 0) {
+      // console.log("rel:" + JSON.stringify(rel))
+      rel.forEach((rm) => {
+        if (rm.c_mem_id_1 == result.data.Member_by_pk.c_mem_id) { // relation member 1 = this member
+          // check relation member 2 youth status
+          isYouth = rm.RelationMember2.b_mem_type1 && !rm.RelationMember2.d_exit_1 && qdate.getDateDiff(Date.now(), rm.RelationMember2.d_expired_1) < 0 && ageUtil.calculateAge(rm.RelationMember2.d_birth) >= 15 && ageUtil.calculateAge(rm.RelationMember2.d_birth) <= 24
+          if (isYouth && currentExpiryDate < qdate.addToDate(rm.RelationMember2.d_birth, {years: 25})) currentExpiryDate = qdate.addToDate(rm.RelationMember2.d_birth, {years: 25})
+          // console.log("Member2:" + rm.RelationMember2.c_mem_id + " b_mem_type1:" + rm.RelationMember2.b_mem_type1 + " d_exit_1: " + rm.RelationMember2.d_exit_1 + " d_expired_1: " + rm.RelationMember2.d_expired_1 + " age: " + ageUtil.calculateAge(rm.RelationMember2.d_birth) + " isYouth:" + isYouth)
+        }
+        if (rm.c_mem_id_2 == result.data.Member_by_pk.c_mem_id) { // relation member 2 = this member
+          // check relation member 2 youth status
+          isYouth = rm.RelationMember1.b_mem_type1 && !rm.RelationMember1.d_exit_1 && qdate.getDateDiff(Date.now(), rm.RelationMember1.d_expired_1) < 0 && ageUtil.calculateAge(rm.RelationMember1.d_birth) >= 15 && ageUtil.calculateAge(rm.RelationMember1.d_birth) <= 24
+          if (isYouth && currentExpiryDate < qdate.addToDate(rm.RelationMember1.d_birth, {years: 25})) currentExpiryDate = qdate.addToDate(rm.RelationMember1.d_birth, {years: 25})
+          // console.log("Member1:" + rm.RelationMember1.c_mem_id + " b_mem_type1:" + rm.RelationMember1.b_mem_type1 + " d_exit_1: " + rm.RelationMember1.d_exit_1 + " d_expired_1: " + rm.RelationMember1.d_expired_1 + " age: " + ageUtil.calculateAge(rm.RelationMember1.d_birth) + " isYouth:" + isYouth)
+        }
+      })
+    }
+    
+    const logObject = ref({
+      "username": username.value,
+      "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+      "module": "會員系統",
+      "action": "系統自動更新:" + result.data.Member_by_pk.c_mem_id + " 青年家人狀態-" + isYouth + " 會藉屆滿日期-" + qdate.formatDate(currentExpiryDate, "YYYY-MM-DD"),
+    })
+    // console.log("setting " + result.data.Member_by_pk.c_mem_id + " b_mem_type10 to " + isYouth + " expiryDate: " + currentExpiryDate)
+    
+    UpdateYouthMemberStatus({
+      c_mem_id: result.data.Member_by_pk.c_mem_id,
+      b_mem_type10: isYouth,
+      d_expired_1: qdate.formatDate(currentExpiryDate, "YYYY/MM/DD"),
+      logObject: logObject.value
+    })
+  }
+  loadingState = false
+  updateQueue.value.splice(0, 1)
+  
+    
+  //if (RelationMember1.c_mem_id == result.data.update_Member_by_pk.c_mem_id) { // relation member 1 = this member
+          // check relation member 2 youth status
+          
+          //isYouth = rel.RelationMember2.b_mem_type1 && !rel.RelationMember2.d_exit_1 && qdate.getDateDiff(Date.now(), rel.RelationMember2.d_expired_1) < 0 && ageUtil.calculateAge(rel.RelationMember2.d_birth) >= 15 && ageUtil.calculateAge(rel.RelationMember2.d_birth) <= 24
+          //console.log("Member2 isYouth:" + isYouth)
+    //    }
+     //   if (rel.RelationMember2.c_mem_id == result.data.update_Member_by_pk.c_mem_id) { // relation member 2 = this member
+          // check relation member 2 youth status
+          // updateYouthRelatedMember(rel.c_mem_id_2)
+          //let isYouth = rel.RelationMember1.b_mem_type1 && !rel.RelationMember1.d_exit_1 && qdate.getDateDiff(Date.now(), rel.RelationMember1.d_expired_1) < 0 && ageUtil.calculateAge(rel.RelationMember1.d_birth) >= 15 && ageUtil.calculateAge(rel.RelationMember1.d_birth) <= 24
+          //console.log("Member1 isYouth:" + isYouth)
+       // }
+  
+})
+
+QuitMember_Error((error) => {
+  logErrorMessage(error)
+})
+
 QuitMember_Completed((result) => {
   refetch()
   awaitServerResponse.value--
+  //console.log(relationTable.value)
   $q.notify({ message: "會員: " + result.data.returning[0].c_mem_id + "退會. 會籍狀態：" + result.data.returning[0].b_mem_type1 ? "有效" : "無效" + " 退會日期：" + qdate.formatDate(result.returning[0].d_exit_1, "YYYY年MM月DD日")});
-  if (relatedMember.value.length > 0) {
-    relatedMember.value.forEach((rel) => {
-      updateYouthRelatedMember(rel)
+  if (relationTable.value.length > 0) {
+    relationTable.value.forEach((rel) => {
+      console.log("TODO quit member rel:" + rel)
+      //updateQueue.value.push(rel)
+      //updateYouthMemberStatusByMemberID.value = { c_mem_id: rel }
     })
   }
 })
-    
+
 UpdateMember_Completed((result) => {
+  // console.log("updatemember_completed: " + JSON.stringify(result.data))
+  
+  let newRelation = result.data.insert_Relation
+  if (newRelation.returning.length > 0) {
+    newRelation.returning.forEach((rel) => {
+      if (rel.uuid != "00000000-0000-0000-0000-000000000000") { // not the dummy record
+        // console.log("modified rel, update youth on " + rel.c_mem_id_1 + " and " + rel.c_mem_id_2)
+        if (result.data.update_Member_by_pk.c_mem_id == rel.c_mem_id_1) updateQueue.value.push(rel.c_mem_id_2)
+        else updateQueue.value.push(rel.c_mem_id_1)
+        //updateYouthMemberStatusByMemberID.value = { c_mem_id: rel.c_mem_id_1 }
+        //updateYouthMemberStatusByMemberID.value = { c_mem_id: rel.c_mem_id_2 }
+      }
+    })
+  }
+
+  let delRelation = result.data.delete_Relation
+  if (delRelation.returning.length > 0) {
+    delRelation.returning.forEach((rel) => {
+      if (rel.uuid != "00000000-0000-0000-0000-000000000000") { // not the dummy record
+        // console.log("deleted rel, update youth on " + rel.c_mem_id_1 + " and " + rel.c_mem_id_2)
+        if (result.data.update_Member_by_pk.c_mem_id == rel.c_mem_id_1) updateQueue.value.push(rel.c_mem_id_2)
+        else updateQueue.value.push(rel.c_mem_id_1)
+        //updateYouthMemberStatusByMemberID.value = { c_mem_id: rel.c_mem_id_1 }
+        //updateYouthMemberStatusByMemberID.value = { c_mem_id: rel.c_mem_id_2 }
+      }
+    })
+  }
   refetch()
   if (result.data.update_Member_by_pk.c_mem_id) {
+    updateQueue.value.push(result.data.update_Member_by_pk.c_mem_id)
     $q.notify({ message: "編號: " + result.data.update_Member_by_pk.c_mem_id + "更新資料成功." });
   }
   editState.value = false;
   awaitServerResponse.value--;
+  //})
+  
   //changedMemid = edit_relationTable.value.map(a => a.c_mem_id)
   /*
   await this.updateRelation(newRelation, changeRelation, deleteRelation);
@@ -619,79 +743,7 @@ UpdateMember_Completed((result) => {
 
     
     /*
-    async updateRelation(newRelation, changeRelation, deleteRelation) {
-      // add relation
-      if (newRelation.length > 0) {
-        let relatedMemberID = ""
-        newRelation.forEach((data) => {
-          relatedMemberID = relatedMemberID + data.c_mem_id_2 + " "
-        })
-        const logObject = {
-          "username": this.username,
-          "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-          "module": "會員系統",
-          "action": "新增 " + this.member.c_mem_id + " 關聯會員-" + relatedMemberID
-        }
-        
-        await this.$apollo.mutate({
-          mutation: INSERT_RELATION,
-          variables: {
-            "newObjects": newRelation,
-            logObject: logObject,
-          },
-        })
-      }
-      
-      // change relation
-      if (changeRelation.length > 0) {
-        for (const index in changeRelation) {
-          const logObject = {
-            "username": this.username,
-            "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-            "module": "會員系統",
-            "action": "修改 " + this.member.c_mem_id + " 關聯會員-" + changeRelation[index].c_mem_id_2 + "(" + changeRelation[index].relation + ")"
-          }
-          const uuid = changeRelation[index].uuid
-          const object = {
-            c_mem_id_1: changeRelation[index].c_mem_id_1,
-            c_mem_id_2: changeRelation[index].c_mem_id_2,
-            relation: changeRelation[index].relation,
-          }
-
-          await this.$apollo.mutate({
-            mutation: UPDATE_RELATION,
-            variables: {
-              uuid: uuid,
-              changeObject: object,
-              logObject: logObject,
-            },
-          })
-        }
-      }
-
-      // delete relation
-      if (deleteRelation.length > 0) {
-        let removeMemberID = ""
-        deleteRelation.forEach((rel) => {
-          let i = this.relationTable.findIndex((element) => element.uuid == rel)
-          removeMemberID = removeMemberID + this.relationTable[i].c_mem_id + " "
-        })
-        
-        const logObject = {
-          "username": this.username,
-          "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-          "module": "會員系統",
-          "action": "刪除 " + this.member.c_mem_id + " 的關聯會員-" + removeMemberID
-        }
-        await this.$apollo.mutate({
-          mutation: DELETE_RELATION,
-          variables: {
-            deleteObjects: deleteRelation,
-            logObject: logObject,
-          },
-        })
-      }
-    },
+   
     async confirmUserRemove() {
       // start loading screen
       this.awaitServerResponse++;
@@ -807,25 +859,7 @@ UpdateMember_Completed((result) => {
     
       
     },
-    renewMemberModal(member, duration) {
-      this.renewDialog = true;
-      // assume renew for 1 year
-      const expiryDateOneYear = qdate.subtractFromDate(
-          qdate.addToDate(member.d_expired_1, { years: 1 }),
-          { days: 1 }
-        )
-        
-      this.renewObject = ref({
-        c_mem_id: member.c_mem_id,
-        duration: duration,
-        c_name: member.c_name,
-        d_birth: member.d_birth,
-        c_udf_1: member.c_udf_1,
-        d_expired_1: member.d_expired_1,
-        new_expired_1: duration == 1? expiryDateOneYear : qdate.formatDate(new Date("3000/01/01"), "YYYY-MM-DDTHH:mm:ss"),
-        renewFee: duration == 1? 35 : 100
-      })
-    },
+    
     async updateYouthRelatedMember(mem_id, excluded_mem_id = "") {
       // query and update mem_type_10 based on mem_id
       // 1) query mem_info and query related members
@@ -912,4 +946,6 @@ UpdateMember_Completed((result) => {
   },
   
   }*/
+
+
 </script>

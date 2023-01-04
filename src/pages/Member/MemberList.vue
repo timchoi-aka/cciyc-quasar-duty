@@ -41,7 +41,7 @@
   </q-dialog>
 
   <!-- rowDetail modal -->
-  <q-dialog v-if="$q.screen.gt.md"
+  <q-dialog v-else
     v-model="detailModal"
     persistent
     full-height
@@ -49,7 +49,9 @@
     transition-hide="slide-down"
     class="q-pa-none"
   >
-    <MemberDetail v-model="showMemberID" />
+    <q-card style="min-width: 70vw; width: 70vw; max-width: 70vw;">
+      <MemberDetail v-model="showMemberID"/>
+    </q-card>
   </q-dialog>
   
   <q-table

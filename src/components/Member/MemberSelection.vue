@@ -18,8 +18,11 @@
             {{ scope.opt.value }} - 
             {{scope.opt.c_name? scope.opt.c_name: scope.opt.c_name_other}} 
             ({{ageUtil.calculateAge(scope.opt.d_birth)}}歲 - {{scope.opt.c_sex}})
-            <div v-if="(qdate.getDateDiff(Date.now(), scope.opt.d_expired_1) > 0)" class="text-red">會藉過期</div>
-            <div v-else class="text-primary">會藉有效</div>
+            <div v-if="scope.opt.d_exit_1" class="text-teal">已退會</div>
+            <div v-else>
+              <div v-if="(qdate.getDateDiff(Date.now(), scope.opt.d_expired_1) > 0)" class="text-red">會藉過期</div>
+              <div v-else class="text-primary">會藉有效</div>
+            </div>
           </q-item-label>
         </q-item-section>
       </q-item>
@@ -36,13 +39,14 @@
 <script setup>
 import { ref } from "vue"
 import ageUtil from "src/lib/calculateAge.js"
-import { useQuery } from "@vue/apollo-composable"
+import { useSubscription } from "@vue/apollo-composable"
 import { gql } from "graphql-tag"
 import { date as qdate } from "quasar"
 
 // props & emits
 const props = defineProps({
   modelValue: String,
+  MemberID: String,
 })
 const emit = defineEmits(["update:modelValue"])
 
@@ -51,8 +55,8 @@ const NameOptions = ref([])
 const OriginalNameOptions = ref([])
 
 // query
-const { onResult: NameResult } = useQuery(gql`
-  query allMemberIDAndName {
+const { onResult: NameResult } = useSubscription(gql`
+  subscription allMemberIDAndName {
     Member {
       c_mem_id
       c_name
@@ -61,6 +65,7 @@ const { onResult: NameResult } = useQuery(gql`
       d_birth
       c_udf_1
       d_expired_1
+      d_exit_1
     }
   }`
   )
@@ -68,15 +73,18 @@ const { onResult: NameResult } = useQuery(gql`
 // callback
 NameResult((data) => {
   data.data.Member.forEach((d) => {
-    NameOptions.value.push({
-      value: d.c_mem_id,
-      c_name: d.c_name,
-      c_name_other: d.c_name_other,
-      c_sex: d.c_sex,
-      d_birth: d.d_birth,
-      c_udf_1: d.c_udf_1,
-      d_expired_1: d.d_expired_1
-    })
+    if (d.c_mem_id != props.MemberID) {
+      NameOptions.value.push({
+        value: d.c_mem_id,
+        c_name: d.c_name,
+        c_name_other: d.c_name_other,
+        c_sex: d.c_sex,
+        d_birth: d.d_birth,
+        c_udf_1: d.c_udf_1,
+        d_expired_1: d.d_expired_1,
+        d_exit_1: d.d_exit_1
+      })
+    }
   })
 
   OriginalNameOptions.value = NameOptions.value

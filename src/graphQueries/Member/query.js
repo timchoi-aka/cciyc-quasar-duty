@@ -1,5 +1,62 @@
 import { gql } from "graphql-tag"
 
+export const GET_RELATION_BY_PK = gql`
+query GetRelationByPK($c_mem_id: String = "") {
+  Member_by_pk(c_mem_id: $c_mem_id) 
+  {
+    c_mem_id
+    b_mem_type1
+    b_mem_type10
+    d_birth
+    d_enter_1
+    d_exit_1
+    d_renew_1
+    d_expired_1
+    c_udf_1
+    MemberRelation1 {
+      c_mem_id_1
+      c_mem_id_2
+      relation
+      uuid
+      RelationMember1 {
+        c_mem_id,
+        d_birth,
+        b_mem_type1,
+        d_expired_1,
+        d_exit_1,
+      }
+      RelationMember2 {
+        c_mem_id,
+        d_birth,
+        b_mem_type1,
+        d_expired_1,
+        d_exit_1,
+      }
+    }
+    MemberRelation2 {
+      c_mem_id_1
+      c_mem_id_2
+      relation
+      uuid
+      RelationMember1 {
+        c_mem_id,
+        d_birth,
+        b_mem_type1,
+        d_expired_1,
+        d_exit_1,
+      }
+      RelationMember2 {
+        c_mem_id,
+        d_birth,
+        b_mem_type1,
+        d_expired_1,
+        d_exit_1,
+      }
+    }
+  }
+}
+`
+
 export const GET_MEM_DETAIL_AND_RELATION_BY_PK = gql`
 query GetMemDetailAndRelationByPK($c_mem_id: String = "") {
   Member_by_pk(c_mem_id: $c_mem_id) 
@@ -147,6 +204,8 @@ export const GET_NAME_FROM_ID = gql`
       b_mem_type1,
       c_name,
       c_name_other,
+      d_exit_1,
+      d_expired_1
     }
   }`
 

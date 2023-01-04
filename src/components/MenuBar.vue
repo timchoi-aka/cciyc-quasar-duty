@@ -22,7 +22,6 @@
     <q-route-tab to="/member/log" icon="public" label="系統記錄" />
     <q-route-tab to="/member/admin" icon="public" label="系統管理" />
     <q-route-tab to="/member/status" icon="public" label="開發狀況" />
-    <q-route-tab to="/member/status" icon="public" label="開發狀況" />
   </q-tabs>
   <q-tabs v-if="username && module == 'event'" inline-label class="desktop-only" align="left">
     <q-route-tab to="/event/my-event" icon="public" label="我的活動" />
