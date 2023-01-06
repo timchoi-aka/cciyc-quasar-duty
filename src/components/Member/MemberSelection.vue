@@ -20,7 +20,7 @@
             ({{ageUtil.calculateAge(scope.opt.d_birth)}}歲 - {{scope.opt.c_sex}})
             <div v-if="scope.opt.d_exit_1" class="text-teal">已退會</div>
             <div v-else>
-              <div v-if="(qdate.getDateDiff(Date.now(), scope.opt.d_expired_1) > 0)" class="text-red">會藉過期</div>
+              <div v-if="(!scope.opt.d_expired_1 || qdate.getDateDiff(Date.now(), scope.opt.d_expired_1) > 0)" class="text-red">會藉過期</div>
               <div v-else class="text-primary">會藉有效</div>
             </div>
           </q-item-label>

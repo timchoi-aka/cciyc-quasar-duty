@@ -218,8 +218,6 @@ const props = defineProps({
   EventID: String, 
 })
 
-const emits = defineEmits(["useDialogPluginComponent.emits"])
-
 // variables
 const splitterModel = ref(50) // default split at 50%
 const edit = ref(false)

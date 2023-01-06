@@ -37,7 +37,7 @@
     transition-show="slide-up"
     transition-hide="slide-down"
   >
-    <MemberDetail v-model="showMemberID" />
+    <MemberDetail v-model="showMemberID"/>
   </q-dialog>
 
   <!-- rowDetail modal -->
@@ -406,7 +406,11 @@ function resetFilter() {
     udf_1: "",
   };
 }
-    
+
+function changeMember(value) {
+  console.log("change in parent:" + value)
+}
+
 function tableFilter(rows, terms) {
   // rows contain the entire data
   // terms contains whatever you have as filter

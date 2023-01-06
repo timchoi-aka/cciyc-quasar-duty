@@ -104,7 +104,7 @@ const $store = useStore();
 const $q = useQuasar();
 
 // computed
-// getters
+// userModule getters
 const uid = computed(() => $store.getters["userModule/getUID"])
 const username = computed(() => $store.getters["userModule/getUsername"])
 const photoURL = computed(() => $store.getters["userModule/getPhotoURL"])
@@ -112,24 +112,12 @@ const UAT = computed(() => $store.getters["userModule/getUAT"])
 const isTmp = computed(() => $store.getters["userModule/getTmp"])
 const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"])
 const isUserManagement = computed(() => $store.getters["userModule/getUserManagement"])
+// currentModule getters
 const module = computed(() => $store.getters["currentModule/getCurrentModule"])
 
-// dispatch
-const userProfileLogout = () => $store.dispatch("userModule/logout")
-const toggleLeftDrawer = () => leftDrawerOpen.value = !leftDrawerOpen.value
-const toggleRightDrawer = () => rightDrawerOpen.value = !rightDrawerOpen.value
-const setCurrentModule = (module) => $store.dispatch("currentModule/setCurrentModule", module)
-
-// functions
-function logout() {
-  userProfileLogout().then(() => {
-    $q.notify({ message: "登出成功." });
-  })
-  .catch((error) => console.log("error", error));
-}
-
+// menu items
 // links
-const dutyList = ref([
+const dutyList = computed(() => [
   {
     title: "編更系統",
     caption: "編更，活動，列印",
@@ -166,6 +154,22 @@ const dutyList = ref([
     enable: isSystemAdmin.value,
   },
 ])
+
+
+// dispatch
+const userProfileLogout = () => $store.dispatch("userModule/logout")
+const toggleLeftDrawer = () => leftDrawerOpen.value = !leftDrawerOpen.value
+const toggleRightDrawer = () => rightDrawerOpen.value = !rightDrawerOpen.value
+const setCurrentModule = (module) => $store.dispatch("currentModule/setCurrentModule", module)
+
+// functions
+function logout() {
+  userProfileLogout().then(() => {
+    $q.notify({ message: "登出成功." });
+  })
+  .catch((error) => console.log("error", error));
+}
+
 
 const memberList = ref([
   {

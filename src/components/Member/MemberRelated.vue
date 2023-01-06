@@ -49,7 +49,7 @@ import { useQuery } from "@vue/apollo-composable"
 import { is, date as qdate } from "quasar";
 
 // props and emits
-const emit = defineEmits(['updateMember', "update:modelValue"])
+const emit = defineEmits(["update:modelValue"])
 const props = defineProps({
   MemberID: String,
   modelValue: Object,
@@ -86,7 +86,7 @@ onResult((data) => {
   if (!is.object(result)) {
     relatedMember.value.c_mem_id_1 = relatedMember.value.c_mem_id_1 == props.MemberID.trim()? props.MemberID.trim(): ""
     relatedMember.value.c_mem_id_2 = relatedMember.value.c_mem_id_2 == props.MemberID.trim()? props.MemberID.trim(): ""
-    relatedMember.value.name = "沒有此會員"
+    relatedMember.value.name = "無此人"
     relatedMember.value.b_mem_type1 = false
     relatedMember.value.age = null
     relatedMember.value.d_birth = null
@@ -99,11 +99,11 @@ onResult((data) => {
     relatedMember.value.name = result.c_name
       ? result.c_name
       : result.c_name_other
-    relatedMember.value.b_mem_type1 = result.b_mem_type1 && !result.d_exit_1 && qdate.getDateDiff(Date.now(), result.d_expired_1) < 0
+    relatedMember.value.b_mem_type1 = result.b_mem_type1 && !result.d_exit_1 && result.d_expired_1 && qdate.getDateDiff(Date.now(), result.d_expired_1) < 0
     relatedMember.value.age = ageUtil.calculateAge(result.d_birth)
     relatedMember.value.d_birth = result.d_birth
   } else { // selected member same as this member or not exist
-    relatedMember.value.name = "沒有此會員"
+    relatedMember.value.name = "無此人"
     relatedMember.value.age = null
     relatedMember.value.d_birth = null
   } 

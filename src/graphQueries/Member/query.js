@@ -24,6 +24,7 @@ query GetRelationByPK($c_mem_id: String = "") {
         b_mem_type1,
         d_expired_1,
         d_exit_1,
+        c_udf_1
       }
       RelationMember2 {
         c_mem_id,
@@ -31,6 +32,7 @@ query GetRelationByPK($c_mem_id: String = "") {
         b_mem_type1,
         d_expired_1,
         d_exit_1,
+        c_udf_1
       }
     }
     MemberRelation2 {
@@ -44,6 +46,7 @@ query GetRelationByPK($c_mem_id: String = "") {
         b_mem_type1,
         d_expired_1,
         d_exit_1,
+        c_udf_1
       }
       RelationMember2 {
         c_mem_id,
@@ -51,6 +54,7 @@ query GetRelationByPK($c_mem_id: String = "") {
         b_mem_type1,
         d_expired_1,
         d_exit_1,
+        c_udf_1
       }
     }
   }

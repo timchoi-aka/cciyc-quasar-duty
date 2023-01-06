@@ -1,4 +1,3 @@
-// TODO - update expiry date according to youth member expiry date
 <template>
   <!-- renew dialog -->
   <q-dialog v-model="renewDialog">
@@ -19,7 +18,7 @@
       </q-card-section>
       <q-card-actions class="row justify-end">
         <q-btn icon="cancel" class="bg-negative text-white" label="取消" v-close-popup/>
-        <q-btn icon="check" class="bg-secondary text-white" label="確定" v-close-popup="-1" @click="renewMember(renewObject)"/>
+        <q-btn icon="check" class="bg-secondary text-white" label="確定" v-close-popup @click="renewMember(renewObject)"/>
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -27,6 +26,30 @@
   <!-- loading dialog -->
   <q-dialog v-model="waitingAsync" position="bottom">
     <LoadingDialog message="處理中"/>
+  </q-dialog>
+
+  <!-- print receipt modal -->
+  <q-dialog v-if="$q.screen.gt.md"
+    v-model="printReceiptModal"
+    full-height
+    full-width
+    transition-show="slide-up"
+    transition-hide="slide-down"
+    class="q-pa-none"
+    >
+    <PrintReceipt :MemberID="printReceiptMember"/>
+  </q-dialog>
+
+  <q-dialog v-if="$q.screen.lt.md"
+    v-model="printReceiptModal"
+    maximized
+    full-width
+    persistent
+    transition-show="slide-up"
+    transition-hide="slide-down"
+    class="q-pa-none"
+    >
+    <PrintReceipt :MemberID="printReceiptMember"/>
   </q-dialog>
 
   <!-- confirm delete dialog -->
@@ -85,14 +108,12 @@
     
   <q-card>
     <q-card-section class="bg-primary text-white text-h6">
-      <div class="row">
-        <div class="col-*">
-          <span v-if="member.c_mem_id != null">{{ member.c_mem_id }} - </span>
-          <span v-if="member.c_name != null">{{member.c_name}}</span>
-          <span v-if="member.c_name_other">({{member.c_name_other}})</span>
-          <span v-if="member.c_sex != null">[{{member.c_sex}}]</span>
+      <!-- mobile UI -->
+      <div class="row" v-if="$q.screen.lt.sm">
+        <div class="col-md-10 col-sm-10 col-xs-8 row">
+          <span v-if="member.c_mem_id != null"><MemberSelection class="text-white" :model-value="props.modelValue" @update:model-value="(value) => $emit('update:modelValue', value? value: props.modelValue)"/></span>
         </div>
-        <q-btn v-if="!editState" class="text-white q-mr-none" rounded flat icon="edit" @click="startEdit">
+        <q-btn v-if="!editState" class="text-white q-mr-none col-shrink" rounded flat icon="edit" @click="startEdit">
           <q-tooltip class="text-white">修改</q-tooltip>  
         </q-btn>
         <q-space/>
@@ -100,7 +121,24 @@
           <q-tooltip class="bg-white text-primary">關閉</q-tooltip>
         </q-btn>
       </div>
-    
+      <!-- desktop UI -->
+      <div class="row" v-else>
+        <div class="col-*">
+          <span v-if="member.c_mem_id != null">{{member.c_mem_id}} - </span>
+          <span v-if="member.c_name != null" class="col-4">{{member.c_name}}</span>
+          <span v-if="member.c_name_other" class="col-1">({{member.c_name_other}})</span>
+          <span v-if="member.c_sex != null" class="col-1">[{{member.c_sex}}]</span>
+        </div>
+        <q-btn v-if="!editState" class="text-white q-mr-none col-shrink" rounded flat icon="edit" @click="startEdit">
+          <q-tooltip class="text-white">修改</q-tooltip>  
+        </q-btn>
+        <q-space/>
+        <MemberSelection class="text-white" :model-value="props.modelValue" @update:model-value="(value) => $emit('update:modelValue', value? value: props.modelValue)"/>
+        <q-btn class="col-shrink" dense flat icon="close" v-close-popup>
+          <q-tooltip class="bg-white text-primary">關閉</q-tooltip>
+        </q-btn>
+      </div>
+      
       <div class="row">
         <div class="row col-xs-12">
           <q-btn v-if="editState" class="text-white q-mr-none" rounded flat icon="save" @click="saveRecord">
@@ -141,10 +179,10 @@
     <q-card-section class="bg-blue-1 row q-pa-none" style="border: 1px solid lightgrey;">
       <div class="q-pa-sm col-12 col-xs-12 bg-blue-2 text-black text-h5">個人資料</div>
       <div :class="[ $q.screen.lt.md? 'q-pa-xs text-body1' : 'q-pa-sm text-h6', 'col-12', 'col-xs-12']">
-        <div class="col-12 col-xs-12 row"><span class="col-5 col-xs-5">中文姓名:</span><span v-if="editState" class="col-7 col-xs-7"><q-input filled v-model="edit_member.c_name"/></span><span v-else class="col-7 col-xs-7">{{member.c_name}}</span></div>
-        <div class="col-12 col-xs-12 row"><span class="col-5 col-xs-5">英文姓名:</span><span v-if="editState" class="col-7 col-xs-7"><q-input filled v-model="edit_member.c_name_other"/></span><span v-else class="col-7 col-xs-7">{{member.c_name_other}}</span></div>
-        <div class="col-12 col-xs-12 row"><span class="col-5 col-xs-5">性別:</span>
-          <span v-if="editState" class="col-7 col-xs-7">
+        <div class="col-12 col-xs-12 row"><span class="col-md-2 col-sm-2 col-xs-4">中文姓名:</span><span v-if="editState" class="col-md-10 col-sm-10 col-xs-8"><q-input filled v-model="edit_member.c_name"/></span><span v-else class="col-md-10 col-sm-10 col-xs-8">{{member.c_name}}</span></div>
+        <div class="col-12 col-xs-12 row"><span class="col-md-2 col-sm-2 col-xs-4">英文姓名:</span><span v-if="editState" class="col-md-10 col-sm-10 col-xs-8"><q-input filled v-model="edit_member.c_name_other"/></span><span v-else class="col-md-10 col-sm-10 col-xs-8">{{member.c_name_other}}</span></div>
+        <div class="col-12 col-xs-12 row"><span class="col-md-2 col-sm-2 col-xs-4">性別:</span>
+          <span v-if="editState" class="col-md-10 col-sm-10 col-xs-8">
             <q-btn-toggle
               v-model="edit_member.c_sex"
               toggle-color="primary"
@@ -154,8 +192,8 @@
               ]"
             />
           </span><span v-else>{{member.c_sex}}</span></div>
-        <div class="col-12 row"><span class="col-5 col-xs-5">出生日期: </span>
-          <span v-if="editState" class="col-7 col-xs-7">
+        <div class="col-12 row"><span class="col-md-2 col-sm-2 col-xs-4">出生日期: </span>
+          <span v-if="editState" class="col-md-10 col-sm-10 col-xs-8">
             <q-input filled v-model="edit_member.d_birth" mask="date" hint="YYYY/MM/DD" :rules="['date']">
               <template v-slot:append>
                 <q-icon name="event" class="cursor-pointer">
@@ -170,40 +208,83 @@
               </template>
             </q-input>
           </span>
-          <span v-else class="col-7 col-xs-7">{{qdate.formatDate(member.d_birth, "YYYY年MM月DD日")}}</span></div>
-        <div class="col-12 row"><span class="col-5 col-xs-5">年齡: </span><span v-if="editState" class="col-7 col-xs-7">{{ageUtil.calculateAge(edit_member.d_birth)}}</span><span v-else class="col-7 col-xs-7">{{ageUtil.calculateAge(member.d_birth)}}</span></div>
-        <div class="col-12 row"><span class="col-5 col-xs-5">手提電話: </span><span v-if="editState" class="col-7 col-xs-7"><q-input filled v-model="edit_member.c_mobile" mask="########"/></span><span v-else class="col-7 col-xs-7">{{member.c_mobile}}</span></div>
-        <div class="col-12 row"><span class="col-5 col-xs-5">家居電話: </span><span v-if="editState" class="col-7 col-xs-7"><q-input filled v-model="edit_member.c_tel" mask="########"/></span><span v-else class="col-7 col-xs-7">{{member.c_tel}}</span></div>
-        <div class="col-12 row"><span class="col-5 col-xs-5">地址:</span><span v-if="editState" class="col-7 col-xs-7"><q-input filled v-model="edit_member.m_addscom"/></span><span v-else class="col-7 col-xs-7">{{member.m_addscom}}</span></div>
-        <div class="col-12 row"><span class="col-5 col-xs-5">電郵:</span><span v-if="editState" class="col-7 col-xs-7"><q-input filled v-model="edit_member.c_email"/></span><span v-else class="col-7 col-xs-7">{{member.c_email}}</span></div>
+          <span v-else class="col-md-10 col-sm-10 col-xs-8">{{qdate.formatDate(member.d_birth, "YYYY年MM月DD日")}}</span></div>
+        <div class="col-12 row"><span class="col-md-2 col-sm-2 col-xs-4">年齡: </span><span v-if="editState" class="col-md-10 col-sm-10 col-xs-8">{{ageUtil.calculateAge(edit_member.d_birth)}}</span><span v-else class="col-md-10 col-sm-10 col-xs-8">{{ageUtil.calculateAge(member.d_birth)}}</span></div>
+        <div class="col-12 row"><span class="col-md-2 col-sm-2 col-xs-4">手提電話: </span><span v-if="editState" class="col-md-10 col-sm-10 col-xs-8"><q-input filled v-model="edit_member.c_mobile" mask="########"/></span><span v-else class="col-md-10 col-sm-10 col-xs-8">{{member.c_mobile}}</span></div>
+        <div class="col-12 row"><span class="col-md-2 col-sm-2 col-xs-4">家居電話: </span><span v-if="editState" class="col-md-10 col-sm-10 col-xs-8"><q-input filled v-model="edit_member.c_tel" mask="########"/></span><span v-else class="col-md-10 col-sm-10 col-xs-8">{{member.c_tel}}</span></div>
+        <div class="col-12 row"><span class="col-md-2 col-sm-2 col-xs-4">地址:</span><span v-if="editState" class="col-md-10 col-sm-10 col-xs-8"><q-input filled v-model="edit_member.m_addscom"/></span><span v-else class="col-md-10 col-sm-10 col-xs-8">{{member.m_addscom}}</span></div>
+        <div class="col-12 row"><span class="col-md-2 col-sm-2 col-xs-4">電郵:</span><span v-if="editState" class="col-md-10 col-sm-10 col-xs-8"><q-input filled v-model="edit_member.c_email"/></span><span v-else class="col-md-10 col-sm-10 col-xs-8">{{member.c_email}}</span></div>
       </div>
     </q-card-section>
     <q-card-section class="bg-yellow-1 row q-pa-none" style="border: 1px solid lightgrey;">
       <div class="q-pa-sm col-12 col-xs-12 bg-yellow-3 text-black text-h5">緊急聯絡人資料</div>
       <div :class="[ $q.screen.lt.md? 'q-pa-xs text-body1' : 'q-pa-sm text-h6', 'col-12', 'col-xs-12']">
-        <div class="col-12 row"><span class="col-5 col-xs-5">緊急聯絡人: </span><span v-if="editState" class="col-7 col-xs-7"><q-input filled v-model="edit_member.c_emer_name"/></span><span v-else class="col-7 col-xs-7">{{member.c_emer_name}}</span></div>
-        <div class="col-12 row"><span class="col-5 col-xs-5">關係: </span><span v-if="editState" class="col-7 col-xs-7"><q-input filled v-model="edit_member.c_emer_rel"/></span><span v-else class="col-7 col-xs-7">{{member.c_emer_rel}}</span></div>
-        <div class="col-12 row"><span class="col-5 col-xs-5">電話: </span><span v-if="editState" class="col-7 col-xs-7"><q-input filled v-model="edit_member.c_emer_tel1_1" mask="########"/></span><span v-else class="col-7 col-xs-7">{{member.c_emer_tel1_1}}</span></div>
+        <div class="col-12 row"><span class="col-md-2 col-sm-2 col-xs-4">緊急聯絡人: </span><span v-if="editState" class="col-md-10 col-sm-10 col-xs-8"><q-input filled v-model="edit_member.c_emer_name"/></span><span v-else class="col-md-10 col-sm-10 col-xs-8">{{member.c_emer_name}}</span></div>
+        <div class="col-12 row"><span class="col-md-2 col-sm-2 col-xs-4">關係: </span><span v-if="editState" class="col-md-10 col-sm-10 col-xs-8"><q-input filled v-model="edit_member.c_emer_rel"/></span><span v-else class="col-md-10 col-sm-10 col-xs-8">{{member.c_emer_rel}}</span></div>
+        <div class="col-12 row"><span class="col-md-2 col-sm-2 col-xs-4">電話: </span><span v-if="editState" class="col-md-10 col-sm-10 col-xs-8"><q-input filled v-model="edit_member.c_emer_tel1_1" mask="########"/></span><span v-else class="col-md-10 col-sm-10 col-xs-8">{{member.c_emer_tel1_1}}</span></div>
       </div>
     </q-card-section>
     <q-card-section class="bg-green-1 row q-pa-none" style="border: 1px solid lightgrey;">
       <div class="q-pa-sm col-12 col-xs-12 bg-green-2 text-black text-h5">會籍資料</div>
       <div :class="[ $q.screen.lt.md? 'q-pa-xs text-body1' : 'q-pa-sm text-h6', 'col-12', 'col-xs-12']">
-        <div class="col-12 col-xs-12">會籍: {{member.c_udf_1}}
-          (<q-icon v-if="member.b_mem_type1" color="positive" name="check"/>
-          <q-icon v-else color="negative" name="cancel"/>)
+        <div class="col-12 row">
+          <span class="col-md-2 col-sm-2 col-xs-4">會籍:</span>
+          <span v-if="editState" class="col-md-10 col-sm-10 col-xs-8">
+            <q-select
+              v-model="edit_member.c_udf_1"
+              :options="udf1List"
+              label="選擇會藉"
+            />
+          </span>
+          <span v-else class="col-md-10 col-sm-10 col-xs-8">{{member.c_udf_1}}(<q-icon v-if="member.b_mem_type1" color="positive" name="check"/>
+            <q-icon v-else color="negative" name="cancel"/>)
+          </span>
         </div>
-        <div class="col-12 col-xs-12">入會日期: {{qdate.formatDate(member.d_enter_1, "YYYY年MM月DD日")}}</div>
-        <div class="col-12 col-xs-12">屆滿日期: {{qdate.formatDate(member.d_expired_1, "YYYY年MM月DD日") == "3000年01月01日"? "永久":qdate.formatDate(member.d_expired_1, "YYYY年MM月DD日")}}</div>
-        <div class="col-12 col-xs-12">續會日期: {{qdate.formatDate(member.d_renew_1, "YYYY年MM月DD日")}}</div>
-        <div class="col-12 col-xs-12">退會日期: {{qdate.formatDate(member.d_exit_1, "YYYY年MM月DD日")}}</div>
-        <div class="col-1 col-xs-12">青年家人: 
-          <q-icon v-if="member.b_mem_type10" color="positive" name="check"/>
-          <q-icon v-else color="negative" name="cancel"/>
+        <div class="col-12 row">
+          <span class="col-md-2 col-sm-2 col-xs-4">入會日期:</span>
+          <span v-if="editState" class="col-md-10 col-sm-10 col-xs-8">
+            <q-input
+              filled
+              v-model="edit_member.d_enter_1"
+              mask="date"
+              hint="YYYY/MM/DD"
+              :rules="['date']"
+              
+            >
+              <template v-slot:append>
+                <q-icon name="event" class="cursor-pointer">
+                  <q-popup-proxy
+                    cover
+                    transition-show="scale"
+                    transition-hide="scale"
+                  >
+                    <q-date
+                      v-model="edit_member.d_enter_1"
+                      
+                    >
+                      <div class="row items-center justify-end">
+                        <q-btn v-close-popup label="Close" color="primary" flat />
+                      </div>
+                    </q-date>
+                  </q-popup-proxy>
+                </q-icon>
+              </template>
+            </q-input>
+          </span>
+          <span v-else>{{qdate.formatDate(member.d_enter_1, "YYYY年MM月DD日")}}</span>
+        </div>
+        <div class="col-12 row">
+          <span class="col-md-2 col-sm-2 col-xs-4">屆滿日期:</span><span class="col-md-10 col-sm-10 col-xs-8">{{qdate.formatDate(member.d_expired_1, "YYYY年MM月DD日") == "3000年01月01日"? "永久":qdate.formatDate(member.d_expired_1, "YYYY年MM月DD日")}}</span>
+          <span class="col-md-2 col-sm-2 col-xs-4">續會日期:</span><span class="col-md-10 col-sm-10 col-xs-8">{{qdate.formatDate(member.d_renew_1, "YYYY年MM月DD日")}}</span>
+          <span class="col-md-2 col-sm-2 col-xs-4">退會日期:</span><span class="col-md-10 col-sm-10 col-xs-8">{{qdate.formatDate(member.d_exit_1, "YYYY年MM月DD日")}}</span>
+          <span class="col-md-2 col-sm-2 col-xs-4">青年家人:</span><span class="col-md-10 col-sm-10 col-xs-8">
+            <q-icon v-if="member.b_mem_type10" color="positive" name="check"/>
+            <q-icon v-else color="negative" name="cancel"/>
+          </span>
         </div>
       </div>
     </q-card-section>
-    <q-card-section class="bg-teal-1 row q-pa-none" style="border: 1px solid lightgrey;">
+    <q-card-section class="bg-teal-1 row q-pa-none" style="border: 1px solid lightgrey;">      
       <div class="q-pa-sm col-12 bg-teal-2 text-black text-h5">
         關聯會員
         <q-btn
@@ -216,7 +297,7 @@
               c_mem_id_1: currentMemberID,
               c_mem_id_2: '',
               relation: '',
-              name: '沒有此會員',
+              name: '無此人',
               age: 0,
               d_birth: '',
               b_mem_type1: false,
@@ -236,13 +317,15 @@
           </div>
           <div class="row col-12" v-for="(relation, index) in edit_relationTable" :key="index">
             <span v-if="!relation.delete" class="col-12">
-              <MemberRelated :key="props.modelValue" v-model="edit_relationTable[index]" class="row fit" :MemberID="props.modelValue"  @update-member="(value) => updateRelationTable(index, value)"/>
+              <MemberRelated :key="props.modelValue" v-model="edit_relationTable[index]" class="row fit" :MemberID="props.modelValue"/>
             </span>
           </div>
         </div>
         <div v-else>
           <div v-for="(relation, index) in relationTable" :key="index" class="col-12 col-xs-12">
-            <div v-if="relation.b_mem_type1 && !relation.delete">[{{relation.c_mem_id_1 == props.modelValue? relation.c_mem_id_2: relation.c_mem_id_1}}] {{relation.name}} ({{relation.age}}) - {{relation.relation}}</div>
+            <q-btn v-if="$q.screen.lt.sm" outline class="q-mr-sm" icon="person_search" @click="changeMember(relation.c_mem_id_1 == props.modelValue? relation.c_mem_id_2: relation.c_mem_id_1)"/>
+            <q-btn v-else outline class="q-mr-md" icon="person_search" @click="changeMember(relation.c_mem_id_1 == props.modelValue? relation.c_mem_id_2: relation.c_mem_id_1)" label="檢視會員"/>
+            <span v-if="relation.b_mem_type1 && !relation.delete">[{{relation.c_mem_id_1 == props.modelValue? relation.c_mem_id_2: relation.c_mem_id_1}}] {{relation.name}} ({{relation.age}}) - {{relation.relation}}</span>
           </div>
         </div>
       </div>
@@ -255,7 +338,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, watch, reactive } from "vue";
+import { computed, ref, watch } from "vue";
 import { useStore } from "vuex";
 import LoadingDialog from "components/LoadingDialog.vue"
 import { date as qdate, is, useQuasar, uid} from "quasar";
@@ -264,22 +347,15 @@ import { GET_RELATED_MEMBER_FROM_ID, LATEST_RECEIPT_NO, GET_MEM_DETAIL_AND_RELAT
 import ageUtil from "src/lib/calculateAge.js"
 import { useQuery, useSubscription, useMutation } from "@vue/apollo-composable"
 import MemberRelated from "components/Member/MemberRelated.vue"
-import calculateAge from "src/lib/calculateAge.js";
-
-/* 
-onMounted(() => {
-  let testID = "4100"
-  updateYouthMemberStatusByMemberID.value = {
-    c_mem_id: testID
-  }
-})
-*/
-
+import MemberSelection from "components/Member/MemberSelection.vue"
+import PrintReceipt from "components/Account/PrintReceipt.vue"
 
 // props
 const props = defineProps({
   modelValue: String, 
 })
+// emits
+const emit = defineEmits(["update:modelValue"])
 
 const $store = useStore()
 const $q = useQuasar()
@@ -287,18 +363,32 @@ const awaitServerResponse = ref(0)
 const confirmDeleteModal = ref(false)
 const quitDialog = ref(false)
 const renewDialog = ref(false)
-const relationOptions = ref(["父母子女", "兄弟姐妹", "其他親人"])
 const renewObject = ref({})
+const printReceiptModal = ref(false)
+const printReceiptMember = ref("")
 const queryNameFromID = ref("")
 const editState = ref(false)
 const edit_relationTable = ref([])
 const edit_member = ref({})
 const updateQueue = ref([])
-let loadingState = false
+const searchMemberID = ref("")
+const udf1List = [
+  {
+    label: "青年義工(<25歲)",
+    value: "青年義工會員",
+  },
+  {
+    label: "青年家人義工(>25歲)",
+    value: "青年家人義工",
+  },
+  {
+    label: "社區義工",
+    value: "社區義工",
+  },
+]
 
 // query
-// const { result: ReceiptData } = useSubscription(LATEST_RECEIPT_NO);
-const ReceiptData = ref([])
+const { result: ReceiptData } = useSubscription(LATEST_RECEIPT_NO);
 const { result: GetMemDetailAndRelationByPK, refetch } = useQuery(GET_MEM_DETAIL_AND_RELATION_BY_PK, 
   () => ({
     c_mem_id: props.modelValue
@@ -312,21 +402,18 @@ const { onResult: GetRelationByPK_Completed, variables: updateYouthMemberStatusB
   }, {
     fetchPolicy: 'network-only'
   })
+const { mutate: RemoveMember, onDone: RemoveMember_Completed, onError: RemoveMember_Error } = useMutation(DELETE_MEMBER_BY_ID)
+const { mutate: RenewMember, onDone: RenewMember_Completed, onError: RenewMember_Error } = useMutation(RENEW_MEMBER_FROM_ID_WITH_PAYMENT)
 
 // watcher
 watch(updateQueue.value, (newQueue, oldQueue)  => { 
-  // console.log("newQueue:" + newQueue + " watchStatus:" + loadingState)
-  // console.log("status:" + updatingYouthMemberStatus.value)
-  if (newQueue.length > 0 && !loadingState) {
-    // console.log("updateQueue in watchQueue: " + newQueue)
-    // console.log("start updating " + newQueue[0])
-    loadingState = true
+  if (newQueue.length > 0) {
     updateYouthMemberStatusByMemberID.value = { c_mem_id: newQueue[0] }
   } 
 })
 
 // computed
-const waitingAsync = computed((() => awaitServerResponse.value > 0 ))
+const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const latestReceiptNO = computed(() => {
   if (ReceiptData.value) {
     let token = ReceiptData.value.tbl_account[0].c_receipt_no.split("-")
@@ -341,7 +428,7 @@ const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"]
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
 const member = computed(() => GetMemDetailAndRelationByPK.value?.Member_by_pk??{})
 const currentMemberID = computed(() => props.modelValue? props.modelValue.trim(): "")
-//const NameFromID = computed(() => GetNameFromID.value? GetNameFromID.value.Member[0].c_name? GetNameFromID.value.Member[0].c_name : GetNameFromID.value.Member[0].c_name_other : "沒有此會員")    
+//const NameFromID = computed(() => GetNameFromID.value? GetNameFromID.value.Member[0].c_name? GetNameFromID.value.Member[0].c_name : GetNameFromID.value.Member[0].c_name_other : "無此人")    
 //const MemType1FromID = computed(() => GetNameFromID.value? GetNameFromID.value.Member[0].c_mem_type1 : "")   
 
 const relationTable = computed(() => {
@@ -349,7 +436,7 @@ const relationTable = computed(() => {
   if (GetMemDetailAndRelationByPK.value) {
     for (const rel of [...GetMemDetailAndRelationByPK.value.Member_by_pk.MemberRelation1, ...GetMemDetailAndRelationByPK.value.Member_by_pk.MemberRelation2]) {
       if (Object.keys(rel).length > 0) {
-        if (rel.c_mem_id_1 == currentMemberID.value) { // c_mem_id_2 is the related member
+        if (rel.c_mem_id_1 == currentMemberID.value && rel.RelationMember2) { // c_mem_id_2 is the related member
           result.push({
             c_mem_id_1: rel.c_mem_id_1,
             c_mem_id_2: rel.c_mem_id_2,
@@ -361,7 +448,7 @@ const relationTable = computed(() => {
             uuid: rel.uuid,
             delete: false,
           })
-        } else if (rel.c_mem_id_2 == currentMemberID.value) { //c_mem_id_1 is the related member
+        } else if (rel.c_mem_id_2 == currentMemberID.value && rel.RelationMember1) { //c_mem_id_1 is the related member
           result.push({
             c_mem_id_1: rel.c_mem_id_1,
             c_mem_id_2: rel.c_mem_id_2,
@@ -383,6 +470,9 @@ const relationTable = computed(() => {
 })
 
 // functions
+function changeMember(mem_id) {
+  emit('update:modelValue', mem_id)
+}
 function getNameFromMemberID(value, index) {
   queryNameFromID.value = value
 } 
@@ -415,7 +505,7 @@ async function quitMember() {
   const quitDate = qdate.formatDate(new Date(), "YYYY-MM-DDTHH:mm:ss")
   
   QuitMember({
-    c_mem_id: "4099",
+    c_mem_id: props.modelValue,
     exitDate: quitDate,
     logObject: logObject.value
   })
@@ -443,7 +533,6 @@ function saveRecord() {
     c_emer_tel1_1: edit_member.value.c_emer_tel1_1
   })      
   
-  
   let deleteRelation = []
   let changeRelation = []
   let newRelation = []
@@ -451,7 +540,7 @@ function saveRecord() {
   if (edit_relationTable.value.length > 0) {
     for (const key in edit_relationTable.value) {
       if (edit_relationTable.value[key].uuid) { // existing record
-        if (edit_relationTable.value[key].delete || edit_relationTable.value[key].name == "沒有此會員") { // delete it
+        if (edit_relationTable.value[key].delete || edit_relationTable.value[key].name == "無此人") { // delete it
           deleteRelation.push(edit_relationTable.value[key].uuid)
           // console.log(this.edit_relationTable[key].uuid + " deleted")
         } else { // modify it
@@ -466,7 +555,7 @@ function saveRecord() {
           }
         }
       } else {  // add new record
-        if (!edit_relationTable.value[key].delete && edit_relationTable.value[key].name != "沒有此會員") { // new record but deleted or invalid member number, no action
+        if (!edit_relationTable.value[key].delete && edit_relationTable.value[key].name != "無此人") { // new record but deleted or invalid member number, no action
           if (edit_relationTable.value[key].relation) {
             newRelation.push({
               uuid: uid(),
@@ -498,7 +587,8 @@ function saveRecord() {
   console.log("upsert: " + JSON.stringify([...newRelation, ...changeRelation]))
   */
 
-  awaitServerResponse.value++;
+  
+  awaitServerResponse.value++
 
   // determine if there's relation to delete and upsert
   let parameters = {
@@ -506,18 +596,11 @@ function saveRecord() {
     object: updateObject.value,
     logObject: logObject.value,
   }
-  if (deleteRelation.length > 0)  parameters.deleteObjects = deleteRelation
+  if (deleteRelation.length > 0) parameters.deleteObjects = deleteRelation
   if ([...newRelation, ...changeRelation].length > 0) parameters.upsertObjects = [...newRelation, ...changeRelation]
   
-  UpdateMember(parameters)
+  UpdateMember(parameters) 
 }
-
-function updateRelationTable(index, value) {
-  // console.log(index + ":" + JSON.stringify(value))
-  edit_relationTable.value[index] = value
-}
-
-
 
 function logErrorMessage(error) {
   $q.notify({
@@ -526,8 +609,6 @@ function logErrorMessage(error) {
 }
 
 function renewMemberModal(member, duration) {
-  // assume renew for 1 year
-  const expiryDateOneYear = qdate.addToDate(member.d_expired_1, { years: 1 })
   let renewFee = 0
   let new_memberType = ""
   let expiryDate = ""
@@ -536,7 +617,7 @@ function renewMemberModal(member, duration) {
       if (duration == 1) {
         renewFee = 35
         new_memberType = member.c_udf_1
-        expiryDate = qdate.addToDate(member.d_expired_1, { years: 1 })
+        expiryDate = qdate.addToDate(member.d_expired_1, { years: 1, hours: 8 })
       } else {
         renewFee = 100
         new_memberType = "永久會員"
@@ -550,7 +631,7 @@ function renewMemberModal(member, duration) {
       if (duration == 1) {
         renewFee = 35
         new_memberType = "個人會員"
-        expiryDate = qdate.addToDate(Date.now(), { years: 1 })
+        expiryDate = qdate.addToDate(Date.now(), { years: 1, hours: 8 })
       } else {
         renewFee = 135
         new_memberType = "永久會員"
@@ -561,7 +642,7 @@ function renewMemberModal(member, duration) {
       if (duration == 1) {
         renewFee = 35
         new_memberType = "個人會員"
-        expiryDate = qdate.addToDate(Date.now(), { years: 1 })
+        expiryDate = qdate.addToDate(Date.now(), { years: 1, hours: 8 })
       } else {
         renewFee = 135
         new_memberType = "永久會員"
@@ -572,7 +653,7 @@ function renewMemberModal(member, duration) {
       if (duration == 1) {
         renewFee = 35
         new_memberType = "個人會員"
-        expiryDate = qdate.addToDate(Date.now(), { years: 1 })
+        expiryDate = qdate.addToDate(Date.now(), { years: 1, hours: 8 })
       } else {
         renewFee = 135
         new_memberType = "永久會員"
@@ -595,28 +676,170 @@ function renewMemberModal(member, duration) {
   renewDialog.value = true;
 }
 
-// callback
+function confirmUserRemove() {
+  // start loading screen
+  awaitServerResponse.value++;
+  // console.log("start removing user:" + props.modelValue)
+  
+  const logObject = ref({
+    "username": username.value,
+    "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+    "module": "會員系統",
+    "action": props.modelValue + " 被刪除。"
+  })
+
+  RemoveMember({
+    c_mem_id: props.modelValue,
+    logObject: logObject.value
+  })
+}
+
+function renewMember(renewObject) {
+  const remark = renewObject.duration == 1? "繳 付：至" + qdate.formatDate(renewObject.new_expired_1, "YYYY年MM月") + "之會費\r\n屆滿日期:" + qdate.formatDate(renewObject.new_expired_1, "DD/MM/YYYY") : "繳 付：永久會員會費"
+  const renewDuration = renewObject.duration == 1? "(1年) " : "(永久) "
+  const logObject = ref({
+    "username": username.value,
+    "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+    "module": "會員系統",
+    "action": "會員續會" + renewDuration + renewObject.c_mem_id + " 會藉: " + renewObject.c_udf_1 + " 新屆滿日期: " + qdate.formatDate(renewObject.new_expired_1, "YYYY年MM月DD日") + " 費用: " + renewObject.renewFee,
+  })
+
+  const accountObject = ref({
+    c_receipt_no: latestReceiptNO.value,
+    d_create: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+    i_receipt_type: 1, //type 1 = membership fee
+    c_desc: renewObject.duration == 1? "會員續會費" : "永久會員(會員升級)續會費",
+    c_type: "續會員費",
+    u_discount: 0,
+    u_price_after_discount: renewObject.renewFee,
+    c_cash_type: "Cash",
+    c_cheque_no: "",
+    m_remark: remark,
+    c_mem_id: renewObject.c_mem_id,
+    c_user_id: username.value,
+    c_name: renewObject.c_name,
+    b_cssa: false,
+    b_refund: false,
+    b_OtherIncome: false,
+    b_clear: false,
+    d_clear: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+    i_prints: 0,
+  })
+
+  const memberObject = ref({
+    c_udf_1: renewObject.duration == 1? renewObject.c_udf_1 : "永久會員",
+    d_expired_1: renewObject.new_expired_1,
+    c_update_user: username.value,
+    d_update: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+    d_write: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+  })
+
+  awaitServerResponse.value++
+  RenewMember({
+    c_mem_id: renewObject.c_mem_id,
+    logObject: logObject.value,
+    memberObject: memberObject.value,
+    accountObject: accountObject.value,
+  })
+}
+
+// callback functions
+RenewMember_Completed((result) => {
+  awaitServerResponse.value--
+  if (result.data.insert_tbl_account_one) {
+    $q.notify({ 
+      progress: true,
+      message: "會員: " + result.data.update_Member_by_pk.c_mem_id + "續會成功. 續會日期：" + qdate.formatDate(Date.now(), "YYYY年MM月DD日"),
+      actions: [
+        { label: '列印收據', color: 'yellow', handler: () => { printReceiptMember.value = result.data.update_Member_by_pk.c_mem_id; printReceiptModal.value = true } },
+        { label: '關閉', color: 'white', handler: () => {  } }
+      ]
+    }, 5000);
+  } else {
+    $q.notify({ message: "會員: " + result.data.update_Member_by_pk.c_mem_id + "續會成功. 續會日期：" + qdate.formatDate(Date.now(), "YYYY年MM月DD日")});
+  }
+})
+
+RemoveMember_Completed((result) => {
+  awaitServerResponse.value--;
+  const deleteMember = result.data.delete_Member_by_pk;
+  const deleteRelateMember = result.data.delete_Relation;
+        
+  // console.log("deleteMember: " + JSON.stringify(deleteMember))
+  // console.log("deleteRelateMember: " + JSON.stringify(deleteRelateMember))
+        
+  if (deleteRelateMember.returning.length > 0) {
+    $q.notify({ message: "刪除會員編號: " + deleteMember.c_mem_id + " 成功，" + deleteRelateMember.returning.length + "個關聯關係已刪除。"});
+    let deletedData = deleteRelateMember.returning
+    // console.log("deletedData:" + JSON.stringify(deletedData))
+    deletedData.forEach((mem) => {
+      if (mem.c_mem_id_1 == deleteMember.c_mem_id) {
+        updateQueue.value.push(mem.c_mem_id_2)
+      } else updateQueue.value.push(mem.c_mem_id_1)
+    })
+  } else {
+    $q.notify({ message: "刪除會員編號: " + deleteMember.c_mem_id + " 成功."});
+  }
+})
+
+// after getting relation from mem_id, calculate whether this is a youth relative
+// and determine this membership expiry date if it is a youth relative member
 GetRelationByPK_Completed((result) => {
-  //console.log("result returned: " + JSON.stringify(result))
-  if (result.data.Member_by_pk && result.data.Member_by_pk.c_udf_1 == '青年家人義工') {
+  // console.log("result returned: " + JSON.stringify(result))
+  if (result.data.Member_by_pk) {
+    // only consider "青年家人義工"
+    // default is not Youth relative, and membership expire today
+    let youthMembership = result.data.Member_by_pk.c_udf_1 == '青年家人義工'
+    console.log("youthMembership:" + youthMembership)
     let isYouth = false
     let currentExpiryDate = Date.now()
   
+    // loop through all related members
     let rel = [...result.data.Member_by_pk.MemberRelation1, ...result.data.Member_by_pk.MemberRelation2]
     if (rel.length > 0) {
       // console.log("rel:" + JSON.stringify(rel))
       rel.forEach((rm) => {
         if (rm.c_mem_id_1 == result.data.Member_by_pk.c_mem_id) { // relation member 1 = this member
           // check relation member 2 youth status
+          // criterion: b_mem_type1 valid && d_exit_1 invalid && relatedMember membership is not yet expired && relatedMember age is 15-24
           isYouth = rm.RelationMember2.b_mem_type1 && !rm.RelationMember2.d_exit_1 && qdate.getDateDiff(Date.now(), rm.RelationMember2.d_expired_1) < 0 && ageUtil.calculateAge(rm.RelationMember2.d_birth) >= 15 && ageUtil.calculateAge(rm.RelationMember2.d_birth) <= 24
-          if (isYouth && currentExpiryDate < qdate.addToDate(rm.RelationMember2.d_birth, {years: 25})) currentExpiryDate = qdate.addToDate(rm.RelationMember2.d_birth, {years: 25})
-          // console.log("Member2:" + rm.RelationMember2.c_mem_id + " b_mem_type1:" + rm.RelationMember2.b_mem_type1 + " d_exit_1: " + rm.RelationMember2.d_exit_1 + " d_expired_1: " + rm.RelationMember2.d_expired_1 + " age: " + ageUtil.calculateAge(rm.RelationMember2.d_birth) + " isYouth:" + isYouth)
+          
+          // if target is youth && this member is a youth membership, determine expiry date
+          if (isYouth && youthMembership) {
+            // determine this member expiry base on relatedMember membership and age
+            // console.log("membership:" + rm.RelationMember2.c_udf_1)
+            switch (rm.RelationMember2.c_udf_1) {
+              case "個人會員":
+                if (currentExpiryDate < rm.RelationMember2.d_expired_1) currentExpiryDate = rm.RelationMember2.d_expired_1
+                break
+              case "永久會員":
+              case "青年義工會員(15-24歲)":
+                if (currentExpiryDate < qdate.addToDate(rm.RelationMember2.d_birth, {years: 25})) currentExpiryDate = qdate.addToDate(rm.RelationMember2.d_birth, {years: 25})
+                break
+            }
+          }
+          console.log("Member2:" + rm.RelationMember2.c_mem_id + " b_mem_type1:" + rm.RelationMember2.b_mem_type1 + " d_exit_1: " + rm.RelationMember2.d_exit_1 + " d_expired_1: " + rm.RelationMember2.d_expired_1 + " age: " + ageUtil.calculateAge(rm.RelationMember2.d_birth) + " isYouth:" + isYouth)
         }
         if (rm.c_mem_id_2 == result.data.Member_by_pk.c_mem_id) { // relation member 2 = this member
           // check relation member 2 youth status
+          // criterion: b_mem_type1 valid && d_exit_1 invalid && relatedMember membership is not yet expired && relatedMember age is 15-24
           isYouth = rm.RelationMember1.b_mem_type1 && !rm.RelationMember1.d_exit_1 && qdate.getDateDiff(Date.now(), rm.RelationMember1.d_expired_1) < 0 && ageUtil.calculateAge(rm.RelationMember1.d_birth) >= 15 && ageUtil.calculateAge(rm.RelationMember1.d_birth) <= 24
-          if (isYouth && currentExpiryDate < qdate.addToDate(rm.RelationMember1.d_birth, {years: 25})) currentExpiryDate = qdate.addToDate(rm.RelationMember1.d_birth, {years: 25})
-          // console.log("Member1:" + rm.RelationMember1.c_mem_id + " b_mem_type1:" + rm.RelationMember1.b_mem_type1 + " d_exit_1: " + rm.RelationMember1.d_exit_1 + " d_expired_1: " + rm.RelationMember1.d_expired_1 + " age: " + ageUtil.calculateAge(rm.RelationMember1.d_birth) + " isYouth:" + isYouth)
+          
+          // if target is youth && this member is a youth membership, determine expiry date
+          if (isYouth && youthMembership) {
+            // determine this member expiry base on relatedMember membership and age
+            // console.log("membership:" + rm.RelationMember2.c_udf_1)
+            switch (rm.RelationMember1.c_udf_1) {
+              case "個人會員":
+                if (currentExpiryDate < rm.RelationMember1.d_expired_1) currentExpiryDate = rm.RelationMember1.d_expired_1
+                break
+              case "永久會員":
+              case "青年義工會員(15-24歲)":
+                if (currentExpiryDate < qdate.addToDate(rm.RelationMember1.d_birth, {years: 25})) currentExpiryDate = qdate.addToDate(rm.RelationMember1.d_birth, {years: 25})
+                break
+            }
+          }
+          console.log("Member1:" + rm.RelationMember1.c_mem_id + " b_mem_type1:" + rm.RelationMember1.b_mem_type1 + " d_exit_1: " + rm.RelationMember1.d_exit_1 + " d_expired_1: " + rm.RelationMember1.d_expired_1 + " age: " + ageUtil.calculateAge(rm.RelationMember1.d_birth) + " isYouth:" + isYouth)
         }
       })
     }
@@ -627,32 +850,24 @@ GetRelationByPK_Completed((result) => {
       "module": "會員系統",
       "action": "系統自動更新:" + result.data.Member_by_pk.c_mem_id + " 青年家人狀態-" + isYouth + " 會藉屆滿日期-" + qdate.formatDate(currentExpiryDate, "YYYY-MM-DD"),
     })
-    // console.log("setting " + result.data.Member_by_pk.c_mem_id + " b_mem_type10 to " + isYouth + " expiryDate: " + currentExpiryDate)
+    console.log("setting " + result.data.Member_by_pk.c_mem_id + " b_mem_type10 to " + isYouth + " expiryDate: " + currentExpiryDate)
     
-    UpdateYouthMemberStatus({
-      c_mem_id: result.data.Member_by_pk.c_mem_id,
-      b_mem_type10: isYouth,
-      d_expired_1: qdate.formatDate(currentExpiryDate, "YYYY/MM/DD"),
-      logObject: logObject.value
-    })
+    if (youthMembership) {
+      UpdateYouthMemberStatus({
+        c_mem_id: result.data.Member_by_pk.c_mem_id,
+        b_mem_type10: isYouth,
+        d_expired_1: qdate.formatDate(currentExpiryDate, "YYYY/MM/DD"),
+        logObject: logObject.value
+      })
+    } else {
+      UpdateYouthMemberStatus({
+        c_mem_id: result.data.Member_by_pk.c_mem_id,
+        b_mem_type10: isYouth,
+        logObject: logObject.value
+      })
+    }
   }
-  loadingState = false
   updateQueue.value.splice(0, 1)
-  
-    
-  //if (RelationMember1.c_mem_id == result.data.update_Member_by_pk.c_mem_id) { // relation member 1 = this member
-          // check relation member 2 youth status
-          
-          //isYouth = rel.RelationMember2.b_mem_type1 && !rel.RelationMember2.d_exit_1 && qdate.getDateDiff(Date.now(), rel.RelationMember2.d_expired_1) < 0 && ageUtil.calculateAge(rel.RelationMember2.d_birth) >= 15 && ageUtil.calculateAge(rel.RelationMember2.d_birth) <= 24
-          //console.log("Member2 isYouth:" + isYouth)
-    //    }
-     //   if (rel.RelationMember2.c_mem_id == result.data.update_Member_by_pk.c_mem_id) { // relation member 2 = this member
-          // check relation member 2 youth status
-          // updateYouthRelatedMember(rel.c_mem_id_2)
-          //let isYouth = rel.RelationMember1.b_mem_type1 && !rel.RelationMember1.d_exit_1 && qdate.getDateDiff(Date.now(), rel.RelationMember1.d_expired_1) < 0 && ageUtil.calculateAge(rel.RelationMember1.d_birth) >= 15 && ageUtil.calculateAge(rel.RelationMember1.d_birth) <= 24
-          //console.log("Member1 isYouth:" + isYouth)
-       // }
-  
 })
 
 QuitMember_Error((error) => {
@@ -662,13 +877,12 @@ QuitMember_Error((error) => {
 QuitMember_Completed((result) => {
   refetch()
   awaitServerResponse.value--
-  //console.log(relationTable.value)
-  $q.notify({ message: "會員: " + result.data.returning[0].c_mem_id + "退會. 會籍狀態：" + result.data.returning[0].b_mem_type1 ? "有效" : "無效" + " 退會日期：" + qdate.formatDate(result.returning[0].d_exit_1, "YYYY年MM月DD日")});
+  let validityResult = result.data.update_Member_by_pk.b_mem_type1 ? "有效" : "無效"
+  $q.notify({ message: "會員: " + result.data.update_Member_by_pk.c_mem_id + "退會. 會籍狀態：" + validityResult + " 退會日期：" + qdate.formatDate(result.data.update_Member_by_pk.d_exit_1, "YYYY年MM月DD日")});
   if (relationTable.value.length > 0) {
     relationTable.value.forEach((rel) => {
-      console.log("TODO quit member rel:" + rel)
-      //updateQueue.value.push(rel)
-      //updateYouthMemberStatusByMemberID.value = { c_mem_id: rel }
+      if (result.data.update_Member_by_pk.c_mem_id == rel.c_mem_id_1) updateQueue.value.push(rel.c_mem_id_2)
+      else updateQueue.value.push(rel.c_mem_id_1)
     })
   }
 })
@@ -683,8 +897,6 @@ UpdateMember_Completed((result) => {
         // console.log("modified rel, update youth on " + rel.c_mem_id_1 + " and " + rel.c_mem_id_2)
         if (result.data.update_Member_by_pk.c_mem_id == rel.c_mem_id_1) updateQueue.value.push(rel.c_mem_id_2)
         else updateQueue.value.push(rel.c_mem_id_1)
-        //updateYouthMemberStatusByMemberID.value = { c_mem_id: rel.c_mem_id_1 }
-        //updateYouthMemberStatusByMemberID.value = { c_mem_id: rel.c_mem_id_2 }
       }
     })
   }
@@ -696,8 +908,6 @@ UpdateMember_Completed((result) => {
         // console.log("deleted rel, update youth on " + rel.c_mem_id_1 + " and " + rel.c_mem_id_2)
         if (result.data.update_Member_by_pk.c_mem_id == rel.c_mem_id_1) updateQueue.value.push(rel.c_mem_id_2)
         else updateQueue.value.push(rel.c_mem_id_1)
-        //updateYouthMemberStatusByMemberID.value = { c_mem_id: rel.c_mem_id_1 }
-        //updateYouthMemberStatusByMemberID.value = { c_mem_id: rel.c_mem_id_2 }
       }
     })
   }
@@ -706,246 +916,7 @@ UpdateMember_Completed((result) => {
     updateQueue.value.push(result.data.update_Member_by_pk.c_mem_id)
     $q.notify({ message: "編號: " + result.data.update_Member_by_pk.c_mem_id + "更新資料成功." });
   }
-  editState.value = false;
-  awaitServerResponse.value--;
-  //})
-  
-  //changedMemid = edit_relationTable.value.map(a => a.c_mem_id)
-  /*
-  await this.updateRelation(newRelation, changeRelation, deleteRelation);
-  
-  for (const index in changedMemid) {
-    this.debug("updating youth on " + changedMemid[index])
-    await this.updateYouthRelatedMember(changedMemid[index])
-  }
-  // update youth status of this member too
-  this.debug("updating youth on this member " + c_mem_id)
-  await this.updateYouthRelatedMember(c_mem_id)
-
-  this.relationTable = this.edit_relationTable
-  */
+  editState.value = false
+  awaitServerResponse.value--
 })
-   
-    
-  
-
- /*     this.edit_relationTable[index].b_mem_type1 =
-        getNameFromID[0].b_mem_type1;
-      this.edit_relationTable[index].age = ageUtil.calculateAge(getNameFromID[0].d_birth)
-    } else {
-      this.edit_relationTable[index].name = "沒有此會員";
-      this.edit_relationTable[index].age = null;
-    }
-    });
-  }
-}
-*/
-
-    
-    /*
-   
-    async confirmUserRemove() {
-      // start loading screen
-      this.awaitServerResponse++;
-      const c_mem_id = this.member.c_mem_id;
-      
-      this.debug("start removing user:" + c_mem_id)
-      
-      try {
-        this.$apollo.mutate({
-            mutation: DELETE_MEMBER_BY_ID,
-            variables: {
-              "c_mem_id": c_mem_id,
-              "logObject": {
-                "username": this.username,
-                "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-                "module": "會員系統",
-                "action": c_mem_id + " 被刪除。"
-              }
-            },
-          }).then((data_DELETE_MEMBER_BY_ID) => {
-            const deleteMember = data_DELETE_MEMBER_BY_ID.data.delete_Member_by_pk;
-            const deleteRelateMember = data_DELETE_MEMBER_BY_ID.data.delete_Relation;
-            // this.debug("deleteMember: " + JSON.stringify(deleteMember))
-            // this.debug("deleteRelateMember: " + JSON.stringify(deleteRelateMember))
-            if (deleteRelateMember.returning.length > 0) {
-              this.$q.notify({ message: "刪除會員編號: " + deleteMember.c_mem_id + " 成功，" + deleteRelateMember.returning.length + "個關聯關係已刪除。"});
-              let relatedMemberID = [];
-              let deletedData = deleteRelateMember.returning
-              this.debug("deletedData:" + JSON.stringify(deletedData))
-              deletedData.forEach((mem) => {
-                if (mem.c_mem_id_1 == deleteMember.c_mem_id) {
-                  relatedMemberID.push(mem.c_mem_id_2)
-                } else relatedMemberID.push(mem.c_mem_id_1)
-              })
-              this.debug("relatedMemberID:" + relatedMemberID)
-              if (relatedMemberID.length > 0) {
-                relatedMemberID.forEach((id) => {
-                  this.updateYouthRelatedMember(id)
-                })
-              }
-            } else {
-              this.$q.notify({ message: "刪除會員編號: " + deleteMember.c_mem_id + " 成功."});
-            }
-            
-            
-            
-          })
-       
-    
-      
-      
-     
-      } catch (e) {
-        this.debug("error: " + e)
-      }
-      
-      
-    
-
-      // clear modal data and cancel loading screen
-      this.member = {}
-      this.awaitServerResponse--;     
-    },
-    
-    async renewMember(renewObject) {
-      const remark = renewObject.duration == 1? "繳 付：至" + qdate.formatDate(renewObject.new_expired_1, "YYYY年MM月") + "之會費\r\n屆滿日期:" + qdate.formatDate(renewObject.new_expired_1, "DD/MM/YYYY") : "繳 付：永久會員會費"
-      const renewDuration = renewObject.duration == 1? "(1年) " : "(永久) "
-      const logObject = {
-        "username": this.username,
-        "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-        "module": "會員系統",
-        "action": "會員續會" + renewDuration + renewObject.c_mem_id + " 會藉: " + renewObject.c_udf_1 + " 新屆滿日期: " + qdate.formatDate(renewObject.new_expired_1, "YYYY年MM月DD日") + " 費用: " + renewObject.renewFee,
-      }
-      const accountObject = {
-        c_receipt_no: this.latestReceiptNO,
-        d_create: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-        i_receipt_type: 1, //type 1 = membership fee
-        c_desc: renewObject.duration == 1? "會員續會費" : "永久會員(會員升級)續會費",
-        c_type: "續會員費",
-        u_discount: 0,
-        u_price_after_discount: renewObject.renewFee,
-        c_cash_type: "Cash",
-        c_cheque_no: "",
-        m_remark: remark,
-        c_mem_id: renewObject.c_mem_id,
-        c_user_id: this.username,
-        c_name: renewObject.c_name,
-        b_cssa: false,
-        b_refund: false,
-        b_OtherIncome: false,
-        b_clear: false,
-        d_clear: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-        i_prints: 0,
-      }
-      const memberObject = {
-        c_udf_1: renewObject.duration == 1? renewObject.c_udf_1 : "永久會員",
-        d_expired_1: renewObject.new_expired_1,
-        c_update_user: this.username,
-        d_update: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-        d_write: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-      }
-      this.$apollo.mutate({
-        mutation: RENEW_MEMBER_FROM_ID_WITH_PAYMENT, 
-        variables: {
-          c_mem_id: renewObject.c_mem_id,
-          logObject: logObject,
-          memberObject: memberObject,
-          accountObject: accountObject,
-        }
-      }).then((data) => {
-        this.$q.notify({ message: "會員: " + data.data.update_Member_by_pk.c_mem_id + "續會成功. 續會日期：" + qdate.formatDate(Date.now(), "YYYY年MM月DD日")});
-      })
-    
-      
-    },
-    
-    async updateYouthRelatedMember(mem_id, excluded_mem_id = "") {
-      // query and update mem_type_10 based on mem_id
-      // 1) query mem_info and query related members
-      // 2) loop through related members see if there is any youth
-      // 3) update this mem_type_10 based on (2)
-      
-      this.awaitServerResponse++;
-      let isYouthRelatedMember = false;
-
-      // get mem_info
-      // result: isYouthRelatedMember (boolean)
-      this.debug("checking related of: " + mem_id + " excluding " + excluded_mem_id)
-      try {
-        let data_GET_RELATED_MEMBER_FROM_ID = await this.$apollo.query({
-          //query: GET_MEMBER_BASIC_AND_RELATED_MEMBER_FROM_IDS,
-          query: GET_RELATED_MEMBER_FROM_ID,
-          variables: {
-            "c_mem_id": mem_id
-          },
-          fetchPolicy: 'network-only'
-        })
-        this.debug("data_GET_RELATED_MEMBER_FROM_ID: " + JSON.stringify(data_GET_RELATED_MEMBER_FROM_ID))
-        const RelationResponse = data_GET_RELATED_MEMBER_FROM_ID.data.Relation;
-      
-        let relation = [];
-        if (RelationResponse.length > 0) {
-          RelationResponse.forEach((rel) => {
-            this.debug("processing rel: " + JSON.stringify(rel))
-            if (rel.c_mem_id_1 == mem_id) {
-              if (rel.c_mem_id_2 != excluded_mem_id) {
-                this.debug("adding to relation:" + rel.c_mem_id_2)
-                relation.push(rel.c_mem_id_2)
-              }
-            } else {
-              if (rel.c_mem_id_1 != excluded_mem_id) {
-                this.debug("adding to relation:" + rel.c_mem_id_1)
-                relation.push(rel.c_mem_id_1)
-              }
-            }
-          })
-        }
-
-        this.debug("found relation id:" + relation)
-        if (relation.length > 0) {
-          let data_GET_NAME_FROM_IDS = await this.$apollo.query({
-            query: GET_NAME_FROM_IDS,
-            variables: {
-              c_mem_ids: relation
-            },
-            fetchPolicy: 'network-only'
-          })
-          let memberResponse = data_GET_NAME_FROM_IDS.data.Member;
-          let i = memberResponse.findIndex((element) => element.b_mem_type1 && ageUtil.calculateAge(element.d_birth) >= 15 && ageUtil.calculateAge(element.d_birth) <= 24)
-          i != -1 ? isYouthRelatedMember = true: isYouthRelatedMember = false;
-        }
-      } catch (e) {
-        this.debug("error:" +e)
-      }
-              
-      this.debug("mem_id:" + mem_id + "is Youth? "+ isYouthRelatedMember)
-      
-      // update status, + system log
-      // console.log("this.apollo5: " + this.$apollo)
-      try {
-        await this.$apollo.mutate({
-          mutation: UPDATE_RELATED_YOUTH_MEMBER_STATUS,
-          variables: {
-            "c_mem_ids": [mem_id],
-            "b_mem_type10": isYouthRelatedMember,
-            "logObject": {
-              "username": this.username + "(自動系統管理)",
-              "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-              "module": "會員系統",
-              "action": "設定 " + mem_id + " 的青年家人會員狀態-" + isYouthRelatedMember
-            }
-          },
-        })
-      } catch (e) {
-        this.debug("error: " + e)
-      }
-      
-      this.awaitServerResponse--;
-    },
-  },
-  
-  }*/
-
-
 </script>

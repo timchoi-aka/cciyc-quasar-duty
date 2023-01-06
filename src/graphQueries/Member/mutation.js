@@ -214,6 +214,8 @@ export const QUIT_MEMBER_BY_ID = gql`
     ) {
       update_Member_by_pk(pk_columns: {c_mem_id: $c_mem_id}, _set: {b_mem_type1: false, d_exit_1: $exitDate}) {
       c_mem_id
+      b_mem_type1
+      d_exit_1
     }
     delete_Relation(where: {_or: [{c_mem_id_1: {_eq: $c_mem_id}}, {c_mem_id_2: {_eq: $c_mem_id}}]}) {
       returning {
@@ -221,6 +223,20 @@ export const QUIT_MEMBER_BY_ID = gql`
         c_mem_id_1
         c_mem_id_2
         relation
+        RelationMember1 {
+          c_mem_id
+          b_mem_type1
+          d_birth
+          d_expired_1
+          d_exit_1
+        }
+        RelationMember2 {
+          c_mem_id
+          b_mem_type1
+          d_birth
+          d_expired_1
+          d_exit_1
+        }
       }
     }
     insert_Log_one(object: $logObject) {

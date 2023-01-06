@@ -5,7 +5,7 @@
       <LoadingDialog message="資料讀取中"/>
     </q-dialog>
 
-    <q-page-sticky style="z-index: 1" position="top" expand>
+    <q-page-sticky style="z-index: 1;" position="top" expand>
       <q-tabs
         dense
         class="text-black bg-light-blue-2 fit"
@@ -16,12 +16,16 @@
         <q-route-tab to="/holiday/al-view" icon="celebration" label="年假表" />
         <q-route-tab v-if="isSAL || isCenterIC" to="/holiday/sal-view" icon="local_activity" label="特別年假" />
         <q-route-tab to="/holiday/al-apply" icon="edit_calendar" label="申請假期">
-          <q-badge color="red" floating
+          <q-badge v-if="$q.screen.gt.xs" color="red" floating
+            >{{ ALBalance }}<span v-if="isSAL">+{{ SALBalance }}</span></q-badge
+          >
+          <q-badge v-else color="red"
             >{{ ALBalance }}<span v-if="isSAL">+{{ SALBalance }}</span></q-badge
           >
         </q-route-tab>
         <q-route-tab to="/holiday/holiday-pending" icon="hourglass_empty" label="待審批">
-          <q-badge color="red" floating>{{ pendingCount }}</q-badge>
+          <q-badge v-if="$q.screen.gt.xs" color="red" floating>{{ pendingCount }}</q-badge>
+          <q-badge v-else color="red">{{ pendingCount }}</q-badge>
         </q-route-tab>
         <q-route-tab
           v-if="isLeaveApprove"
@@ -29,13 +33,14 @@
           icon="approval"
           label="批核假期"
         >
-          <q-badge color="red" floating>{{ pendingALApprovalCount }}</q-badge>
+          <q-badge v-if="$q.screen.gt.xs" color="red" floating>{{ pendingALApprovalCount }}</q-badge>
+          <q-badge v-else color="red">{{ pendingALApprovalCount }}</q-badge>
         </q-route-tab>
       </q-tabs>
     </q-page-sticky>
     <q-separator class="q-mt-xl" />
     
-    <router-view class="q-mt-md q-mb-xl" />
+    <router-view class="q-mt-lg q-mb-xl" />
   
   </q-page>
 </template>
@@ -44,7 +49,7 @@
 import { useStore } from "vuex";
 import { leaveCollection, dashboardCollection, usersCollection } from "boot/firebase";
 import { ref, computed, onUnmounted } from "vue";
-import { date as qdate } from "quasar";
+import { date as qdate, useQuasar } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
 import { query, where, onSnapshot, doc, getDoc, Timestamp } from "firebase/firestore"
 
@@ -55,6 +60,7 @@ onUnmounted(() => {
   leaveApprovedListener.value();
 })
 
+const $q = useQuasar()
 const $store = useStore()
 // listeners
 const leaveListener = ref()

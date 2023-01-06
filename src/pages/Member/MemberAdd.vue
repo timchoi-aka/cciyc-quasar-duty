@@ -1,8 +1,31 @@
-<!-- TODO check form before submit -->
 <template class="q-mb-md">
   <!-- loading dialog -->
   <q-dialog v-model="waitingAsync" position="bottom">
     <LoadingDialog message="處理中" />
+  </q-dialog>
+
+  <!-- print receipt modal -->
+  <q-dialog v-if="$q.screen.gt.md"
+    v-model="printReceiptModal"
+    full-height
+    full-width
+    transition-show="slide-up"
+    transition-hide="slide-down"
+    class="q-pa-none"
+    >
+    <PrintReceipt :MemberID="printReceiptMember"/>
+  </q-dialog>
+
+  <q-dialog v-if="$q.screen.lt.md"
+    v-model="printReceiptModal"
+    maximized
+    full-width
+    persistent
+    transition-show="slide-up"
+    transition-hide="slide-down"
+    class="q-pa-none"
+    >
+    <PrintReceipt :MemberID="printReceiptMember"/>
   </q-dialog>
 
   <!-- personal info qcard -->
@@ -223,6 +246,7 @@ import { useStore } from "vuex";
 import { date as qdate, is, useQuasar } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
 import MemberRelated from "components/Member/MemberRelated.vue"
+import PrintReceipt from "components/Account/PrintReceipt.vue"
 import { LATEST_MEMBER_ID, LATEST_RECEIPT_NO } from "/src/graphQueries/Member/query.js";
 import {
   ADD_MEMBER_FROM_ID,
@@ -235,15 +259,18 @@ import {
 import { useSubscription, useMutation } from "@vue/apollo-composable"
 import ageUtil from "src/lib/calculateAge.js"
 
+// variables
 const relateObject = ref({})
-let awaitServerResponse = ref(0)
-const waitingAsync = computed(() => awaitServerResponse > 0 ? true : false)
+const awaitServerResponse = ref(0)
+const printReceiptModal = ref(false)
+const printReceiptMember = ref("")
 
 // save current module
 const $store = useStore();
 const $q = useQuasar()
 $store.dispatch("currentModule/setCurrentModule", "member");
 
+// queries
 // load graphql subscription on latest member id
 const { result: MemberData, loading } = useSubscription(
   LATEST_MEMBER_ID,
@@ -261,9 +288,10 @@ const { mutate: addMemberAndRelationFromIDUpdateRelatedYouthStatusWithPayment, o
 const { mutate: addMemberAndRelationFromID, onDone: addMemberAndRelationFromID_Completed, onError: addMemberAndRelationFromID_Error} = useMutation(ADD_MEMBER_AND_RELATION_FROM_ID)
 const { mutate: addMemberAndRelationFromIDWithPayment, onDone: addMemberAndRelationFromIDWithPayment_Completed, onError: addMemberAndRelationFromIDWithPayment_Error} = useMutation(ADD_MEMBER_AND_RELATION_FROM_ID_WITH_PAYMENT)
 
+// computed
+const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const username = computed(() => $store.getters["userModule/getUsername"])
 const latestMemberID = computed(() => MemberData.value? (parseInt(MemberData.value.Member[0].c_mem_id)+1).toString(): "")
-
 const latestReceiptNO = computed(() => {
   if (ReceiptData.value) {
     let token = ReceiptData.value.tbl_account[0].c_receipt_no.split("-")
@@ -274,6 +302,7 @@ const latestReceiptNO = computed(() => {
   } else return null
 })
 
+// constants
 const membershipFee = ref({
   "個人": "$35",
   "永久": "$135",
@@ -342,7 +371,7 @@ let memberInfo = ref({
   b_mem_type1: false,
   b_mem_type10: false,
   c_udf_1: "",
-  c_update_user: username,
+  c_update_user: username.value,
   d_enter_1: qdate.formatDate(Date.now(), "YYYY/MM/DD"),
   d_expired_1: "",
   d_update: qdate.formatDate(Date.now(), "YYYY/MM/DD"),
@@ -472,21 +501,49 @@ function postCallback(data) {
   const relationResponse = data.data.insert_Relation
     ? data.data.insert_Relation.returning
     : [];
+  const receiptNumber = data.data.insert_tbl_account_one?.c_receipt_no??""
 
   if (memberResponse.c_mem_id) {
     if (relationResponse.length > 0) {
-      $q.notify({
-        message:
-          "新增會員編號: " +
-          memberResponse.c_mem_id +
-          " 成功， " +
-          relationResponse.length +
-          "個關聯會員。",
-      });
+      if (receiptNumber) {
+        $q.notify({
+          progress: true,
+          message:
+            "新增會員編號: " +
+            memberResponse.c_mem_id +
+            " 成功， " +
+            relationResponse.length +
+            "個關聯會員。",
+          actions: [
+            { label: '列印收據', color: 'yellow', handler: () => { printReceiptMember.value = memberResponse.c_mem_id; printReceiptModal.value = true } },
+            { label: '關閉', color: 'white', handler: () => {  } }
+          ]
+        }, 5000)
+      } else {
+        $q.notify({
+          message:
+            "新增會員編號: " +
+            memberResponse.c_mem_id +
+            " 成功， " +
+            relationResponse.length +
+            "個關聯會員。",
+        });
+      }
     } else {
-      $q.notify({
-        message: "新增會員編號: " + memberResponse.c_mem_id + " 成功.",
-      });
+      if (receiptNumber) {
+        $q.notify({
+          progress: true,
+          message: "新增會員編號: " + memberResponse.c_mem_id + " 成功.",
+          actions: [
+            { label: '列印收據', color: 'yellow', handler: () => { printReceiptMember.value = memberResponse.c_mem_id; printReceiptModal.value = true } },
+            { label: '關閉', color: 'white', handler: () => {  } }
+          ]
+        }, 5000)
+      } else {
+        $q.notify({
+          message: "新增會員編號: " + memberResponse.c_mem_id + " 成功.",
+        });
+      }
     }
   }
 
@@ -510,7 +567,7 @@ function postCallback(data) {
     b_mem_type1: false,
     b_mem_type10: false,
     c_udf_1: "",
-    c_update_user: username,
+    c_update_user: username.value,
     d_enter_1: qdate.formatDate(Date.now(), "YYYY/MM/DD"),
     d_expired_1: "",
     d_update: qdate.formatDate(Date.now(), "YYYY/MM/DD"),
@@ -530,7 +587,7 @@ function postCallback(data) {
       delete: false,
     },
   ]
-  awaitServerResponse--;
+  awaitServerResponse.value--;
 }
 
 function capitalize() {
@@ -607,7 +664,7 @@ function updateAge(value) {
 }
 
 function addMember() {
-  awaitServerResponse++;
+  awaitServerResponse.value++;
   
   // assign computed value to object
   memberInfo.value.d_expired_1 = expiryDate.value
@@ -623,7 +680,7 @@ function addMember() {
   // error check before submit
   let valid = true
   relationTable.value.forEach((rel) => {
-    if (rel.name != "" && rel.name != "沒有此會員") {
+    if (rel.name != "" && rel.name != "無此人") {
       if (rel.relation) {
         memberRelation.value.push({
           c_mem_id_1: latestMemberID,
@@ -701,7 +758,7 @@ function addMember() {
   })
 
   const logObject = ref({
-    "username": username,
+    "username": username.value,
     "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     "module": "會員系統",
     "action": "新增會員 " + latestMemberID.value,
@@ -719,7 +776,7 @@ function addMember() {
     c_cheque_no: "",
     m_remark: remark.value,
     c_mem_id: latestMemberID,
-    c_user_id: username,
+    c_user_id: username.value,
     c_name: personalInfo.value.c_name,
     b_cssa: false,
     b_refund: false,
