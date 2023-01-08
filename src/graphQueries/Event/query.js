@@ -363,8 +363,40 @@ query Event_by_pk($c_act_code: String!) {
     u_income
     u_tutor_pay
   }
-}
-`
+}`
+
+export const EVENT_SEARCHINFO_BY_PK = gql`
+query EventSearchInfoByPK($c_act_code: String!) {
+  HTX_Event_by_pk(c_act_code: $c_act_code) {
+    c_act_code
+    IsShow
+    b_freeofcharge
+    b_not_change_price
+    b_open_oth
+    b_open_own
+    c_acc_type
+    c_act_name
+    c_act_nameen
+    c_dest
+    c_end_collect
+    c_group1
+    c_group2
+    c_nature
+    c_open_other
+    c_respon
+    c_respon2
+    c_start_collect
+    c_type
+    c_week
+    c_whojoin
+    c_worker
+    c_worker2
+    i_lessons
+    i_quota_max
+    m_remark
+    m_remind_content
+  }
+}`
   /*
 order_by: {c_act_code: desc},
    c_status: {_eq: $c_status},

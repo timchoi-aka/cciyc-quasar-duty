@@ -20,13 +20,112 @@
     </q-card>
   </q-dialog>
 
+  <!-- load event modal -->
+  <q-dialog v-model="loadDialog" v-if="$q.screen.lt.md"
+    full-width>
+    <q-card>
+      <q-card-section class="text-h6 bg-primary text-white">
+        載入活動資料: <EventSelection v-model="loadEventID"/>
+      </q-card-section>
+      <q-card-section v-if="EventData.HTX_Event_by_pk">
+        {{EventData}}
+      </q-card-section>
+      <q-card-actions>
+        <q-btn icon="check" label="確定" class="bg-positive text-white" v-close-popup/>
+        <q-btn icon="cancel" label="取消" class="bg-negative text-white" v-close-popup/>
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+
+  <q-dialog v-model="loadDialog" position="top" v-else>
+    <q-card style="width: 60vw;">
+      <q-card-section class="text-h6 bg-primary text-white">
+        載入活動資料: <EventSelection v-model="loadEventID"/>
+      </q-card-section>
+      <q-card-section v-if="EventData.HTX_Event_by_pk" class="text-body1 q-pa-none">
+        <q-tabs v-model="activeTab" inline-label align="left" class="desktop-only bg-primary text-white">
+          <q-tab name="EventInfo" icon="source" label="活動資料" />
+          <q-tab name="DateTime" icon="event" label="日期時間" />
+          <q-tab name="Venue" icon="pin_drop" label="地點" />
+          <q-tab name="Fee" icon="paid" label="費用" />
+        </q-tabs>
+
+        <q-tab-panels
+          v-model="activeTab"
+          animated
+          swipeable
+          transition-prev="jump-up"
+          transition-next="jump-up"
+        >
+          <q-tab-panel name="EventInfo" class="q-ma-none q-pa-sm text-body1"> 
+            <div>活動名稱(中文)：{{EventData.HTX_Event_by_pk.c_act_name}}</div>
+            <div>活動名稱(英文)：{{EventData.HTX_Event_by_pk.c_act_nameen}}</div>
+            <div>會計類別：{{EventData.HTX_Event_by_pk.c_acc_type}}</div>
+            <div>免費：<q-icon v-if="EventData.HTX_Event_by_pk.b_freeofcharge" name="check"/><q-icon v-else name="cancel"/></div>
+            <div>類別：{{EventData.HTX_Event_by_pk.c_type}}</div>
+            <div>性質：{{EventData.HTX_Event_by_pk.c_nature}}</div>
+            <div>大分類：{{EventData.HTX_Event_by_pk.c_group1}}</div>
+            <div>細類：{{EventData.HTX_Event_by_pk.c_group2}}</div>
+            <div>對象：{{EventData.HTX_Event_by_pk.c_whojoin}}</div>
+            <div>負責人1：{{EventData.HTX_Event_by_pk.c_respon}}</div>
+            <div>負責人2：{{EventData.HTX_Event_by_pk.c_respon2}}</div>
+            <div>工作人員1：{{EventData.HTX_Event_by_pk.c_worker}}</div>
+            <div>工作人員2：{{EventData.HTX_Event_by_pk.c_worker2}}</div>
+            <div>導師：{{EventData.HTX_Event_by_pk.c_course_tutor}}</div>
+          </q-tab-panel>
+
+          <q-tab-panel name="DateTime" class="q-ma-none q-pa-sm text-body1">
+            <div>名額：{{EventData.HTX_Event_by_pk.i_quota_max}}</div>
+            <div>總堂數：{{EventData.HTX_Event_by_pk.i_lessons}}</div>
+            <div>逢星期：{{EventData.HTX_Event_by_pk.c_week}}</div>
+            <div>收據備註：{{EventData.HTX_Event_by_pk.m_remind_content}}</div>
+            <div>備註：{{EventData.HTX_Event_by_pk.m_remark}}</div>
+          </q-tab-panel>
+
+          <q-tab-panel name="Venue" class="q-ma-none q-pa-sm text-body1">
+            <div>舉行地點：{{EventData.HTX_Event_by_pk.c_dest}}</div>
+            <div>集合地點：{{EventData.HTX_Event_by_pk.c_start_collect}}</div>
+            <div>解散地點：{{EventData.HTX_Event_by_pk.c_end_collect}}</div>
+            <div>本身主辦：<q-icon v-if="EventData.HTX_Event_by_pk.b_open_own" name="check"/><q-icon v-else name="cancel"/></div>
+            <div>合辦機構：<q-icon v-if="EventData.HTX_Event_by_pk.b_open_oth" name="check"/><q-icon v-else name="cancel"/></div>
+            <div>顯示網頁：<q-icon v-if="EventData.HTX_Event_by_pk.IsShow" name="check"/><q-icon v-else name="cancel"/></div>
+          </q-tab-panel>
+
+          <q-tab-panel name="Fee" class="q-ma-none q-pa-sm text-body1">
+            <div v-if="EventFee.tbl_act_fee.length">
+              <q-list>
+                <q-item v-for="item in EventFee.tbl_act_fee">
+                  {{item.c_type}} - {{ item.u_fee }}
+                </q-item>
+              </q-list>
+            </div>
+            <div v-else>
+              沒有收費設定
+            </div>
+          </q-tab-panel>
+        </q-tab-panels>
+      </q-card-section>
+      <q-card-actions>
+        <q-btn icon="check" label="確定" class="bg-positive text-white" v-close-popup @click="copyEvent"/>
+        <q-btn icon="cancel" label="取消" class="bg-negative text-white" v-close-popup/>
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+
+  <!-- add event q-card -->
   <q-card bordered flat class="q-pa-none q-ma-none text-h6 fit">
-    <q-card-section class="row bg-grey-2 q-pl-none q-pt-none q-pb-lg">
-      <q-chip class="col-12 bg-grey-4" size="xl">基本資料
+    <q-card-section class="row bg-grey-2 q-px-none q-pt-none q-pb-lg">
+      <div class="col-12 bg-grey-4 q-pa-md q-mb-sm">基本資料
         <q-btn icon="save" flat @click="saveDialog = true">
           <q-tooltip class="bg-white text-primary">儲存</q-tooltip>
         </q-btn>
-      </q-chip>
+        <q-btn icon="replay" flat @click="editObject = {}">
+          <q-tooltip class="bg-white text-primary">清除</q-tooltip>
+        </q-btn>
+        <q-btn icon="upload_file" flat @click="loadDialog = true">
+          <q-tooltip class="bg-white text-primary">載入</q-tooltip>
+        </q-btn>
+      </div>
       <div class="row q-gutter-lg q-ml-sm">
         <span class="col-2 column">
           <div class="col">活動編號:</div>
@@ -39,8 +138,8 @@
       </div>
     </q-card-section>
 
-    <q-card-section class="row bg-yellow-2 q-pl-none q-pt-none q-pb-lg">
-      <q-chip class="col-12 bg-yellow-4" size="xl">類別</q-chip>
+    <q-card-section class="row bg-yellow-2 q-px-none q-pt-none q-pb-lg">
+      <div class="col-12 bg-yellow-4 q-pa-md q-mb-sm">類別</div>
       <div class="row col-12 q-gutter-lg q-ml-sm">  
         <span class="col-3">會計類別： <q-select :options="acc_type" v-model="editObject.c_acc_type"/></span>
         <span class="col-3">狀況: <q-select :options="status" v-model="editObject.c_status"/></span>
@@ -126,10 +225,12 @@ import DateComponent from "components/Basic/DateComponent.vue"
 import TimeComponent from "components/Basic/TimeComponent.vue"
 import { usersCollection} from "boot/firebase";
 import { ADD_EVENT } from "/src/graphQueries/Event/mutation.js"
-import { useMutation } from "@vue/apollo-composable"
+import { EVENT_SEARCHINFO_BY_PK, EVENT_FEE_BY_ACT_CODE } from "/src/graphQueries/Event/query.js"
+import { useMutation, useQuery } from "@vue/apollo-composable"
 import LoadingDialog from "components/LoadingDialog.vue"
 import dateUtil from "/src/lib/date.js"
 import { getDocs, query, where } from "@firebase/firestore"
+import EventSelection from "components/Event/EventSelection.vue"
 
 // props
 const props = defineProps({
@@ -142,7 +243,10 @@ const $store = useStore();
 const editObject = ref({})
 const serverObject = ref({})
 const saveDialog = ref(false)
+const loadDialog = ref(false)
 const awaitServerResponse = ref(0)
+const loadEventID = ref("")
+const activeTab = ref("EventInfo")
 
 const acc_type = ref([
   'PF', 'CF', 'RF', 'MF', 'SF'
@@ -184,6 +288,18 @@ const whojoin_class = ref({
   '新來港人士': 13
 })
 
+const whojoin_class_reverse = ref({
+  1: "2-6歲幼兒",
+  4: "15-24歲青年",
+  6: '其他人士',
+  8: '義工',
+  9: '童軍',
+  10: '12-14歲青少年',
+  11: '7-11歲兒童',
+  12: '親子',
+  13: '新來港人士'
+})
+
 const week = ref([
   '一', '二', '三', '四', '五', '六', '日', '一三五', '二四六'
 ])
@@ -193,6 +309,16 @@ const dest = ref([
 ])
 // query
 const { mutate: addEvent, onDone: addEvent_Completed, onError: addEvent_Error } = useMutation(ADD_EVENT)
+const { result: EventData } = useQuery(
+  EVENT_SEARCHINFO_BY_PK,
+  () => ({
+    c_act_code: loadEventID.value? loadEventID.value: ''
+  }));
+const { result: EventFee } = useQuery(
+  EVENT_FEE_BY_ACT_CODE,
+  () => ({
+    c_act_code: loadEventID.value? loadEventID.value: ''
+  }));
 
 const UserList = ref([])
 // computed
@@ -212,6 +338,17 @@ const waitingAsync = computed(() => awaitServerResponse > 0)
 const userProfileLogout = () => $store.dispatch("userModule/logout")
 
 //function
+function copyEvent() {
+  if (Object.keys(EventData.value.HTX_Event_by_pk).length) {
+    //console.log(Object.keys(EventData.value.HTX_Event_by_pk))
+    for (const key of Object.keys(EventData.value.HTX_Event_by_pk)) {
+      if (key != "__typename") {
+        editObject.value[key] = EventData.value.HTX_Event_by_pk[key]
+      }
+    }
+  }
+}
+
 function save() {
   // clone the object to a new object before purification
   // avoid v-model limit during purification
