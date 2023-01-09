@@ -1,3 +1,4 @@
+<!-- TODO finish evaluation approval-->
 <template>
   <!-- loading dialog -->
   <q-dialog v-model="waitingAsync" position="bottom">
@@ -6,11 +7,23 @@
 
   <!-- event detail modal -->
   <q-dialog
+    v-if="$q.screen.gt.md"
     full-height
     full-width
-    :maximized="$q.screen.lt.md"
     v-model="eventDetailDialog"
+    transition-show="slide-up"
+    transition-hide="slide-down"
     z-index="1"
+  >
+    <EventDetail :EventID="selectedEventID"/>
+  </q-dialog>
+
+  <q-dialog
+    v-if="$q.screen.lt.md"
+    maximized
+    transition-show="slide-up"
+    transition-hide="slide-down"
+    v-model="eventDetailDialog"
   >
     <EventDetail :EventID="selectedEventID"/>
   </q-dialog>
@@ -40,7 +53,17 @@
       <div class="row col-12">
         <q-chip class="bg-negative text-white" size="lg" label="待審批 - 主任only"/>
       </div>
-      <div class="q-pa-sm">待主任審批的活動檢討</div>
+      <div class="q-pa-sm">
+        <q-table
+          class="q-mt-sm"
+          flat
+          bordered
+          @row-click="showDetail"
+          :rows="awaitApprovalTableEntries"
+          :pagination="pagination"
+          :columns="unapprovedColumns"
+        />
+      </div>
     </div>
 
     <!-- my events -->
@@ -88,7 +111,7 @@
 import { computed, ref } from "vue";
 import { useSubscription } from "@vue/apollo-composable";
 import { useStore } from "vuex";
-import { MY_EVENT_SEARCH, MY_FAV } from "/src/graphQueries/Event/query.js";
+import { MY_EVENT_SEARCH, MY_FAV, EVALUATION_UNAPPROVED } from "/src/graphQueries/Event/query.js";
 import EventDetail from "components/Event/EventDetail.vue";
 import LoadingDialog from "components/LoadingDialog.vue"
 import { date as qdate, useQuasar } from "quasar";
@@ -199,6 +222,42 @@ const FavColumns = ref([
   },
 ])
 
+const unapprovedColumns = ref([
+  {
+    name: "c_act_code",
+    label: "編號",
+    field: "c_act_code",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "c_act_name",
+    label: "名稱",
+    field: "c_act_name",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "submit_date",
+    label: "遞交日期",
+    field: "submit_date",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+    format: (val) => qdate.formatDate(val, "YYYY年M月D日")
+  },
+  {
+    name: "c_status",
+    label: "狀態",
+    field: "c_status",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+])
+
 // setting current module
 $store.dispatch("currentModule/setCurrentModule", "event");
 
@@ -208,12 +267,23 @@ const { result: fav, onError: fav_onError } = useSubscription(MY_FAV,
 () => ({
   username: username.value
 }));
+const { result: awaitApproval } = useSubscription(EVALUATION_UNAPPROVED)
 
 // computed
 const userProfileLogout = () => $store.dispatch("userModule/logout")
 const EventList = computed(() => eventList.value?.HTX_Event??[])
 const FavList = computed(() => fav.value?.Event_Favourate.map(a => a.Favourate_to_Event)??[])
 const waitingAsync = computed(() => awaitServerResponse > 0 ? true : false)
+const awaitApprovalTableEntries = computed(() => 
+  awaitApproval.value?
+  awaitApproval.value.Event_Evaluation.map(x => ({
+    c_act_code: x.c_act_code,
+    c_act_name: x.Evaluation_to_Event.c_act_name,
+    submit_date: x.submit_date,
+    c_status: x.Evaluation_to_Event.c_status,
+  })) :
+  []
+)
 
 // functions 
 function showDetail(evt, row, index) {

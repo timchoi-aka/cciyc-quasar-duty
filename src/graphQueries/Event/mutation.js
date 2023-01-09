@@ -109,6 +109,7 @@ export const UPDATE_EVENT_STAT_BY_PK = gql`
       affected_rows
       returning {
         c_act_code
+        d_act
       }
     }
     insert_Log_one(object: $logObject) {
@@ -138,6 +139,7 @@ export const UPDATE_EVENT_FEE = gql`
     insert_tbl_act_fee(objects: $objects, if_matched: {match_columns: [c_type, c_act_code], update_columns: [u_fee]}) {
       affected_rows
       returning {
+        c_act_code
         c_type
         u_fee
       }
@@ -201,6 +203,7 @@ export const ADD_EVALUATION_FROM_ACT_CODE = gql`
   {
     insert_Event_Evaluation_one(object: $evaluationObject)
       {
+        uuid
         c_act_code
       }
     insert_Log_one(object: $logObject) {
@@ -215,6 +218,7 @@ mutation updateEvaluationFromPK(
   $logObject: Log_insert_input! = {}
   ) {
   update_Event_Evaluation_by_pk(pk_columns: {uuid: $uuid}, _set: $evaluationObject) {
+    uuid
     c_act_code
   }
   insert_Log_one(object: $logObject) {
@@ -234,6 +238,7 @@ mutation addEvaluationAccountFromUUID(
   ) {
     affected_rows 
     returning {
+      account_uuid
       c_act_code
     }
   }
@@ -258,10 +263,42 @@ mutation submitEvaluationFromUUID(
       staff_name: $staff_name, 
       submit_date: $submit_date
     }) {
-    c_act_code
+      uuid
+      c_act_code
   }
   insert_Log_one(object: $logObject) {
     log_id
   }
 }`
 
+export const APPROVE_EVALUATION = gql`
+mutation approveEvaluationFromUUID(
+  $uuid: uniqueidentifier = "", 
+  $c_act_code: String = "",
+  $ic: String = "", 
+  $ic_date: smalldatetime = "",
+  $ic_comment: String = "",
+  $logObject: Log_insert_input! = {}
+  ) {
+  update_Event_Evaluation_by_pk(
+    pk_columns: {uuid: $uuid}, 
+    _set: {
+      ic: $ic, 
+      ic_date: $ic_date,
+      ic_comment: $ic_comment
+    }) {
+      uuid
+      c_act_code
+  }
+  update_HTX_Event_by_pk(
+    pk_columns: {c_act_code: $c_act_code},
+    _set: {
+      m_evaluation_rem: $ic_comment
+    }) {
+      c_act_code
+      m_evaluation_rem
+  }
+  insert_Log_one(object: $logObject) {
+    log_id
+  }
+}`

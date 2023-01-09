@@ -379,7 +379,7 @@ const filter = computed(() => ({
 }))
 const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const uid = computed(() => $store.getters["userModule/getUID"])
-const MemberData = computed(() => result.value?.Member ?? [])
+const MemberData = computed(() => result.value?.Member??[])
 
 // function
 function rowDetail(evt, row, index) {

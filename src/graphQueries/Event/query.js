@@ -48,7 +48,7 @@ export const EVENT_FEE_BY_ACT_CODE = gql`
   }`
 
 export const EVENT_GET_ALL_ACTIVE = gql`
-  query getActiveEvent {
+  subscription getActiveEvent {
     HTX_Event(order_by: {c_act_code: desc}, where: {c_status: {_eq: "未完成"}}) {
       c_act_code
       c_act_name
@@ -183,6 +183,19 @@ subscription EVENT_APPLY_BY_ACT_CODE($c_act_code: String = "") {
   }
 }`
 
+export const EVALUATION_UNAPPROVED = gql`
+  subscription EvaluationUnapproved {
+    Event_Evaluation(where: {ic_date: {_is_null: true}, submit_date: {_is_null: false}}) {
+      submit_date
+      c_act_code
+      uuid
+      Evaluation_to_Event {
+        c_act_code
+        c_act_name
+        c_status
+      }
+    }
+  }`
 
 export const EVALUATION_ACCOUNT = gql`
   query EvaluationAccount($type: String = "", $planeval: String = "", $eval_uuid: uniqueidentifier = "00000000-0000-0000-0000-000000000000") {
@@ -215,6 +228,7 @@ query EVENT_EVALUATION_BY_ACT_CODE($c_act_code: String!) {
     c_group2
     c_type
     c_respon2
+    
     Event_to_Evaluation {
       attendance
       c_act_code
@@ -258,6 +272,8 @@ query EVENT_EVALUATION_BY_ACT_CODE($c_act_code: String!) {
       supervisor
       supervisor_date
       uuid
+      supervisor_comment
+      ic_comment
     }
   }
 }`

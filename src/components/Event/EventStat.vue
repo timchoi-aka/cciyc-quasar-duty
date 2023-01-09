@@ -262,11 +262,8 @@ function deleteRow(d_act) {
 
 // UI functions
 function notifyClientError(error) {
-  userProfileLogout()
-    .then(() => {
-      $q.notify({ message: "系統錯誤，請重新登入." });
-    })
-    .catch((error) => console.log("error", error));
+  $q.notify({ message: "系統錯誤，請重新登入." });
+  console.error("error", error);
 }
 
 function notifyClientSuccess(result) {
