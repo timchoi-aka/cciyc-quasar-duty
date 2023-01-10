@@ -182,6 +182,7 @@
         會籍<q-select
           v-model="memberInfo.c_udf_1"
           :options="udf1List"
+          :option-disable="opt => Object(opt) === opt ? opt.inactive === true : true"
           label="選擇會藉"
           @update:model-value="updateType1Expire"
         />
@@ -312,33 +313,6 @@ const membershipFee = ref({
   "社區義工": "免費",
 })
 
-const udf1List = [
-  {
-    label: "全部",
-    value: "",
-  },
-  {
-    label: "個人",
-    value: "個人會員",
-  },
-  {
-    label: "永久",
-    value: "永久會員",
-  },
-  {
-    label: "青年義工(<25歲)",
-    value: "青年義工會員",
-  },
-  {
-    label: "青年家人義工(>25歲)",
-    value: "青年家人義工",
-  },
-  {
-    label: "社區義工",
-    value: "社區義工",
-  },
-]
-
 let relationTable = ref([
   { 
     c_mem_id_1: latestMemberID,
@@ -380,6 +354,34 @@ let memberInfo = ref({
 })
 
 const age = computed(() => personalInfo.value.d_birth ? ageUtil.calculateAge(personalInfo.value.d_birth): 0)
+const udf1List = computed(() => [
+  {
+    label: "全部",
+    value: "",
+  },
+  {
+    label: "個人",
+    value: "個人會員",
+  },
+  {
+    label: "永久",
+    value: "永久會員",
+  },
+  {
+    label: "青年義工(<25歲)",
+    value: "青年義工會員",
+    inactive: age.value >= 25 || age.value == 0,
+  },
+  {
+    label: "青年家人義工(>25歲)",
+    value: "青年家人義工",
+    inactive: age.value < 25 || age.value == 0,
+  },
+  {
+    label: "社區義工",
+    value: "社區義工",
+  },
+])
 const expiryDate = computed(() => {
   if (
     is.object(memberInfo.value.c_udf_1) &&
