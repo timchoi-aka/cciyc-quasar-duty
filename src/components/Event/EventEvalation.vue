@@ -225,6 +225,9 @@
         </template>
     </q-splitter>
   </div>
+  <div v-else>
+    Mobile version developing, refer to desktop for now
+  </div>
 </template>
 
 <script setup>

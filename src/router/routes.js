@@ -17,6 +17,10 @@ const routes = [
         component: () => import('src/pages/Member/MemberAdd.vue'), meta: {requiresAuth: true},
       },
       {
+        path: 'report',
+        component: () => import('src/pages/Member/Report.vue'), meta: {requiresAuth: true},
+      },
+      {
         path: 'log',
         component: () => import('src/pages/Member/LogViewer.vue'), meta: {requiresAuth: true},
       },

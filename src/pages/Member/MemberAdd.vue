@@ -664,8 +664,6 @@ function updateAge(value) {
 }
 
 function addMember() {
-  awaitServerResponse.value++;
-  
   // assign computed value to object
   memberInfo.value.d_expired_1 = expiryDate.value
   personalInfo.value.age = age.value
@@ -785,7 +783,8 @@ function addMember() {
     d_clear: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     i_prints: 0,
   })
-
+  
+  awaitServerResponse.value++;
   if (memberRelation.value.length == 0) { // no related member
     if (price.value == 0) { // free member
       addMemberFromID({

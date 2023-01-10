@@ -166,6 +166,8 @@ export const MEMBER_GET_ALL = gql`
       c_udf_1
       d_birth
       d_expired_1
+      d_exit_1
+      d_renew_1
       MemberAccount {
         c_receipt_no
       }

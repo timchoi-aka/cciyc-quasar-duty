@@ -4,8 +4,18 @@
     <LoadingDialog message="處理中" />
   </q-dialog>
   <q-btn class="q-mt-md q-mx-md" :disable="migrated_relations.length == 0" @click="startMigrateRelation" label="Migrate Relation"/>
+  <q-btn class="q-mt-md q-mx-md" :disable="migrated_relations.length == 0" @click="consolidateMembership" label="Consolidate Membership"/>
   <q-btn class="q-mt-md q-mx-md" :disable="Members.length == 0" @click="updateYouthRelatedMember" label="Update Youth Relation"/>
-  {{updateQueue}}
+  <div>consolidateQueue:
+    <q-list v-for="item in consolidateQueue" :key="item.c_mem_id">
+      {{item.c_mem_id}},
+    </q-list>  
+  </div>
+  <div>updateQueue: 
+    <q-list v-for="item in updateQueue" :key="item">
+      {{item}},
+    </q-list>
+  </div>
 </template>
 
 <script setup>
@@ -15,7 +25,6 @@ import LoadingDialog from "components/LoadingDialog.vue";
 import { ref, computed, watch } from "vue";
 import ageUtil from "src/lib/calculateAge.js"
 import { date as qdate } from "quasar";
-import { UPDATE_RELATED_YOUTH_MEMBER_STATUS, UPDATE_YOUTH_MEMBER_STATUS } from "/src/graphQueries/Member/mutation.js"
 import { useStore } from "vuex";
 import { useQuery, useMutation } from "@vue/apollo-composable"
 
@@ -24,18 +33,66 @@ const $store = useStore()
 const awaitServerResponse = ref(0)
 const migrated_relations = ref([])
 const updateQueue = ref([])
+const consolidateQueue = ref([])
+const membershipMap = ref({
+  "個人會員": "個人會員",
+  "永久會員": "永久會員",
+  "青年義工會員": "青年義工會員",
+  "青年義工會員(15-24歲)": "青年義工會員",
+  "社工義工會員": "社區義工",
+  "社區義工": "社區義工",
+  "社區會員": "社區義工",
+  "青年家人義工會員(25歲或以上)": "青年家人義工",
+  "青年家人義工會員(14歲或以下)": "青年家人義工",
+  "青年義工會員(12-14歲)": "青年義工會員",
+  "青年家人義工會員": "青年家人義工",
+  "家庭會員": "青年家人義工",
+  "": ""
+})
 
 // watcher
-watch(updateQueue.value, (newQueue, oldQueue)  => { 
-  if (newQueue.length > 0) {
-    console.log("updating: " + newQueue[0])
+watch([updateQueue.value, consolidateQueue.value], ([newUpdateQueue, newConsolidateQueue], [oldUpdateQueue, oldConsolidateQueue])  => { 
+  if (newUpdateQueue.length > 0) {
+    console.log("updating: " + newUpdateQueue[0])
     awaitServerResponse.value++
-    updateYouthMemberStatusByMemberID.value = { c_mem_id: newQueue[0] }
+    updateYouthMemberStatusByMemberID.value = { c_mem_id: newUpdateQueue[0] }
+  }
+
+  if (newConsolidateQueue.length > 0) {
+    console.log("consolidating: " + newConsolidateQueue[0].c_mem_id)
+    updateMembership({
+      c_mem_id: newConsolidateQueue[0].c_mem_id,
+      b_mem_type1: newConsolidateQueue[0].b_mem_type1,
+      c_udf_1: newConsolidateQueue[0].c_udf_1,
+      d_enter_1: newConsolidateQueue[0].d_enter_1,
+      d_exit_1: newConsolidateQueue[0].d_exit_1,
+      d_renew_1: newConsolidateQueue[0].d_renew_1,
+      d_expired_1: newConsolidateQueue[0].d_expired_1
+    })
   }
 })
 
 // query
-const { mutate: UpdateYouthMemberStatus, onDone: UpdateYouthMemberStatus_Completed, onError: UpdateYouthMemberStatus_Error } = useMutation(UPDATE_YOUTH_MEMBER_STATUS)
+const { mutate: UpdateYouthMemberStatus } = useMutation(gql`
+  mutation updateYouthMemberStatus(
+    $c_mem_id: String = "", 
+    $c_udf_1: String = "",
+    $b_mem_type1: Boolean = false,
+    $d_enter_1: datetime2,
+    $d_renew_1: datetime2,
+    $d_exit_1: datetime2,
+    $b_mem_type10: Boolean = false,
+    $d_expired_1: datetime2,
+    $logObject: Log_insert_input! = {}, 
+    ) {
+    update_Member_by_pk(pk_columns: {c_mem_id: $c_mem_id}, _set: {b_mem_type10: $b_mem_type10, d_expired_1: $d_expired_1}) {
+      c_mem_id
+    }
+    insert_Log_one(object: $logObject) {
+      log_id
+    }
+  }`)
+
 const { onResult: GetRelationByPK_Completed, variables: updateYouthMemberStatusByMemberID, loading: updatingYouthMemberStatus } = useQuery(GET_RELATION_BY_PK, 
   {
     c_mem_id: ""
@@ -54,25 +111,38 @@ const { mutate: migrateRelation, onDone: migrateRelation_Completed, onError: mig
   }
 `)
 
+const { mutate: updateMembership, onDone: updateMembership_Completed } = useMutation(gql`
+mutation updateMembership(
+    $c_mem_id: String = "", 
+    $c_udf_1: String = "",
+    $b_mem_type1: Boolean = false,
+    $d_enter_1: datetime2,
+    $d_renew_1: datetime2,
+    $d_exit_1: datetime2,
+    $d_expired_1: datetime2,
+    ) {
+    update_Member_by_pk(pk_columns: {c_mem_id: $c_mem_id}, 
+      _set: {
+        c_udf_1: $c_udf_1,
+        b_mem_type1: $b_mem_type1
+        d_enter_1: $d_enter_1,
+        d_renew_1: $d_renew_1,
+        d_exit_1: $d_exit_1,
+        d_expired_1: $d_expired_1,
+      }) {
+      c_mem_id
+    }
+  }
+`)
+
 const { result: activeMembers } = useQuery(gql`
-  query getActiveMember {
-    Member(where: {b_mem_type1: {_eq: true}}) {
+  query getAllMember {
+    Member {
       c_mem_id
     }
   }`)
 
-const { mutate: updateYouthStatus, onDone: updateYouthStatus_Completed, onError: updateYouthStatus_Error } = useMutation(gql`
-  mutation updateYouthStatus(
-    $memberObjects: [Member_insert_input!] = {},
-    $logObject: Log_insert_input! = {}, 
-    ) {
-    insert_Member(objects: $memberObjects, if_matched: {match_columns: c_mem_id, update_columns: b_mem_type10}) {
-      affected_rows
-    }
-    insert_Log_one(object: $logObject) {
-      log_id
-    }
-  }`)
+
 
 // computed
 const waitingAsync = computed(() => awaitServerResponse.value > 0)
@@ -81,7 +151,43 @@ const ActiveMembers = computed(() => activeMembers.value?.Member.map(a => a.c_me
 const Members = ref([])
 const Relations = ref([])
 
-const { onResult } = useQuery(GET_MEMBER_BASIC_AND_RELATED_MEMBER_FROM_IDS, 
+const { onResult } = useQuery(gql`
+  query getMemberNameFromID($c_mem_ids: [String!]) {
+    Member(where: {c_mem_id: {_in: $c_mem_ids}}) {
+      c_mem_id,
+      b_mem_type1,
+      b_mem_type2,
+      b_mem_type3,
+      b_mem_type4,
+      c_udf_1,
+      d_enter_1,
+      d_exit_1,
+      d_renew_1,
+      d_expired_1,
+      d_enter_2,
+      d_exit_2,
+      d_renew_2,
+      d_expired_2,
+      d_enter_3,
+      d_exit_3,
+      d_renew_3,
+      d_expired_3,
+      d_enter_4,
+      d_exit_4,
+      d_renew_4,
+      d_expired_4,
+      b_mem_type10,
+      d_birth,
+      c_name,
+      c_name_other,
+    }
+    Relation(where: {_or: [{c_mem_id_1: {_in: $c_mem_ids}} {c_mem_id_2: {_in: $c_mem_ids}}]}) {
+      uuid
+      c_mem_id_1
+      c_mem_id_2
+      relation
+    }
+  }`, 
   () => ({
     c_mem_ids: ActiveMembers.value
   }))
@@ -110,63 +216,69 @@ function updateYouthRelatedMember() {
   updateQueue.value.push(...new Set(result)) // unique items only
 }
 
-function updateYouthRelatedMember_old() {
-  let youthLog = ""
-  let memberObject = []
-  // loop both members in Relations
-  // find their index, and age in Members
-  // if both members in Relations are found
-  //    calculate their ages
-  //    if member is youth, update Members.b_mem_type10 in Relations
-  // update Members object to server
-  Relations.value.forEach((rel) => {
-    let mem1Index = Members.value.findIndex((element) => element.c_mem_id == rel.c_mem_id_1)
-    let mem2Index = Members.value.findIndex((element) => element.c_mem_id == rel.c_mem_id_2)
-    
-    if (mem1Index != -1 && mem2Index != -1) {
-      let age1 = ageUtil.calculateAge(Members.value[mem1Index].d_birth)
-      let age2 = ageUtil.calculateAge(Members.value[mem2Index].d_birth)
+function consolidateMembership() {
+  if (Members.value) {
+    Members.value.forEach((member) => {
+      let hasChange = false
+      let b_mem_type1 = member.b_mem_type1
+      let c_udf_1 = membershipMap.value[member.c_udf_1]
+      let d_exit_1 = member.d_exit_1
+      let d_renew_1 = member.d_renew_1
+      let d_expired_1 = member.d_expired_1
+      let d_enter_1 = member.d_enter_1
       
-      if (age1 >= 15 && age1 <= 24) {
-        memberObject.push({
-          c_mem_id: Members.value[mem2Index].c_mem_id,
-          b_mem_type10: true
-        })
-        youthLog += Members.value[mem2Index].c_mem_id + ", "
+      if (!b_mem_type1) {
+        if (member.b_mem_type2) {
+          hasChange = true
+          b_mem_type1 = true
+          c_udf_1 = "青年義工會員"
+          d_enter_1 = member.d_enter_2
+          d_exit_1 = member.d_exit_2
+          d_renew_1 = member.d_renew_2
+          d_expired_1 = member.d_expired_2
+        } else if (member.b_mem_type3) {
+          hasChange = true
+          b_mem_type1 = true
+          c_udf_1 = "社區義工"
+          d_enter_1 = member.d_enter_3
+          d_exit_1 = member.d_exit_3
+          d_renew_1 = member.d_renew_3
+          d_expired_1 = member.d_expired_3
+        } else if (member.b_mem_type4) {
+          hasChange = true
+          b_mem_type1 = true
+          c_udf_1 = "青年家人義工"
+          d_enter_1 = member.d_enter_4
+          d_exit_1 = member.d_exit_4
+          d_renew_1 = member.d_renew_4
+          d_expired_1 = member.d_expired_4
+        }
       }
-
-      if (age2 >= 15 && age2 <= 24) {
-        memberObject.push({
-          c_mem_id: Members.value[mem1Index].c_mem_id,
-          b_mem_type10: true
-        })
-        youthLog += Members.value[mem1Index].c_mem_id + ", "
+      if (c_udf_1 == null) c_udf_1 = ""
+      
+      
+      /*
+      if (d_expired_1 != member.d_expired_1) {
+        console.log(member.c_mem_id + ":" + " b_mem_type1: " + member.b_mem_type1 + " member.d_expired_1:" + member.d_expired_1 +  "b_mem_type2: " + member.b_mem_type2 + " member.d_expired_2: " + member.d_expired_2 + " b_mem_type3: " + member.b_mem_type3 + " member.d_expired_3: " + member.d_expired_3 + " b_mem_type4: " + member.b_mem_type4 + " member.d_expired_4: " + member.d_expired_4 + " d_expired_1: " + d_expired_1)
       }
-    }
-  })
+      */
+      
+        consolidateQueue.value.push({
+          c_mem_id: member.c_mem_id,
+          b_mem_type1: b_mem_type1,
+          c_udf_1: c_udf_1,
+          d_enter_1: d_enter_1,
+          d_exit_1: d_exit_1,
+          d_renew_1: d_renew_1,
+          d_expired_1: d_expired_1
+        })
+      
+    })
+  }
   
-  // remove duplicates
-  memberObject = memberObject.filter((value, index, self) =>
-    index === self.findIndex((t) => (
-      t.c_mem_id === value.c_mem_id && t.b_mem_type10 === value.b_mem_type10
-    ))
-  )
+    
+}
 
-  const logObject = ref({
-    "username": username.value + "(自動系統管理)",
-    "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-    "module": "會員系統",
-    "action": "以下會員被設定為青年家人會員：" + youthLog
-  })
-       
-  console.log("data length: " + memberObject.length)
-  
-  awaitServerResponse.value++
-  updateYouthStatus({
-    memberObjects: memberObject,
-    logObject: logObject.value
-  })
-};
 // callback
 migrateRelation_Completed((result) => {
   console.log(JSON.stringify(result))
@@ -176,19 +288,15 @@ migrateRelation_Error((error) => {
   console.log(JSON.stringify(error))
 })
 
-updateYouthStatus_Error((error) => {
-  awaitServerResponse.value--
-  console.log(JSON.stringify(error))
-})
-
-updateYouthStatus_Completed((result) => {
-  awaitServerResponse.value--
-  console.log(result)
-})
 
 onResult((result) => {
   Members.value = JSON.parse(JSON.stringify(result.data.Member))
   Relations.value = JSON.parse(JSON.stringify(result.data.Relation))
+})
+
+updateMembership_Completed((result) => {
+  awaitServerResponse.value--
+  consolidateQueue.value.splice(0, 1)
 })
 
 // after getting relation from mem_id, calculate whether this is a youth relative
@@ -200,7 +308,7 @@ GetRelationByPK_Completed((result) => {
     // only consider "青年家人義工"
     // default is not Youth relative, and membership expire today
     let youthMembership = result.data.Member_by_pk.c_udf_1 == '青年家人義工'
-    console.log("youthMembership:" + youthMembership)
+    // console.log("youthMembership:" + youthMembership)
     let isYouth = false
     let currentExpiryDate = Date.now()
   
@@ -224,7 +332,7 @@ GetRelationByPK_Completed((result) => {
                   if (currentExpiryDate < rm.RelationMember2.d_expired_1) currentExpiryDate = rm.RelationMember2.d_expired_1
                   break
                 case "永久會員":
-                case "青年義工會員(15-24歲)":
+                case "青年義工會員":
                   if (currentExpiryDate < qdate.addToDate(rm.RelationMember2.d_birth, {years: 25})) currentExpiryDate = qdate.addToDate(rm.RelationMember2.d_birth, {years: 25})
                   break
               }
@@ -247,7 +355,7 @@ GetRelationByPK_Completed((result) => {
                   if (currentExpiryDate < rm.RelationMember1.d_expired_1) currentExpiryDate = rm.RelationMember1.d_expired_1
                   break
                 case "永久會員":
-                case "青年義工會員(15-24歲)":
+                case "青年義工會員":
                   if (currentExpiryDate < qdate.addToDate(rm.RelationMember1.d_birth, {years: 25})) currentExpiryDate = qdate.addToDate(rm.RelationMember1.d_birth, {years: 25})
                   break
               }
@@ -277,6 +385,7 @@ GetRelationByPK_Completed((result) => {
       UpdateYouthMemberStatus({
         c_mem_id: result.data.Member_by_pk.c_mem_id,
         b_mem_type10: isYouth,
+        d_expired_1: result.data.Member_by_pk.d_expired_1,
         logObject: logObject.value
       })
       console.log("setting " + result.data.Member_by_pk.c_mem_id + " b_mem_type10 to " + isYouth)
