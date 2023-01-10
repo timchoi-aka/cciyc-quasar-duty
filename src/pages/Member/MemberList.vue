@@ -40,7 +40,6 @@
     <MemberDetail v-model="showMemberID"/>
   </q-dialog>
 
-  <!-- rowDetail modal -->
   <q-dialog v-else
     v-model="detailModal"
     persistent
