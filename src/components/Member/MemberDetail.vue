@@ -813,7 +813,7 @@ GetRelationByPK_Completed((result) => {
                 if (currentExpiryDate < rm.RelationMember2.d_expired_1) currentExpiryDate = rm.RelationMember2.d_expired_1
                 break
               case "永久會員":
-              case "青年義工會員(15-24歲)":
+              case "青年義工會員":
                 if (currentExpiryDate < qdate.addToDate(rm.RelationMember2.d_birth, {years: 25})) currentExpiryDate = qdate.addToDate(rm.RelationMember2.d_birth, {years: 25})
                 break
             }
@@ -834,7 +834,7 @@ GetRelationByPK_Completed((result) => {
                 if (currentExpiryDate < rm.RelationMember1.d_expired_1) currentExpiryDate = rm.RelationMember1.d_expired_1
                 break
               case "永久會員":
-              case "青年義工會員(15-24歲)":
+              case "青年義工會員":
                 if (currentExpiryDate < qdate.addToDate(rm.RelationMember1.d_birth, {years: 25})) currentExpiryDate = qdate.addToDate(rm.RelationMember1.d_birth, {years: 25})
                 break
             }
