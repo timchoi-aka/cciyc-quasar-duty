@@ -1,3 +1,4 @@
+<!-- TODO 咁你出D提醒，令同事知道已經有同名有效會員-->
 <template class="q-mb-md">
   <!-- loading dialog -->
   <q-dialog v-model="waitingAsync" position="bottom">
@@ -658,11 +659,6 @@ function updateType1Expire() {
   } else memberInfo.value.d_expired_1 = "";
 }
 
-function updateAge(value) {
-  personalInfo.value.age = ageUtil.calculateAge(value)
-  updateType1Expire()
-}
-
 function addMember() {
   // assign computed value to object
   memberInfo.value.d_expired_1 = expiryDate.value
@@ -711,6 +707,16 @@ function addMember() {
   if(!memberInfo.value.c_udf_1) {
     $q.notify({
       message: "請輸入會藉！",
+      color: "negative",
+      textColor: "white",
+      icon: "error"
+    })
+    valid = false
+  }
+
+  if(!is.date(expiryDate.value)) {
+    $q.notify({
+      message: "請選擇正確會藉！",
       color: "negative",
       textColor: "white",
       icon: "error"

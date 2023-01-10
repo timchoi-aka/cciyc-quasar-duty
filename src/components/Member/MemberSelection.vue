@@ -73,7 +73,15 @@ const { onResult: NameResult } = useSubscription(gql`
 // callback
 NameResult((data) => {
   data.data.Member.forEach((d) => {
-    if (d.c_mem_id != props.MemberID) {
+    if (
+      d.c_mem_id != props.MemberID &&
+      d.c_mem_id != "9999" && // 顧客
+      d.d_exit_1 == null &&
+      (
+        d.d_expired_1 == null || 
+        qdate.getDateDiff(Date.now(), d.d_expired_1) < 0
+      )
+    ) {
       NameOptions.value.push({
         value: d.c_mem_id,
         c_name: d.c_name,

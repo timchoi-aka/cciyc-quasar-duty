@@ -505,19 +505,89 @@ function wrapCsvValue (val, formatFn, row) {
 }
 
 // export to xls functions
+// mime type [xls, csv]
+const type = {
+  type: String,
+  default: "xls",
+}
+
+// Json to download
+const data = {
+  type: Array,
+  required: false,
+  default: null,
+}
+    
+// fields inside the Json Object that you want to export
+// if no given, all the properties in the Json are exported
+const fields = {
+  type: Object,
+  default: () => null,
+}
+    
+// this prop is used to fix the problem with other components that use the
+// variable fields, like vee-validate. exportFields works exactly like fields
+const exportFields = {
+  type: Object,
+  default: () => null,
+}
+
+// Use as fallback when the row has no field values
 const defaultValue = {
   type: String,
   required: false,
   default: "",
 }
 
+// Title(s) for the data, could be a string or an array of strings (multiple titles)
 const header = {
   default: null,
 }
- 
+
 // Footer(s) for the data, could be a string or an array of strings (multiple footers)
 const footer = {
   default: null,
+}
+// filename to export
+const name = {
+  type: String,
+  default: "data.xls",
+}
+ 
+const fetch = {
+  type: Function,
+}
+    
+const meta = {
+  type: Array,
+  default: () => [],
+}
+ 
+const worksheet = {
+  type: String,
+  default: "Sheet1",
+}
+    
+//event before generate was called
+const beforeGenerate = {
+  type: Function,
+}
+    
+//event before download pops up
+const beforeFinish = {
+  type: Function,
+}
+    
+// Determine if CSV Data should be escaped
+const escapeCsv = {
+  type: Boolean,
+  default: true,
+}
+
+// long number stringify
+const stringifyLongNum = {
+  type: Boolean,
+  default: false,
 }
 
 function jsonToXLS(data) {
@@ -525,9 +595,7 @@ function jsonToXLS(data) {
     '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta name=ProgId content=Excel.Sheet> <meta name=Generator content="Microsoft Excel 11"><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>${worksheet}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--><style>br {mso-data-placement: same-cell;}</style></head><body><table>${table}</table></body></html>';
   let xlsData = "<thead>";
   const colspan = Object.keys(data[0]).length;
-  let _self = this;
   //Header
-  const header = this.header || this.$attrs.title;
   if (header) {
     xlsData += this.parseExtraData(
       header,
@@ -548,8 +616,8 @@ function jsonToXLS(data) {
     for (let key in item) {
       xlsData +=
         "<td>" +
-        _self.preprocessLongNum(
-          _self.valueReformattedForMultilines(item[key])
+        preprocessLongNum(
+          valueReformattedForMultilines(item[key])
         ) +
         "</td>";
     }
@@ -576,7 +644,6 @@ jsonToCSV
 Transform json data into an CSV file.
 */
 function jsonToCSV(data) {
-  let _self = this;
   var csvData = [];
   //Header
   const header = this.header || this.$attrs.title;
@@ -596,7 +663,7 @@ function jsonToCSV(data) {
       let escapedCSV = item[key] + "";
       // Escaped CSV data to string to avoid problems with numbers or other types of values
       // this is controlled by the prop escapeCsv
-      if (_self.escapeCsv) {
+      if (escapeCsv) {
         escapedCSV = '="' + escapedCSV + '"'; // cast Numbers to string
         if (escapedCSV.match(/[,"\n]/)) {
           escapedCSV = '"' + escapedCSV.replace(/\"/g, '""') + '"';
@@ -623,12 +690,11 @@ Get only the data to export, if no fields are set return all the data
 function getProcessedJson(data, header) {
   let keys = this.getKeys(data, header);
   let newData = [];
-  let _self = this;
   data.map(function (item, index) {
     let newItem = {};
     for (let label in keys) {
       let property = keys[label];
-      newItem[label] = _self.getValue(property, item);
+      newItem[label] = getValue(property, item);
     }
     newData.push(newItem);
   });
@@ -670,10 +736,10 @@ function getValue(key, item) {
   let value = defaultValue;
   if (!field) value = item;
   else if (indexes.length > 1)
-    value = this.getValueFromNestedItem(item, indexes);
+    value = getValueFromNestedItem(item, indexes);
   else value = this.parseValue(item[field]);
   if (key.hasOwnProperty("callback"))
-    value = this.getValueFromCallback(value, key.callback);
+    value = getValueFromCallback(value, key.callback);
   return value;
 }
 
