@@ -790,7 +790,7 @@ GetRelationByPK_Completed((result) => {
     // only consider "青年家人義工"
     // default is not Youth relative, and membership expire today
     let youthMembership = result.data.Member_by_pk.c_udf_1 == '青年家人義工'
-    console.log("youthMembership:" + youthMembership)
+    // console.log("youthMembership:" + youthMembership)
     let isYouth = false
     let currentExpiryDate = Date.now()
   
@@ -818,7 +818,7 @@ GetRelationByPK_Completed((result) => {
                 break
             }
           }
-          console.log("Member2:" + rm.RelationMember2.c_mem_id + " b_mem_type1:" + rm.RelationMember2.b_mem_type1 + " d_exit_1: " + rm.RelationMember2.d_exit_1 + " d_expired_1: " + rm.RelationMember2.d_expired_1 + " age: " + ageUtil.calculateAge(rm.RelationMember2.d_birth) + " isYouth:" + isYouth)
+          //console.log("Member2:" + rm.RelationMember2.c_mem_id + " b_mem_type1:" + rm.RelationMember2.b_mem_type1 + " d_exit_1: " + rm.RelationMember2.d_exit_1 + " d_expired_1: " + rm.RelationMember2.d_expired_1 + " age: " + ageUtil.calculateAge(rm.RelationMember2.d_birth) + " isYouth:" + isYouth)
         }
         if (rm.c_mem_id_2 == result.data.Member_by_pk.c_mem_id) { // relation member 2 = this member
           // check relation member 2 youth status
@@ -839,7 +839,7 @@ GetRelationByPK_Completed((result) => {
                 break
             }
           }
-          console.log("Member1:" + rm.RelationMember1.c_mem_id + " b_mem_type1:" + rm.RelationMember1.b_mem_type1 + " d_exit_1: " + rm.RelationMember1.d_exit_1 + " d_expired_1: " + rm.RelationMember1.d_expired_1 + " age: " + ageUtil.calculateAge(rm.RelationMember1.d_birth) + " isYouth:" + isYouth)
+          //console.log("Member1:" + rm.RelationMember1.c_mem_id + " b_mem_type1:" + rm.RelationMember1.b_mem_type1 + " d_exit_1: " + rm.RelationMember1.d_exit_1 + " d_expired_1: " + rm.RelationMember1.d_expired_1 + " age: " + ageUtil.calculateAge(rm.RelationMember1.d_birth) + " isYouth:" + isYouth)
         }
       })
     }
@@ -850,7 +850,7 @@ GetRelationByPK_Completed((result) => {
       "module": "會員系統",
       "action": "系統自動更新:" + result.data.Member_by_pk.c_mem_id + " 青年家人狀態-" + isYouth + " 會藉屆滿日期-" + qdate.formatDate(currentExpiryDate, "YYYY-MM-DD"),
     })
-    console.log("setting " + result.data.Member_by_pk.c_mem_id + " b_mem_type10 to " + isYouth + " expiryDate: " + currentExpiryDate)
+    // console.log("setting " + result.data.Member_by_pk.c_mem_id + " b_mem_type10 to " + isYouth + " expiryDate: " + currentExpiryDate)
     
     if (youthMembership) {
       UpdateYouthMemberStatus({
@@ -863,6 +863,7 @@ GetRelationByPK_Completed((result) => {
       UpdateYouthMemberStatus({
         c_mem_id: result.data.Member_by_pk.c_mem_id,
         b_mem_type10: isYouth,
+        d_expired_1: result.data.Member_by_pk.d_expired_1,
         logObject: logObject.value
       })
     }
