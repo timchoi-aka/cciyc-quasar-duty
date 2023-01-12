@@ -34,7 +34,6 @@
 <script setup>
 import holiday from "assets/holiday.json";
 import dateUtil from "src/lib/date.js";
-//import dateHeader from "src/lib/dateHeader.js";
 import { useQuasar, date as qdate } from "quasar";
 import { computed } from "vue"
 

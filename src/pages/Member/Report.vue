@@ -3,7 +3,7 @@
   <q-dialog v-model="loading" position="bottom">
     <LoadingDialog message="處理中"/>
   </q-dialog>
-  
+
   <!-- rowDetail modal -->
   <q-dialog v-if="$q.screen.lt.md"
     v-model="detailModal"
@@ -28,33 +28,42 @@
       <MemberDetail v-model="showMemberID"/>
     </q-card>
   </q-dialog>
+  <div class="row justify-center">
+    
+    <div class="row items-center q-mx-md"><q-btn label="上月" @click="reportDate = qdate.formatDate(qdate.endOfDate(qdate.subtractFromDate(reportDate, {month: 1}), 'month'), 'YYYY/MM/DD')" class="bg-primary text-white items-center"/></div>
+    
+    <div>
+      <q-input filled v-model="reportDate" mask="date" :rules="['date']">
+        <template v-slot:prepend>
+          截數月份：
+        </template>
+        <template v-slot:append>
+          <q-icon name="event" class="cursor-pointer">
+            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+              <q-date v-model="reportDate">
+                <div class="row items-center justify-end">
+                  <q-btn v-close-popup label="關閉" color="primary" flat />
+                </div>
+              </q-date>
+            </q-popup-proxy>
+          </q-icon>
+        </template>
+      </q-input>
+    </div>
+    
+    <div class="row items-center q-mx-md"><q-btn label="下月" @click="reportDate = qdate.formatDate(qdate.endOfDate(qdate.addToDate(reportDate, {month: 1}), 'month'), 'YYYY/MM/DD')" class="bg-primary text-white items-center"/></div>
+  </div>
   
-  <q-input filled v-model="reportDate" mask="date" :rules="['date']">
-    <template v-slot:prepend>
-      截數月份：
-    </template>
-    <template v-slot:append>
-      <q-icon name="event" class="cursor-pointer">
-        <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-          <q-date v-model="reportDate">
-            <div class="row items-center justify-end">
-              <q-btn v-close-popup label="關閉" color="primary" flat />
-            </div>
-          </q-date>
-        </q-popup-proxy>
-      </q-icon>
-    </template>
-  </q-input>
   
   <!--<q-date v-model="reportDate" default-view="Months"/>-->
   <q-tabs v-model="activeTab" inline-label align="left" class="desktop-only bg-primary text-white">
-    <q-tab name="All" icon="source" label="全部" />
-    <q-tab name="Youth" icon="pin_drop" label="青年" />
-    <q-tab name="Family_15" icon="pin_drop" label="家人(<15)" />
-    <q-tab name="Family_24" icon="pin_drop" label="家人(>24)" />
-    <q-tab name="Quit" icon="pin_drop" label="退會" />
-    <q-tab name="Expired" icon="pin_drop" label="過期" />
-    <q-tab name="Error" icon="error" label="錯誤" />
+    <q-tab name="All" icon="source" :label="'全部('+MemberData.length+'人)'" />
+    <q-tab name="Youth" icon="pin_drop" :label="'青年('+YouthData.length+'人)'" />
+    <q-tab name="Family_15" icon="pin_drop" :label="'家人(<15)('+Family_15Data.length+'人)'" />
+    <q-tab name="Family_24" icon="pin_drop" :label="'家人(>24)('+Family_24Data.length+'人)'" />
+    <q-tab name="Quit" icon="pin_drop" :label="'退會('+QuitData.length+'人)'" />
+    <q-tab name="Expired" icon="pin_drop" :label="'過期('+ExpiredData.length+'人)'" />
+    <q-tab name="Error" icon="error" :label="'錯誤('+ErrorData.length+'人)'" />
   </q-tabs>
 
   <q-tab-panels
@@ -260,24 +269,15 @@
 import { computed, ref } from "vue";
 import { exportFile, date as qdate } from "quasar";
 import { useSubscription } from "@vue/apollo-composable"
-import LoadingDialog from "components/LoadingDialog.vue"
 import { gql } from "graphql-tag"
 import MemberDetail from "components/Member/MemberDetail.vue";
 import Report from "src/lib/sis"
+import LoadingDialog from "components/LoadingDialog.vue"
+import dateUtil from "src/lib/calculateAge"
 
-function test() {
-  //console.log(Report.isYouthFamily(reportDate, MemberData.value, "3705"))
-  /*
-  MemberData.value.forEach((x) => {
-    //if (x.c_mem_id == "0043") {
-    if (x.MemberRelation1.length > 0)
-      console.log(x.MemberRelation1)
-    //}
-  })
-  */
-}
+
 // variables
-const reportDate = ref(qdate.formatDate(qdate.endOfDate(qdate.subtractFromDate(Date.now(), {month: 1}), 'month'), "YYYY-MM-DD"))
+const reportDate = ref(qdate.formatDate(qdate.endOfDate(qdate.subtractFromDate(Date.now(), {month: 1}), 'month'), "YYYY/MM/DD"))
 const detailModal = ref(false)
 const showMemberID = ref("")
 const activeTab = ref("All")
@@ -344,7 +344,7 @@ const memberListColumns = ref([
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
-    format: (val) => val? qdate.getDateDiff(reportDate.value, val, 'years') : '錯誤'
+    format: (val) => val? dateUtil.calculateAge(val, reportDate) : '錯誤'
   },
   //
   {
@@ -470,90 +470,16 @@ const MemberData = computed(() => {
 const QuitData = computed(() => MemberData.value? MemberData.value.filter((x) => x.d_exit_1 != null): [])
 const YouthData = computed(() => MemberData.value? 
   MemberData.value.filter((x) => Report.sisFilter(reportDate, 'youth', x)
-  /*
-    ( // did not exit membership or exit after report date
-      x.d_exit_1 == null ||
-      x.d_exit_1 && qdate.getDateDiff(x.d_exit_1, reportDate.value) > 0
-    ) &&
-    ( // did not expire membership or expire after report date
-      (x.d_expired_1 == null) || 
-      (x.d_expired_1 && qdate.getDateDiff(x.d_expired_1, reportDate.value) > 0)
-    ) &&
-    ( // is age 15-24 in the report month
-      qdate.isBetweenDates(
-        x.d_birth,
-        qdate.startOfDate(qdate.subtractFromDate(reportDate.value, {years: 25}), 'month'),
-        qdate.endOfDate(qdate.subtractFromDate(reportDate.value, {years: 15}), 'month'), {
-          inclusiveFrom: true, inclusiveTo: true
-        }
-      )
-    ) && (
-      (
-        // for report months Jan-Mar, May-Dec
-        qdate.formatDate(reportDate.value, "M") != 4 && 
-        ( // enter within report month
-          qdate.isBetweenDates(
-            x.d_enter_1, 
-            qdate.startOfDate(reportDate.value, 'month'),
-            qdate.endOfDate(reportDate.value, 'month'), 
-            {
-              inclusiveFrom: true, inclusiveTo: true
-            }
-          )
-        ) || 
-        ( // renew within report month
-          qdate.isBetweenDates(
-            x.d_renew_1, 
-            qdate.startOfDate(reportDate.value, 'month'),
-            qdate.endOfDate(reportDate.value, 'month'), 
-            {
-              inclusiveFrom: true, inclusiveTo: true
-            }
-          )
-        )
-      ) ||
-      (
-        // for report months Apr
-        qdate.formatDate(reportDate.value, "M") == 4 && 
-        ( // enter before end of report month
-          qdate.getDateDiff(x.d_enter_1, qdate.endOfDate(reportDate.value, 'month')) < 0
-        ) && 
-        ( // no expiry date or expiry after begin of report month
-          !x.d_expired_1 ||
-          qdate.getDateDiff(x.d_expired_1, qdate.startOfDate(reportDate.value, 'month')) > 0
-        )
-      )
-    ) */
-  ) : [])
+) : [])
 
-const Family_15Data = computed(() => MemberData.value? 
-    MemberData.value.filter((x) => 
-      Report.sisFilter(reportDate, 'child', x)
-      /*
-      x.c_udf_1 != null &&
-      x.c_udf_1 == "青年義工會員" &&
-      x.d_exit_1 == null &&
-      (
-        (x.d_expired_1 == null) || 
-        (x.d_expired_1 && qdate.getDateDiff(x.d_expired_1, reportDate.value) > 0)
-      ) &&
-      qdate.getDateDiff(reportDate.value, x.d_birth, 'years') < 15
-      */
-    ) : [])
+const Family_15Data = computed(() => MemberData.value? MemberData.value.filter((x) => 
+  Report.sisFilter(reportDate, 'child', x)
+) : [])
 
+const Family_24Data = computed(() => MemberData.value? MemberData.value.filter((x) => 
+  Report.sisFilter(reportDate, 'family', x)
+): [])
 
-const Family_24Data = computed(() => MemberData.value? 
-    MemberData.value.filter((x) => 
-      x.c_udf_1 != null &&
-      x.c_udf_1 == "青年家人義工" &&
-      x.d_exit_1 == null &&
-      (
-        ( x.d_expired_1 == null) || 
-        (x.d_expired_1 && qdate.getDateDiff(x.d_expired_1, reportDate.value) > 0)
-      ) &&
-      qdate.getDateDiff(reportDate.value, x.d_birth, 'years') > 24
-    )
-    : [])
 const ErrorData = computed(() => MemberData.value? MemberData.value.filter((x) => 
   (
     x.d_birth == null || 

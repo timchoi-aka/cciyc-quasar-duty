@@ -7,6 +7,7 @@ function sisFilter(reportDate, reportType, x) {
     qdate.startOfDate(qdate.subtractFromDate(reportDate.value, {years: 15}), 'month')
   ) ) */
   return (
+    x.c_udf_1 != "社區義工" &&
     ( // did not exit membership or exit after report date
       x.d_exit_1 == null ||
       x.d_exit_1 && qdate.getDateDiff(x.d_exit_1, reportDate.value) > 0
@@ -26,12 +27,23 @@ function sisFilter(reportDate, reportType, x) {
           }
         )
       ) ||
-      // children: is aged below 15
+      // children: is aged below 15 and isYouthFamily
       ( reportType == 'child' &&
         qdate.getDateDiff(
           x.d_birth,
           qdate.endOfDate(qdate.subtractFromDate(reportDate.value, {years: 15}), 'month')
-        ) > 0
+        ) > 0 &&
+        x.isYouthFamily
+      ) ||
+      // family: is aged 25 or above and isYouthFamily and family Membership
+      (
+        reportType == 'family' &&
+        qdate.getDateDiff(
+          x.d_birth,
+          qdate.startOfDate(qdate.subtractFromDate(reportDate.value, {years: 25}), 'month')
+        ) < 0 &&
+        x.isYouthFamily &&
+        x.c_udf_1 == "青年家人義工"
       )
     ) && (
       (

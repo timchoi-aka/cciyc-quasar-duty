@@ -3,7 +3,7 @@
    <q-dialog v-model="waitingAsync" position="bottom">
     <LoadingDialog message="處理中"/>
   </q-dialog>
-
+  
   <div class="col-12 row justify-center">
     <q-chip class="bg-grey-4" size="lg" square :label="props.type"/>
     <q-btn flat v-if="!edit && !props.isSubmitted" icon="edit" class="bg-white text-primary" @click="startEdit"/>

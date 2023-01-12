@@ -1,3 +1,4 @@
+/*
 import dateHeader from 'src/lib/date.js'
 
 function generateTableColumns(renderDate, withSlot = true) {
@@ -45,3 +46,4 @@ function generateTableColumns(renderDate, withSlot = true) {
 export default {
   generateTableColumns,
 }
+*/

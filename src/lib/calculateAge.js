@@ -1,8 +1,8 @@
 import { date as qdate } from "quasar";
 
-function calculateAge(dob) {
+function calculateAge(dob, targetDate) {
   if (qdate.isValid(dob)) { 
-    let now = new Date();
+    let now = qdate.isValid(targetDate.value)? qdate.extractDate(targetDate.value, 'YYYY/MM/DD'): new Date();
     let birth = new Date(dob);
     let birthyear = birth.getFullYear();
     birth = qdate.adjustDate(birth, {year: now.getFullYear()})

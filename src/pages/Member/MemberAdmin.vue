@@ -36,6 +36,7 @@ const awaitServerResponse = ref(0)
 const migrated_relations = ref([])
 const updateQueue = ref([])
 const consolidateQueue = ref([])
+const updateMembershipQueue = ref([])
 const membershipMap = ref({
   "個人會員": "個人會員",
   "永久會員": "永久會員",
@@ -49,14 +50,14 @@ const membershipMap = ref({
   "青年義工會員(12-14歲)": "青年義工會員",
   "青年家人義工會員": "青年家人義工",
   "青年家人義工": "青年家人義工",
-  "家庭會員": "家庭會員",
+  "家庭會員": "個人會員",
   "": ""
 })
 
 const upsertCount = ref(1000)
-
+const updateMembershipUpsertCount = ref(1000)
 // watcher
-watch([updateQueue.value, consolidateQueue.value], ([newUpdateQueue, newConsolidateQueue], [oldUpdateQueue, oldConsolidateQueue])  => { 
+watch([updateQueue.value, consolidateQueue.value, updateMembershipQueue.value], ([newUpdateQueue, newConsolidateQueue, newUpdateMembershipQueue], [oldUpdateQueue, oldConsolidateQueue, oldUpdateMembershipQueue])  => { 
   if (newUpdateQueue.length > 0) {
     console.log("updating: " + newUpdateQueue[0])
     awaitServerResponse.value++
@@ -89,6 +90,20 @@ watch([updateQueue.value, consolidateQueue.value], ([newUpdateQueue, newConsolid
       d_expired_1: newConsolidateQueue[0].d_expired_1
     })
     */
+  }
+
+  if (newUpdateMembershipQueue.length > 0) {
+    //console.log("newConsolidateQueue:" + JSON.stringify(newConsolidateQueue))
+    if (newUpdateMembershipQueue.length < updateMembershipUpsertCount.value) updateMembershipUpsertCount.value = newUpdateMembershipQueue.length
+    console.log("updating membership: " + newUpdateMembershipQueue[0].c_mem_id + "-" + newUpdateMembershipQueue[updateMembershipUpsertCount.value-1].c_mem_id)
+    
+    let upsertObjects = [] 
+    for (let i = 0; i < updateMembershipUpsertCount.value; i++) {
+      upsertObjects = [...upsertObjects, newUpdateMembershipQueue[i]]
+    }
+    updateMemberStatus({
+     upsertObjects: upsertObjects
+    })
   }
 })
 
@@ -278,7 +293,7 @@ function consolidateMembership() {
         let d_enter_1 = member.d_enter_1
         
         if (!b_mem_type1) {
-          if (member.b_mem_type2) {
+          if (member.b_mem_type2 && member.d_expired_2 && member.d_expired_2 > member.d_expired_1) {
             hasChange = true
             b_mem_type1 = true
             c_udf_1 = "青年義工會員"
@@ -286,7 +301,7 @@ function consolidateMembership() {
             d_exit_1 = member.d_exit_2
             d_renew_1 = member.d_renew_2
             d_expired_1 = member.d_expired_2
-          } else if (member.b_mem_type3) {
+          } else if (member.b_mem_type3 && member.d_expired_3 && member.d_expired_3 > member.d_expired_1) {
             hasChange = true
             b_mem_type1 = true
             c_udf_1 = "社區義工"
@@ -294,7 +309,7 @@ function consolidateMembership() {
             d_exit_1 = member.d_exit_3
             d_renew_1 = member.d_renew_3
             d_expired_1 = member.d_expired_3
-          } else if (member.b_mem_type4) {
+          } else if (member.b_mem_type4 && member.d_expired_4 && member.d_expired_4 > member.d_expired_1) {
             hasChange = true
             b_mem_type1 = true
             c_udf_1 = "青年家人義工"
@@ -358,6 +373,8 @@ migrateRelation_Error((error) => {
 
 updateMemberStatus_Completed((result) => {
   console.log(JSON.stringify(result))
+  awaitServerResponse.value--
+  updateMembershipQueue.value.splice(0, updateMembershipUpsertCount.value)
 })
 
 onResult((result) => {
@@ -476,8 +493,9 @@ function updateMemberStatus4() {
         
         if (d_expired_1 == null || qdate.getDateDiff(Date.now(), d_expired_1) < 0) {
           b_mem_type1 = true
-        }
-        // console.log(member.c_mem_id + ":" + original_b_mem_type1 + ":" + b_mem_type1 + ":" + d_expired_1)
+        } else b_mem_type1 = false
+        
+        //console.log(member.c_mem_id + ":" + original_b_mem_type1 + ":" + b_mem_type1 + ":" + d_expired_1 + ":" + qdate.getDateDiff(Date.now(), d_expired_1))
         // expired or quit, set active member status to false
         if (b_mem_type1 != original_b_mem_type1) {
           queue.push({
@@ -487,11 +505,15 @@ function updateMemberStatus4() {
         }
       }
     })      
-    
+    console.log("datasize: " + queue.length)
     if (queue.length > 0) {
+      updateMembershipQueue.value.push(...queue)
+      
+      /* controlled by watcher
       updateMemberStatus({
         upsertObjects: queue
       })
+      */
     }
   }
 }
