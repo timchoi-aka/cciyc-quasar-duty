@@ -28,7 +28,6 @@
       <MemberDetail v-model="showMemberID"/>
     </q-card>
   </q-dialog>
-
   
   <q-input filled v-model="reportDate" mask="date" :rules="['date']">
     <template v-slot:prepend>
@@ -46,8 +45,8 @@
       </q-icon>
     </template>
   </q-input>
+  
   <!--<q-date v-model="reportDate" default-view="Months"/>-->
-
   <q-tabs v-model="activeTab" inline-label align="left" class="desktop-only bg-primary text-white">
     <q-tab name="All" icon="source" label="全部" />
     <q-tab name="Youth" icon="pin_drop" label="青年" />
@@ -83,10 +82,18 @@
           <q-btn
             color="primary"
             icon-right="archive"
+            label="匯出Excel"
+            no-caps
+            @click="exportExcel(MemberData)"
+          />
+          <!--
+          <q-btn
+            color="primary"
+            icon-right="archive"
             label="下載CSV"
             no-caps
             @click="exportTable(MemberData)"
-          />
+          />-->
         </template>
       </q-table>
     </q-tab-panel>
@@ -109,9 +116,9 @@
           <q-btn
             color="primary"
             icon-right="archive"
-            label="下載CSV"
+            label="匯出Excel"
             no-caps
-            @click="exportTable(QuitData)"
+            @click="exportExcel(QuitData)"
           />
         </template>
       </q-table>
@@ -135,9 +142,9 @@
           <q-btn
             color="primary"
             icon-right="archive"
-            label="下載CSV"
+            label="匯出Excel"
             no-caps
-            @click="exportTable(YouthData)"
+            @click="exportExcel(YouthData)"
           />
         </template>
       </q-table>
@@ -161,9 +168,9 @@
           <q-btn
             color="primary"
             icon-right="archive"
-            label="下載CSV"
+            label="匯出Excel"
             no-caps
-            @click="exportTable(Family_15Data)"
+            @click="exportExcel(Family_15Data)"
           />
         </template>
       </q-table>
@@ -187,9 +194,9 @@
           <q-btn
             color="primary"
             icon-right="archive"
-            label="下載CSV"
+            label="匯出Excel"
             no-caps
-            @click="exportTable(Family_24Data)"
+            @click="exportExcel(Family_24Data)"
           />
         </template>
       </q-table>
@@ -213,9 +220,9 @@
           <q-btn
             color="primary"
             icon-right="archive"
-            label="下載CSV"
+            label="匯出Excel"
             no-caps
-            @click="exportTable(ExpiredData)"
+            @click="exportExcel(ExpiredData)"
           />
         </template>
       </q-table>
@@ -239,9 +246,9 @@
           <q-btn
             color="primary"
             icon-right="archive"
-            label="下載CSV"
+            label="匯出Excel"
             no-caps
-            @click="exportTable(ErrorData)"
+            @click="exportExcel(ErrorData)"
           />
         </template>
       </q-table>
@@ -256,7 +263,19 @@ import { useSubscription } from "@vue/apollo-composable"
 import LoadingDialog from "components/LoadingDialog.vue"
 import { gql } from "graphql-tag"
 import MemberDetail from "components/Member/MemberDetail.vue";
+import Report from "src/lib/sis"
 
+function test() {
+  //console.log(Report.isYouthFamily(reportDate, MemberData.value, "3705"))
+  /*
+  MemberData.value.forEach((x) => {
+    //if (x.c_mem_id == "0043") {
+    if (x.MemberRelation1.length > 0)
+      console.log(x.MemberRelation1)
+    //}
+  })
+  */
+}
 // variables
 const reportDate = ref(qdate.formatDate(qdate.endOfDate(qdate.subtractFromDate(Date.now(), {month: 1}), 'month'), "YYYY-MM-DD"))
 const detailModal = ref(false)
@@ -367,6 +386,24 @@ const memberListColumns = ref([
         ? "永久"
         : qdate.formatDate(val, "YYYY年M月D日"),
   },
+  {
+    name: "isYouthFamily",
+    label: "青年家人",
+    field: "isYouthFamily",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+    format: (val) => val? '是': ''
+  },
+  {
+    name: "youthMemberName",
+    label: "青年家人姓名",
+    field: "youthMemberName",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+    format: (val) => [...val]
+  },
 ])
 
 // query - load graphql subscription on member list
@@ -385,44 +422,130 @@ const { result, loading } = useSubscription(gql`
       d_exit_1
       d_renew_1
       d_enter_1
+      MemberRelation1 {
+        c_mem_id_1
+        c_mem_id_2
+        relation
+        uuid
+      }
+      MemberRelation2 {
+        c_mem_id_1
+        c_mem_id_2
+        relation
+        uuid
+      }
     }
   }`);
 
+const tableHeader = {
+  c_mem_id: "會員號碼",
+  b_mem_type1: "會藉有效",
+  b_mem_type10: "青年家人",
+  c_name: "姓名",
+  c_name_other: "英文姓名",
+  c_sex: "性別",
+  c_udf_1: "會藉",
+  d_birth: "出生日期",
+  d_expired_1: "屆滿日期",
+  d_exit_1: "退會日期",
+  d_renew_1: "續會日期",
+  d_enter_1: "人會日期",
+  isYouthFamily: "青年家人",
+  youthMemberName: "青年家人姓名"
+}
 
 // computed
-const MemberData = computed(() => result.value?.Member??[])
+const MemberData = computed(() => {
+  let res = []
+  if (result.value) {
+    result.value.Member.forEach((x) => {
+      res.push({
+        ...x,
+        ...Report.isYouthFamily(reportDate, result.value.Member, x.c_mem_id)
+      })
+    })
+  }
+  return res
+})
 const QuitData = computed(() => MemberData.value? MemberData.value.filter((x) => x.d_exit_1 != null): [])
 const YouthData = computed(() => MemberData.value? 
-  MemberData.value.filter((x) => 
-    x.c_udf_1 != null &&
-    x.d_exit_1 == null &&
-    (
+  MemberData.value.filter((x) => Report.sisFilter(reportDate, 'youth', x)
+  /*
+    ( // did not exit membership or exit after report date
+      x.d_exit_1 == null ||
+      x.d_exit_1 && qdate.getDateDiff(x.d_exit_1, reportDate.value) > 0
+    ) &&
+    ( // did not expire membership or expire after report date
       (x.d_expired_1 == null) || 
       (x.d_expired_1 && qdate.getDateDiff(x.d_expired_1, reportDate.value) > 0)
     ) &&
-    (
-      qdate.getDateDiff(reportDate.value, x.d_birth, 'years') >= 15 &&
-      qdate.getDateDiff(reportDate.value, x.d_birth, 'years') <= 24
-    )
+    ( // is age 15-24 in the report month
+      qdate.isBetweenDates(
+        x.d_birth,
+        qdate.startOfDate(qdate.subtractFromDate(reportDate.value, {years: 25}), 'month'),
+        qdate.endOfDate(qdate.subtractFromDate(reportDate.value, {years: 15}), 'month'), {
+          inclusiveFrom: true, inclusiveTo: true
+        }
+      )
+    ) && (
+      (
+        // for report months Jan-Mar, May-Dec
+        qdate.formatDate(reportDate.value, "M") != 4 && 
+        ( // enter within report month
+          qdate.isBetweenDates(
+            x.d_enter_1, 
+            qdate.startOfDate(reportDate.value, 'month'),
+            qdate.endOfDate(reportDate.value, 'month'), 
+            {
+              inclusiveFrom: true, inclusiveTo: true
+            }
+          )
+        ) || 
+        ( // renew within report month
+          qdate.isBetweenDates(
+            x.d_renew_1, 
+            qdate.startOfDate(reportDate.value, 'month'),
+            qdate.endOfDate(reportDate.value, 'month'), 
+            {
+              inclusiveFrom: true, inclusiveTo: true
+            }
+          )
+        )
+      ) ||
+      (
+        // for report months Apr
+        qdate.formatDate(reportDate.value, "M") == 4 && 
+        ( // enter before end of report month
+          qdate.getDateDiff(x.d_enter_1, qdate.endOfDate(reportDate.value, 'month')) < 0
+        ) && 
+        ( // no expiry date or expiry after begin of report month
+          !x.d_expired_1 ||
+          qdate.getDateDiff(x.d_expired_1, qdate.startOfDate(reportDate.value, 'month')) > 0
+        )
+      )
+    ) */
   ) : [])
 
 const Family_15Data = computed(() => MemberData.value? 
     MemberData.value.filter((x) => 
+      Report.sisFilter(reportDate, 'child', x)
+      /*
       x.c_udf_1 != null &&
-      x.c_udf_1.includes("家人") &&
+      x.c_udf_1 == "青年義工會員" &&
       x.d_exit_1 == null &&
       (
         (x.d_expired_1 == null) || 
         (x.d_expired_1 && qdate.getDateDiff(x.d_expired_1, reportDate.value) > 0)
       ) &&
       qdate.getDateDiff(reportDate.value, x.d_birth, 'years') < 15
+      */
     ) : [])
 
 
 const Family_24Data = computed(() => MemberData.value? 
     MemberData.value.filter((x) => 
       x.c_udf_1 != null &&
-      x.c_udf_1.includes("家人") &&
+      x.c_udf_1 == "青年家人義工" &&
       x.d_exit_1 == null &&
       (
         ( x.d_expired_1 == null) || 
@@ -450,6 +573,42 @@ const ExpiredData = computed(() => MemberData.value? MemberData.value.filter((x)
 ): [])
 
 // functions
+function exportExcel(datasource) {
+  //console.log(memberListColumns.value.map(col => wrapCsvValue(col.label)))
+  /*
+  let data = datasource.map(row => memberListColumns.value.map(col => wrapCsvValue(
+      typeof col.field === 'function'
+        ? col.field(row)
+        : row[ col.field === void 0 ? col.name : col.field ],
+      col.format,
+      row
+    )))
+  //console.log(data)
+  
+  for (const row of data) {
+    for (const item of row) {
+      console.log(item)
+    }
+  }
+  */
+  
+  let content = jsonToXLS(datasource)
+  
+  const status = exportFile(
+    'CCIYC-Report.xls',
+    content,
+    'text/xls'
+  )
+
+  if (status !== true) {
+    $q.notify({
+      message: 'Browser denied file download...',
+      color: 'negative',
+      icon: 'warning'
+    })
+  }
+  
+}
 function rowDetail(evt, row, index) {
   if (evt.target.nodeName === 'TD') {
     detailModal.value = true;
@@ -501,94 +660,48 @@ function wrapCsvValue (val, formatFn, row) {
   // .split('\n').join('\\n')
   // .split('\r').join('\\r')
 
-  return `"${formatted}"`
+  //return `"${formatted}"`
+  return `${formatted}`
 }
 
 // export to xls functions
 // mime type [xls, csv]
-const type = {
-  type: String,
-  default: "xls",
-}
+const type = "xls"
 
 // Json to download
-const data = {
-  type: Array,
-  required: false,
-  default: null,
-}
+const data = null
     
 // fields inside the Json Object that you want to export
 // if no given, all the properties in the Json are exported
-const fields = {
-  type: Object,
-  default: () => null,
-}
+const fields = () => null
     
 // this prop is used to fix the problem with other components that use the
 // variable fields, like vee-validate. exportFields works exactly like fields
-const exportFields = {
-  type: Object,
-  default: () => null,
-}
+const exportFields = () => null
 
 // Use as fallback when the row has no field values
-const defaultValue = {
-  type: String,
-  required: false,
-  default: "",
-}
+const defaultValue = ""
 
 // Title(s) for the data, could be a string or an array of strings (multiple titles)
-const header = {
-  default: null,
-}
+const header = null
 
 // Footer(s) for the data, could be a string or an array of strings (multiple footers)
-const footer = {
-  default: null,
-}
+const footer = null
+
 // filename to export
-const name = {
-  type: String,
-  default: "data.xls",
-}
+const name = "data.xls"
  
-const fetch = {
-  type: Function,
-}
     
-const meta = {
-  type: Array,
-  default: () => [],
-}
+const meta = () => []
  
-const worksheet = {
-  type: String,
-  default: "Sheet1",
-}
+const worksheet = "Sheet1"
     
-//event before generate was called
-const beforeGenerate = {
-  type: Function,
-}
-    
-//event before download pops up
-const beforeFinish = {
-  type: Function,
-}
-    
+
 // Determine if CSV Data should be escaped
-const escapeCsv = {
-  type: Boolean,
-  default: true,
-}
+const escapeCsv = true
 
 // long number stringify
-const stringifyLongNum = {
-  type: Boolean,
-  default: false,
-}
+const stringifyLongNum = true
 
 function jsonToXLS(data) {
   let xlsTemp =
@@ -596,21 +709,43 @@ function jsonToXLS(data) {
   let xlsData = "<thead>";
   const colspan = Object.keys(data[0]).length;
   //Header
+  // const header = this.header || this.$attrs.title;
   if (header) {
-    xlsData += this.parseExtraData(
+    xlsData += parseExtraData(
       header,
       '<tr><th colspan="' + colspan + '">${data}</th></tr>'
     );
   }
+  
   //Fields
   xlsData += "<tr>";
-  for (let key in data[0]) {
+  let tableHeader = memberListColumns.value.map(col => wrapCsvValue(col.label))
+  for (let key of tableHeader) {
     xlsData += "<th>" + key + "</th>";
   }
   xlsData += "</tr>";
   xlsData += "</thead>";
+  
+  
+  /*data.map(row => memberListColumns.value.map(col => wrapCsvValue(
+      typeof col.field === 'function'
+        ? col.field(row)
+        : row[ col.field === void 0 ? col.name : col.field ],
+      col.format,
+      row
+    )))*/
+
   //Data
   xlsData += "<tbody>";
+
+  let tableFieldData = data.map(row => memberListColumns.value.map(col => wrapCsvValue(
+                        typeof col.field === 'function'
+                          ? col.field(row)
+                          : row[ col.field === void 0 ? col.name : col.field ],
+                        col.format,
+                        row
+                      )))
+  /*
   data.map(function (item, index) {
     xlsData += "<tr>";
     for (let key in item) {
@@ -623,19 +758,35 @@ function jsonToXLS(data) {
     }
     xlsData += "</tr>";
   });
+  */
+  // ableFieldData)
+  for (const row of tableFieldData) {
+    xlsData += "<tr>"
+    for (const item of row) {
+      xlsData +=
+        "<td>" +
+        preprocessLongNum(
+          valueReformattedForMultilines(item)
+        ) +
+        "</td>";
+    }
+    xlsData += "</tr>";
+  }
   xlsData += "</tbody>";
+  
   //Footer
-  if (this.footer != null) {
+  if (footer != null) {
     xlsData += "<tfoot>";
-    xlsData += this.parseExtraData(
-      this.footer,
+    xlsData += parseExtraData(
+      footer,
       '<tr><td colspan="' + colspan + '">${data}</td></tr>'
     );
     xlsData += "</tfoot>";
   }
+  
   return xlsTemp
     .replace("${table}", xlsData)
-    .replace("${worksheet}", this.worksheet);
+    .replace("${worksheet}", worksheet);
 }
  
 /*
@@ -646,9 +797,9 @@ Transform json data into an CSV file.
 function jsonToCSV(data) {
   var csvData = [];
   //Header
-  const header = this.header || this.$attrs.title;
+  // const header = this.header || this.$attrs.title;
   if (header) {
-    csvData.push(this.parseExtraData(header, "${data}\r\n"));
+    csvData.push(parseExtraData(header, "${data}\r\n"));
   }
   //Fields
   for (let key in data[0]) {
@@ -676,8 +827,8 @@ function jsonToCSV(data) {
     csvData.push("\r\n");
   });
   //Footer
-  if (this.footer != null) {
-    csvData.push(this.parseExtraData(this.footer, "${data}\r\n"));
+  if (footer != null) {
+    csvData.push(parseExtraData(footer, "${data}\r\n"));
   }
   return csvData.join("");
 }
@@ -688,7 +839,7 @@ getProcessedJson
 Get only the data to export, if no fields are set return all the data
 */
 function getProcessedJson(data, header) {
-  let keys = this.getKeys(data, header);
+  let keys = getKeys(data, header);
   let newData = [];
   data.map(function (item, index) {
     let newItem = {};
@@ -737,7 +888,7 @@ function getValue(key, item) {
   if (!field) value = item;
   else if (indexes.length > 1)
     value = getValueFromNestedItem(item, indexes);
-  else value = this.parseValue(item[field]);
+  else value = parseValue(item[field]);
   if (key.hasOwnProperty("callback"))
     value = getValueFromCallback(value, key.callback);
   return value;
@@ -752,7 +903,7 @@ function valueReformattedForMultilines(value) {
 }
 
 function preprocessLongNum(value) {
-  if (this.stringifyLongNum) {
+  if (stringifyLongNum) {
     if (String(value).startsWith("0x")) {
       return value;
     }

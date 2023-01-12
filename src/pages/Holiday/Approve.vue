@@ -217,7 +217,7 @@
           <q-btn
             v-close-popup
             @click="confirmModify"
-            :disable="invalidInModification()"
+            :disable="invalidInModification"
             flat
             color="teal"
             label="確認修改"
@@ -236,7 +236,7 @@
       style="z-index: 1"
     >
       <q-fab
-        v-if="checkForApproval()"
+        v-if="checkForApproval"
         label="批准"
         icon="check"
         color="primary"
@@ -244,15 +244,15 @@
         @click="showApproveDialog = !showApproveDialog"
       />
       <q-fab
-        v-if="checkForModification()"
+        v-if="checkForModification"
         label="修改"
         icon="edit"
         color="warning"
         push
-        @click="buildModifyingRow()"
+        @click="buildModifyingRow"
       />
       <q-fab
-        v-if="checkForApproval()"
+        v-if="checkForApproval"
         label="拒絕"
         icon="close"
         color="red"
@@ -403,7 +403,7 @@
                     color="warning"
                     outline
                     label="修改"
-                    @click="buildModifyingRow()"
+                    @click="buildModifyingRow"
                   />
                 </div>
               </q-card-actions>
@@ -582,6 +582,7 @@ function buildModifyingRow() {
   for (let i = 0; i < modifyingRow.value.length; i++) {
     modifyingRow.value[i].invalidEdit = true;
   }
+  
   showModificationDialog.value = !showModificationDialog.value;
 }
 
@@ -628,19 +629,11 @@ function changeRenderDate(days) {
   }
 }
  
-function checkForApproval() {
-  if (selectedRow.value.length == 0) return false;
-  let i = selectedRow.value.findIndex(
+const checkForApproval = computed(() => selectedRow.value.length > 0? selectedRow.value.findIndex(
     (element) => element.status == "批准" || element.status == "拒絕"
-  );
-  return i == -1;
-}
+  ) == -1: false)
     
-function checkForModification() {
-  if (selectedRow.value.length == 0) return false;
-  let i = selectedRow.value.findIndex((element) => element.status != "批准");
-  return !(i != -1);
-}
+const checkForModification = computed(() => selectedRow.value.length > 0? !(selectedRow.value.findIndex((element) => element.status != "批准") != -1): false)
     
 function customFilter(rows, terms) {
   if (terms.usersSelected.length > 0 || terms.statusSelected.value != "") {

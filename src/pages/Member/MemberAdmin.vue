@@ -3,13 +3,15 @@
   <q-dialog v-model="waitingAsync" position="bottom">
     <LoadingDialog message="處理中" />
   </q-dialog>
-  <q-btn class="q-mt-md q-mx-md" :disable="migrated_relations.length == 0" @click="startMigrateRelation" label="Migrate Relation"/>
-  <q-btn class="q-mt-md q-mx-md" :disable="migrated_relations.length == 0" @click="consolidateMembership" label="Consolidate Membership"/>
-  <q-btn class="q-mt-md q-mx-md" :disable="Members.length == 0" @click="updateYouthRelatedMember" label="Update Youth Relation"/>
+  
+  <q-btn class="q-mt-md q-mx-md" :disable="migrated_relations.length == 0" @click="startMigrateRelation" label="1. Migrate Relation"/>
+  <q-btn class="q-mt-md q-mx-md" :disable="migrated_relations.length == 0" @click="consolidateMembership" label="2. Consolidate Membership"/>
+  <q-btn class="q-mt-md q-mx-md" :disable="Members.length == 0" @click="updateYouthRelatedMember" label="3. Update Youth Relation"/>
+  <q-btn class="q-mt-md q-mx-md" :disable="Members.length == 0" @click="updateMemberStatus4" label="4. Update Member Status"/>
   <div>consolidateQueue:
-    <q-list v-for="item in consolidateQueue" :key="item.c_mem_id">
+    <div v-for="item in consolidateQueue" :key="item.c_mem_id">
       {{item.c_mem_id}},
-    </q-list>  
+    </div>  
   </div>
   <div>updateQueue: 
     <q-list v-for="item in updateQueue" :key="item">
@@ -19,7 +21,7 @@
 </template>
 
 <script setup>
-import { MIGRATE_RELATION, GET_MEMBER_BASIC_AND_RELATED_MEMBER_FROM_IDS, GET_RELATION_BY_PK } from "/src/graphQueries/Member/query.js";
+import { MIGRATE_RELATION, GET_RELATION_BY_PK } from "/src/graphQueries/Member/query.js";
 import { gql } from "graphql-tag"
 import LoadingDialog from "components/LoadingDialog.vue";
 import { ref, computed, watch } from "vue";
@@ -46,9 +48,12 @@ const membershipMap = ref({
   "青年家人義工會員(14歲或以下)": "青年家人義工",
   "青年義工會員(12-14歲)": "青年義工會員",
   "青年家人義工會員": "青年家人義工",
-  "家庭會員": "青年家人義工",
+  "青年家人義工": "青年家人義工",
+  "家庭會員": "家庭會員",
   "": ""
 })
+
+const upsertCount = ref(1000)
 
 // watcher
 watch([updateQueue.value, consolidateQueue.value], ([newUpdateQueue, newConsolidateQueue], [oldUpdateQueue, oldConsolidateQueue])  => { 
@@ -59,7 +64,21 @@ watch([updateQueue.value, consolidateQueue.value], ([newUpdateQueue, newConsolid
   }
 
   if (newConsolidateQueue.length > 0) {
-    console.log("consolidating: " + newConsolidateQueue[0].c_mem_id)
+    //console.log("newConsolidateQueue:" + JSON.stringify(newConsolidateQueue))
+    if (newConsolidateQueue.length < upsertCount.value) upsertCount.value = newConsolidateQueue.length
+    console.log("consolidating records: " + newConsolidateQueue[0].c_mem_id + "-" + newConsolidateQueue[upsertCount.value-1].c_mem_id)
+    
+    // upsertObject
+    //
+    let upsertObjects = [] 
+    for (let i = 0; i < upsertCount.value; i++) {
+      upsertObjects = [...upsertObjects, newConsolidateQueue[i]]
+    }
+    updateMembership({
+     upsertObjects: upsertObjects
+    })
+    //
+    /* per record
     updateMembership({
       c_mem_id: newConsolidateQueue[0].c_mem_id,
       b_mem_type1: newConsolidateQueue[0].b_mem_type1,
@@ -69,8 +88,10 @@ watch([updateQueue.value, consolidateQueue.value], ([newUpdateQueue, newConsolid
       d_renew_1: newConsolidateQueue[0].d_renew_1,
       d_expired_1: newConsolidateQueue[0].d_expired_1
     })
+    */
   }
 })
+
 
 // query
 const { mutate: UpdateYouthMemberStatus } = useMutation(gql`
@@ -93,26 +114,34 @@ const { mutate: UpdateYouthMemberStatus } = useMutation(gql`
     }
   }`)
 
-const { onResult: GetRelationByPK_Completed, variables: updateYouthMemberStatusByMemberID, loading: updatingYouthMemberStatus } = useQuery(GET_RELATION_BY_PK, 
-  {
-    c_mem_id: ""
-  }, {
-    fetchPolicy: 'network-only'
-  })
-
-const { onResult: onRelationResult } = useQuery(MIGRATE_RELATION)
-const { mutate: migrateRelation, onDone: migrateRelation_Completed, onError: migrateRelation_Error } = useMutation(gql`
-  mutation migrateRelation(
-    $migrated_relations: [Relation_insert_input!] = {}
+const { mutate: updateMemberStatus, onDone: updateMemberStatus_Completed } = useMutation(gql`
+  mutation updateMemberStatus(
+    $upsertObjects: [Member_insert_input!] = []
     ) {
-    insert_Relation(objects: $migrated_relations) {
+    insert_Member(
+      objects: $upsertObjects, if_matched: {match_columns: c_mem_id, update_columns: [b_mem_type1]}
+    ) {
+      affected_rows
+    }
+  }
+`)
+// per upsertObject, should be less transsaction but not working, maybe data size too large
+const { mutate: updateMembership, onDone: updateMembership_Completed } = useMutation(gql`
+  mutation updateMembership(
+    $upsertObjects: [Member_insert_input!] = []
+    ) {
+    insert_Member(
+      objects: $upsertObjects, if_matched: {match_columns: c_mem_id, update_columns: [c_udf_1, d_enter_1, d_renew_1, d_exit_1, d_expired_1]}
+    ) {
       affected_rows
     }
   }
 `)
 
+
+/* per record, small transactions but too many transactions
 const { mutate: updateMembership, onDone: updateMembership_Completed } = useMutation(gql`
-mutation updateMembership(
+  mutation updateMembership(
     $c_mem_id: String = "", 
     $c_udf_1: String = "",
     $b_mem_type1: Boolean = false,
@@ -131,6 +160,25 @@ mutation updateMembership(
         d_expired_1: $d_expired_1,
       }) {
       c_mem_id
+    }
+  }
+`)
+*/
+
+const { onResult: GetRelationByPK_Completed, variables: updateYouthMemberStatusByMemberID, loading: updatingYouthMemberStatus } = useQuery(GET_RELATION_BY_PK, 
+  {
+    c_mem_id: ""
+  }, {
+    fetchPolicy: 'network-only'
+  })
+
+const { onResult: onRelationResult } = useQuery(MIGRATE_RELATION)
+const { mutate: migrateRelation, onDone: migrateRelation_Completed, onError: migrateRelation_Error } = useMutation(gql`
+  mutation migrateRelation(
+    $migrated_relations: [Relation_insert_input!] = {}
+    ) {
+    insert_Relation(objects: $migrated_relations) {
+      affected_rows
     }
   }
 `)
@@ -217,53 +265,59 @@ function updateYouthRelatedMember() {
 }
 
 function consolidateMembership() {
+  let queue = []
   if (Members.value) {
     Members.value.forEach((member) => {
-      let hasChange = false
-      let b_mem_type1 = member.b_mem_type1
-      let c_udf_1 = membershipMap.value[member.c_udf_1]
-      let d_exit_1 = member.d_exit_1
-      let d_renew_1 = member.d_renew_1
-      let d_expired_1 = member.d_expired_1
-      let d_enter_1 = member.d_enter_1
-      
-      if (!b_mem_type1) {
-        if (member.b_mem_type2) {
-          hasChange = true
-          b_mem_type1 = true
-          c_udf_1 = "青年義工會員"
-          d_enter_1 = member.d_enter_2
-          d_exit_1 = member.d_exit_2
-          d_renew_1 = member.d_renew_2
-          d_expired_1 = member.d_expired_2
-        } else if (member.b_mem_type3) {
-          hasChange = true
-          b_mem_type1 = true
-          c_udf_1 = "社區義工"
-          d_enter_1 = member.d_enter_3
-          d_exit_1 = member.d_exit_3
-          d_renew_1 = member.d_renew_3
-          d_expired_1 = member.d_expired_3
-        } else if (member.b_mem_type4) {
-          hasChange = true
-          b_mem_type1 = true
-          c_udf_1 = "青年家人義工"
-          d_enter_1 = member.d_enter_4
-          d_exit_1 = member.d_exit_4
-          d_renew_1 = member.d_renew_4
-          d_expired_1 = member.d_expired_4
+      if (member.c_mem_id != "9999") {
+        let hasChange = false
+        let b_mem_type1 = member.b_mem_type1
+        let c_udf_1 = membershipMap.value[member.c_udf_1]
+        let d_exit_1 = member.d_exit_1
+        let d_renew_1 = member.d_renew_1
+        let d_expired_1 = member.d_expired_1
+        let d_enter_1 = member.d_enter_1
+        
+        if (!b_mem_type1) {
+          if (member.b_mem_type2) {
+            hasChange = true
+            b_mem_type1 = true
+            c_udf_1 = "青年義工會員"
+            d_enter_1 = member.d_enter_2
+            d_exit_1 = member.d_exit_2
+            d_renew_1 = member.d_renew_2
+            d_expired_1 = member.d_expired_2
+          } else if (member.b_mem_type3) {
+            hasChange = true
+            b_mem_type1 = true
+            c_udf_1 = "社區義工"
+            d_enter_1 = member.d_enter_3
+            d_exit_1 = member.d_exit_3
+            d_renew_1 = member.d_renew_3
+            d_expired_1 = member.d_expired_3
+          } else if (member.b_mem_type4) {
+            hasChange = true
+            b_mem_type1 = true
+            c_udf_1 = "青年家人義工"
+            d_enter_1 = member.d_enter_4
+            d_exit_1 = member.d_exit_4
+            d_renew_1 = member.d_renew_4
+            d_expired_1 = member.d_expired_4
+          }
         }
-      }
-      if (c_udf_1 == null) c_udf_1 = ""
-      
-      
-      /*
-      if (d_expired_1 != member.d_expired_1) {
-        console.log(member.c_mem_id + ":" + " b_mem_type1: " + member.b_mem_type1 + " member.d_expired_1:" + member.d_expired_1 +  "b_mem_type2: " + member.b_mem_type2 + " member.d_expired_2: " + member.d_expired_2 + " b_mem_type3: " + member.b_mem_type3 + " member.d_expired_3: " + member.d_expired_3 + " b_mem_type4: " + member.b_mem_type4 + " member.d_expired_4: " + member.d_expired_4 + " d_expired_1: " + d_expired_1)
-      }
-      */
-      
-        consolidateQueue.value.push({
+        if (c_udf_1 == null) c_udf_1 = ""
+        
+        // expired or quit, set active member status to false
+        if (
+          d_exit_1 ||
+          (d_expired_1 && qdate.getDateDiff(d_expired_1, Date.now()) < 0)
+          ) b_mem_type1 = false
+        /*
+        if (d_expired_1 != member.d_expired_1) {
+          console.log(member.c_mem_id + ":" + " b_mem_type1: " + member.b_mem_type1 + " member.d_expired_1:" + member.d_expired_1 +  "b_mem_type2: " + member.b_mem_type2 + " member.d_expired_2: " + member.d_expired_2 + " b_mem_type3: " + member.b_mem_type3 + " member.d_expired_3: " + member.d_expired_3 + " b_mem_type4: " + member.b_mem_type4 + " member.d_expired_4: " + member.d_expired_4 + " d_expired_1: " + d_expired_1)
+        }
+        */
+        
+        queue.push({
           c_mem_id: member.c_mem_id,
           b_mem_type1: b_mem_type1,
           c_udf_1: c_udf_1,
@@ -272,8 +326,22 @@ function consolidateMembership() {
           d_renew_1: d_renew_1,
           d_expired_1: d_expired_1
         })
-      
+
+        /*
+        if (queue.length == 100) {
+          consolidateQueue.value.push(...queue)
+          queue = []
+        }
+        */
+      }
     })
+    
+    consolidateQueue.value.push(...queue)
+    /*
+    updateMembership({
+     upsertObjects: queue
+    })
+    */
   }
   
     
@@ -288,6 +356,9 @@ migrateRelation_Error((error) => {
   console.log(JSON.stringify(error))
 })
 
+updateMemberStatus_Completed((result) => {
+  console.log(JSON.stringify(result))
+})
 
 onResult((result) => {
   Members.value = JSON.parse(JSON.stringify(result.data.Member))
@@ -296,7 +367,7 @@ onResult((result) => {
 
 updateMembership_Completed((result) => {
   awaitServerResponse.value--
-  consolidateQueue.value.splice(0, 1)
+  consolidateQueue.value.splice(0, upsertCount.value)
 })
 
 // after getting relation from mem_id, calculate whether this is a youth relative
@@ -393,4 +464,35 @@ GetRelationByPK_Completed((result) => {
   }
   updateQueue.value.splice(0, 1)
 })
+
+function updateMemberStatus4() {
+  if (Members.value) {
+    let queue = []
+    Members.value.forEach((member) => {      
+      if (member.c_mem_id != "9999") {
+        let original_b_mem_type1 = member.b_mem_type1
+        let b_mem_type1 = member.b_mem_type1
+        let d_expired_1 = member.d_expired_1
+        
+        if (d_expired_1 == null || qdate.getDateDiff(Date.now(), d_expired_1) < 0) {
+          b_mem_type1 = true
+        }
+        // console.log(member.c_mem_id + ":" + original_b_mem_type1 + ":" + b_mem_type1 + ":" + d_expired_1)
+        // expired or quit, set active member status to false
+        if (b_mem_type1 != original_b_mem_type1) {
+          queue.push({
+            c_mem_id: member.c_mem_id,
+            b_mem_type1: b_mem_type1,
+          })
+        }
+      }
+    })      
+    
+    if (queue.length > 0) {
+      updateMemberStatus({
+        upsertObjects: queue
+      })
+    }
+  }
+}
 </script>

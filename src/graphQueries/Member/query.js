@@ -217,7 +217,7 @@ export const GET_NAME_FROM_ID = gql`
 
 export const MIGRATE_RELATION = gql`
   query getMemberRelation {
-    Member(where: {b_mem_type1: {_eq: true}}) {
+    Member {
       c_mem_id
       c_mem_relative_memid
       c_mem_relation

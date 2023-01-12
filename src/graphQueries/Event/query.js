@@ -162,6 +162,26 @@ query EVENT_STAT_BY_PK($c_act_code: String) {
     d_act
   }
 }`
+//
+//
+export const APPLICANTS_BY_ACT_CODE = gql`
+subscription ApplicantsByActCode($c_act_code: String = "") {
+  tbl_act_reg (where: {c_act_code: {_eq: $c_act_code}, b_refund: {_eq: false}}) {
+    i_age
+    d_reg
+    d_refund
+    c_type
+    c_tel
+    c_sex
+    c_remarks
+    ID
+    b_refund
+    c_act_code
+    c_mem_id
+    c_name
+    c_receipt_no
+  }
+}`
 
 export const EVENT_APPLY_BY_ACT_CODE = gql`
 subscription EVENT_APPLY_BY_ACT_CODE($c_act_code: String = "") {

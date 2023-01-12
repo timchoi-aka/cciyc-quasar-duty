@@ -1,8 +1,48 @@
-<!-- TODO 咁你出D提醒，令同事知道已經有同名有效會員-->
 <template class="q-mb-md">
   <!-- loading dialog -->
   <q-dialog v-model="waitingAsync" position="bottom">
     <LoadingDialog message="處理中" />
+  </q-dialog>
+
+  <!-- Duplicate Member modal -->
+  <q-dialog
+    v-model="duplicateMemberModal"
+    transition-show="slide-up"
+    transition-hide="slide-down"
+    class="q-pa-none"
+    >
+    <q-card>
+      <q-card-section class="bg-primary text-white text-h6">發現重複會員</q-card-section>
+      <q-card-section class="q-pa-none">
+        <div class="row">
+          <div class="col-6 row bg-yellow-1 items-start content-start q-pa-sm">
+            <span class="col-12 q-pb-md">新會員</span>
+            <span class="col-12">姓名：{{ personalInfo.c_name }}</span>
+            <span class="col-12">英文姓名：{{ personalInfo.c_name_other }}</span>
+            <span class="col-12">出生日期：{{ personalInfo.d_birth }}</span>
+          </div>
+          <div class="col-6 row bg-blue-1 q-pa-sm">
+            <span class="col-12 q-pb-md">舊會員</span>
+            <div v-for="obj in duplicateMemberObject" class="col-12 row q-pb-md">
+              <span class="col-12">會員編號：{{ obj.c_mem_id}}</span>
+              <span class="col-12">姓名：{{ obj.c_name }}</span>
+              <span class="col-12">英文姓名：{{ obj.c_name_other }}</span>
+              <span class="col-12">出生日期：{{ qdate.formatDate(obj.d_birth, "YYYY/MM/DD") }}</span>
+              <span class="col-12">會藉：{{ obj.c_udf_1 }}</span>
+              <span class="col-12">人會日期：{{ qdate.formatDate(obj.d_enter_1, "YYYY/MM/DD") }}</span>
+              <span class="col-12">退會日期：{{ qdate.formatDate(obj.d_exit_1, "YYYY/MM/DD") }}</span>
+              <span class="col-12">屆滿日期：{{ qdate.formatDate(obj.d_expired_1, "YYYY/MM/DD") }}</span>
+              <span class="col-12">續會日期：{{ qdate.formatDate(obj.d_renew_1, "YYYY/MM/DD") }}</span>
+            </div>
+          </div>
+        </div>
+      </q-card-section>
+      <q-card-actions>
+        <q-space/>
+        <q-btn label="取消" class="bg-negative text-white" v-close-popup/>
+        <q-btn label="確定新增" class="bg-primary text-white" v-close-popup @click="addMember"/>
+      </q-card-actions>
+    </q-card>
   </q-dialog>
 
   <!-- print receipt modal -->
@@ -138,7 +178,6 @@
           icon="add"
           @click="
             relationTable.push({
-              
               c_mem_id_1: latestMemberID,
               c_mem_id_2: '',
               relation: '',
@@ -236,7 +275,7 @@
         color="primary"
         icon="add"
         label="新增會員"
-        @click="addMember"
+        @click="checkDuplicate"
       />
     </div>
   </div>
@@ -245,6 +284,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import { useStore } from "vuex";
+import { gql } from "graphql-tag"
 import { date as qdate, is, useQuasar } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
 import MemberRelated from "components/Member/MemberRelated.vue"
@@ -258,14 +298,16 @@ import {
   ADD_MEMBER_AND_RELATION_FROM_ID_UPDATE_RELATED_YOUTH_STATUS,
   ADD_MEMBER_AND_RELATION_FROM_ID_UPDATE_RELATED_YOUTH_STATUS_WITH_PAYMENT
 } from "/src/graphQueries/Member/mutation.js";
-import { useSubscription, useMutation } from "@vue/apollo-composable"
+import { useSubscription, useMutation, useQuery } from "@vue/apollo-composable"
 import ageUtil from "src/lib/calculateAge.js"
 
 // variables
-const relateObject = ref({})
 const awaitServerResponse = ref(0)
 const printReceiptModal = ref(false)
 const printReceiptMember = ref("")
+let addNewRecord = false
+const duplicateMemberModal = ref(false)
+const duplicateMemberObject = ref([])
 
 // save current module
 const $store = useStore();
@@ -282,6 +324,51 @@ const { result: MemberData, loading } = useSubscription(
 const { result: ReceiptData } = useSubscription(
   LATEST_RECEIPT_NO,
 );
+
+
+const { onResult: checkDuplicateMember_Completed, refetch, variables: checkDuplicateMemberVariables } = useQuery(gql`
+  query checkDuplicateMember(
+    $c_name: String = "",
+    $c_name_other: String = "",
+    $d_birth: datetime2
+    ) {
+      Member(
+        where: {
+          _or: [
+            {
+              _and: {
+                c_name: {_eq: $c_name},
+                d_birth: {_eq: $d_birth},
+                b_mem_type1: {_eq: true}
+              }, 
+            },
+            {
+              _and: {
+                c_name_other: {_eq: $c_name_other},
+                d_birth: {_eq: $d_birth},
+                b_mem_type1: {_eq: true}
+              }
+            }
+          ]
+        }
+      ) {
+        c_mem_id,
+        b_mem_type1,
+        b_mem_type10,
+        d_birth,
+        c_name,
+        c_name_other,
+        d_enter_1,
+        d_exit_1,
+        d_expired_1,
+        d_renew_1,
+        c_udf_1,
+      }
+    }`, {
+  c_name: "預設",
+  c_name_other: "預設",
+  d_birth: "",
+})
 
 const { mutate: addMemberFromID, onDone: addMemberFromID_Completed, onError: addMemberFromID_Error } = useMutation(ADD_MEMBER_FROM_ID)
 const { mutate: addMemberFromIDWithPayment, onDone: addMemberFromIDWithPayment_Completed, onError: addMemberFromIDWithPayment_Error} = useMutation(ADD_MEMBER_FROM_ID_WITH_PAYMENT)
@@ -382,6 +469,7 @@ const udf1List = computed(() => [
     value: "社區義工",
   },
 ])
+
 const expiryDate = computed(() => {
   if (
     is.object(memberInfo.value.c_udf_1) &&
@@ -465,6 +553,17 @@ addMemberAndRelationFromIDWithPayment_Completed((result) => {
   postCallback(result)
 })
 
+checkDuplicateMember_Completed((result) => {
+  if (addNewRecord) {
+    addNewRecord = false
+    if (result.data.Member.length == 0) { // no dup
+      addMember()
+    } else {
+      duplicateMemberObject.value = result.data.Member
+      duplicateMemberModal.value = true
+    }
+  }
+})
 
 // error handling
 addMemberFromID_Error((error) => {
@@ -661,23 +760,13 @@ function updateType1Expire() {
   } else memberInfo.value.d_expired_1 = "";
 }
 
-function addMember() {
-  // assign computed value to object
-  memberInfo.value.d_expired_1 = expiryDate.value
-  personalInfo.value.age = age.value
-  
-  let queryString;
-  let memberRelation = ref([]);
-  let receiptDescription = ref("")
-  let price = ref(0)
-  let remark = ref("")
-  const related_ids = ref([])
 
-  // error check before submit
-  let valid = true
+function checkForm() {
+// error check before submit
+let valid = true
   relationTable.value.forEach((rel) => {
     if (rel.name != "" && rel.name != "無此人") {
-      if (rel.relation) {
+      if (rel.relation == "") {
         memberRelation.value.push({
           c_mem_id_1: latestMemberID,
           c_mem_id_2: rel.c_mem_id_2,
@@ -716,7 +805,7 @@ function addMember() {
     valid = false
   }
 
-  if(!is.date(expiryDate.value)) {
+  if(!is.date(new Date(expiryDate.value))) {
     $q.notify({
       message: "請選擇正確會藉！",
       color: "negative",
@@ -725,7 +814,61 @@ function addMember() {
     })
     valid = false
   }
-  if (!valid) return
+  return valid
+}
+
+function checkDuplicate() {
+  if (checkForm()) {
+    addNewRecord = true 
+    let c_name = personalInfo.value.c_name.length > 0 ? personalInfo.value.c_name: "預設"
+    let c_name_other = personalInfo.value.c_name_other.length > 0? personalInfo.value.c_name_other: "預設"
+    let d_birth = personalInfo.value.d_birth
+
+    /*
+    console.log(checkDuplicateMemberVariables.value)
+    console.log("c_name:" + c_name)
+    console.log("c_name_other:" + c_name_other)
+    console.log("d_birth:" + d_birth)
+    */
+    if (
+      checkDuplicateMemberVariables.value.c_name == c_name &&
+      checkDuplicateMemberVariables.value.c_name_other == c_name_other &&
+      checkDuplicateMemberVariables.value.d_birth == d_birth
+      ) {
+        // console.log("refetching")
+        refetch()
+      } else {
+        // console.log("check duplicate again with new variables")
+        checkDuplicateMemberVariables.value = {
+          c_name: c_name,
+          c_name_other: c_name_other,
+          d_birth: d_birth,
+        }
+      }
+  } 
+}
+
+function addMember() {
+  // assign computed value to object
+  memberInfo.value.d_expired_1 = expiryDate.value
+  personalInfo.value.age = age.value
+  
+  let memberRelation = ref([]);
+  let receiptDescription = ref("")
+  let price = ref(0)
+  let remark = ref("")
+  const related_ids = ref([])
+
+  relationTable.value.forEach((rel) => {
+    if (rel.name != "" && rel.name != "無此人" && rel.relation) {
+      memberRelation.value.push({
+        c_mem_id_1: latestMemberID,
+        c_mem_id_2: rel.c_mem_id_2,
+        relation: rel.relation,
+      })
+      related_ids.value.push(rel.c_mem_id_2)
+    } 
+  }); 
 
   switch(memberInfo.value.c_udf_1.value) {
     case "永久會員":

@@ -130,6 +130,9 @@ export default boot(
             tbl_act_reg: {
               keyFields: ["ID"],
             },
+            EventRegistration_to_Member: {
+              keyFields: ["c_mem_id"]
+            },
             tbl_act_session: {
               keyFields: ["c_act_code", "d_act"],
             },

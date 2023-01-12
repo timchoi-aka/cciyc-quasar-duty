@@ -323,8 +323,8 @@
         </div>
         <div v-else>
           <div v-for="(relation, index) in relationTable" :key="index" class="col-12 col-xs-12">
-            <q-btn v-if="$q.screen.lt.sm" outline class="q-mr-sm" icon="person_search" @click="changeMember(relation.c_mem_id_1 == props.modelValue? relation.c_mem_id_2: relation.c_mem_id_1)"/>
-            <q-btn v-else outline class="q-mr-md" icon="person_search" @click="changeMember(relation.c_mem_id_1 == props.modelValue? relation.c_mem_id_2: relation.c_mem_id_1)" label="檢視會員"/>
+            <q-btn v-if="$q.screen.lt.sm && relation.b_mem_type1 && !relation.delete" outline class="q-mr-sm" icon="person_search" @click="changeMember(relation.c_mem_id_1 == props.modelValue? relation.c_mem_id_2: relation.c_mem_id_1)"/>
+            <q-btn v-if="$q.screen.gt.sm && relation.b_mem_type1 && !relation.delete" outline class="q-mr-md" icon="person_search" @click="changeMember(relation.c_mem_id_1 == props.modelValue? relation.c_mem_id_2: relation.c_mem_id_1)" label="檢視會員"/>
             <span v-if="relation.b_mem_type1 && !relation.delete">[{{relation.c_mem_id_1 == props.modelValue? relation.c_mem_id_2: relation.c_mem_id_1}}] {{relation.name}} ({{relation.age}}) - {{relation.relation}}</span>
           </div>
         </div>

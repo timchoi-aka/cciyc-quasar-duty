@@ -6,6 +6,7 @@
       <q-tab name="Apply" icon="approval" label="報名" />
       <q-tab name="Stat" icon="leaderboard" label="統計節數" />
       <q-tab name="PlanEvaluation" icon="summarize" label="計劃檢討" />
+      <q-tab name="Attendance" icon="person_add" label="點名" />
       <FavourateEvent :c_act_code="props.EventID" :username="username" />
       <q-space/>
       <q-btn class="bg-primary text-white" flat icon="close" v-close-popup>
@@ -40,6 +41,10 @@
       <q-tab-panel name="PlanEvaluation">
         <EventEvaluation :EventID="EventID"/>
       </q-tab-panel>
+
+      <q-tab-panel name="Attendance">
+        <Attendance :EventID="EventID"/>
+      </q-tab-panel>
     </q-tab-panels>
   </q-card>
 </template>
@@ -53,6 +58,7 @@ import EventFee from "components/Event/EventFee.vue"
 import EventStat from "components/Event/EventStat.vue"
 import EventApply from "components/Event/EventApply.vue"
 import FavourateEvent from "components/Event/FavourateEvent.vue"
+import Attendance from "components/Event/Attendance.vue"
 
 // props
 const props = defineProps({
