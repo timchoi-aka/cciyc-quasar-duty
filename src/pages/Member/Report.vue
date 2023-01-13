@@ -62,7 +62,7 @@
     <q-tab name="Family_15" icon="pin_drop" :label="'家人(<15)('+Family_15Data.length+'人)'" />
     <q-tab name="Family_24" icon="pin_drop" :label="'家人(>24)('+Family_24Data.length+'人)'" />
     <q-tab name="Quit" icon="pin_drop" :label="'退會('+QuitData.length+'人)'" />
-    <q-tab name="Expired" icon="pin_drop" :label="'過期('+ExpiredData.length+'人)'" />
+    <q-tab name="Expired" icon="pin_drop" :label="'截數月過期('+ExpiredData.length+'人)'" />
     <q-tab name="Error" icon="error" :label="'錯誤('+ErrorData.length+'人)'" />
   </q-tabs>
 
@@ -402,7 +402,7 @@ const memberListColumns = ref([
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
-    format: (val) => [...val]
+    format: (val) => [...val].join(',')
   },
 ])
 
@@ -495,7 +495,8 @@ const ErrorData = computed(() => MemberData.value? MemberData.value.filter((x) =
 
 const ExpiredData = computed(() => MemberData.value? MemberData.value.filter((x) =>
   !x.d_exit_1 &&
-  x.d_expired_1 && qdate.getDateDiff(x.d_expired_1, reportDate.value) < 0
+  x.d_expired_1 && qdate.getDateDiff(x.d_expired_1, reportDate.value) < 0 &&
+  qdate.isBetweenDates(x.d_expired_1, qdate.startOfDate(reportDate.value, 'month'), qdate.endOfDate(reportDate.value, 'month'))
 ): [])
 
 // functions

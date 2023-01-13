@@ -42,8 +42,8 @@ function sisFilter(reportDate, reportType, x) {
           x.d_birth,
           qdate.startOfDate(qdate.subtractFromDate(reportDate.value, {years: 25}), 'month')
         ) < 0 &&
-        x.isYouthFamily &&
-        x.c_udf_1 == "青年家人義工"
+        x.isYouthFamily //&&
+        //x.c_udf_1 == "青年家人義工"
       )
     ) && (
       (
