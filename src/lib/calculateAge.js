@@ -1,8 +1,10 @@
-import { date as qdate } from "quasar";
+import { date as qdate } from "quasar"
+import { unref } from "vue"
 
 function calculateAge(dob, targetDate) {
   if (qdate.isValid(dob)) { 
-    let now = qdate.isValid(targetDate.value)? qdate.extractDate(targetDate.value, 'YYYY/MM/DD'): new Date();
+    let d = unref(targetDate)
+    let now = qdate.isValid(d)? qdate.extractDate(d, 'YYYY/MM/DD'): new Date();
     let birth = new Date(dob);
     let birthyear = birth.getFullYear();
     birth = qdate.adjustDate(birth, {year: now.getFullYear()})
