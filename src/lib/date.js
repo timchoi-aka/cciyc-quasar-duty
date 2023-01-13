@@ -71,7 +71,6 @@ function generateTableColumns(renderDate, withSlot = true) {
 }
 
 export default {
-  formatDate,
   daysOfWeek,
   mergeDateSlot,
   splitDateSlot,
