@@ -5,7 +5,7 @@
   </q-dialog>
   
   <q-btn class="q-mt-md q-mx-md" :disable="migrated_relations.length == 0" @click="startMigrateRelation" label="1. Migrate Relation"/>
-  <q-btn class="q-mt-md q-mx-md" :disable="migrated_relations.length == 0" @click="consolidateMembership" label="2. Consolidate Membership"/>
+  <q-btn class="q-mt-md q-mx-md" :disable="Members.length == 0" @click="consolidateMembership" label="2. Consolidate Membership"/>
   <q-btn class="q-mt-md q-mx-md" :disable="Members.length == 0" @click="updateYouthRelatedMember" label="3. Update Youth Relation"/>
   <q-btn class="q-mt-md q-mx-md" :disable="Members.length == 0" @click="updateMemberStatus4" label="4. Update Member Status"/>
   <div>consolidateQueue:
@@ -293,7 +293,7 @@ function consolidateMembership() {
         let d_enter_1 = member.d_enter_1
         
         if (!b_mem_type1) {
-          if (member.b_mem_type2 && member.d_expired_2 && member.d_expired_2 > member.d_expired_1) {
+          if (member.b_mem_type2 && member.d_expired_2 && (member.d_expired_2 > member.d_expired_1 || !member.d_expired_1)) {
             hasChange = true
             b_mem_type1 = true
             c_udf_1 = "青年義工會員"
@@ -301,7 +301,7 @@ function consolidateMembership() {
             d_exit_1 = member.d_exit_2
             d_renew_1 = member.d_renew_2
             d_expired_1 = member.d_expired_2
-          } else if (member.b_mem_type3 && member.d_expired_3 && member.d_expired_3 > member.d_expired_1) {
+          } else if (member.b_mem_type3 && member.d_expired_3 && (member.d_expired_3 > member.d_expired_1 || !member.d_expired_1)) {
             hasChange = true
             b_mem_type1 = true
             c_udf_1 = "社區義工"
@@ -309,7 +309,7 @@ function consolidateMembership() {
             d_exit_1 = member.d_exit_3
             d_renew_1 = member.d_renew_3
             d_expired_1 = member.d_expired_3
-          } else if (member.b_mem_type4 && member.d_expired_4 && member.d_expired_4 > member.d_expired_1) {
+          } else if (member.b_mem_type4 && member.d_expired_4 && (member.d_expired_4 > member.d_expired_1 || !member.d_expired_1)) {
             hasChange = true
             b_mem_type1 = true
             c_udf_1 = "青年家人義工"
@@ -409,10 +409,11 @@ GetRelationByPK_Completed((result) => {
           // check relation member 2 youth status
           // criterion: b_mem_type1 valid && d_exit_1 invalid && relatedMember membership is not yet expired && relatedMember age is 15-24
           if (rm.RelationMember2) { // only proceed if relation member exist
-            isYouth = rm.RelationMember2.b_mem_type1 && !rm.RelationMember2.d_exit_1 && qdate.getDateDiff(Date.now(), rm.RelationMember2.d_expired_1) < 0 && ageUtil.calculateAge(rm.RelationMember2.d_birth) >= 15 && ageUtil.calculateAge(rm.RelationMember2.d_birth) <= 24
-          
+            let tempYouth = rm.RelationMember2.b_mem_type1 && !rm.RelationMember2.d_exit_1 && qdate.getDateDiff(Date.now(), rm.RelationMember2.d_expired_1) < 0 && ageUtil.calculateAge(rm.RelationMember2.d_birth) >= 15 && ageUtil.calculateAge(rm.RelationMember2.d_birth) <= 24
+            // is one of the related member is youth, set isYouth to true
+            if (tempYouth) isYouth = tempYouth
             // if target is youth && this member is a youth membership, determine expiry date
-            if (isYouth && youthMembership) {
+            if (tempYouth && youthMembership) {
               // determine this member expiry base on relatedMember membership and age
               // console.log("membership:" + rm.RelationMember2.c_udf_1)
               switch (rm.RelationMember2.c_udf_1) {
@@ -432,10 +433,11 @@ GetRelationByPK_Completed((result) => {
           // check relation member 2 youth status
           // criterion: b_mem_type1 valid && d_exit_1 invalid && relatedMember membership is not yet expired && relatedMember age is 15-24
           if (rm.RelationMember1) { // only proceed if relation member exist
-            isYouth = rm.RelationMember1.b_mem_type1 && !rm.RelationMember1.d_exit_1 && qdate.getDateDiff(Date.now(), rm.RelationMember1.d_expired_1) < 0 && ageUtil.calculateAge(rm.RelationMember1.d_birth) >= 15 && ageUtil.calculateAge(rm.RelationMember1.d_birth) <= 24
-          
+            let tempYouth = rm.RelationMember1.b_mem_type1 && !rm.RelationMember1.d_exit_1 && qdate.getDateDiff(Date.now(), rm.RelationMember1.d_expired_1) < 0 && ageUtil.calculateAge(rm.RelationMember1.d_birth) >= 15 && ageUtil.calculateAge(rm.RelationMember1.d_birth) <= 24
+            // is one of the related member is youth, set isYouth to true
+            if (tempYouth) isYouth = tempYouth
             // if target is youth && this member is a youth membership, determine expiry date
-            if (isYouth && youthMembership) {
+            if (tempYouth && youthMembership) {
               // determine this member expiry base on relatedMember membership and age
               // console.log("membership:" + rm.RelationMember2.c_udf_1)
               switch (rm.RelationMember1.c_udf_1) {
@@ -461,11 +463,11 @@ GetRelationByPK_Completed((result) => {
       "action": "系統自動更新:" + result.data.Member_by_pk.c_mem_id + " 青年家人狀態-" + isYouth + " 會藉屆滿日期-" + qdate.formatDate(currentExpiryDate, "YYYY-MM-DD"),
     })
     
-    if (youthMembership) {
+    if (isYouth && youthMembership) {
       UpdateYouthMemberStatus({
         c_mem_id: result.data.Member_by_pk.c_mem_id,
         b_mem_type10: isYouth,
-        d_expired_1: qdate.formatDate(currentExpiryDate, "YYYY/MM/DD"),
+        d_expired_1: qdate.formatDate(currentExpiryDate, "YYYY-MM-DDTHH:mm:ss"),
         logObject: logObject.value
       })
       console.log("setting " + result.data.Member_by_pk.c_mem_id + " b_mem_type10 to " + isYouth + " expiryDate: " + currentExpiryDate)
@@ -491,7 +493,7 @@ function updateMemberStatus4() {
         let b_mem_type1 = member.b_mem_type1
         let d_expired_1 = member.d_expired_1
         
-        if (d_expired_1 == null || qdate.getDateDiff(Date.now(), d_expired_1) < 0) {
+        if (qdate.getDateDiff(Date.now(), d_expired_1) < 0) {
           b_mem_type1 = true
         } else b_mem_type1 = false
         

@@ -1,0 +1,34 @@
+{
+
+  "vetur.experimental.templateInterpolationService": true,
+  "cSpell.words": [
+    "ATTACHHOLIDAY",
+    "borderless",
+    "datasize",
+    "dateslot",
+    "DDMMYYYY",
+    "docdate",
+    "draggables",
+    "fbadmin",
+    "housekeep",
+    "Jkzn",
+    "liman",
+    "MDDYYYY",
+    "neccessary",
+    "persistedstate",
+    "printme",
+    "sheung",
+    "sjbg",
+    "sturcture",
+    "Telp",
+    "YYYYMMDD"
+  ],
+  "vue3snippets.enable-compile-vue-file-on-did-save-code": true,
+  "azureFunctions.deploySubpath": "src/api/schedule",
+  "azureFunctions.postDeployTask": "npm install (functions)",
+  "azureFunctions.projectLanguage": "JavaScript",
+  "azureFunctions.projectRuntime": "~4",
+  "debug.internalConsoleOptions": "neverOpen",
+  "azureFunctions.projectSubpath": "src/api/schedule",
+  "azureFunctions.preDeployTask": "npm prune (functions)"
+}

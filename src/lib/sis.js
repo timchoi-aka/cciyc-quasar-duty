@@ -8,13 +8,13 @@ function sisFilter(reportDate, reportType, x) {
   ) ) */
   return (
     x.c_udf_1 != "社區義工" &&
-    ( // did not exit membership or exit after report date
+    ( // did not exit membership or exit after start of report month
       x.d_exit_1 == null ||
-      x.d_exit_1 && qdate.getDateDiff(x.d_exit_1, reportDate.value) > 0
+      x.d_exit_1 && qdate.getDateDiff(x.d_exit_1, qdate.startOfDate(reportDate.value, 'month')) > 0
     ) &&
-    ( // did not expire membership or expire after report date
+    ( // did not expire membership or expire after start of report month
       (x.d_expired_1 == null) || 
-      (x.d_expired_1 && qdate.getDateDiff(x.d_expired_1, reportDate.value) > 0)
+      (x.d_expired_1 && qdate.getDateDiff(x.d_expired_1, qdate.startOfDate(reportDate.value, 'month')) > 0)
     ) &&
     ( 
       // youth: is age 15-24 in the report month
@@ -76,8 +76,7 @@ function sisFilter(reportDate, reportType, x) {
         ( // enter before end of report month
           qdate.getDateDiff(x.d_enter_1, qdate.endOfDate(reportDate.value, 'month')) < 0
         ) && 
-        ( // no expiry date or expiry after begin of report month
-          !x.d_expired_1 ||
+        ( // expiry after begin of report month
           qdate.getDateDiff(x.d_expired_1, qdate.startOfDate(reportDate.value, 'month')) > 0
         )
       )
@@ -112,8 +111,8 @@ function isYouthFamily(reportDate, database, c_mem_id) {
     if ( j != -1 ) {
       // target is youth?
       // 1) check age
-      // 2) membership not yet expired
-      // 3) no quit date or not quit yet
+      // 2) membership not yet expired (compare with start of report month)
+      // 3) no quit date or not quit yet (compare with start of report month)
       let isYouth = // 1
                     qdate.isBetweenDates(
                       database[j].d_birth,
@@ -124,12 +123,12 @@ function isYouthFamily(reportDate, database, c_mem_id) {
                     ) && (
                       // 2
                       (database[j].d_expired_1 == null) || 
-                      (database[j].d_expired_1 && qdate.getDateDiff(database[j].d_expired_1, reportDate.value) > 0)
+                      (database[j].d_expired_1 && qdate.getDateDiff(database[j].d_expired_1, qdate.startOfDate(reportDate.value, 'month')) > 0)
                     ) && 
                     (
                       // 3
                       database[j].d_exit_1 == null ||
-                      database[j].d_exit_1 && qdate.getDateDiff(database[j].d_exit_1, reportDate.value) > 0
+                      database[j].d_exit_1 && qdate.getDateDiff(database[j].d_exit_1, qdate.startOfDate(reportDate.value, 'month')) > 0
                     )
       if (isYouth) {
         result.isYouthFamily = true
