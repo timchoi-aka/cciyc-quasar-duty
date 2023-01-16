@@ -512,6 +512,31 @@ async function quitMember() {
 }
 
 function saveRecord() {
+  // error check before save
+  let valid = true
+  
+  if (edit_member.value.c_name && /[a-zA-Z0-9]+/.test(edit_member.value.c_name)) {
+    $q.notify({
+      message: "中文名字含有英文字符！",
+      color: "negative",
+      textColor: "white",
+      icon: "error"
+    })
+    valid = false
+  }
+  
+  if (edit_member.value.c_name_other && /[\u3400-\u9FBF]+/.test(edit_member.value.c_name_other)) {
+    $q.notify({
+      message: "英文名字含有中文字符！",
+      color: "negative",
+      textColor: "white",
+      icon: "error"
+    })
+    valid = false
+  }
+  
+  if (!valid) return
+
   const updateObject = ref({
     d_update: new Date(),
     c_update_user: username.value,

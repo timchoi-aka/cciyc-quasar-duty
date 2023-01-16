@@ -762,8 +762,28 @@ function updateType1Expire() {
 
 
 function checkForm() {
-// error check before submit
-let valid = true
+  // error check before submit
+  let valid = true
+  if (/[a-zA-Z0-9]+/.test(personalInfo.value.c_name)) {
+    $q.notify({
+      message: "中文名字含有英文字符！",
+      color: "negative",
+      textColor: "white",
+      icon: "error"
+    })
+    valid = false
+  }
+  
+  if (/[\u3400-\u9FBF]/.test(personalInfo.value.c_name_other)) {
+    $q.notify({
+      message: "英文名字含有中文字符！",
+      color: "negative",
+      textColor: "white",
+      icon: "error"
+    })
+    valid = false
+  }
+
   relationTable.value.forEach((rel) => {
     if (rel.name != "" && rel.name != "無此人") {
       if (rel.relation == "") {
