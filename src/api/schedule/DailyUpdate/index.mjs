@@ -1,6 +1,6 @@
-const fetch = require('node-fetch');
-const adminSecret = process.env.adminSecret;
-const hgeEndpoint = process.env.hgeEndpoint;
+import fetch from "node-fetch"
+const adminSecret = process.env["adminSecret"]
+const hgeEndpoint = process.env["hgeEndpoint"]
 
 const query = `
 query getMemberNameFromID($c_mem_ids: [String!]) {
@@ -70,7 +70,7 @@ mutation updateYouthMemberStatus(
   }
 }`
 
-module.exports = async (context, myTimer) => {
+export default async function (context, myTimer) {
   var timeStamp = new Date().toISOString();
   
   if (myTimer.isPastDue)
@@ -106,7 +106,7 @@ module.exports = async (context, myTimer) => {
         
         // expired or quit, set active member status to false
         if (b_mem_type1 != original_b_mem_type1) {
-          //console.log(member.c_mem_id + ":" + original_b_mem_type1 + ":" + b_mem_type1 + ":" + member.d_expired_1 + ":" + d_expired_1 + ":" + (now - d_expired_1))
+          //context.log(member.c_mem_id + ":" + original_b_mem_type1 + ":" + b_mem_type1 + ":" + member.d_expired_1 + ":" + d_expired_1 + ":" + (now - d_expired_1))
           queue.push({
             c_mem_id: member.c_mem_id,
             b_mem_type1: b_mem_type1,
@@ -124,7 +124,7 @@ module.exports = async (context, myTimer) => {
       b_mem_type1: true,
     })*/
 
-    console.log("會藉自動更新數目：" + queue.length)
+    context.log("會藉自動更新數目：" + queue.length)
     let relationQueue = [...queue]
     if (queue.length > 0) {  
       let loopCount = Math.floor(queue.length / 1000)
@@ -152,9 +152,9 @@ module.exports = async (context, myTimer) => {
           headers: { 'Content-Type': 'application/json', 'x-hasura-admin-secret': adminSecret },
         })
         const json = await res.json()
-        console.log(json) 
+        context.log(json) 
       }
-      //console.log("relationQueue: "+ relationQueue)
+      //context.log("relationQueue: "+ relationQueue)
       // update b_mem_type10
       /*
         algorithm: for each member that has b_mem_type1 changed,
@@ -162,7 +162,7 @@ module.exports = async (context, myTimer) => {
         for each (j), check his youth related status against j's related members (k)
       */
       for (const member of relationQueue) {
-        //console.log("member:"+member)
+        //context.log("member:"+member)
         let i = Members.findIndex((element) => element.c_mem_id == member.c_mem_id)
 
         let rel = []
@@ -173,7 +173,7 @@ module.exports = async (context, myTimer) => {
         })
         // remove duplicates
         rel = [...new Set(rel)]
-        // console.log("rel:" + JSON.stringify(rel))
+        // context.log("rel:" + JSON.stringify(rel))
         // update all related member of this member who changed b_mem_type1
         if (rel.length > 0) {
           // loop on every related members
@@ -187,11 +187,11 @@ module.exports = async (context, myTimer) => {
                 if (relation.c_mem_id_1 == Members[j].c_mem_id) rel_rel.push(relation.c_mem_id_2)
                 if (relation.c_mem_id_2 == Members[j].c_mem_id) rel_rel.push(relation.c_mem_id_1)
               })
-              // console.log("rel_rel of " + Members[j].c_mem_id + ":" + rel_rel)
+              // context.log("rel_rel of " + Members[j].c_mem_id + ":" + rel_rel)
               // only consider "青年家人義工"
               // default is not Youth relative, and membership expire today
               let youthMembership = Members[j].c_udf_1 == '青年家人義工'
-              // console.log("youthMembership:" + youthMembership)
+              // context.log("youthMembership:" + youthMembership)
               let isYouth = false
               let currentExpiryDate = new Date()
 
@@ -217,7 +217,7 @@ module.exports = async (context, myTimer) => {
                       let t = new Date(new Date(Members[k].d_birth).setHours(8))
                       // add 25 years after birth to expiry date
                       let dateOfTwentyFive = new Date(t.setFullYear(t.getFullYear() + 25))
-                      // console.log("dateOfTwentyFive: " + dateOfTwentyFive.toISOString())
+                      // context.log("dateOfTwentyFive: " + dateOfTwentyFive.toISOString())
                       if (currentExpiryDate < dateOfTwentyFive) currentExpiryDate = dateOfTwentyFive
                       break
                   }
@@ -225,7 +225,7 @@ module.exports = async (context, myTimer) => {
               })
               
               if (isYouth && youthMembership) {
-                // console.log("currentExpiryDate:" + currentExpiryDate.toISOString())
+                // context.log("currentExpiryDate:" + currentExpiryDate.toISOString())
                 const logObject = {
                   "username": "系統每日",
                   "datetime": (new Date()).toISOString(),
@@ -245,8 +245,8 @@ module.exports = async (context, myTimer) => {
                   headers: { 'Content-Type': 'application/json', 'x-hasura-admin-secret': adminSecret },
                 })
                 const json = await res.json()
-                console.log(json) 
-                console.log("setting " + Members[j].c_mem_id + " b_mem_type10 to " + isYouth + " expiryDate: " + currentExpiryDate.toISOString())
+                context.log(json) 
+                context.log("setting " + Members[j].c_mem_id + " b_mem_type10 to " + isYouth + " expiryDate: " + currentExpiryDate.toISOString())
               } else {
                 const logObject = {
                   "username": "系統每日",
@@ -267,8 +267,8 @@ module.exports = async (context, myTimer) => {
                   headers: { 'Content-Type': 'application/json', 'x-hasura-admin-secret': adminSecret },
                 })
                 const json = await res.json()
-                console.log(json) 
-                console.log("setting " + Members[j].c_mem_id + " b_mem_type10 to " + isYouth)
+                context.log(json) 
+                context.log("setting " + Members[j].c_mem_id + " b_mem_type10 to " + isYouth)
               }
             }
           }
