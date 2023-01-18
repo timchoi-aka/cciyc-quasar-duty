@@ -55,16 +55,16 @@ const routes = [
         component: () => import('src/pages/Event/AddEvent.vue'), meta: {requiresAuth: true},
       },
       {
+        path: 'report',
+        component: () => import('src/pages/Event/Report.vue'), meta: {requiresAuth: true},
+      },
+      {
         path: 'log',
         component: () => import('src/pages/Event/LogViewer.vue'), meta: {requiresAuth: true},
       },
       {
         path: 'status',
         component: () => import('src/pages/Event/Status.vue'), meta: {requiresAuth: true},
-      },
-      {
-        path: 'test',
-        component: () => import('src/pages/Test.vue'), meta: {requiresAuth: true},
       },
     ]
   },

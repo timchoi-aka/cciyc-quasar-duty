@@ -29,9 +29,9 @@
     <q-route-tab to="/event/active" icon="public" label="活動進行中" />
     <q-route-tab to="/event/search" icon="public" label="搜尋活動" />
     <q-route-tab to="/event/add" icon="public" label="新增活動" />
+    <q-route-tab to="/event/report" icon="public" label="報表" />
     <q-route-tab to="/event/log" icon="public" label="系統記錄" />
     <q-route-tab to="/event/status" icon="public" label="開發狀況" />
-    <q-route-tab to="/event/test" icon="public" label="Test" />
   </q-tabs>
 </template>
 
