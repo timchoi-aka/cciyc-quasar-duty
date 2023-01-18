@@ -59,7 +59,6 @@ const props = defineProps({
 const { result, onError, refetch } = useQuery(
   EVALUATION_ACCOUNT,
   () => ({
-    //eval_uuid: props.eval_uuid,
     eval_uuid: props.eval_uuid,
     type: props.type,
     planeval: props.planeval,

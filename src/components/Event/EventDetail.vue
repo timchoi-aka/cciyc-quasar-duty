@@ -6,7 +6,7 @@
       <q-tab name="Apply" icon="approval" label="報名" />
       <q-tab name="Stat" icon="leaderboard" label="統計節數" />
       <q-tab name="PlanEvaluation" icon="summarize" label="計劃檢討" />
-      <q-tab name="Attendance" icon="person_add" label="點名" />
+      <q-tab name="Attendance" icon="person_add" label="點名紙" />
       <FavourateEvent :c_act_code="props.EventID" :username="username" />
       <q-space/>
       <q-btn class="bg-primary text-white" flat icon="close" v-close-popup>
