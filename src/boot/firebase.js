@@ -74,6 +74,7 @@ export const FirebaseFunctions = functions
 // collection references
 export const usersCollection = collection(db, 'users')
 export const scheduleCollection = collection(db, 'schedule')
+export const sessionCollection = collection(db, 'session')
 export const activityCollection = collection(db, 'activity')
 export const leaveCollection = collection(db, 'leave')
 export const OTCollection = collection(db, 'ot')

@@ -2,6 +2,32 @@
 const {functions, FireDB, FieldValue, Timestamp} = require("./fbadmin");
 const {formatDate} = require("./utilities");
 
+/* testing cloud function to read holiday file from storage
+exports.getPublicHoliday = functions.region("asia-east2").https.onCall(async (data, context) => {
+  // App Check token. (If the request includes an invalid App Check
+  // token, the request will be rejected with HTTP error 401.)
+  if (context.app == undefined) {
+    throw new functions.https.HttpsError(
+        "failed-precondition",
+        "The function must be called from an App Check verified app.");
+  }
+
+  if (!context.auth.uid) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated user can access this function",
+    );
+  }
+  const {Storage} = require("@google-cloud/storage");
+  const storage = new Storage();
+  const myBucket = storage.bucket("manage-hr.appspot.com");
+  const file = myBucket.file("tc.json");
+  const content = await file.download();
+  const jsonContent = JSON.parse(content.toString());
+  console.log(jsonContent);
+  // return fetch("https://www.1823.gov.hk/common/ical/tc.json").then((res) => res.json()).then((data) => data);
+});
+*/
 // API 2.0 - delete a leave application
 exports.delLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check

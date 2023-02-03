@@ -29,6 +29,51 @@
       <EventDetail :EventID="showEventID"/>
     </q-card>
   </q-dialog>
+  
+  <!-- 開放節數記錄 -->
+  <q-dialog
+    v-model="openingModal"
+    transition-show="slide-up"
+    transition-hide="slide-down"
+    class="q-pa-none"
+  >
+    <q-card style="min-width: 50vw; width: 50vw; max-width: 50vw; height: 50vh; min-height: 50vh; max-height: 50vh;">
+      <q-card-section class="bg-primary text-white row">
+        <div class="text-body1">開放節數</div>
+        <q-space/>
+        <q-btn icon="close" flat v-close-popup/>
+      </q-card-section>
+      <q-card-section>
+        <q-table
+          dense
+          flat
+          :rows="dutyTable"
+          :columns="dutyTableColumns"
+          :pagination="defaultPagination"
+          color="primary"
+          row-key="date"
+          separator="cell"
+          hide-bottom
+          virtual-scroll
+          binary-state-sort
+        >
+          <template v-slot:body-cell-slot_a="props">
+            <q-td :props="props" :class="[props.value? 'bg-green': 'bg-red']">
+            </q-td>
+          </template>
+          <template v-slot:body-cell-slot_b="props">
+            <q-td :props="props" :class="[props.value? 'bg-green': 'bg-red']">
+            </q-td>
+          </template>
+          <template v-slot:body-cell-slot_c="props">
+            <q-td :props="props" :class="[props.value? 'bg-green': 'bg-red']">
+            </q-td>
+          </template>
+        </q-table>
+      </q-card-section>
+    </q-card>
+  </q-dialog>
+
   <div class="row justify-center">
     <div class="row items-center q-mx-md"><q-btn label="上月" @click="reportDate = qdate.formatDate(qdate.endOfDate(qdate.subtractFromDate(reportDate, {month: 1}), 'month'), 'YYYY/MM/DD')" class="bg-primary text-white items-center"/></div>
     <div>
@@ -93,6 +138,9 @@
     </q-tab-panel>
 
     <q-tab-panel name="OS2" class="q-ma-none q-pa-sm text-body1"> 
+      <div>i) Total number of attendance: {{ OS2Data.reduce((x,v) => x + v.i_people_count, 0) }}</div>
+      <div>ii) Total number of sessions: {{ Object.values(dutyTable).reduce((x,v) => x + (v.slot_a?1:0) + (v.slot_b?1:0) + (v.slot_c?1:0), 0) }} <q-btn class="bg-primary text-white" flat @click="openingModal = true" label="開放節數"/></div> 
+      <div>iii) Average attendance per session: {{ is.number((OS2Data.reduce((x,v) => x + v.i_people_count, 0) / Object.values(dutyTable).reduce((x,v) => x + (v.slot_a?1:0) + (v.slot_b?1:0) + (v.slot_c?1:0), 0)))? (OS2Data.reduce((x,v) => x + v.i_people_count, 0) / Object.values(dutyTable).reduce((x,v) => x + (v.slot_a?1:0) + (v.slot_b?1:0) + (v.slot_c?1:0), 0)).toFixed(2): 0 }}</div>
       <q-table
         dense
         flat
@@ -268,30 +316,77 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { sessionCollection } from "boot/firebase";
+import { computed, ref, watch, onMounted } from "vue";
 import { exportFile, date as qdate, is } from "quasar";
 import { useSubscription, useQuery } from "@vue/apollo-composable"
 import { gql } from "graphql-tag"
 import EventDetail from "components/Event/EventDetail.vue";
 import Report from "src/lib/sis"
 import LoadingDialog from "components/LoadingDialog.vue"
-import dateUtil from "src/lib/calculateAge"
+import dateUtil from "src/lib/date.js";
+import { getDocs, query, where, orderBy, onSnapshot } from "firebase/firestore";
 
+onMounted(() => {
+  refreshSchedule(reportDate.value)
+})
 
 // variables
 const reportDate = ref(qdate.formatDate(qdate.endOfDate(qdate.subtractFromDate(Date.now(), {month: 1}), 'month'), "YYYY/MM/DD"))
 const detailModal = ref(false)
+const openingModal = ref(false)
 const showEventID = ref("")
 const activeTab = ref("All")
+const dutyTable = ref([])
 const destInCenter = [
-  '本中心', '大堂', '活動室(一)', '活動室(二)', '舞蹈室', 'Band房', '電腦室', '會議室', '中心廣場', '星有利球場'
+  '本中心', '大堂', '活動室(一)', '活動室(二)', '舞蹈室', 'Band房', '電腦室', '會議室', '中心廣場', '星有利球場', '星有利籃球場'
 ]
+//const closeList = ref(["覆", "AL", "SL", "補", "長", "短"])
+const scheduleSnapshot = ref()
 
 const defaultPagination = ref({
-  rowsPerPage: 30,
+  rowsPerPage: 40,
   sortBy: "c_act_code",
   descending: true,
 })
+const dutyTableColumns = ref([
+  {
+    name: "date",
+    label: "日期",
+    field: "date",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+    format: (val) => qdate.formatDate(val, "YYYY年M月D日(ddd)", {
+                  daysShort: ['日', '一', '二', '三', '四', '五', '六'],
+                })
+  },
+  {
+    name: "slot_a",
+    label: "早",
+    field: "slot_a",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "slot_b",
+    label: "午",
+    field: "slot_b",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "slot_c",
+    label: "晚",
+    field: "slot_c",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  }
+])
+
 const eventListColumns = ref([
   {
     name: "c_act_code",
@@ -535,6 +630,12 @@ const tableHeader = {
   i_people_count: "青年人次"
 }
 
+// watcher
+watch(reportDate, (newDate, oldDate)  => { 
+  dutyTable.value = []
+  refreshSchedule(newDate)
+})
+
 // computed
 const EventData = computed(() => result.value?.HTX_Event??[])
 const OS2Data = computed(() => {
@@ -634,6 +735,28 @@ function exportExcel(datasource) {
   }
   
 }
+
+function refreshSchedule(newDate) {
+  // build up dates in month
+  for (let day = qdate.addToDate(qdate.startOfDate(newDate, 'month'), {hours: 8}); day < qdate.endOfDate(newDate, 'month'); day = qdate.addToDate(day, { day: 1})) {
+    dutyTable.value.push({
+      date: day
+    })
+  }
+
+  const sessionDocQuery = query(sessionCollection, 
+    where("date", ">=", qdate.startOfDate(newDate, 'month')),
+    where("date", "<=", qdate.endOfDate(newDate, 'month'))
+  )
+
+  getDocs(sessionDocQuery).then((sessionDoc) => {
+    sessionDoc.forEach((doc) => {
+      let i = dutyTable.value.findIndex((element) => qdate.formatDate(element.date, "YYYY-MM-DD") == qdate.formatDate(doc.data().date.toDate(), "YYYY-MM-DD"))
+      dutyTable.value[i][doc.data().slot] = true
+    });
+  });
+}
+
 function rowDetail(evt, row, index) {
   if (evt.target.nodeName === 'TD') {
     detailModal.value = true;

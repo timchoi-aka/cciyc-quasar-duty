@@ -5,7 +5,8 @@ module.exports = {
   client: {
     service: {
       name: 'cciyc-api',
-      url: 'https://cciycgw.eastasia.cloudapp.azure.com/v1/graphql/',
+      //url: 'https://cciycgw.eastasia.cloudapp.azure.com/v1/graphql/',
+      url: 'https://hasura.cciyc.com:4430/v1/graphql/',
     },
     // Files processed by the extension
     includes: ['src/**/*.vue', 'src/**/*.js'],

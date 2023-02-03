@@ -45,7 +45,8 @@ export default boot(
     // new graphql-ws link (for subscription)
     const wsLink = new GraphQLWsLink(
       createClient({
-        url: "wss://cciycgw.eastasia.cloudapp.azure.com/v1/graphql",
+        //url: "wss://cciycgw.eastasia.cloudapp.azure.com/v1/graphql",
+        url: "wss://hasura.cciyc.com:4430/v1/graphql",
         connectionParams: async () => {
           //const token = sessionStorage.getItem("access-token")
           const token = FirebaseAuth.currentUser? await FirebaseAuth.currentUser.getIdToken(): '';
@@ -60,7 +61,8 @@ export default boot(
 
     // http link 
     const apiLink = createHttpLink({ 
-      uri: 'https://cciycgw.eastasia.cloudapp.azure.com/v1/graphql/',
+      //uri: 'https://cciycgw.eastasia.cloudapp.azure.com/v1/graphql/',
+      uri: 'https://hasura.cciyc.com:4430/v1/graphql/'
     })
 
     // error link

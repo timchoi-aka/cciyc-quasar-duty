@@ -17,6 +17,7 @@
     "@capacitor/core": "^4.5.0",
     "@firebase/app-check": "^0.5.11",
     "@firebase/app-compat": "^0.1.29",
+    "@quasar/cli": "^2.0.0",
     "@quasar/extras": "^1.15.6",
     "@types/node": "^18.8.0",
     "@vue/apollo-composable": "^4.0.0-beta.1",

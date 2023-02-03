@@ -60,7 +60,7 @@
           :key="col.name"
           :props="props"
         >
-          <q-th v-if="index > 0" class="dataColumn">
+          <q-th v-if="index > 0" :class="['dataColumn', 'pointer', openSessions.includes(col.name)? 'bg-blue-2': 'bg-yellow-1']" @click="toggleOpeningSession(col.name)">
             {{ slotMap[dateUtil.splitDateSlot(col.label)[1]] }}
           </q-th>
         </template>
@@ -177,6 +177,11 @@
         {{ qdate.formatDate(dateUtil.splitDateSlot(Object(columns[1]).name)[0], "M月D日") }} 至
         {{ qdate.formatDate(dateUtil.splitDateSlot(Object(columns[21]).name)[0], "M月D日") }}
       </div>
+    </template>
+
+    <!-- bottom button template -->
+    <template v-slot:bottom-row="props" v-if="isScheduleModify && !printOnly">
+      <q-btn flat class="bg-primary text-white" label="預設開放節數" @click="defaultOpeningSession(props)"/>
     </template>
 
     <!-- grid template -->
@@ -307,15 +312,23 @@ import {
   leaveCollection,
   FirebaseFunctions,
   usersCollection,
+  sessionCollection,
 } from "boot/firebase";
 import { useStore } from "vuex";
-import { ref, computed, onUnmounted } from "vue";
+import { onMounted, ref, computed, onUnmounted } from "vue";
 import dateUtil from "src/lib/date.js";
 import holiday from "assets/holiday.json";
 import { date as qdate } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
 import { getDocs, query, where, orderBy, onSnapshot } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
+
+/* 
+onMounted(() => {
+  const getPublicHoliday = httpsCallable(FirebaseFunctions, "holiday-getPublicHoliday");
+  getPublicHoliday().then(result => holiday.value = result.data)
+})
+*/
 
 // props
 const props = defineProps({
@@ -333,11 +346,13 @@ const awaitServerResponse = ref(0)
 const rowUnderModification = ref("")
 const $store = useStore();
 const scheduleSnapshot = ref()
+const sessionSnapshot = ref()
 const leaveSnapshot = ref()
 const editingRow = ref([])
+const openSessions = ref([])
 
 // options
-const dutyInputOptions = ref(["覆", "O", "M", "補", "長", "短"],)
+const dutyInputOptions = ref(["覆", "O", "M", "補", "長", "短"])
 const slotMap = ref({
   slot_a: "早",
   slot_b: "午",
@@ -380,6 +395,32 @@ const colString = computed(() => columns.value.reduce(function (previousValue, c
 }, []))
       
 // functions
+function defaultOpeningSession(props) {
+  const defaultSessions = [5,6,8,9,11,12,14,15,17,18,20]
+  defaultSessions.forEach((session) => {
+    toggleOpeningSession(props.cols[session].name)
+  })
+}
+
+function toggleOpeningSession(dateSlot) {
+  if (isScheduleModify.value) {
+    const [date, slot] = dateUtil.splitDateSlot(dateSlot)
+    const changeOpeningSession = httpsCallable(FirebaseFunctions, "schedule-changeOpeningSession");
+    awaitServerResponse.value++;
+    changeOpeningSession({
+      date: date,
+      slot: slot
+    })
+      .then((response) => {
+        awaitServerResponse.value--;
+      })
+      .catch((error) => {
+        awaitServerResponse.value--;
+        console.log(error.message);
+      });
+  }
+}
+
 function updateEditingRow(col) {
   if (tempInputValue.value) {
     editingRow.value[col] = tempInputValue.value;
@@ -514,10 +555,35 @@ const scheduleDocQuery = query(scheduleCollection,
   where("date", "<=", queryEndDate.value)
 )
 
+const sessionDocQuery = query(sessionCollection, 
+  where("date", ">=", queryStartDate.value),
+  where("date", "<=", queryEndDate.value)
+)
+
 const leaveDocQuery = query(leaveCollection,
   where("date", "in", colString.value),
   where("status", "==", "批准")
 )
+
+sessionSnapshot.value = onSnapshot(sessionDocQuery, (snapshot) => {
+  snapshot.docChanges().forEach((change) => {
+    let d = change.doc.data();
+    
+    if (change.type == "added") {
+      // console.log("added: " + d.uid + ":" + dateSlot + "[" + d.type + "]")
+      let i = openSessions.value.findIndex((element) => element == (qdate.formatDate(d.date.toDate(), "YYYY-MM-DD") + "|" + d.slot));
+      if (i == -1) {
+        openSessions.value.push(
+          qdate.formatDate(d.date.toDate(), "YYYY-MM-DD") + "|" + d.slot
+        )
+      }
+    } else if (change.type === "removed") {
+      // console.log("deleted: " + d.uid + ":" + dateSlot)
+      let i = openSessions.value.findIndex((element) => element == (qdate.formatDate(d.date.toDate(), "YYYY-MM-DD") + "|" + d.slot));
+      if (i != -1) openSessions.value.splice(i, 1)
+    }
+  })
+})
 
 getDocs(userDocQuery).then((userDoc) => {
   userDoc.forEach((doc) => {
@@ -591,6 +657,7 @@ getDocs(userDocQuery).then((userDoc) => {
 onUnmounted(() => {
   leaveSnapshot.value();
   scheduleSnapshot.value();
+  sessionSnapshot.value();
 })
 </script>
 
@@ -624,6 +691,9 @@ onUnmounted(() => {
     min-width: 4.2vw;
   }
 
+  .q-table .pointer {
+    cursor: pointer;
+  }
   .q-table .approved {
     background-color: $green-3;
   }

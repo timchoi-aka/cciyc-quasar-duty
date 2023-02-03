@@ -10,7 +10,8 @@ import { FirebaseAuth } from "boot/firebase";
 // for each client)
 const api = axios.create({
   // baseURL: process.env.NODE_ENV == "development" ? "http://localhost:1337" : "",
-  baseURL: "https://cciycgw.eastasia.cloudapp.azure.com/v1/graphql/",
+  //baseURL: "https://cciycgw.eastasia.cloudapp.azure.com/v1/graphql/",
+  baseURL: "https://hasura.cciyc.com:4430/v1/graphql/",
 });
 
 

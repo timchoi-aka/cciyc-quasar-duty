@@ -2,6 +2,57 @@
 const {functions, FireDB, Timestamp} = require("./fbadmin");
 const {formatDate} = require("./utilities");
 
+// http callable function (change opening session)
+exports.changeOpeningSession = functions.region("asia-east2").https.onCall(async (data, context) => {
+  // App Check token. (If the request includes an invalid App Check
+  // token, the request will be rejected with HTTP error 401.)
+  if (context.app == undefined) {
+    throw new functions.https.HttpsError(
+        "failed-precondition",
+        "The function must be called from an App Check verified app.");
+  }
+
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated users can add requests",
+    );
+  }
+
+  const loginUserDoc = FireDB
+      .collection("users")
+      .doc(context.auth.uid);
+  const loginUser = await loginUserDoc.get();
+  const loginUserData = loginUser.data();
+  if (loginUserData.privilege.scheduleModify != true) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only user with scheduleModify right can change opening session",
+    );
+  }
+
+  const firebaseDate = Timestamp.fromDate(new Date(data.date));
+
+  // set docid and try to get it
+  const newDocid = formatDate(data.date, "", "YYYYMMDD")+"_"+data.slot;
+  const sessionDoc = FireDB.collection("session").doc(newDocid);
+  const session = await sessionDoc.get();
+
+  if (!session.exists) { // no record found
+    return await sessionDoc.set({
+      date: firebaseDate,
+      slot: data.slot,
+    }).then(() => {
+      console.log("USER:" + loginUserData.name + "設定這節為開放:" + data.date + ":" + data.slot);
+      return data;
+    });
+  } else {
+    return await sessionDoc.delete().then(() => {
+      console.log("USER:" + loginUserData.name + "設定這節為關閉:" + data.date + ":" + data.slot);
+      return data;
+    });
+  }
+});
 
 // http callable function (adding a schedule)
 exports.updateSchedule = functions.region("asia-east2").https.onCall(async (datas, context) => {
