@@ -1,5 +1,5 @@
 <template>
-  <div class="col-1 text-body1">{{Member.c_name? Member.c_name : "無此人"}}</div><div class="col-1 text-body1">{{ageUtil.calculateAge(Member.d_birth)}}</div><div class="col-2 text-body1">{{Member.c_udf_1}}</div><div class="col-2 text-body1">{{Member.d_expired_1?qdate.formatDate(Member.d_expired_1, "YYYY年M月D日"):""}}</div>
+  <div class="col-grow">{{Member.c_name? Member.c_name : "無此人"}}</div><div class="col-grow">{{ageUtil.calculateAge(Member.d_birth)}}</div><div class="col-grow">{{Member.c_udf_1}}</div><div class="col-grow">{{Member.d_expired_1?qdate.formatDate(Member.d_expired_1, "YYYY年M月D日"):""}}</div>
 </template>
 
 <script setup>

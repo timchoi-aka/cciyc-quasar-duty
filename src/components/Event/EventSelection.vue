@@ -5,6 +5,7 @@
     class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none"
     use-input
     clearable
+    label="活動編號"
     input-debounce="0"
     :options="EventOptions"
     :model-value="props.modelValue"
@@ -26,7 +27,7 @@
       </q-item>
     </template>
     <template v-slot:selected>
-      <div v-if="props.modelValue" class="text-white">{{ props.modelValue }} - {{ EventOptions.filter((x) => x.value == props.modelValue).length? EventOptions.filter((x) => x.value == props.modelValue)[0].c_act_name: ''}}</div>
+      <div v-if="props.modelValue">{{ props.modelValue }} - {{ EventOptions.filter((x) => x.value == props.modelValue).length? EventOptions.filter((x) => x.value == props.modelValue)[0].c_act_name: ''}}</div>
     </template>
     <template v-slot:no-option>          
       沒有結果    

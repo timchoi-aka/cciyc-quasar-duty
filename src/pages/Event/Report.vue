@@ -102,6 +102,8 @@
   <q-tabs v-model="activeTab" inline-label align="left" class="desktop-only bg-primary text-white">
     <q-tab name="All" icon="source" :label="'全部活動'" />
     <q-tab name="OS2" icon="pin_drop" label="OS2" />
+    <q-tab name="OS3" icon="pin_drop" label="OS3/4" />
+    <q-tab name="OS5" icon="pin_drop" label="OS5" />
   </q-tabs>
 
   <q-tab-panels
@@ -123,15 +125,16 @@
         row-key="c_act_code"
         :loading="loading"
         binary-state-sort
+        no-data-label="沒有資料"
         @row-click="rowDetail"
       >
-        <template v-slot:top-right>
+        <template v-slot:top-right="props">
           <q-btn
             color="primary"
             icon-right="archive"
             label="匯出Excel"
             no-caps
-            @click="exportExcel(EventData)"
+            @click="exportExcel(EventData, eventListColumns, '全部活動數據')"
           />
         </template>
       </q-table>
@@ -152,6 +155,7 @@
         row-key="c_act_code"
         :loading="loading"
         binary-state-sort
+        no-data-label="沒有資料"
         @row-click="rowDetail"
       >
         <!-- export button -->
@@ -161,7 +165,7 @@
             icon-right="archive"
             label="匯出Excel"
             no-caps
-            @click="exportExcel(QuitData)"
+            @click="exportExcel(OS2Data, os2Columns, 'OS2_'+qdate.formatDate(reportDate, 'YYYY-MM'))"
           />
         </template>
         
@@ -180,19 +184,73 @@
       </q-table>
     </q-tab-panel>
     
-<!--
-    <q-tab-panel name="Youth" class="q-ma-none q-pa-sm text-body1"> 
+    <q-tab-panel name="OS3" class="q-ma-none q-pa-sm text-body1">
+      <div class="row">
+        <div class="col-6">
+          <div class="text-h6">OS3</div>
+          <div>ia) Guidance and counselling (group and activity): {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務A").reduce((x,v) => x + v.i_number, 0) }}</div>
+          <div>ib) Guidance and counselling (case interview): 0</div>
+          <div>ii) Supportive service for young people in disadvantaged circumstances: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務B").reduce((x,v) => x + v.i_number, 0) }}</div> 
+          <div>iii) Socialization programmes: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務C").reduce((x,v) => x + v.i_number, 0) }}</div> 
+          <div>iv) Development of social responsibility and competence: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務D").reduce((x,v) => x + v.i_number, 0) }}</div> 
+          <div>v) Total (Output Standard 3): {{ OS3Data.reduce((x,v) => x + v.i_number, 0) }}</div>
+        </div> 
+        <div class="col-6">
+          <div class="text-h6">OS4</div>
+          <div>ia) Guidance and counselling (group and activity): {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務A").reduce((x,v) => x + v.i_people_count, 0) }}</div>
+          <div>ib) Guidance and counselling (case interview): 0</div>
+          <div>ii) Supportive service for young people in disadvantaged circumstances: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務B").reduce((x,v) => x + v.i_people_count, 0) }}</div> 
+          <div>iii) Socialization programmes: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務C").reduce((x,v) => x + v.i_people_count, 0) }}</div> 
+          <div>iv) Development of social responsibility and competence: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務D").reduce((x,v) => x + v.i_people_count, 0) }}</div> 
+          <div>v) Total (Output Standard 4): {{ OS3Data.reduce((x,v) => x + v.i_people_count, 0) }}</div>
+        </div> 
+      </div>
       <q-table
         dense
         flat
-        title="青年會員數據"
-        :rows="YouthData"
-        :columns="memberListColumns"
+        :rows="OS3Data"
+        :columns="os2Columns"
         :pagination="defaultPagination"
         color="primary"
-        row-key="c_mem_id"
+        row-key="c_act_code"
         :loading="loading"
+        :filter="search"
+        :filter-method="tableFilter"
         binary-state-sort
+        no-data-label="沒有資料"
+        @row-click="rowDetail"
+      >
+        <template v-slot:top class="row">
+          <q-select class="col-2" clearable label="性質" :options="os3natures" v-model="search.c_nature"/>
+          <q-space/>
+          <q-btn
+            color="primary"
+            icon-right="archive"
+            label="匯出Excel"
+            no-caps
+            @click="exportExcel(OS3Data, os2Columns, 'OS34_'+qdate.formatDate(reportDate, 'YYYY-MM'))"
+          />
+        </template>
+      </q-table>
+    </q-tab-panel>
+    
+    <q-tab-panel name="OS5" class="q-ma-none q-pa-sm text-body1"> 
+      <div>i) Total number of core programmes completed/case closed in the quarter: {{ Object.keys(OS5Data).length }}</div>
+      <div>ii) Total number of core programmes completed/case closed with goals achieved in the quarter: {{ Object.keys(OS5Data.filter((x) => x.c_status.trim() == '完成達標')).length }}</div>
+      <div>iii) Rate of achieving core programme plan: {{ is.number((Object.keys(OS5Data.filter((x) => x.c_status.trim() == '完成達標')).length/Object.keys(OS5Data).length))? (Object.keys(OS5Data.filter((x) => x.c_status.trim() == '完成達標')).length*100/Object.keys(OS5Data).length).toFixed(2) + "%":0 }}</div> 
+      
+      <q-table
+        dense
+        flat
+        title="OS5"
+        :rows="OS5Data"
+        :columns="os5Columns"
+        :pagination="defaultPagination"
+        color="primary"
+        row-key="c_act_code"
+        :loading="os5loading"
+        binary-state-sort
+        no-data-label="沒有資料"
         @row-click="rowDetail"
       >
         <template v-slot:top-right>
@@ -201,116 +259,11 @@
             icon-right="archive"
             label="匯出Excel"
             no-caps
-            @click="exportExcel(YouthData)"
+            @click="exportExcel(OS5Data, os5Columns, 'OS5_'+qdate.formatDate(reportDate, 'YYYY-MM'))"
           />
         </template>
       </q-table>
     </q-tab-panel>
-
-    <q-tab-panel name="Family_15" class="q-ma-none q-pa-sm text-body1"> 
-      <q-table
-        dense
-        flat
-        title="家人(<15)會員數據"
-        :rows="Family_15Data"
-        :columns="memberListColumns"
-        :pagination="defaultPagination"
-        color="primary"
-        row-key="c_mem_id"
-        :loading="loading"
-        binary-state-sort
-        @row-click="rowDetail"
-      >
-        <template v-slot:top-right>
-          <q-btn
-            color="primary"
-            icon-right="archive"
-            label="匯出Excel"
-            no-caps
-            @click="exportExcel(Family_15Data)"
-          />
-        </template>
-      </q-table>
-    </q-tab-panel>
-
-    <q-tab-panel name="Family_24" class="q-ma-none q-pa-sm text-body1"> 
-      <q-table
-        dense
-        flat
-        title="家人(>24)會員數據"
-        :rows="Family_24Data"
-        :columns="memberListColumns"
-        :pagination="defaultPagination"
-        color="primary"
-        row-key="c_mem_id"
-        :loading="loading"
-        binary-state-sort
-        @row-click="rowDetail"
-      >
-        <template v-slot:top-right>
-          <q-btn
-            color="primary"
-            icon-right="archive"
-            label="匯出Excel"
-            no-caps
-            @click="exportExcel(Family_24Data)"
-          />
-        </template>
-      </q-table>
-    </q-tab-panel>
-
-    <q-tab-panel name="Expired" class="q-ma-none q-pa-sm text-body1"> 
-      <q-table
-        dense
-        flat
-        title="過期會員數據"
-        :rows="ExpiredData"
-        :columns="memberListColumns"
-        :pagination="defaultPagination"
-        color="primary"
-        row-key="c_mem_id"
-        :loading="loading"
-        binary-state-sort
-        @row-click="rowDetail"
-      >
-        <template v-slot:top-right>
-          <q-btn
-            color="primary"
-            icon-right="archive"
-            label="匯出Excel"
-            no-caps
-            @click="exportExcel(ExpiredData)"
-          />
-        </template>
-      </q-table>
-    </q-tab-panel>
-
-    <q-tab-panel name="Error" class="q-ma-none q-pa-sm text-body1"> 
-      <q-table
-        dense
-        flat
-        title="錯誤會員數據"
-        :rows="ErrorData"
-        :columns="memberListColumns"
-        :pagination="defaultPagination"
-        color="primary"
-        row-key="c_mem_id"
-        :loading="loading"
-        binary-state-sort
-        @row-click="rowDetail"
-      >
-        <template v-slot:top-right>
-          <q-btn
-            color="primary"
-            icon-right="archive"
-            label="匯出Excel"
-            no-caps
-            @click="exportExcel(ErrorData)"
-          />
-        </template>
-      </q-table>
-    </q-tab-panel>
-    -->
   </q-tab-panels>
   
 </template>
@@ -322,10 +275,9 @@ import { exportFile, date as qdate, is } from "quasar";
 import { useSubscription, useQuery } from "@vue/apollo-composable"
 import { gql } from "graphql-tag"
 import EventDetail from "components/Event/EventDetail.vue";
-import Report from "src/lib/sis"
 import LoadingDialog from "components/LoadingDialog.vue"
-import dateUtil from "src/lib/date.js";
-import { getDocs, query, where, orderBy, onSnapshot } from "firebase/firestore";
+import Excel from "src/lib/exportExcel"
+import { getDocs, query, where } from "firebase/firestore";
 
 onMounted(() => {
   refreshSchedule(reportDate.value)
@@ -336,8 +288,15 @@ const reportDate = ref(qdate.formatDate(qdate.endOfDate(qdate.subtractFromDate(D
 const detailModal = ref(false)
 const openingModal = ref(false)
 const showEventID = ref("")
+const search = ref({})
 const activeTab = ref("All")
 const dutyTable = ref([])
+const os3natures = [
+  '核心青年服務A','核心青年服務B','核心青年服務C','核心青年服務D'
+]
+const os5status = [
+  '完成達標', '完成不達標'
+]
 const destInCenter = [
   '本中心', '大堂', '活動室(一)', '活動室(二)', '舞蹈室', 'Band房', '電腦室', '會議室', '中心廣場', '星有利球場', '星有利籃球場'
 ]
@@ -349,6 +308,7 @@ const defaultPagination = ref({
   sortBy: "c_act_code",
   descending: true,
 })
+
 const dutyTableColumns = ref([
   {
     name: "date",
@@ -384,6 +344,66 @@ const dutyTableColumns = ref([
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
+  }
+])
+
+const os5Columns = ref([
+  {
+    name: "c_act_code",
+    label: "活動編號",
+    field: "c_act_code",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "c_act_name",
+    label: "活動名稱",
+    field: "c_act_name",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "c_nature",
+    label: "性質",
+    field: "c_nature",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "c_respon",
+    label: "負責職員",
+    field: "c_respon",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "c_status",
+    label: "狀況",
+    field: "c_status",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "c_type",
+    label: "類別",
+    field: "c_type",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "d_finish_goal",
+    label: "完成日期",
+    field: "d_finish_goal",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+    format: (val) => qdate.formatDate(val, "YYYY年M月D日")
   }
 ])
 
@@ -614,21 +634,24 @@ query queryO2Result(
   d_act: qdate.formatDate(reportDate.value, "MM/YYYY")
 }))
 
-const tableHeader = {
-  c_act_code: "活動編號",
-  c_act_name: "活動名稱",
-  c_dest: "地點",
-  c_nature: "分類",
-  c_respon: "負責人",
-  c_type: "種類",
-  c_status: "狀態",
-  c_group1: "大分類",
-  c_group2: "細類",
-  c_acc_type: "會計",
-  d_act: "月份",
-  i_number: "青年節數",
-  i_people_count: "青年人次"
-}
+const { result: os5result, loading: os5loading } = useQuery(gql`
+query queryOS5Result(
+  $startDate: smalldatetime = "", 
+  $endDate: smalldatetime = ""
+  ) {
+  HTX_Event(where: {_and: {d_finish_goal: {_gte: $startDate}}, d_finish_goal: {_lte: $endDate}}) {
+    c_act_code
+    c_act_name
+    c_nature
+    c_respon
+    c_status
+    c_type
+    d_finish_goal
+  }
+}`, () => ({
+  startDate: qdate.formatDate(qdate.startOfDate(reportDate.value, 'month'), "YYYY-MM-DD"),
+  endDate: qdate.formatDate(qdate.endOfDate(reportDate.value, 'month'), "YYYY-MM-DD")
+}))
 
 // watcher
 watch(reportDate, (newDate, oldDate)  => { 
@@ -665,70 +688,40 @@ const OS2Data = computed(() => {
   }
   return res
 })
-/*
-const QuitData = computed(() => MemberData.value? MemberData.value.filter((x) => x.d_exit_1 != null): [])
-const YouthData = computed(() => MemberData.value? 
-  MemberData.value.filter((x) => Report.sisFilter(reportDate, 'youth', x)
-) : [])
-
-const Family_15Data = computed(() => MemberData.value? MemberData.value.filter((x) => 
-  Report.sisFilter(reportDate, 'child', x)
-) : [])
-
-const Family_24Data = computed(() => MemberData.value? MemberData.value.filter((x) => 
-  Report.sisFilter(reportDate, 'family', x)
-): [])
-
-const ErrorData = computed(() => MemberData.value? MemberData.value.filter((x) => 
-  (
-    x.d_birth == null || 
-    x.d_birth > reportDate.value || 
-    x.d_enter_1 == null
-  ) &&
-  x.c_udf_1 != "社區義工" &&
-  (
-    (x.d_expired_1 == null) || 
-    (x.d_expired_1 && qdate.getDateDiff(x.d_expired_1, reportDate.value) > 0)
-  )
-  ): [])
-
-const ExpiredData = computed(() => MemberData.value? MemberData.value.filter((x) =>
-  !x.d_exit_1 &&
-  x.d_expired_1 && qdate.getDateDiff(x.d_expired_1, reportDate.value) < 0 &&
-  qdate.isBetweenDates(x.d_expired_1, qdate.startOfDate(reportDate.value, 'month'), qdate.endOfDate(reportDate.value, 'month'))
-): [])
-*/
-// functions
-function exportExcel(datasource) {
-  //console.log(memberListColumns.value.map(col => wrapCsvValue(col.label)))
-  /*
-  let data = datasource.map(row => memberListColumns.value.map(col => wrapCsvValue(
-      typeof col.field === 'function'
-        ? col.field(row)
-        : row[ col.field === void 0 ? col.name : col.field ],
-      col.format,
-      row
-    )))
-  //console.log(data)
-  
-  for (const row of data) {
-    for (const item of row) {
-      console.log(item)
-    }
+const OS3Data = computed(() => { //os2result.value? os2result.value.tbl_act_session.filter((x) => os3natures.includes(x.Session_to_Event.c_nature.trim())): [])
+  let res = []
+  if (os2result.value) {
+    os2result.value.tbl_act_session.forEach((x) => {
+      let result = os3natures.includes(x.Session_to_Event.c_nature.trim())
+      
+      if (result) {
+        res.push({
+          d_act: x.d_act,
+          i_number: x.i_number,
+          i_people_count: x.i_people_count,
+          ...x.Session_to_Event,
+        })
+      }
+    })
   }
-  */
-  
-  let content = jsonToXLS(datasource)
+  return res
+})
+
+const OS5Data = computed(() => os5result.value?.HTX_Event.filter((x) => os5status.includes(x.c_status.trim()))??[])
+
+// functions
+function exportExcel(datasource, columns, filename) {
+  let content = Excel.jsonToXLS(datasource, columns)
   
   const status = exportFile(
-    'CCIYC-Report.xls',
+    filename + '.xls',
     content,
     'text/xls'
   )
 
   if (status !== true) {
     $q.notify({
-      message: 'Browser denied file download...',
+      message: '瀏覽器阻止下載檔案...',
       color: 'negative',
       icon: 'warning'
     })
@@ -757,341 +750,16 @@ function refreshSchedule(newDate) {
   });
 }
 
+function tableFilter(rows, terms) {
+  return rows.filter(
+    (row) => terms.c_nature? row.c_nature.trim() == terms.c_nature: true
+  );
+}
+
 function rowDetail(evt, row, index) {
   if (evt.target.nodeName === 'TD') {
     detailModal.value = true;
     showEventID.value = row.c_act_code;
   }
-}
-
-function exportTable(dataSource) {
-  // naive encoding to csv format
-  const content = [memberListColumns.value.map(col => wrapCsvValue(col.label))].concat(
-    dataSource.map(row => memberListColumns.value.map(col => wrapCsvValue(
-      typeof col.field === 'function'
-        ? col.field(row)
-        : row[ col.field === void 0 ? col.name : col.field ],
-      col.format,
-      row
-    )).join(','))
-  ).join('\r\n')
-
-  const status = exportFile(
-    'table-export.csv',
-    content,
-    'text/csv'
-  )
-
-  if (status !== true) {
-    $q.notify({
-      message: 'Browser denied file download...',
-      color: 'negative',
-      icon: 'warning'
-    })
-  }
-}
-
-function wrapCsvValue (val, formatFn, row) {
-  let formatted = formatFn !== void 0
-    ? formatFn(val, row)
-    : val
-
-  formatted = formatted === void 0 || formatted === null
-    ? ''
-    : String(formatted)
-
-  formatted = formatted.split('"').join('""')
-  /**
-   * Excel accepts \n and \r in strings, but some other CSV parsers do not
-   * Uncomment the next two lines to escape new lines
-   */
-  // .split('\n').join('\\n')
-  // .split('\r').join('\\r')
-
-  //return `"${formatted}"`
-  return `${formatted}`
-}
-
-// export to xls functions
-// mime type [xls, csv]
-const type = "xls"
-
-// Json to download
-const data = null
-    
-// fields inside the Json Object that you want to export
-// if no given, all the properties in the Json are exported
-const fields = () => null
-    
-// this prop is used to fix the problem with other components that use the
-// variable fields, like vee-validate. exportFields works exactly like fields
-const exportFields = () => null
-
-// Use as fallback when the row has no field values
-const defaultValue = ""
-
-// Title(s) for the data, could be a string or an array of strings (multiple titles)
-const header = null
-
-// Footer(s) for the data, could be a string or an array of strings (multiple footers)
-const footer = null
-
-// filename to export
-const name = "data.xls"
- 
-    
-const meta = () => []
- 
-const worksheet = "Sheet1"
-    
-
-// Determine if CSV Data should be escaped
-const escapeCsv = true
-
-// long number stringify
-const stringifyLongNum = true
-
-function jsonToXLS(data) {
-  let xlsTemp =
-    '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta name=ProgId content=Excel.Sheet> <meta name=Generator content="Microsoft Excel 11"><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>${worksheet}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--><style>br {mso-data-placement: same-cell;}</style></head><body><table>${table}</table></body></html>';
-  let xlsData = "<thead>";
-  const colspan = Object.keys(data[0]).length;
-  //Header
-  // const header = this.header || this.$attrs.title;
-  if (header) {
-    xlsData += parseExtraData(
-      header,
-      '<tr><th colspan="' + colspan + '">${data}</th></tr>'
-    );
-  }
-  
-  //Fields
-  xlsData += "<tr>";
-  let tableHeader = eventListColumns.value.map(col => wrapCsvValue(col.label))
-  for (let key of tableHeader) {
-    xlsData += "<th>" + key + "</th>";
-  }
-  xlsData += "</tr>";
-  xlsData += "</thead>";
-  
-  
-  /*data.map(row => memberListColumns.value.map(col => wrapCsvValue(
-      typeof col.field === 'function'
-        ? col.field(row)
-        : row[ col.field === void 0 ? col.name : col.field ],
-      col.format,
-      row
-    )))*/
-
-  //Data
-  xlsData += "<tbody>";
-
-  let tableFieldData = data.map(row => eventListColumns.value.map(col => wrapCsvValue(
-                        typeof col.field === 'function'
-                          ? col.field(row)
-                          : row[ col.field === void 0 ? col.name : col.field ],
-                        col.format,
-                        row
-                      )))
-  /*
-  data.map(function (item, index) {
-    xlsData += "<tr>";
-    for (let key in item) {
-      xlsData +=
-        "<td>" +
-        preprocessLongNum(
-          valueReformattedForMultilines(item[key])
-        ) +
-        "</td>";
-    }
-    xlsData += "</tr>";
-  });
-  */
-  // ableFieldData)
-  for (const row of tableFieldData) {
-    xlsData += "<tr>"
-    for (const item of row) {
-      xlsData +=
-        "<td>" +
-        preprocessLongNum(
-          valueReformattedForMultilines(item)
-        ) +
-        "</td>";
-    }
-    xlsData += "</tr>";
-  }
-  xlsData += "</tbody>";
-  
-  //Footer
-  if (footer != null) {
-    xlsData += "<tfoot>";
-    xlsData += parseExtraData(
-      footer,
-      '<tr><td colspan="' + colspan + '">${data}</td></tr>'
-    );
-    xlsData += "</tfoot>";
-  }
-  
-  return xlsTemp
-    .replace("${table}", xlsData)
-    .replace("${worksheet}", worksheet);
-}
- 
-/*
-jsonToCSV
----------------
-Transform json data into an CSV file.
-*/
-function jsonToCSV(data) {
-  var csvData = [];
-  //Header
-  // const header = this.header || this.$attrs.title;
-  if (header) {
-    csvData.push(parseExtraData(header, "${data}\r\n"));
-  }
-  //Fields
-  for (let key in data[0]) {
-    csvData.push(key);
-    csvData.push(",");
-  }
-  csvData.pop();
-  csvData.push("\r\n");
-  //Data
-  data.map(function (item) {
-    for (let key in item) {
-      let escapedCSV = item[key] + "";
-      // Escaped CSV data to string to avoid problems with numbers or other types of values
-      // this is controlled by the prop escapeCsv
-      if (escapeCsv) {
-        escapedCSV = '="' + escapedCSV + '"'; // cast Numbers to string
-        if (escapedCSV.match(/[,"\n]/)) {
-          escapedCSV = '"' + escapedCSV.replace(/\"/g, '""') + '"';
-        }
-      }
-      csvData.push(escapedCSV);
-      csvData.push(",");
-    }
-    csvData.pop();
-    csvData.push("\r\n");
-  });
-  //Footer
-  if (footer != null) {
-    csvData.push(parseExtraData(footer, "${data}\r\n"));
-  }
-  return csvData.join("");
-}
-
-/*
-getProcessedJson
----------------
-Get only the data to export, if no fields are set return all the data
-*/
-function getProcessedJson(data, header) {
-  let keys = getKeys(data, header);
-  let newData = [];
-  data.map(function (item, index) {
-    let newItem = {};
-    for (let label in keys) {
-      let property = keys[label];
-      newItem[label] = getValue(property, item);
-    }
-    newData.push(newItem);
-  });
-  return newData;
-}
-
-function getKeys(data, header) {
-  if (header) {
-    return header;
-  }
-  let keys = {};
-  for (let key in data[0]) {
-    keys[key] = key;
-  }
-  return keys;
-}
-
-/*
-parseExtraData
----------------
-Parse title and footer attribute to the csv format
-*/
-function parseExtraData(extraData, format) {
-  let parseData = "";
-  if (Array.isArray(extraData)) {
-    for (var i = 0; i < extraData.length; i++) {
-      if (extraData[i])
-        parseData += format.replace("${data}", extraData[i]);
-    }
-  } else {
-    parseData += format.replace("${data}", extraData);
-  }
-  return parseData;
-}
-
-function getValue(key, item) {
-  const field = typeof key !== "object" ? key : key.field;
-  let indexes = typeof field !== "string" ? [] : field.split(".");
-  let value = defaultValue;
-  if (!field) value = item;
-  else if (indexes.length > 1)
-    value = getValueFromNestedItem(item, indexes);
-  else value = parseValue(item[field]);
-  if (key.hasOwnProperty("callback"))
-    value = getValueFromCallback(value, key.callback);
-  return value;
-}
-
-/*
-convert values with newline \n characters into <br/>
-*/
-function valueReformattedForMultilines(value) {
-  if (typeof value == "string") return value.replace(/\n/gi, "<br/>");
-  else return value;
-}
-
-function preprocessLongNum(value) {
-  if (stringifyLongNum) {
-    if (String(value).startsWith("0x")) {
-      return value;
-    }
-    if (!isNaN(value) && value != "") {
-      if (value > 99999999999 || value < 0.0000000000001) {
-        return '="' + value + '"';
-      }
-    }
-  }
-  return value;
-}
-    
-function getValueFromNestedItem(item, indexes) {
-  let nestedItem = item;
-  for (let index of indexes) {
-    if (nestedItem) nestedItem = nestedItem[index];
-  }
-  return parseValue(nestedItem);
-}
-  
-function getValueFromCallback(item, callback) {
-  if (typeof callback !== "function") return defaultValue;
-  const value = callback(item);
-  return parseValue(value);
-}
-   
-function parseValue(value) {
-  return value || value === 0 || typeof value === "boolean"
-    ? value
-    : defaultValue;
-}
-
-function base64ToBlob(data, mime) {
-  let base64 = window.btoa(window.unescape(encodeURIComponent(data)));
-  let bstr = atob(base64);
-  let n = bstr.length;
-  let u8arr = new Uint8ClampedArray(n);
-  while (n--) {
-    u8arr[n] = bstr.charCodeAt(n);
-  }
-  return new Blob([u8arr], { type: mime });
 }
 </script>

@@ -24,7 +24,7 @@
   <q-dialog v-model="loadDialog" v-if="$q.screen.lt.md"
     full-width>
     <q-card>
-      <q-card-section class="text-h6 bg-primary text-white">
+      <q-card-section class="text-h6 bg-blue-2">
         載入活動資料: <EventSelection v-model="loadEventID"/>
       </q-card-section>
       <q-card-section v-if="EventData.HTX_Event_by_pk">
@@ -39,7 +39,7 @@
 
   <q-dialog v-model="loadDialog" position="top" v-else>
     <q-card style="width: 60vw;">
-      <q-card-section class="text-h6 bg-primary text-white">
+      <q-card-section class="text-h6 bg-blue-2">
         載入活動資料: <EventSelection v-model="loadEventID"/>
       </q-card-section>
       <q-card-section v-if="EventData.HTX_Event_by_pk" class="text-body1 q-pa-none">

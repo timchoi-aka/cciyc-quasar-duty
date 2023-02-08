@@ -75,7 +75,7 @@
           <span class="col">免費: <q-checkbox v-if="edit" v-model="editObject.b_freeofcharge"/><span v-else><q-icon class="text-green" v-if="Event.b_freeofcharge" name="check"/><q-icon class="text-red" v-else name="cancel"/></span></span>
           <span class="col">完成: <q-checkbox v-if="edit" v-model="editObject.b_finish"/><span v-else><q-icon class="text-green" v-if="Event.b_finish" name="check"/><q-icon class="text-red" v-else name="cancel"/></span></span>
         </span>
-        <span class="col-3">達標日期: <span v-if="edit"><DateComponent v-model="editObject.d_finish_goal"/></span><span v-else>{{Event.d_finish_goal}}</span></span>
+        <span class="col-3">達標日期: <span v-if="edit"><DateComponent v-model="editObject.d_finish_goal"/></span><span v-else>{{qdate.formatDate(Event.d_finish_goal, "YYYY年M月D日")}}</span></span>
       </div>
       <div class="row col-12 q-gutter-lg q-ml-sm">
         <span class="col-3">類別： <q-select v-if="edit" filled :options="type" v-model="editObject.c_type"/><span v-else>{{Event.c_type}}</span></span>
@@ -266,7 +266,7 @@ function startEdit() {
   editObject.value.d_date_to = editObject.value.d_date_to? qdate.formatDate(qdate.extractDate(editObject.value.d_date_to, "D/M/YYYY"), "YYYY-MM-DD"): null
   editObject.value.d_sale_start = editObject.value.d_sale_start? qdate.formatDate(qdate.extractDate(editObject.value.d_sale_start, "D/M/YYYY"), "YYYY-MM-DD"): null
   editObject.value.d_sale_end = editObject.value.d_sale_end? qdate.formatDate(qdate.extractDate(editObject.value.d_sale_end, "D/M/YYYY"), "YYYY-MM-DD"): null
-  editObject.value.d_finish_goal = editObject.value.d_finish_goal? qdate.formatDate(qdate.extractDate(editObject.value.d_finish_goal, "D/M/YYYY"), "YYYY-MM-DD"): null
+  editObject.value.d_finish_goal = editObject.value.d_finish_goal? qdate.formatDate(editObject.value.d_finish_goal, "YYYY-MM-DD"): null
   editObject.value.d_time_from = editObject.value.d_time_from? qdate.formatDate(qdate.extractDate(editObject.value.d_time_from, "h:mm:ss A"), "HH:mm"): null
   editObject.value.d_time_to = editObject.value.d_time_to? qdate.formatDate(qdate.extractDate(editObject.value.d_time_to, "h:mm:ss A"), "HH:mm"): null
   editObject.value.IsShow = editObject.value.IsShow == 1? true: false
@@ -337,7 +337,8 @@ function purityData() {
   serverObject.value.b_finish = serverObject.value.b_finish? true: false
   serverObject.value.d_date_from = serverObject.value.d_date_from? qdate.formatDate(serverObject.value.d_date_from, "D/M/YYYY"): null
   serverObject.value.d_date_to = serverObject.value.d_date_to? qdate.formatDate(serverObject.value.d_date_to, "D/M/YYYY"): null
-  serverObject.value.d_finish_goal = serverObject.value.d_finish_goal? qdate.formatDate(serverObject.value.d_finish_goal, "D/M/YYYY"): null
+  //serverObject.value.d_finish_goal = serverObject.value.d_finish_goal? qdate.formatDate(serverObject.value.d_finish_goal, "D/M/YYYY"): null
+  serverObject.value.d_finish_goal = serverObject.value.d_finish_goal
   serverObject.value.d_sale_start = serverObject.value.d_sale_start? qdate.formatDate(serverObject.value.d_sale_start, "D/M/YYYY"): null
   serverObject.value.d_sale_end = serverObject.value.d_sale_end? qdate.formatDate(serverObject.value.d_sale_end, "D/M/YYYY"): null
   

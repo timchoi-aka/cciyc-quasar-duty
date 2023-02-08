@@ -19,6 +19,7 @@
   <q-tabs v-if="username && module == 'member'" inline-label class="desktop-only" align="left">
     <q-route-tab to="/member/list" icon="public" label="會員列表" />
     <q-route-tab to="/member/add" icon="public" label="新增會員" />
+    <q-route-tab to="/volunteer" icon="public" label="義工記錄" />
     <q-route-tab to="/member/report" icon="public" label="報表" />
     <q-route-tab to="/member/log" icon="public" label="系統記錄" />
     <q-route-tab to="/member/admin" icon="public" label="系統管理" />

@@ -35,6 +35,24 @@ const routes = [
     ]
   },
   {
+    path: '/volunteer',
+    component: () => import('src/pages/VolunteerHome.vue'), meta: {requiresAuth: true},
+    children: [
+      {
+        path: 'add',
+        component: () => import('src/pages/Volunteer/VolunteerAdd.vue'), meta: {requiresAuth: true},
+      },
+      {
+        path: 'edit',
+        component: () => import('src/pages/Volunteer/VolunteerEdit.vue'), meta: {requiresAuth: true},
+      },
+      {
+        path: 'report',
+        component: () => import('src/pages/Volunteer/Report.vue'), meta: {requiresAuth: true},
+      },
+    ]
+  },
+  {
     path: '/event',
     component: () => import('src/pages/Event/Event.vue'), meta: {requiresAuth: true},
     children: [

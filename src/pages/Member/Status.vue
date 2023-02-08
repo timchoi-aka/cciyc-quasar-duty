@@ -19,5 +19,9 @@ const development = ref({
   "續會列印收據": true,
   "刪除會員": true,
   "搜尋會員": true,
+  "會員 - 報表": true,
+  "義工記錄 - 新增": true,
+  "義工記錄 - 修改": true,
+  "義工記錄 - 報表": true,
 })
 </script>

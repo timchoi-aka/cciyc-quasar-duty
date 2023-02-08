@@ -21,6 +21,7 @@
         <div><q-input clearable label="活動編號" v-model="search.c_act_code"/></div>
         <div><q-input clearable label="活動名稱" v-model="search.c_act_name"/></div>
         <div><q-select clearable label="會計類別" :options="acc_type" v-model="search.c_acc_type"/></div>
+        <div><q-select clearable label="性質" :options="c_nature" v-model="search.c_nature"/></div>
         <div><q-select clearable use-input input-debounce="0" @new-value="newUser" label="負責人員" :options="userList" v-model="search.c_respon"/></div>
         <div><q-select clearable label="大分類" :options="group1" v-model="search.c_group1"/></div>
         <div><q-select clearable label="狀態" :options="status" v-model="search.c_status"/></div>
@@ -87,6 +88,7 @@ const search = ref({
   c_status: "",
   c_acc_type: "",
   c_group1: "",
+  c_nature: "",
 })
 
 
@@ -105,6 +107,10 @@ const pagination = ref({
 
 const acc_type = ref([
   'PF', 'CF', 'RF', 'MF', 'SF'
+])
+
+const c_nature = ref([
+  '核心青年服務A','核心青年服務B','核心青年服務C','核心青年服務D','非核心青年服務','其他服務'
 ])
 
 const group1 = ref([
@@ -198,6 +204,7 @@ function submitSearch() {
   if (search.value.c_status) searchCondition.value.condition.c_status = {"_eq" : search.value.c_status} 
   if (search.value.c_acc_type) searchCondition.value.condition.c_acc_type = {"_eq" : search.value.c_acc_type} 
   if (search.value.c_group1) searchCondition.value.condition.c_group1 = {"_eq" : search.value.c_group1} 
+  if (search.value.c_nature) searchCondition.value.condition.c_nature = {"_eq" : search.value.c_nature} 
   //console.log(searchCondition.value)
   refetch()
 }
@@ -215,6 +222,7 @@ function clearSearch() {
     c_status: "",
     c_acc_type: "",
     c_group1: "",
+    c_nature: "",
   }
   delete searchCondition.value.condition
   refetch()

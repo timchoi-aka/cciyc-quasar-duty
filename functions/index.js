@@ -42,3 +42,8 @@ module.exports = {
   ot, schedule, activity, user, holiday, systemAdmin,
 };
 */
+
+// import housekeep from "./housekeep.mjs"
+exports.housekeep = require("./housekeep.js");
+// exports.housekeep = housekeep
+// - housekeep.updateMemberStatus

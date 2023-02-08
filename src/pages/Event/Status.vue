@@ -18,12 +18,12 @@ const development = ref({
   "修改活動資料": true,
   "刪除活動": true,
   "計劃/檢討": true,
-  "審批計劃/檢討": false,
-  "統計報表": false,
+  "審批計劃/檢討": true,
+  "統計報表": true,
   "活動進行中": true,
   "搜尋活動": true,
   "我的活動": true,
-  "Dashboard": false,
+  "Dashboard": true,
   "活動退款": true,
 })
 </script>
