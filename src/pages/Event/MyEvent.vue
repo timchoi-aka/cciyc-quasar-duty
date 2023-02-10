@@ -51,17 +51,30 @@
       </q-table>
       <q-separator/>
       <div class="row col-12">
-        <q-chip class="bg-negative text-white" size="lg" label="待審批 - 主任only"/>
+        <q-chip class="bg-negative text-white" size="lg" label="待審批項目"/>
       </div>
       <div class="q-pa-sm">
         <q-table
           class="q-mt-sm"
           flat
           bordered
+          title="活動計劃檢討"
           @row-click="showDetail"
           :rows="awaitApprovalTableEntries"
           :pagination="pagination"
           :columns="unapprovedColumns"
+        />
+      </div>
+      <div class="q-pa-sm">
+        <q-table
+          class="q-mt-sm"
+          flat
+          bordered
+          title="活動預支餘款"
+          @row-click="showDetail"
+          :rows="awaitApprovalPrepaid"
+          :pagination="pagination"
+          :columns="unapprovedPrepaidColumns"
         />
       </div>
     </div>
@@ -115,6 +128,7 @@ import { MY_EVENT_SEARCH, MY_FAV, EVALUATION_UNAPPROVED } from "/src/graphQuerie
 import EventDetail from "components/Event/EventDetail.vue";
 import LoadingDialog from "components/LoadingDialog.vue"
 import { date as qdate, useQuasar } from "quasar";
+import { gql } from "graphql-tag"
 
 // variables
 const $store = useStore();
@@ -258,6 +272,50 @@ const unapprovedColumns = ref([
   },
 ])
 
+const unapprovedPrepaidColumns = ref([
+  {
+    name: "c_act_code",
+    label: "活動編號",
+    field: "c_act_code",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "apply_user",
+    label: "申請人",
+    field: "apply_user",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "apply_date",
+    label: "申請日期",
+    field: "apply_date",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+    format: (val) => qdate.formatDate(val, "YYYY年M月D日")
+  },
+  {
+    name: "type",
+    label: "種類",
+    field: "type",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "amount",
+    label: "金額",
+    field: "amount",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+    format: (val) => `$${val.toFixed(1)}`
+  },
+])
 // setting current module
 $store.dispatch("currentModule/setCurrentModule", "event");
 
@@ -268,6 +326,17 @@ const { result: fav, onError: fav_onError } = useSubscription(MY_FAV,
   username: username.value
 }));
 const { result: awaitApproval } = useSubscription(EVALUATION_UNAPPROVED)
+const { result: awaitApprovalPrepaidRecords } = useSubscription(gql`
+subscription GetUnapprovedPrepaid {
+  Event_Prepaid(where: {approved: {_eq: false}, approve_date: {_is_null: true}}) {
+    apply_user
+    apply_date
+    amount
+    c_act_code
+    type
+    uuid
+  }
+}`)
 
 // computed
 const userProfileLogout = () => $store.dispatch("userModule/logout")
@@ -284,6 +353,7 @@ const awaitApprovalTableEntries = computed(() =>
   })) :
   []
 )
+const awaitApprovalPrepaid = computed(() => awaitApprovalPrepaidRecords.value?.Event_Prepaid??[])
 
 // functions 
 function showDetail(evt, row, index) {
@@ -309,11 +379,8 @@ function MyEventFilter(rows, terms) {
 
 // UI Functions
 function notifyClientError(error) {
-  userProfileLogout()
-    .then(() => {
-      $q.notify({ message: "系統錯誤，請重新登入." });
-    })
-    .catch((error) => console.log("error", error));   
+  $q.notify({ message: "系統錯誤，請重新登入." });
+  console.error("error", error);
 }
 
 // callbacks

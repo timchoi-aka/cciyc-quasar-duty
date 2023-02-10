@@ -248,7 +248,7 @@ query EVENT_EVALUATION_BY_ACT_CODE($c_act_code: String!) {
     c_group2
     c_type
     c_respon2
-    
+    c_respon
     Event_to_Evaluation {
       attendance
       c_act_code

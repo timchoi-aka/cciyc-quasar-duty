@@ -146,6 +146,12 @@ export default boot(
             },
             RelationMember2: {
               keyFields: ["c_mem_id"]
+            },
+            Event_Evaluation_Account: {
+              keyFields: ["account_uuid"]
+            },
+            Event_Prepaid: {
+              keyFields: ["uuid"]
             }
           }
         }

@@ -788,7 +788,7 @@ function refreshHolidayTable() {
 
 onMounted(() => {
   const usersQuery = query(usersCollection, 
-    where("privilege.systemAdmin", "==", true),
+    where("privilege.systemAdmin", "==", false),
     where("privilege.tmp", "==", false),
     where("enable", "==", true),
     orderBy("order")

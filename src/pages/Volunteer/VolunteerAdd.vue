@@ -133,10 +133,8 @@ addVolunteer_Completed((result) => {
 
 // UI functions
 function notifyClientSuccess(result) {
-  awaitServerResponse.value--  
   $q.notify({
     message: "義工記錄" + result.data.insert_Volunteer.returning.map((x) => x.c_mem_id.trim()) + "更新完成。",
   })
-  
 }
 </script>

@@ -126,10 +126,10 @@
             <div v-if="Object.keys(PlanEval).length == 0">先儲存活動計劃才能開始財政預算</div>
             <div v-else class="row col-grow">
               <div class="col-6 row content-start">
-                <EvaluationAccount :isSubmitted="isSubmitted" type="收入" planeval="計劃" :eval_uuid="PlanEval.uuid" :c_act_code="PlanEval.c_act_code"/>
+                <EvaluationAccount :respon="[Event.c_respon, Event.c_respon2]" :isSubmitted="isSubmitted" type="收入" planeval="計劃" :eval_uuid="PlanEval.uuid" :c_act_code="PlanEval.c_act_code"/>
               </div>
               <div class="col-6 row content-start">
-                <EvaluationAccount :isSubmitted="isSubmitted" type="支出" planeval="計劃" :eval_uuid="PlanEval.uuid" :c_act_code="PlanEval.c_act_code"/>
+                <EvaluationAccount :respon="[Event.c_respon, Event.c_respon2]" :isSubmitted="isSubmitted" type="支出" planeval="計劃" :eval_uuid="PlanEval.uuid" :c_act_code="PlanEval.c_act_code"/>
               </div>
             </div>
           </div>
@@ -190,10 +190,10 @@
             <div v-if="Object.keys(PlanEval).length == 0">先儲存活動計劃才能開始財政檢討</div>
             <div v-else class="row col-grow">
               <div class="col-6 row content-start">
-                <EvaluationAccount :isSubmitted="isSubmitted" type="收入" planeval="檢討" :eval_uuid="PlanEval.uuid" :c_act_code="PlanEval.c_act_code"/>
+                <EvaluationAccount :respon="[Event.c_respon, Event.c_respon2]" :isSubmitted="isSubmitted" type="收入" planeval="檢討" :eval_uuid="PlanEval.uuid" :c_act_code="PlanEval.c_act_code"/>
               </div>
               <div class="col-6 row content-start">
-                <EvaluationAccount :isSubmitted="isSubmitted" type="支出" planeval="檢討" :eval_uuid="PlanEval.uuid" :c_act_code="PlanEval.c_act_code"/>
+                <EvaluationAccount :respon="[Event.c_respon, Event.c_respon2]" :isSubmitted="isSubmitted" type="支出" planeval="檢討" :eval_uuid="PlanEval.uuid" :c_act_code="PlanEval.c_act_code"/>
               </div>
             </div>
           </div>

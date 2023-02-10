@@ -27,7 +27,11 @@
       </div>
     </span>   
   </q-list>
-  <div class="col-12 text-right q-mt-sm">總數: HK${{total}}</div>
+  <div class="col-12 text-right q-mt-sm q-px-sm">總數: HK${{total}}</div>
+  
+  <div class="col-12 text-right q-mt-sm" v-if="total > 0 && props.planeval == '計劃' && props.type == '支出' && !props.isSubmitted">
+    <EvaluationAccountPrepaid v-model="prepaid" type="預支" :c_act_code="props.c_act_code" :eval_uuid="props.eval_uuid" :respon="props.respon"/>
+  </div>
 </template>
 
 <script setup>
@@ -38,6 +42,7 @@ import { ADD_EVALUATION_ACCOUNT_FROM_UUID } from "/src/graphQueries/Event/mutati
 import { useQuery, useMutation } from "@vue/apollo-composable"
 import { date as qdate, useQuasar, uid } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
+import EvaluationAccountPrepaid from "components/Account/EvaluationAccountPrepaid.vue"
 
 // variables
 const edit = ref(false)
@@ -45,6 +50,7 @@ const editObject = ref({})
 const removeRecord = ref([])
 const awaitServerResponse = ref(0)
 const $q = useQuasar()
+const prepaid = ref({})
 
 // props
 const props = defineProps({
@@ -53,6 +59,7 @@ const props = defineProps({
   eval_uuid: String,
   c_act_code: String,
   isSubmitted: Boolean,
+  respon: Array,
 })
 
 // queries
