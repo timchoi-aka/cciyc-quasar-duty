@@ -15,6 +15,9 @@
     <q-item v-for="item in account" clickable >
       <q-item-section><q-item-label>{{item.description}}</q-item-label></q-item-section>
       <q-item-section side class="text-black">HK${{item.amount.toFixed(2)}}<q-btn v-if="edit" icon="remove" class="bg-negative text-white"/></q-item-section>
+      <q-tooltip>
+         日期：{{ qdate.formatDate(item.txn_date, "YYYY年M月D日") }}
+      </q-tooltip>
     </q-item>   
   </q-list>
   <q-list v-if="edit && editObject.length > 0" class="col-12 self-start" bordered separator>
@@ -25,12 +28,16 @@
         <span class="text-negative" v-if="removeRecord.includes(editObject[index].account_uuid)">會刪除</span>
         <q-btn v-if="edit" icon="delete" class="bg-white text-negative" flat @click="removeRecord.push(editObject[index].account_uuid)"/>
       </div>
+      <div class="col-12"><DateComponent v-model="editObject[index].txn_date"/></div>
     </span>   
   </q-list>
   <div class="col-12 text-right q-mt-sm q-px-sm">總數: HK${{total}}</div>
   
-  <div class="col-12 text-right q-mt-sm" v-if="total > 0 && props.planeval == '計劃' && props.type == '支出' && !props.isSubmitted">
-    <EvaluationAccountPrepaid v-model="prepaid" type="預支" :c_act_code="props.c_act_code" :eval_uuid="props.eval_uuid" :respon="props.respon"/>
+  <div class="col-12 text-right q-mt-sm" v-if="props.type == '支出' && props.planeval == '計劃' && !props.isSubmitted">
+    <EvaluationAccountPrepaid :c_act_code="props.c_act_code" :eval_uuid="props.eval_uuid" :respon="props.respon"/>
+  </div>
+  <div class="col-12 text-right q-mt-sm" v-if="props.type == '支出' && props.planeval == '檢討' && !props.isSubmitted">
+    <EvaluationAccountRemain :c_act_code="props.c_act_code" :eval_uuid="props.eval_uuid" :respon="props.respon"/>
   </div>
 </template>
 
@@ -43,6 +50,8 @@ import { useQuery, useMutation } from "@vue/apollo-composable"
 import { date as qdate, useQuasar, uid } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
 import EvaluationAccountPrepaid from "components/Account/EvaluationAccountPrepaid.vue"
+import EvaluationAccountRemain from "components/Account/EvaluationAccountRemain.vue"
+import DateComponent from "components/Basic/DateComponent.vue"
 
 // variables
 const edit = ref(false)
@@ -50,7 +59,7 @@ const editObject = ref({})
 const removeRecord = ref([])
 const awaitServerResponse = ref(0)
 const $q = useQuasar()
-const prepaid = ref({})
+
 
 // props
 const props = defineProps({
@@ -89,6 +98,7 @@ function addObject() {
     eval_uuid: props.eval_uuid,
     planeval: props.planeval,
     c_act_code: props.c_act_code.trim(),
+    txn_date: qdate.formatDate(new Date(), "YYYY/MM/DD")
   })
 }
 
@@ -130,6 +140,7 @@ function save() {
     obj.c_act_code = obj.c_act_code.trim()
     obj.planeval = obj.planeval.trim()
     obj.description = obj.description.trim()
+    obj.txn_date = qdate.formatDate(obj.txn_date, "YYYY-MM-DDTHH:mm:ss")
   })
 
   awaitServerResponse.value++

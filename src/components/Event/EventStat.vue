@@ -16,7 +16,19 @@
     <template v-slot:body="props">
       <q-tr :props="props">
         <q-td key="action" :props="props">
-          <q-btn icon="delete" class="text-negative" flat @click="deleteRow(props.row.d_act)"/>
+          <q-btn icon="delete" class="text-negative" flat @click="deleteRow(props.row.d_act, props.row.inCenter)"/>
+        </q-td>
+        <q-td key="inCenter" :props="props">
+          <q-icon v-if="props.row.inCenter" color="positive" name="check">
+            <q-popup-edit filled v-model="props.row.inCenter" title="中心舉行" auto-save v-slot="scope">
+              <q-toggle v-model="scope.value"/>
+            </q-popup-edit>  
+          </q-icon>
+          <q-icon v-else color="negative" name="cancel">
+            <q-popup-edit filled v-model="props.row.inCenter" title="中心舉行" auto-save v-slot="scope">
+              <q-toggle v-model="scope.value"/>
+            </q-popup-edit>  
+          </q-icon>
         </q-td>
         <q-td key="d_act" :props="props">
           {{ props.row.d_act }}
@@ -100,6 +112,14 @@ const statTableColumn = ref([
     name: "action",
     label: "動作",
     field: "action",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "inCenter",
+    label: "中心舉行",
+    field: "inCenter",
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
@@ -212,6 +232,7 @@ function addRow() {
     i_people_count_b: 0,
     i_number_c: 0,
     i_people_count_c: 0,
+    inCenter: true,
   })
 }
 
@@ -249,13 +270,14 @@ function save() {
     deleteEventStat({
       delete_dAct: deleteData.value.map(a => a.d_act),
       delete_cActCode: props.c_act_code,
+      delete_inCenter: deleteData.value.map(a => a.inCenter),
       logObject: logObject.value,
     })
   }
 }
 
-function deleteRow(d_act) {
-  let i = StatData.value.findIndex((element) => element.d_act == d_act)
+function deleteRow(d_act, inCenter) {
+  let i = StatData.value.findIndex((element) => element.d_act == d_act && element.inCenter == inCenter)
   deleteData.value.push(StatData.value[i])
   StatData.value.splice(i, 1)
 }

@@ -36,6 +36,7 @@
           <q-badge v-if="$q.screen.gt.xs" color="red" floating>{{ pendingALApprovalCount }}</q-badge>
           <q-badge v-else color="red">{{ pendingALApprovalCount }}</q-badge>
         </q-route-tab>
+        <q-route-tab v-if="isCenterIC" to="/holiday/sl-report" icon="vaccines" label="病假記錄" />
       </q-tabs>
     </q-page-sticky>
     <q-separator class="q-mt-xl" />
@@ -84,6 +85,7 @@ const isLeaveApprove = computed(() => $store.getters["userModule/getLeaveApprove
 const dateOfEntry = computed(() => $store.getters["userModule/getDateOfEntry"])
 const dateOfExit = computed(() => $store.getters["userModule/getDateOfExit"])
 const isSAL = computed(() => $store.getters["userModule/getSAL"])
+const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"])
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
 const SALBalance = computed(() => $store.getters["userModule/getSALBalance"])
 const ALBalance = computed(() => systemStartBalance.value + totalGain.value - holidayCount.value)

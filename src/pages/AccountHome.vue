@@ -1,6 +1,6 @@
 <template>
   <q-page>
-    <router-view/>
+    <router-view style="margin-top: 70px;"/>
     <q-page-sticky position="top" expand>
       <q-tabs
         dense
@@ -9,9 +9,7 @@
         indicator-color="blue"
         align="justify"
       >
-        <q-route-tab to="/volunteer/add" icon="add" label="新增記錄" />
-        <q-route-tab to="/volunteer/edit" icon="edit" label="修改記錄" />
-        <q-route-tab to="/volunteer/report" icon="leaderboard" label="報表" />
+        <q-route-tab to="/account/other" icon="calendar_month" label="雜項" />
       </q-tabs>
     </q-page-sticky>
   </q-page>
@@ -19,8 +17,11 @@
 
 <script setup>
 import { useStore } from "vuex";
+import { computed } from "vue";
 
 const $store = useStore();
-$store.dispatch("currentModule/setCurrentModule", "member");
+$store.dispatch("currentModule/setCurrentModule", "account");
+
+const isTmp = computed(() => $store.getters["userModule/getTmp"]) 
 </script>
 

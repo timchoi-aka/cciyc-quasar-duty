@@ -160,6 +160,7 @@ query EVENT_STAT_BY_PK($c_act_code: String) {
     i_people_count_b
     i_people_count_c
     d_act
+    inCenter
   }
 }`
 //
@@ -227,6 +228,7 @@ export const EVALUATION_ACCOUNT = gql`
       eval_uuid
       planeval
       type
+      txn_date
     }
     Event_Evaluation_Account_aggregate(where: {_and: {type: {_eq: $type}, planeval: {_eq: $planeval}, eval_uuid: {_eq: $eval_uuid}}}) {
       aggregate {

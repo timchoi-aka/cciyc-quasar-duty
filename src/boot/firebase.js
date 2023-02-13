@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, connectAuthEmulator, onAuthStateChanged, onIdTokenChanged, getIdToken } from "firebase/auth";
+import { getAuth, onAuthStateChanged, onIdTokenChanged, getIdToken } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator, collection, doc } from "firebase/firestore";
 import { getApp } from "firebase/app";
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";

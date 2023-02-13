@@ -617,6 +617,7 @@ query queryO2Result(
     d_act
     i_number
     i_people_count
+    inCenter
     s_GUID
     Session_to_Event {
       c_act_code
@@ -676,7 +677,7 @@ const OS2Data = computed(() => {
       if (x.Session_to_Event.c_group1 && x.Session_to_Event.c_group1.trim().includes('中心設施')) result = true
       if (x.Session_to_Event.c_type && x.Session_to_Event.c_type.trim().includes('偶到')) result = true
       
-      if (result) {
+      if (result && x.inCenter) {
         res.push({
           d_act: x.d_act,
           i_number: x.i_number,

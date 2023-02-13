@@ -121,7 +121,7 @@
       />
     </q-page-sticky>
 
-    <div v-if="$q.screen.gt.sm" class="row fit items-start">
+    <div v-if="$q.screen.gt.sm" class="row fit items-start" style="margin-top: 70px;">
       <div class="col-4"><EventSelection v-model="searchOptions.c_act_code"/></div>
       <div class="col-shrink q-mx-sm">或</div>
       <div class="col-4"><MemberSelection class="text-white" v-model="searchOptions.c_mem_id"/></div>
@@ -129,7 +129,7 @@
       <div class="col-2"><q-btn class="bg-primary text-white" label="顯示全部記錄" @click="showAll"/></div>
     </div>
     
-    <div v-else class="row fit">
+    <div v-else class="row fit" style="margin-top: 70px;">
       <div class="col-12">活動編號：<EventSelection v-model="searchOptions.c_act_code"/></div>
       <div class="col-12">或</div>
       <div class="col-12">會員號碼：<MemberSelection class="text-white" v-model="searchOptions.c_mem_id"/></div>

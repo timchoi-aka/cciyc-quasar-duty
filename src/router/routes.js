@@ -117,7 +117,9 @@ const routes = [
       {  path: 'holiday-pending',
       component: () => import('src/pages/Holiday/Pending.vue'), meta: {requiresAuth: true}},
       {  path: 'holiday-approve',
-      component: () => import('src/pages/Holiday/Approve.vue'), meta: {requiresAuth: true}}
+      component: () => import('src/pages/Holiday/Approve.vue'), meta: {requiresAuth: true}},
+      {  path: 'sl-report',
+      component: () => import('src/pages/Holiday/SLSummary.vue'), meta: {requiresAuth: true}}
     ]
   },
   {
@@ -149,6 +151,14 @@ const routes = [
     path: '/system-admin',
     name: 'SystemAdministrationView',
     component: () => import('src/pages/SystemAdmin.vue'), meta: { requiresAuth: true}
+  },
+  {
+    path: '/account',
+    component: () => import('src/pages/AccountHome.vue'), meta: {requiresAuth: true},
+    children: [
+      { path: 'other',
+        component: () => import('src/pages/Account/OtherIncome.vue'), meta: {requiresAuth: true }},
+    ]
   },
     /*
     component: () => import('layouts/MainLayout.vue'),

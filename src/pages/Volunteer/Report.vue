@@ -4,7 +4,7 @@
     <q-dialog v-model="waitingAsync" position="bottom">
       <LoadingDialog message="處理中"/>
     </q-dialog>
-    <div v-if="$q.screen.gt.sm" class="row fit items-start">
+    <div v-if="$q.screen.gt.sm" class="row fit items-start" style="margin-top: 70px;">
       <div class="q-mx-sm"><div>日期由：</div><DateComponent v-model="searchOptions.startDate"/></div>
       <div class="q-mx-sm"><div>至</div><DateComponent v-model="searchOptions.endDate"/></div>
       <div class="q-mx-sm col-2">計算標準：<q-select :options="reportTypeOptions" v-model="reportType"/></div>
@@ -12,7 +12,7 @@
       <div class="q-mx-sm"><q-btn class="bg-primary text-white" label="顯示全部記錄" @click="showAll"/></div>
     </div>
     
-    <div v-else class="row fit">
+    <div v-else class="row fit" style="margin-top: 70px;">
       <div class="col-12">日期由：</div>
       <div class="col-12"><DateComponent v-model="searchOptions.startDate"/></div>
       <div class="col-12">至</div>

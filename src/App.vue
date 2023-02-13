@@ -81,7 +81,7 @@
         <q-btn v-close-popup class="col-grow" name="duty" icon="event" label="編更" to="/duty"/>
         <q-btn v-close-popup class="col-grow" name="member" icon="public" label="會員" to="/member"/>
         <q-btn v-close-popup class="col-grow" name="event" icon="festival" label="活動" to="/event"/>
-        <q-btn v-close-popup class="col-grow" name="finance" icon="money" label="財務" to="/finance"/>
+        <q-btn v-close-popup class="col-grow" name="finance" icon="money" label="財務" to="/account"/>
     </q-drawer>
 
     <q-page-container>

@@ -14,8 +14,8 @@
         注意：提交後不能再修改報告！
       </q-card-section>
       <q-card-actions align="right">
-        <q-btn color="primary" label="確定" @click="onOKClick" v-close-popup/>
-        <q-btn color="primary" label="取消" v-close-popup/>
+        <q-btn color="warning" label="取消" v-close-popup/>
+        <q-btn color="positive" label="確定" @click="onOKClick" v-close-popup/>
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -31,14 +31,15 @@
         <q-input class="col-12" v-model="EvaluationComment" filled type="textarea"/>
       </q-card-section>
       <q-card-actions align="right">
-        <q-btn color="positive" label="批准" @click="ApproveOK" v-close-popup/>
+        <q-btn color="warning" label="取消" v-close-popup/>
         <q-btn color="negative" label="發回" @click="ApproveDeny" v-close-popup/>
+        <q-btn color="positive" label="批准" @click="ApproveOK" v-close-popup/>
       </q-card-actions>
     </q-card>
   </q-dialog>
 
   <div class="q-px-md text-h6 bg-primary text-white q-py-md row">
-    <span class="col-xs-12 col-sm-6 col-md-5">
+    <span class="col-xs-12 col-sm-6 col-md-6">
       {{EventID}} - {{Event.c_act_name}}
       <q-btn v-if="!edit && !isSubmitted" icon="edit" flat @click="startEdit">
         <q-tooltip class="bg-white text-primary">修改</q-tooltip>
@@ -52,12 +53,13 @@
     </span>
     <q-space/>
     <div class="col-xs-12 col-sm-2 col-md-2">
-      <q-btn bordered class="bg-positive text-white" v-if="PlanEval.submit_date && !PlanEval.ic_date && isCenterIC" @click="approvalDialog = true" icon="verified" label="主管批核"/>
-      <q-btn v-if="Object.keys(PlanEval).length > 0 && !PlanEval.submit_date" icon="verified" label="提交審批" class="bg-positive text-white" bordered @click="confirmDialog = true" />
+      <q-btn bordered class="bg-positive text-white" v-if="PlanEval.submit_date && !PlanEval.ic_date && isCenterIC" @click="startApprove" icon="verified" label="主管批核"/>
+      <q-btn v-if="Object.keys(PlanEval).length > 0 && !PlanEval.submit_date && !edit" icon="verified" label="提交審批" class="bg-positive text-white" bordered @click="confirmDialog = true" />
     </div>
-    <q-chip dense class="col-xs-12 col-sm-2 col-md-2" v-if="PlanEval.submit_date">提交：{{PlanEval.staff_name}} @ {{qdate.formatDate(PlanEval.submit_date, "YYYY年M月D日")}}</q-chip>
-    <q-chip dense class="col-xs-12 col-sm-2 col-md-2" v-if="PlanEval.supervisor_date">審批：{{PlanEval.supervisor}} @ {{qdate.formatDate(PlanEval.supervisor_date, "YYYY年M月D日")}}</q-chip>
-    <q-chip dense class="col-xs-12 col-sm-2 col-md-2" v-if="PlanEval.ic_date">審批：{{PlanEval.ic}} @ {{qdate.formatDate(PlanEval.ic_date, "YYYY年M月D日")}}</q-chip>
+    <div class="col-xs-12 col-sm-4 col-md-4 text-right">
+      <q-chip dense v-if="PlanEval.submit_date">提交：{{PlanEval.staff_name}} @ {{qdate.formatDate(PlanEval.submit_date, "YYYY年M月D日")}}</q-chip>
+      <q-chip dense v-if="PlanEval.ic_date">審批：{{qdate.formatDate(PlanEval.ic_date, "YYYY年M月D日")}}</q-chip>
+    </div>
   </div>
   <!-- desktop -->
   <div v-if="$q.screen.gt.md">
@@ -126,10 +128,10 @@
             <div v-if="Object.keys(PlanEval).length == 0">先儲存活動計劃才能開始財政預算</div>
             <div v-else class="row col-grow">
               <div class="col-6 row content-start">
-                <EvaluationAccount :respon="[Event.c_respon, Event.c_respon2]" :isSubmitted="isSubmitted" type="收入" planeval="計劃" :eval_uuid="PlanEval.uuid" :c_act_code="PlanEval.c_act_code"/>
+                <EvaluationAccount :respon="[Event.c_respon? Event.c_respon.trim(): '', Event.c_respon2? Event.c_respon2.trim(): '']" :isSubmitted="isSubmitted" type="收入" planeval="計劃" :eval_uuid="PlanEval.uuid" :c_act_code="PlanEval.c_act_code"/>
               </div>
               <div class="col-6 row content-start">
-                <EvaluationAccount :respon="[Event.c_respon, Event.c_respon2]" :isSubmitted="isSubmitted" type="支出" planeval="計劃" :eval_uuid="PlanEval.uuid" :c_act_code="PlanEval.c_act_code"/>
+                <EvaluationAccount :respon="[Event.c_respon? Event.c_respon.trim(): '', Event.c_respon2? Event.c_respon2.trim(): '']" :isSubmitted="isSubmitted" type="支出" planeval="計劃" :eval_uuid="PlanEval.uuid" :c_act_code="PlanEval.c_act_code"/>
               </div>
             </div>
           </div>
@@ -190,10 +192,10 @@
             <div v-if="Object.keys(PlanEval).length == 0">先儲存活動計劃才能開始財政檢討</div>
             <div v-else class="row col-grow">
               <div class="col-6 row content-start">
-                <EvaluationAccount :respon="[Event.c_respon, Event.c_respon2]" :isSubmitted="isSubmitted" type="收入" planeval="檢討" :eval_uuid="PlanEval.uuid" :c_act_code="PlanEval.c_act_code"/>
+                <EvaluationAccount :respon="[Event.c_respon? Event.c_respon.trim(): '', Event.c_respon2? Event.c_respon2.trim(): '']" :isSubmitted="isSubmitted" type="收入" planeval="檢討" :eval_uuid="PlanEval.uuid" :c_act_code="PlanEval.c_act_code"/>
               </div>
               <div class="col-6 row content-start">
-                <EvaluationAccount :respon="[Event.c_respon, Event.c_respon2]" :isSubmitted="isSubmitted" type="支出" planeval="檢討" :eval_uuid="PlanEval.uuid" :c_act_code="PlanEval.c_act_code"/>
+                <EvaluationAccount :respon="[Event.c_respon? Event.c_respon.trim(): '', Event.c_respon2? Event.c_respon2.trim(): '']" :isSubmitted="isSubmitted" type="支出" planeval="檢討" :eval_uuid="PlanEval.uuid" :c_act_code="PlanEval.c_act_code"/>
               </div>
             </div>
           </div>
@@ -231,6 +233,7 @@
 </template>
 
 <script setup>
+import { gql } from "graphql-tag"
 import { computed, ref } from "vue";
 import { useStore } from "vuex";
 import { EVENT_EVALUATION_BY_ACT_CODE } from "/src/graphQueries/Event/query.js"
@@ -268,6 +271,39 @@ const { mutate: addEvaluationFromActCode, onDone: addEvaluationFromActCode_Compl
 const { mutate: updateEvaluationFromActCode, onDone: updateEvaluationFromActCode_Completed, onError: updateEvaluationFromActCode_Error } = useMutation(UPDATE_EVALUATION_FROM_PK)
 const { mutate: submitEvaluation, onDone: submitEvaluation_Completed, onError: submitEvaluation_Error } = useMutation(SUBMIT_EVALUATION)
 const { mutate: approveEvaluation, onDone: approveEvaluation_Completed, onError: approveEvaluation_Error } = useMutation(APPROVE_EVALUATION)
+const { mutate: denyEvaluation, onDone: denyEvaluation_Completed, onError: denyEvaluation_Error } = useMutation(gql`
+mutation denyEvaluationFromUUID(
+  $uuid: uniqueidentifier = "", 
+  $c_act_code: String = "",
+  $ic: String = "", 
+  $ic_date: smalldatetime = "",
+  $ic_comment: String = "",
+  $logObject: Log_insert_input! = {}
+  ) {
+  update_Event_Evaluation_by_pk(
+    pk_columns: {uuid: $uuid}, 
+    _set: {
+      ic: $ic, 
+      ic_date: $ic_date,
+      ic_comment: $ic_comment,
+      submit_date: null,
+    }) {
+      uuid
+      c_act_code
+  }
+  update_HTX_Event_by_pk(
+    pk_columns: {c_act_code: $c_act_code},
+    _set: {
+      m_evaluation_rem: $ic_comment
+    }) {
+      c_act_code
+      m_evaluation_rem
+  }
+  insert_Log_one(object: $logObject) {
+    log_id
+  }
+}
+`)
 
 // computed
 const Event = computed(() => EventEvaluation.value?.HTX_Event_by_pk??[])
@@ -293,6 +329,10 @@ approveEvaluation_Completed((result) => {
   notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
 })
 
+denyEvaluation_Completed((result) => {
+  notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
+})
+
 // error callbacks
 addEvaluationFromActCode_Error((error) => {
   notifyClientError(error)
@@ -313,11 +353,20 @@ submitEvaluation_Error((error) => {
 approveEvaluation_Error((error) => {
   notifyClientError(error)
 })
+
+denyEvaluation_Error((error) => {
+  notifyClientError(error)
+})
 // functions
 // start editing
 function startEdit() {
   clonePlanValue()
   edit.value = true
+}
+
+function startApprove() {
+  EvaluationComment.value = PlanEval.value.ic_comment? PlanEval.value.ic_comment.trim(): ''
+  approvalDialog.value = true
 }
 
 // save
@@ -327,12 +376,11 @@ function saveEdit() {
 }
 
 function ApproveOK() {
-  console.log("approve_ok " + EvaluationComment.value.trim())
   const logObject = ref({
     "username": username.value,
     "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     "module": "活動系統",
-    "action": "批核活動計劃/檢討: " + props.EventID + "。主管評語：" + EvaluationComment.value,
+    "action": "批核活動計劃/檢討: " + props.EventID.trim() + "。主管評語：" + EvaluationComment.value,
   })
   
   awaitServerResponse.value++
@@ -341,15 +389,29 @@ function ApproveOK() {
     ic: username.value,
     ic_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     ic_comment: EvaluationComment.value,
-    c_act_code: props.EventID,
+    c_act_code: props.EventID.trim(),
     uuid: PlanEval.value.uuid,
   })
   // update HTX_Event (m_evaluation_rem), Event_Evaluation (ic_comment, ic_date)
 }
 
 function ApproveDeny() {
-  console.log("approve_deny " + EvaluationComment.value.trim())
+  const logObject = ref({
+    "username": username.value,
+    "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+    "module": "活動系統",
+    "action": "發回活動計劃/檢討: " + props.EventID.trim() + "。主管評語：" + EvaluationComment.value,
+  })
 
+  awaitServerResponse.value++
+  denyEvaluation({
+    logObject: logObject.value,
+    ic: username.value,
+    ic_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+    ic_comment: EvaluationComment.value,
+    c_act_code: props.EventID.trim(),
+    uuid: PlanEval.value.uuid,
+  })
   // update HTX_Event (m_evaluation_rem), Event_Evaluation (ic_comment, ic_date)
   // delete Event_Evaluatoin(submit_date)
 }
@@ -399,7 +461,6 @@ function purifyRecord() {
 }
 
 function onOKClick() {
-  console.log("OK")
   const logObject = ref({
     "username": username.value,
     "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),

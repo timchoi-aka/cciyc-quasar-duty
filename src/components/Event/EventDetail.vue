@@ -2,7 +2,7 @@
   <q-card>
     <q-tabs v-model="activeTab" inline-label align="left" class="bg-primary text-white">
       <q-tab name="BasicInfo" icon="source" label="基本資料" />
-      <q-tab name="FeeSetting" icon="paid" label="費用設定" />
+      <q-tab v-if="!isFree" name="FeeSetting" icon="paid" label="費用設定" />
       <q-tab name="Apply" icon="approval" label="報名" />
       <q-tab name="Stat" icon="leaderboard" label="統計節數" />
       <q-tab name="PlanEvaluation" icon="summarize" label="計劃檢討" />
@@ -34,7 +34,6 @@
       </q-tab-panel>
 
       <q-tab-panel name="Stat">
-        <div>統計數據:</div>
         <EventStat :c_act_code="props.EventID"/>
       </q-tab-panel>
 
@@ -50,8 +49,10 @@
 </template>
 
 <script setup>
+import { gql } from "graphql-tag"
 import { ref, computed } from "vue";
 import { useStore } from "vuex";
+import { useQuery } from "@vue/apollo-composable"
 import EventEvaluation from "components/Event/EventEvalation.vue"
 import EventContent from "components/Event/EventContent.vue"
 import EventFee from "components/Event/EventFee.vue"
@@ -69,6 +70,19 @@ const props = defineProps({
 const activeTab = ref("BasicInfo")
 const $store = useStore();
 
-// computed
-const username = computed(() => $store.getters["userModule/getUsername"])</script>
+// query
+const { result } = useQuery(gql`
+query Event_by_pk($c_act_code: String!) {
+  HTX_Event_by_pk(c_act_code: $c_act_code) {
+    c_act_code
+    b_freeofcharge
+  }
+}`, () => ({
+  c_act_code: props.EventID.trim()
+}));
 
+// computed
+const username = computed(() => $store.getters["userModule/getUsername"])
+const isFree = computed(() => result.value? result.value.HTX_Event_by_pk.b_freeofcharge: false)
+
+</script>

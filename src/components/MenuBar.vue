@@ -34,6 +34,9 @@
     <q-route-tab to="/event/log" icon="public" label="系統記錄" />
     <q-route-tab to="/event/status" icon="public" label="開發狀況" />
   </q-tabs>
+  <q-tabs v-if="username && module == 'account'" inline-label class="desktop-only" align="left">
+    <q-route-tab to="/account/other" icon="public" label="雜項收入" />
+  </q-tabs>
 </template>
 
 <script setup>

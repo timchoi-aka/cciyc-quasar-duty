@@ -136,7 +136,7 @@ export default boot(
               keyFields: ["c_mem_id"]
             },
             tbl_act_session: {
-              keyFields: ["c_act_code", "d_act"],
+              keyFields: ["c_act_code", "d_act", "inCenter"],
             },
             MemberAccount: {
               keyFields: ["c_receipt_no"],
@@ -152,6 +152,9 @@ export default boot(
             },
             Event_Prepaid: {
               keyFields: ["uuid"]
+            },
+            tbl_sel_acc_type: {
+              keyFields: ["c_type"]
             }
           }
         }

@@ -1,4 +1,3 @@
-<!-- TODO finish evaluation approval-->
 <template>
   <!-- loading dialog -->
   <q-dialog v-model="waitingAsync" position="bottom">
