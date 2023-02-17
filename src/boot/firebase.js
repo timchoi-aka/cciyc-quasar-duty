@@ -30,7 +30,6 @@ if (process.env.NODE_ENV === "development") {
   //connectAuthEmulator(auth, "http://localhost:9099");
   connectFirestoreEmulator(db, 'localhost', 8081);
   connectFunctionsEmulator(functions, "localhost", 5001);
-  connectPubSub
   
   self.FIREBASE_APPCHECK_DEBUG_TOKEN = "D0934CAD-09BB-46E6-ABCD-EB7BD32B9365";
   console.log("Debug Mode Enabled")
