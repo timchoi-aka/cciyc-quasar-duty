@@ -4,7 +4,6 @@ import { getAuth, onAuthStateChanged, onIdTokenChanged, getIdToken } from "fireb
 import { getFirestore, connectFirestoreEmulator, collection, doc } from "firebase/firestore";
 import { getApp } from "firebase/app";
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
-import { connect}from 'firebase/connectPubSub'
 
 const { initializeAppCheck, ReCaptchaV3Provider } = require("firebase/app-check");
 
