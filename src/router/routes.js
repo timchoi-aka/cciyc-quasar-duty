@@ -156,8 +156,18 @@ const routes = [
     path: '/account',
     component: () => import('src/pages/AccountHome.vue'), meta: {requiresAuth: true},
     children: [
-      { path: 'other',
-        component: () => import('src/pages/Account/OtherIncome.vue'), meta: {requiresAuth: true }},
+      { 
+        path: 'other',
+        component: () => import('src/pages/Account/OtherIncome.vue'), meta: {requiresAuth: true }
+      },
+      { 
+        path: 'receipt-list',
+        component: () => import('src/pages/Account/ReceiptList.vue'), meta: {requiresAuth: true }
+      },
+      {
+        path: 'log',
+        component: () => import('src/pages/Account/LogViewer.vue'), meta: {requiresAuth: true},
+      },
     ]
   },
     /*

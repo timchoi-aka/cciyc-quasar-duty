@@ -3,8 +3,10 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const firestore = require("firebase-admin/firestore");
 
+let app;
+
 if (admin.apps.length === 0) {
-  admin.initializeApp();
+  app = admin.initializeApp();
 }
 
 const FireDB = admin.firestore();
@@ -14,5 +16,5 @@ const FieldValue = firestore.FieldValue;
 const arrayUnion = FireDB.arrayUnion;
 
 module.exports = {
-  FireDB, Timestamp, functions, FieldValue, arrayUnion, admin,
+  FireDB, Timestamp, functions, FieldValue, arrayUnion, admin, app,
 };

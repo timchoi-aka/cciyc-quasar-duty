@@ -220,8 +220,13 @@ const volunteerData = computed(() => {
 
       if (i == -1) {
         let age = dateUtil.calculateAge(record.Volunteer_to_Member.d_birth)
-        let ageGroup = age >= 60? 'D': age >= 26? 'C': age >= 13? 'B': 'A' 
+        let ageGroup = ''
         
+        if (reportType.value.label == '社署標準') {
+          ageGroup = age >= 60? 'D (60歲或以上)': age >= 26? 'C (26歲或以上)': age >= 13? 'B (13歲或以上)': 'A (12歲或以下)' 
+        } else {
+          ageGroup = age >= 25? '25歲或以上': age >= 15? '15-24歲': '14歲或以下'
+        }
         res.push({
           c_mem_id: String(parseInt(record.c_mem_id.trim())).padStart(4, '0'),
           c_name: record.Volunteer_to_Member.c_name,

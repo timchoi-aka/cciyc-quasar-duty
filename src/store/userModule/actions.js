@@ -1,7 +1,9 @@
-import { FireDB, FirebaseAuth,  /*getAuth, signInWithCredential*/ } from "boot/firebase.js";
+import { FireDB, FirebaseAuth, FirebaseMessaging, FirebaseFunctions /*getAuth, signInWithCredential*/ } from "boot/firebase.js";
+import { getToken } from "firebase/messaging";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
-import { collection, getDoc, doc, getDocs } from "firebase/firestore"; 
+import { collection, getDoc, doc, getDocs, Timestamp } from "firebase/firestore"; 
 import { Notify } from 'quasar'
+import { httpsCallable } from "firebase/functions";
 
 export async function refreshToken({ commit }) {
   const credential = GoogleAuthProvider.credentialFromResult(result)
@@ -26,6 +28,27 @@ export async function login({ commit }) {
     // The signed-in user info.
     const user = result.user;
     
+    // get messaging token
+    // Add the public key generated from the console here.
+    getToken(FirebaseMessaging, {vapidKey: "BFu5VzDUwOVWSQ--MUDmSEPt9AYN9QlTPIzijXKzQVqrIdpKi1goG9l3L8_fDJFr5mojwX5Eo2tDC1XiMmIfSXA"}).then((currentToken) => {
+      if (currentToken) {
+        // Send the token to your server and update the UI if necessary
+        //subscribeToTopic(currentToken, "notiication")
+        const regToken = httpsCallable(FirebaseFunctions, "notification-registerToken");
+        regToken({
+          uid: user.uid,
+          token: currentToken,
+          timestamp: Timestamp.fromDate(new Date())
+        })
+        // console.log("Got Messaging Token:" + currentToken)
+      } else {
+        // Show permission request UI
+        console.log('No registration token available. Request permission to generate one.');
+      }
+    }).catch((err) => {
+      console.log('An error occurred while retrieving token. ', err);
+    });
+
     getDoc(doc(FireDB, "users", user.uid)).then((userDoc) => {
       if (userDoc.exists()) {
         let d = userDoc.data();

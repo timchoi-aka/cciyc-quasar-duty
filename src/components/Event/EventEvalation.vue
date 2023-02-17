@@ -62,7 +62,7 @@
     </div>
   </div>
   <!-- desktop -->
-  <div v-if="$q.screen.gt.md">
+  <div v-if="$q.screen.gt.sm">
     <div class="row text-h6">
       <div v-if="PlanEval.ic_comment" class="col-12 q-my-sm" style="border: 1px dotted red;">主管評語: {{PlanEval.ic_comment}}</div>
       <div class="col-2 q-my-sm">工作目的: </div><span class="col-10" v-if="edit"><q-input filled type="text" v-model="editObject.objective"/></span><span class="col-10" v-else>{{PlanEval.objective}}</span>

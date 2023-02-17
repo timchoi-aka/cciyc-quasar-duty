@@ -47,3 +47,5 @@ module.exports = {
 exports.housekeep = require("./housekeep.js");
 // exports.housekeep = housekeep
 // - housekeep.updateMemberStatus
+
+exports.notification = require("./notification.js");

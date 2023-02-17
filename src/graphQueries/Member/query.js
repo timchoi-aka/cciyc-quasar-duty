@@ -147,7 +147,7 @@ export const LATEST_RECEIPT_NO = gql`
 
 export const LATEST_MRECEIPT_NO = gql`
   subscription getLatestMReceiptNo {
-    tbl_account(limit: 1, order_by: {c_receipt_no: desc}) {
+    tbl_account(limit: 1, order_by: {c_receipt_no: desc}, where: {c_receipt_no: {_lt: "R"}}) {
       c_receipt_no
     }
   }`

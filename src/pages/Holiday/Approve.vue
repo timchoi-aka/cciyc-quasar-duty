@@ -139,11 +139,11 @@
     <q-dialog v-model="showModificationDialog" persistent>
       <q-card style="width: 70vw" class="q-pa-none">
         <q-card-section class="fit q-pa-none">
-          <div class="text-h5 bg-blue-3 text-center">確定修改放假？</div>
+          <div class="text-h6 bg-blue-3 text-center">確定修改放假？</div>
         </q-card-section>
 
         <q-card-section
-          class="scroll bg-grey-2 q-pa-xs text-center"
+          class="scroll bg-grey-2 q-pa-xs"
           :style="
             $q.screen.lt.sm
               ? 'height: 40vw; max-height: 40vw'
@@ -154,42 +154,43 @@
             :style="
               application.invalidEdit ? 'border: 1px solid red' : 'border: 1px solid blue'
             "
-            class="col-6 q-pa-sm full-width q-mt-sm"
+            class="q-pa-sm full-width q-mt-sm"
             v-for="(application, index) in modifyingRow"
             :key="index"
           >
-            <div class="row items-center">
-              <span class="col">{{ application.name }}</span>
-              <span class="col">{{ typeMap[application.type] }}</span>
+            <div class="row col-12 items-center" :style="$q.screen.lt.sm? 'font-size: 1rem;': 'font-size: 0.5rem;'">
+              <span class="col-sm-2 col-xs-6">{{ application.name }}</span>
+              <span class="col-sm-2 col-xs-6">{{ typeMap[application.type] }}</span>
               <span
-                class="col"
-                v-html="qdate.formatDate(application.date, 'DD/MM/YYYY')"
-              />
-              <q-btn icon="event" round color="primary">
-                <q-popup-proxy
-                  persistent
-                  @before-show="proxyDate = application.date"
-                  cover
-                  transition-show="scale"
-                  transition-hide="scale"
-                >
-                  <q-date v-model="proxyDate" mask="YYYY-MM-DD">
-                    <div class="row items-center justify-end q-gutter-sm">
-                      <q-btn label="取消" color="primary" flat v-close-popup />
-                      <q-btn
-                        label="確定"
-                        color="primary"
-                        @click="checkValidEdit(index)"
-                        flat
-                        v-close-popup
-                      />
-                    </div>
-                  </q-date>
-                </q-popup-proxy>
-              </q-btn>
+                class="col-sm-3 col-xs-12"
+              >
+                <span>{{qdate.formatDate(application.date, 'DD/MM/YYYY')}}</span>
+                <q-btn icon="event" round color="primary">
+                  <q-popup-proxy
+                    persistent
+                    @before-show="proxyDate = application.date"
+                    cover
+                    transition-show="scale"
+                    transition-hide="scale"
+                  >
+                    <q-date v-model="proxyDate" mask="YYYY-MM-DD">
+                      <div class="row items-center justify-end q-gutter-sm">
+                        <q-btn label="取消" color="primary" flat v-close-popup />
+                        <q-btn
+                          label="確定"
+                          color="primary"
+                          @click="checkValidEdit(index)"
+                          flat
+                          v-close-popup
+                        />
+                      </div>
+                    </q-date>
+                  </q-popup-proxy>
+                </q-btn>
+              </span>
 
               <q-btn-toggle
-                class="bg-light-blue-2 col-grow offset-1"
+                class="col-auto bg-light-blue-2 offset-1"
                 v-model="application.slot"
                 push
                 toggle-color="primary"
@@ -403,7 +404,7 @@
                     color="warning"
                     outline
                     label="修改"
-                    @click="buildModifyingRow"
+                    @click="buildModifyingItem(props.row)"
                   />
                 </div>
               </q-card-actions>
@@ -579,10 +580,19 @@ const username = computed(() => $store.getters["userModule/getUsername"])
 function buildModifyingRow() {
   proxyDate.value = "";
   modifyingRow.value = JSON.parse(JSON.stringify(selectedRow.value));
+  
   for (let i = 0; i < modifyingRow.value.length; i++) {
     modifyingRow.value[i].invalidEdit = true;
   }
   
+  showModificationDialog.value = !showModificationDialog.value;
+}
+
+function buildModifyingItem(row) {
+  proxyDate.value = "";
+  modifyingRow.value = [];
+  modifyingRow.value.push(JSON.parse(JSON.stringify(row)))
+  modifyingRow.value[0].invalidEdit = true;  
   showModificationDialog.value = !showModificationDialog.value;
 }
 

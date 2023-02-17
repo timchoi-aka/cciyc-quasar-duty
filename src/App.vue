@@ -18,6 +18,9 @@
           <span class="desktop-only">青年 假期系統</span>
         </q-toolbar-title>
 
+        <!-- notifications -->
+        <div v-if="username && isSystemAdmin" class="q-mx-md bg-primary text-white"><NotificationBell/></div>
+
         <div v-if="username" class="desktop-only q-mr-md">
           <q-chip>
             <q-avatar v-if="photoURL">
@@ -92,10 +95,13 @@
 
 <script setup>
 import EssentialLink from "components/EssentialLink.vue";
+import NotificationBell from "components/Basic/NotificationBell.vue"
 import MenuBar from "components/MenuBar.vue";
-import { ref, computed } from "vue";
+import { ref, computed, provide } from "vue";
 import { useStore } from "vuex";
 import { useQuasar } from "quasar"
+import { FirebaseMessaging } from 'boot/firebase'
+provide('messaging', FirebaseMessaging)
 
 // variables
 const leftDrawerOpen = ref(false);

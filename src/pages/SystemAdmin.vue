@@ -9,6 +9,7 @@
   <q-btn @click="calculateLeaveBalance" label="calculateLeaveBalance"></q-btn>
   <q-btn @click="addSALDeadline" label="addSALDeadline"></q-btn>
   <q-btn @click="addCustomClaims" label="Add Custom Claims"></q-btn>
+  <q-btn @click="testNotify" label="Test Notify"></q-btn>
 </template>
 
 <script setup>
@@ -31,7 +32,21 @@ const $store = useStore();
 // computed
 const hasuraClaim = computed(() => $store.getters["userModule/getHasuraClaim"])
 const uid = computed(() => $store.getters["userModule/getUID"])
-   
+
+function testNotify() {
+  const testNoti = httpsCallable(FirebaseFunctions,
+    "systemAdmin-testNotify"
+  );
+
+  testNoti({
+    title: "a test title",
+    body: "the test body",
+    link: "http://localhost:8080/#/system-admin",
+  }).then((result) => {
+    console.log(JSON.stringify(result));
+  })
+}
+
 function addSALDeadline() {
   const addSALDL = httpsCallable(FirebaseFunctions,
     "systemAdmin-addSALDeadline"

@@ -1,6 +1,7 @@
 <template>
-  <q-page>
+  <!--<q-page>
     <router-view style="margin-top: 70px;"/>
+
     <q-page-sticky position="top" expand>
       <q-tabs
         dense
@@ -12,7 +13,9 @@
         <q-route-tab to="/account/other" icon="calendar_month" label="雜項" />
       </q-tabs>
     </q-page-sticky>
-  </q-page>
+    
+  </q-page>-->
+  <router-view/>
 </template>
 
 <script setup>

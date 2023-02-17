@@ -18,7 +18,7 @@
   </q-dialog>
 
   <q-dialog
-    v-if="$q.screen.lt.md"
+    v-else
     maximized
     transition-show="slide-up"
     transition-hide="slide-down"
