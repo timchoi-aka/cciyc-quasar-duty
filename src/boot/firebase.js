@@ -1,8 +1,10 @@
 import { initializeApp } from 'firebase/app';
+import { getMessaging } from "firebase/messaging";
 import { getAuth, onAuthStateChanged, onIdTokenChanged, getIdToken } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator, collection, doc } from "firebase/firestore";
 import { getApp } from "firebase/app";
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
+import { connect}from 'firebase/connectPubSub'
 
 const { initializeAppCheck, ReCaptchaV3Provider } = require("firebase/app-check");
 
@@ -15,7 +17,10 @@ const firebaseConfig = {
   appId: "1:40845111899:web:f5110e9801b0c21704457e"
 };
 
+
 const app = initializeApp(firebaseConfig)
+const messaging = getMessaging(app);
+
 const auth = getAuth(app);
 const db = getFirestore(app);
 const functions = getFunctions(getApp(), "asia-east2");
@@ -26,6 +31,7 @@ if (process.env.NODE_ENV === "development") {
   //connectAuthEmulator(auth, "http://localhost:9099");
   connectFirestoreEmulator(db, 'localhost', 8081);
   connectFunctionsEmulator(functions, "localhost", 5001);
+  connectPubSub
   
   self.FIREBASE_APPCHECK_DEBUG_TOKEN = "D0934CAD-09BB-46E6-ABCD-EB7BD32B9365";
   console.log("Debug Mode Enabled")
@@ -47,7 +53,17 @@ onAuthStateChanged(auth, async (user) => {
   }
 });
 */
+export async function requestPermission() {
+  console.log('Requesting permission...');
+  Notification.requestPermission().then((permission) => {
+    if (permission === 'granted') {
+      console.log('Notification permission granted.');
+    }
+  })
+}
+
 export async function getCurrentUser() {
+  // after login, get the messaging token
   return new Promise((resolve, reject) => {
       const unsubscribe = onAuthStateChanged(auth, user => {
           unsubscribe();
@@ -70,6 +86,7 @@ export async function getCurrentUser() {
 export const FirebaseAuth = auth
 export const FireDB = db
 export const FirebaseFunctions = functions
+export const FirebaseMessaging = messaging
 
 // collection references
 export const usersCollection = collection(db, 'users')
@@ -83,5 +100,3 @@ export const dashboardCollection = collection(db, 'dashboard')
 export const leaveConfig = doc(db, 'dashboard', "leaveConfig")
 export const OTConfig = doc(db, 'dashboard', "otConfig")
 export const Notification = doc(db, 'dashboard', "notification")
-
-

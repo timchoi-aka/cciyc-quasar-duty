@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, inject } from "vue";
 import { useStore } from "vuex";
 import { useQuasar } from "quasar"
 
@@ -26,7 +26,7 @@ import { useQuasar } from "quasar"
 const $store = useStore();
 const $q = useQuasar();
 const awaitServerResponse = ref(0)
-    
+
 // computed    
 const username = computed(() => $store.getters["userModule/getUsername"])
 const waitingAsync = computed(() => awaitServerResponse.value > 0)
