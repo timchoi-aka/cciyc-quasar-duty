@@ -6,7 +6,7 @@ const routes = [
   },
   {
     path: '/member',
-    component: () => import('src/pages/Member/Member.vue'), meta: {requiresAuth: true},
+    component: () => import('src/pages/MemberHome.vue'), meta: {requiresAuth: true},
     children: [
       {
         path: 'list',
@@ -54,7 +54,7 @@ const routes = [
   },
   {
     path: '/event',
-    component: () => import('src/pages/Event/Event.vue'), meta: {requiresAuth: true},
+    component: () => import('src/pages/EventHome.vue'), meta: {requiresAuth: true},
     children: [
       {
         path: 'my-event',
@@ -161,8 +161,18 @@ const routes = [
         component: () => import('src/pages/Account/OtherIncome.vue'), meta: {requiresAuth: true }
       },
       { 
-        path: 'receipt-list',
-        component: () => import('src/pages/Account/ReceiptList.vue'), meta: {requiresAuth: true }
+        path: 'receipt',
+        component: () => import('src/pages/Account/ReceiptHome.vue'), meta: {requiresAuth: true },
+        children: [
+          { 
+            path: 'search',
+            component: () => import('src/pages/Account/ReceiptSearch.vue'), meta: {requiresAuth: true }
+          },
+          { 
+            path: 'report',
+            component: () => import('src/pages/Account/Report.vue'), meta: {requiresAuth: true }
+          }
+        ]
       },
       {
         path: 'log',

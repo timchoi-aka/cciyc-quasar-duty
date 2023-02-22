@@ -19,7 +19,7 @@
         </q-toolbar-title>
 
         <!-- notifications -->
-        <div v-if="username && isSystemAdmin" class="q-mx-md bg-primary text-white"><NotificationBell/></div>
+        <div v-if="username" class="q-mx-md bg-primary text-white"><NotificationBell/></div>
 
         <div v-if="username" class="desktop-only q-mr-md">
           <q-chip>
@@ -45,7 +45,7 @@
         <q-btn class="desktop-only" v-if="UAT" dense flat round icon="menu" @click="toggleRightDrawer" />
       </q-toolbar>
 
-      <MenuBar/>
+      <MenuBar :key="module"/>
     </q-header>
 
     <q-drawer
@@ -59,7 +59,7 @@
       <q-list v-if="!uid">
         <EssentialLink title="登入" caption="請先登入" icon="login" link="/" />
       </q-list>
-      <q-list v-if="uid && (module == 'duty' || module == '')">
+      <q-list v-if="uid && (module == 'duty')">
         <EssentialLink v-for="link in dutyList" :key="link.title" v-bind="link" />
       </q-list>
       <q-list v-if="uid && module == 'member'">
@@ -75,16 +75,16 @@
         <q-btn class="col" name="duty" icon="event" label="編更" @click="setCurrentModule('duty')"/>
         <q-btn class="col" name="member" icon="public" label="會員" @click="setCurrentModule('member')"/>
         <q-btn class="col" name="event" icon="festival" label="活動" @click="setCurrentModule('event')"/>
-        <q-btn class="col" name="finance" icon="money" label="財務" @click="setCurrentModule('finance')"/>
+        <q-btn class="col" name="finance" icon="money" label="財務" @click="setCurrentModule('account')"/>
       </div>
     </q-drawer>
     
     <!-- right drawer -->
     <q-drawer :width="100" v-model="rightDrawerOpen" side="right" overlay elevated class="column justify-around" behavior="mobile">
-        <q-btn v-close-popup class="col-grow" name="duty" icon="event" label="編更" to="/duty"/>
-        <q-btn v-close-popup class="col-grow" name="member" icon="public" label="會員" to="/member"/>
-        <q-btn v-close-popup class="col-grow" name="event" icon="festival" label="活動" to="/event"/>
-        <q-btn v-close-popup class="col-grow" name="finance" icon="money" label="財務" to="/account"/>
+        <q-btn v-close-popup class="col-grow" name="duty" icon="event" label="編更" to="/duty/dutytable"/>
+        <q-btn v-close-popup class="col-grow" name="member" icon="public" label="會員" to="/member/list"/>
+        <q-btn v-close-popup class="col-grow" name="event" icon="festival" label="活動" to="/event/my-event"/>
+        <q-btn v-close-popup class="col-grow" name="finance" icon="money" label="財務" to="/account/receipt/search"/>
     </q-drawer>
 
     <q-page-container>
@@ -119,7 +119,7 @@ const isTmp = computed(() => $store.getters["userModule/getTmp"])
 const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"])
 const isUserManagement = computed(() => $store.getters["userModule/getUserManagement"])
 // currentModule getters
-const module = computed(() => $store.getters["currentModule/getCurrentModule"])
+const module = computed(() => $store.getters["userModule/getModule"])
 
 // menu items
 // links
@@ -166,7 +166,7 @@ const dutyList = computed(() => [
 const userProfileLogout = () => $store.dispatch("userModule/logout")
 const toggleLeftDrawer = () => leftDrawerOpen.value = !leftDrawerOpen.value
 const toggleRightDrawer = () => rightDrawerOpen.value = !rightDrawerOpen.value
-const setCurrentModule = (module) => $store.dispatch("currentModule/setCurrentModule", module)
+const setCurrentModule = (module) => $store.dispatch("userModule/switchModule", module)
 
 // functions
 function logout() {

@@ -74,7 +74,7 @@ const eventDetailDialog = ref(false)
 const selectedEventID = ref("")
 // save current module
 const $store = useStore();
-$store.dispatch("currentModule/setCurrentModule", "event");
+// $q.localStorage.set("module", "event");
 const userProfileLogout = () => $store.dispatch("userModule/logout")
 
 const searchCondition = ref({

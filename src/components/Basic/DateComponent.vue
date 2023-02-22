@@ -1,10 +1,12 @@
 <template>
+  <!-- hint="YYYY/MM/DD" -->
   <q-input 
     mask="date"
-    hint="YYYY-MM-DD" 
+    :label="props.label? props.label: ''"
     filled
     :model-value="props.modelValue"
     hide-hint
+    hide-bottom-space
     @update:model-value="(value) => $emit('update:modelValue', value)">
       <template v-slot:append>
         <q-icon name="event" class="cursor-pointer">
@@ -29,6 +31,7 @@
 <script setup>
 const emit = defineEmits(["update:modelValue"])
 const props = defineProps({
-  modelValue: String
+  modelValue: String,
+  label: String,
 })
 </script>

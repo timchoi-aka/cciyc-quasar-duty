@@ -106,7 +106,7 @@
   </template>
   <template v-slot:body-cell-b_refund="props">
     <q-td :props="props">
-      <q-btn v-if="!props.row.b_refund" icon="currency_exchange" color="negative" @click="confirmUnregister(props.row)" size="md" padding="none" outline/>
+      <q-btn v-if="!props.row.b_refund" icon="undo" color="negative" @click="confirmUnregister(props.row)" size="md" padding="none" outline/>
       <div v-else>已退出</div>
     </q-td>
   </template>
@@ -263,7 +263,7 @@ const columns = ref([
   },
   {
     name: "b_refund",
-    label: "退款",
+    label: "取消報名",
     field: "b_refund",
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
@@ -271,7 +271,7 @@ const columns = ref([
   },
   {
     name: "d_refund",
-    label: "退款日期",
+    label: "取消日期",
     field: "d_refund",
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",

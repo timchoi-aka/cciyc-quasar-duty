@@ -18,9 +18,11 @@
 </template>
 
 <script setup>
+import { useQuasar } from "quasar";
 import { useStore } from "vuex";
 
 const $store = useStore();
-$store.dispatch("currentModule/setCurrentModule", "member");
+const $q = useQuasar()
+// $q.localStorage.set("module", "member");
 </script>
 

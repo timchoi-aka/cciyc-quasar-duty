@@ -1,10 +1,9 @@
 /* eslint-disable max-len */
-// const {functions, admin} = require("./fbadmin");
 const {functions, admin, FireDB} = require("./fbadmin");
 const {formatDateTime} = require("./utilities");
 const messaging = admin.messaging();
 
-exports.registerToken = functions.region("asia-east2").https.onCall(async (data, context) => {
+exports.subscribeTopic = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
   if (context.app == undefined) {
@@ -20,30 +19,8 @@ exports.registerToken = functions.region("asia-east2").https.onCall(async (data,
     );
   }
 
-  /*
-  const loginUserDoc = FireDB
-      .collection("users")
-      .doc(context.auth.uid);
-  const loginUser = await loginUserDoc.get();
-  const loginUserData = loginUser.data();
-  */
-
   // subscribe to user's topic
-  return await messaging.subscribeToTopic(data.token, context.auth.uid).then((result)=>{
-    console.log(result);
-  });
-  // update token in user object
-  /*
-  return await loginUserDoc.update({
-    "FCM_Tokens": {
-      token: data.token,
-      timestamp: data.timestamp,
-    },
-  }).then(() => {
-    this.notify(context.auth.uid, {title: "Timestamp updated", body: "Your client timestamp is updated"});
-    console.log("USER: " + loginUserData.name + " update [FCM_Token] " + data.token + " with timestamp:" + data.timestamp);
-  });
-  */
+  return await messaging.subscribeToTopic(data.token, data.topic);
 });
 
 exports.notify = async (uid, data) => {
@@ -74,19 +51,50 @@ exports.notify = async (uid, data) => {
   });
 };
 
-exports.publishToTopic = async (topic, data) => {
+exports.publishTopic = async (topic, data, channelID = "", link = "") => {
   const message = {
+    /*
     data: {
       title: data.title,
       body: data.body,
       datetime: formatDateTime(new Date()),
     },
-    topic: topic,
-    webpush: {
-      fcm_options: {
-        link: data.link,
+    */
+    notification: {
+      title: data.title,
+      body: data.body,
+    },
+    /*
+    android: {
+      data: {
+        title: data.title,
+        body: data.body,
+        datetime: formatDateTime(new Date()),
+      },
+      notification: {
+        title: data.title,
+        body: data.body,
+        channel_id: channelID,
+        default_sound: true,
+        click_action: link,
       },
     },
+    webpush: {
+      data: {
+        title: data.title,
+        body: data.body,
+        datetime: formatDateTime(new Date()),
+      },
+      notification: {
+        title: data.title,
+        body: data.body,
+      },
+      fcm_options: {
+        link: link,
+      },
+    },
+    */
+    topic: topic,
   };
 
   // Send a message to the device corresponding to the provided

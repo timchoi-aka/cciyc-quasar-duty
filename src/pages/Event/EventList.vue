@@ -37,10 +37,10 @@ import LoadingDialog from "components/LoadingDialog.vue"
 
 // save current module
 const $store = useStore();
-$store.dispatch("currentModule/setCurrentModule", "event");
-const userProfileLogout = () => $store.dispatch("userModule/logout")
-
 const $q = useQuasar()
+// $q.localStorage.set("module", "event");
+
+const userProfileLogout = () => $store.dispatch("userModule/logout")
 const awaitServerResponse = ref(0)
 const initialData = ref()
 

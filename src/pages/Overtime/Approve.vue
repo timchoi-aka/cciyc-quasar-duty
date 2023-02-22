@@ -492,7 +492,7 @@
 <script setup>
 import { OTCollection, usersCollection, FirebaseFunctions } from "boot/firebase";
 import { ref, computed, onMounted } from "vue";
-import { date as qdate } from "quasar";
+import { date as qdate, useQuasar } from "quasar";
 import { useStore } from "vuex";
 import DutyCalendar from "components/Duty/DutyCalendar.vue";
 import LoadingDialog from "components/LoadingDialog.vue"
@@ -517,7 +517,8 @@ onMounted(() => {
 })
 
 // variables
-const $store = useStore();
+const $store = useStore()
+const $q = useQuasar()
 const renderDate = ref(new Date())
 const proxyDate = ref(new Date())
 const modifyingRow = ref([])
@@ -619,13 +620,23 @@ const columns = ref([
 ])
 
 // computed
+const userProfileLogout = () => $store.dispatch("userModule/logout")
+const isLogin = computed(() => $store.getters["userModule/isLogin"])
 const username = computed(() => $store.getters["userModule/getUsername"])
 const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const filterValues = computed(() => ({
   usersSelected: usersSelected.value,
   statusSelected: statusSelected.value,
 }))
-      
+
+// logout if timeout
+if (!isLogin.value) {
+  userProfileLogout().then(() => {
+    $q.notify({ message: "系統超時，請重新登入。" });
+  })
+  .catch((error) => console.log("error", error));
+}
+
 // functions    
 function invalidInModification() {
   return modifyingRow.value.findIndex((element) => "invalidEdit" in element) != -1;

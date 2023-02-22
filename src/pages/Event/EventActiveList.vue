@@ -143,9 +143,6 @@ const eventListColumns = ref([
   },
 ])
 
-// setCurrentModule to Event
-$store.dispatch("currentModule/setCurrentModule", "event");
-
 // functions
 function getRowsNumberCount(filter) {
   if (!filter) {

@@ -9,3 +9,7 @@ export function setUserProfile(state, val) {
 export function setAuth(state, val) {
   state.auth = val
 }
+
+export function setModule(state, val) {
+  state.module = val
+}

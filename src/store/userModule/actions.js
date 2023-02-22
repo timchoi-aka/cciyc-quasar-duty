@@ -4,6 +4,7 @@ import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/
 import { collection, getDoc, doc, getDocs, Timestamp } from "firebase/firestore"; 
 import { Notify } from 'quasar'
 import { httpsCallable } from "firebase/functions";
+import { LocalStorage } from "quasar"
 
 export async function refreshToken({ commit }) {
   const credential = GoogleAuthProvider.credentialFromResult(result)
@@ -28,27 +29,6 @@ export async function login({ commit }) {
     // The signed-in user info.
     const user = result.user;
     
-    // get messaging token
-    // Add the public key generated from the console here.
-    getToken(FirebaseMessaging, {vapidKey: "BFu5VzDUwOVWSQ--MUDmSEPt9AYN9QlTPIzijXKzQVqrIdpKi1goG9l3L8_fDJFr5mojwX5Eo2tDC1XiMmIfSXA"}).then((currentToken) => {
-      if (currentToken) {
-        // Send the token to your server and update the UI if necessary
-        //subscribeToTopic(currentToken, "notiication")
-        const regToken = httpsCallable(FirebaseFunctions, "notification-registerToken");
-        regToken({
-          uid: user.uid,
-          token: currentToken,
-          timestamp: Timestamp.fromDate(new Date())
-        })
-        // console.log("Got Messaging Token:" + currentToken)
-      } else {
-        // Show permission request UI
-        console.log('No registration token available. Request permission to generate one.');
-      }
-    }).catch((err) => {
-      console.log('An error occurred while retrieving token. ', err);
-    });
-
     getDoc(doc(FireDB, "users", user.uid)).then((userDoc) => {
       if (userDoc.exists()) {
         let d = userDoc.data();
@@ -56,10 +36,37 @@ export async function login({ commit }) {
         d.dateOfExit = userDoc.data().dateOfExit? new Date(userDoc.data().dateOfExit.toDate().setHours(0)): null
         commit('setUserProfile', d);
         commit('setAuth', user);
+        commit('setModule', LocalStorage.has('module')? LocalStorage.getItem('module'): 'duty')
         this.$router.push('/').catch(()=>{});
         Notify.create({
           message: userDoc.data().name + " 登入成功."
         })
+        
+        // get messaging token
+        getToken(FirebaseMessaging, {vapidKey: "BFu5VzDUwOVWSQ--MUDmSEPt9AYN9QlTPIzijXKzQVqrIdpKi1goG9l3L8_fDJFr5mojwX5Eo2tDC1XiMmIfSXA"}).then((currentToken) => {
+          if (currentToken) {
+            // subscribeTopic(currentToken, topic)
+            const subscribeTopic = httpsCallable(FirebaseFunctions, "notification-subscribeTopic");
+            subscribeTopic({
+              topic: user.uid,
+              token: currentToken,
+              timestamp: Timestamp.fromDate(new Date())
+            })
+            if (d.privilege.leaveApprove) {
+              subscribeTopic({
+                topic: "holidayApprove",
+                token: currentToken,
+                timestamp: Timestamp.fromDate(new Date())
+              })
+            }
+            // console.log("Got Messaging Token:" + currentToken)
+          } else {
+            // Show permission request UI
+            console.log('No registration token available. Request permission to generate one.');
+          }
+        }).catch((err) => {
+          console.log('An error occurred while retrieving token. ', err);
+        });
       }
     })
   }).catch((error) => {
@@ -80,11 +87,17 @@ export async function logout({ commit }) {
     // Sign-out successful.
     // clear userProfile and redirect to /login
     commit('setUserProfile', {})
-    commit('setAuth', {})
+    commit('setAuth', {})    
+    commit('setModule', {})
     sessionStorage.removeItem("access-token");
     this.$router.push('/').catch(()=>{});
   }).catch((error) => {
     // An error happened.
     console.log(error);
   });
+}
+
+export async function switchModule({ commit }, mod) {
+  LocalStorage.set('module', mod)
+  commit('setModule', mod)
 }

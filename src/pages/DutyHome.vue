@@ -20,9 +20,12 @@
 <script setup>
 import { useStore } from "vuex";
 import { computed } from "vue";
+import { useQuasar } from "quasar";
 
 const $store = useStore();
-$store.dispatch("currentModule/setCurrentModule", "duty");
+const $q = useQuasar()
+
+$store.dispatch("userModule/switchModule", "duty");
 
 const isTmp = computed(() => $store.getters["userModule/getTmp"]) 
 </script>

@@ -23,7 +23,7 @@ import { useStore } from "vuex";
 import { computed } from "vue";
 
 const $store = useStore();
-$store.dispatch("currentModule/setCurrentModule", "account");
+$store.dispatch("userModule/switchModule", "account");
 
 const isTmp = computed(() => $store.getters["userModule/getTmp"]) 
 </script>

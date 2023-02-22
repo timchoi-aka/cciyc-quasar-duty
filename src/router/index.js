@@ -26,13 +26,21 @@ export default route(function (/* { store, ssrContext } */) {
     // quasar.conf.js -> build -> publicPath
     history: createHistory(process.env.MODE === 'ssr' ? void 0 : process.env.VUE_ROUTER_BASE)
   })
-
+  
   Router.beforeEach(async (to, from, next) => {
     const auth = to.matched.some(x => x.meta.requiresAuth)
     // const auth = to.meta.requiresAuth
     // if (auth && !await firebase.getCurrentUser()) {
     if (auth && !await getCurrentUser()) {
       next('/');
+    /*
+    } else if (!SessionStorage.has("vuex")) {
+      console.log("no vuex")
+      // timeout
+      signOut(getAuth()).then(() => {
+        next('/');  
+      })
+    */
     } else {
       next();
     }

@@ -208,7 +208,7 @@
 <script setup>
 import { computed, ref } from "vue";
 import { useStore } from "vuex";
-import { date as qdate } from "quasar";
+import { date as qdate, useQuasar } from "quasar";
 import MemberDetail from "components/Member/MemberDetail.vue";
 import { MEMBER_GET_ALL } from "/src/graphQueries/Member/query.js";
 import { useSubscription } from "@vue/apollo-composable"
@@ -217,7 +217,9 @@ import PrintReceipt from "components/Account/PrintReceipt.vue"
 
 // save current module
 const $store = useStore();
-$store.dispatch("currentModule/setCurrentModule", "member");
+const $q = useQuasar()
+
+// $q.localStorage.set("module", "member");
 
 // variables
 const awaitServerResponse = ref(0)

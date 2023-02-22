@@ -17,13 +17,32 @@
     </q-card>
   </q-dialog>
 
+  <!-- delete modal -->
+  <q-dialog v-model="deleteDialog">
+    <q-card>
+      <q-card-section class="bg-primary text-white text-h6">
+        {{Receipt.c_receipt_no}} - 刪除
+      </q-card-section>
+      <q-card-section class="text-h6">
+        <div>確定刪除？</div>
+        <div>請在以下輸入收據編號{{Receipt.c_receipt_no}}</div>
+        <q-input type="text" v-model="deleteCheck"/>
+      </q-card-section>
+      <q-card-actions align="right">
+        <q-btn :disable="deleteCheck != Receipt.c_receipt_no.trim()" icon="check" label="確定" class="bg-positive text-white" v-close-popup="-1" @click="deleteConfirm"/>
+        <q-btn icon="cancel" label="取消" class="bg-negative text-white" v-close-popup/>
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+
   <div class="row q-ma-md-none q-pa-md-none bg-grey-3 justify-center">
-    <div class="bg-primary row col-12" style="min-height: 50px; max-height: 50px;">
+    <div class="bg-primary row col-12 items-center" style="min-height: 50px; max-height: 50px;">
       <q-btn icon="print" flat class="bg-primary text-white col-shrink" v-print="printObj">
         <q-tooltip class="bg-white text-primary">列印</q-tooltip>  
       </q-btn>
       <q-space/>
-      <q-btn v-if="!Receipt.b_refund" label="退款" icon="currency_exchange" class="bg-negative text-white" flat @click="(refundDialog = true)"/>
+      <div v-if="!Receipt.b_delete"><q-btn label="刪除" icon="delete" class="bg-negative text-white q-mx-sm" flat @click="deleteDialog = true"/></div>
+      <div v-if="!Receipt.b_refund"><q-btn label="退款" icon="currency_exchange" class="bg-negative text-white q-mx-sm" flat @click="refundDialog = true"/></div>
       <q-space/>
       <q-btn class="bg-primary text-white col-shrink" dense flat icon="close" v-close-popup>
         <q-tooltip class="bg-white text-primary">關閉</q-tooltip>
@@ -92,7 +111,7 @@
 import { useQuery, useMutation } from "@vue/apollo-composable";
 import { computed, ref } from "vue"
 import { RECEIPTS_BY_NO } from "src/graphQueries/Account/query.js"
-import { ADD_RECEIPT_PRINT_COUNT, REFUND_BY_RECEIPT_NO } from "src/graphQueries/Account/mutation.js"
+import { ADD_RECEIPT_PRINT_COUNT, REFUND_BY_RECEIPT_NO, DELETE_BY_RECEIPT_NO } from "src/graphQueries/Account/mutation.js"
 import { date as qdate, useQuasar } from "quasar"
 import { useStore } from "vuex";
 
@@ -105,6 +124,8 @@ const $q = useQuasar()
 const $store = useStore();
 const username = computed(() => $store.getters["userModule/getUsername"])
 const userProfileLogout = () => $store.dispatch("userModule/logout")
+const deleteCheck = ref("")
+const deleteDialog = ref(false)
 const refundCheck = ref("")
 const refundDialog = ref(false)
 const printObj = ref({
@@ -136,6 +157,7 @@ const {result, loading, refetch} = useQuery(RECEIPTS_BY_NO,
   }));
 const { mutate: addReceiptPrintCount, onDone: addReceiptPrintCount_Completed, onError: addReceiptPrintCount_Error } = useMutation(ADD_RECEIPT_PRINT_COUNT)
 const { mutate: refund, onDone: refund_Completed, onError: refund_Error } = useMutation(REFUND_BY_RECEIPT_NO)
+const { mutate: deleteReceipt, onDone: deleteReceipt_Completed, onError: deleteReceipt_Error } = useMutation(DELETE_BY_RECEIPT_NO)
 
 const Receipt = computed(() => result.value?.tbl_account_by_pk??[])
 
@@ -170,6 +192,22 @@ function refundConfirm() {
   })
 }
 
+function deleteConfirm() {
+  const logObject = ref({
+    "username": username,
+    "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+    "module": "會計系統",
+    "action": "刪除收據" + Receipt.value.c_receipt_no + "，費用：" + Receipt.value.u_price_after_discount,
+  })
+
+  const remarks = "刪除收據" + Receipt.value.c_receipt_no + "，費用：" + Receipt.value.u_price_after_discount + " 經手人：" + username.value
+
+  deleteReceipt({
+    logObject: logObject.value,
+    remarks: remarks,
+    c_receipt_no: Receipt.value.c_receipt_no 
+  })
+}
 // callback
 addReceiptPrintCount_Completed((result) => {
   refetch()
@@ -181,6 +219,15 @@ refund_Completed((result) => {
 })
 
 refund_Error((error) => {
+  notifyClientError(error)
+})
+
+deleteReceipt_Completed((result) => {
+  refetch()
+  $q.notify({ message: "收據編號：" + result.data.update_tbl_account_by_pk.c_receipt_no + "刪除成功。" });
+})
+
+deleteReceipt_Error((error) => {
   notifyClientError(error)
 })
 

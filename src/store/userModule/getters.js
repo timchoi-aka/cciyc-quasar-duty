@@ -2,6 +2,10 @@
 export function someGetter (state) {
 }
 */
+export function getModule(state) {
+  return state.module;
+}
+
 export function getUserProfile(state) {
   if (Object.keys(state.userProfile).length) {
     return state.userProfile;
@@ -175,3 +179,11 @@ export function getHasuraClaim(state) {
     return null;
   }
 }
+
+export function isLogin(state) {
+  if (Object.keys(state.userProfile).length) {
+   return true;
+  } else {
+    return false;
+  }
+ }

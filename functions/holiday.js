@@ -1,7 +1,12 @@
 /* eslint-disable max-len */
 const {functions, FireDB, FieldValue, Timestamp} = require("./fbadmin");
 const {formatDate} = require("./utilities");
-
+const {publishTopic} = require("./notification");
+const slotMap = {
+  slot_a: "早",
+  slot_b: "午",
+  slot_c: "晚",
+};
 /* testing cloud function to read holiday file from storage
 exports.getPublicHoliday = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
@@ -109,7 +114,7 @@ exports.approveLeaveByDocid = functions.region("asia-east2").https.onCall(async 
 
   let logData = "";
   const batch = FireDB.batch();
-
+  const notiQueue = [];
   for (const d of data) {
     const leaveDoc = FireDB.collection("leave").doc(d.docid);
     const scheduleDocid = d.uid + formatDate(d.date, "", "YYYYMMDD") + d.slot;
@@ -130,13 +135,22 @@ exports.approveLeaveByDocid = functions.region("asia-east2").https.onCall(async 
             " 假期種類 " +
             d.type + "\n";
 
+    const holidayDate = new Date(d.date);
+
+    notiQueue.push({
+      message: {
+        title: "青年-假期系統",
+        body: holidayDate.getFullYear() + "年" + parseInt(holidayDate.getMonth()+1) + "月" + holidayDate.getDate() + "日" + "(" + slotMap[d.slot] + ")-" + d.type + "已獲批",
+      },
+      topic: d.uid,
+    });
+
     // reduce balance
     if (d.type == "AL") {
       batch.update(userRef, "balance.al", FieldValue.increment(-0.5));
     } else if (d.type == "SAL") {
       batch.update(userRef, "balance.sal", FieldValue.increment(-0.5));
     }
-
 
     const firebaseDate = Timestamp.fromDate(
         new Date(d.date),
@@ -184,6 +198,9 @@ exports.approveLeaveByDocid = functions.region("asia-east2").https.onCall(async 
   }
 
   return await batch.commit().then((result) => {
+    notiQueue.forEach((queue) => {
+      publishTopic(queue.topic, queue.message, "假期", "https://duty.cciyc.com/#/duty/dutytable");
+    });
     console.log(logData);
   });
 });
@@ -341,7 +358,7 @@ exports.rejectLeaveByDocid = functions.region("asia-east2").https.onCall(async (
 
   let logData = "";
   const batch = FireDB.batch();
-
+  const notiQueue = [];
   for (const d of data) {
     const leaveDoc = FireDB.collection("leave").doc(d.docid);
 
@@ -359,9 +376,21 @@ exports.rejectLeaveByDocid = functions.region("asia-east2").https.onCall(async (
             d.slot +
             " 假期種類 " +
             d.type + "\n";
+
+    const holidayDate = new Date(d.date);
+    notiQueue.push({
+      message: {
+        title: "青年-假期系統",
+        body: holidayDate.getFullYear() + "年" + parseInt(holidayDate.getMonth()+1) + "月" + holidayDate.getDate() + "日" + "(" + slotMap[d.slot] + ")-" + d.type + "不獲批",
+      },
+      topic: d.uid,
+    });
   }
 
   return await batch.commit().then((result) => {
+    notiQueue.forEach((queue) => {
+      publishTopic(queue.topic, queue.message, "假期", "https://duty.cciyc.com/#/duty/dutytable");
+    });
     console.log(logData);
   });
 });
@@ -524,13 +553,26 @@ exports.addLeave = functions.region("asia-east2").https.onCall(async (data, cont
   const batch = FireDB.batch();
   let logData = "";
   let leaveDoc;
+  const notiQueue = [];
   data.forEach((d) => {
     leaveDoc = FireDB.collection("leave").doc();
     batch.set(leaveDoc, d);
     logData += "HOLIDAY: " + d.name + " 申請了 " + d.date + ":" + d.slot + "(" + d.type + ")\n";
+    const holidayDate = new Date(d.date);
+
+    notiQueue.push({
+      message: {
+        title: "青年-假期系統",
+        body: d.name + "申請了" + holidayDate.getFullYear() + "年" + parseInt(holidayDate.getMonth()+1) + "月" + holidayDate.getDate() + "日" + "(" + slotMap[d.slot] + ")-" + d.type,
+      },
+      topic: "holidayApprove",
+    });
   });
 
   return await batch.commit().then(() => {
+    notiQueue.forEach((queue) => {
+      publishTopic(queue.topic, queue.message, "假期", "https://duty.cciyc.com/#/duty/dutytable");
+    });
     console.log(logData);
   });
 });

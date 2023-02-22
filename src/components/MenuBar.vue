@@ -1,5 +1,5 @@
 <template>
-  <q-tabs v-if="username && (module == 'duty' || module == '')" inline-label class="desktop-only" align="left">
+  <q-tabs v-if="username && (module == 'duty')" inline-label class="desktop-only" align="left">
     <q-route-tab to="/duty/dutytable" icon="calendar_month" label="編更系統" />
     <q-route-tab v-if="!isTmp" to="/holiday/al-view" icon="festival" label="假期系統" />
     <q-route-tab v-if="!isTmp" to="/overtime/ot-view" icon="schedule" label="超時系統" />
@@ -36,7 +36,7 @@
   </q-tabs>
   <q-tabs v-if="username && module == 'account'" inline-label class="desktop-only" align="left">
     <q-route-tab to="/account/other" icon="public" label="雜項收入" />
-    <q-route-tab to="/account/receipt-list" icon="public" label="收據一覽" />
+    <q-route-tab to="/account/receipt/" icon="public" label="收據一覽" />
     <q-route-tab to="/account/log" icon="public" label="系統記錄" />
   </q-tabs>
 </template>
@@ -52,5 +52,5 @@ const username = computed(() => $store.getters["userModule/getUsername"])
 const isTmp = computed(() => $store.getters["userModule/getTmp"])
 const isUserManagement = computed(() => $store.getters["userModule/getUserManagement"])
 const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"])
-const module = computed(() => $store.getters["currentModule/getCurrentModule"])
+const module = computed(() => $store.getters["userModule/getModule"])
 </script>

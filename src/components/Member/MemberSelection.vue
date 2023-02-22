@@ -5,7 +5,7 @@
     class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none"
     use-input
     clearable
-    label="會員編號"
+    :label="props.label? props.label: '會員編號'"
     input-debounce="0"
     :options="NameOptions"
     :model-value="props.modelValue"
@@ -48,6 +48,7 @@ import { date as qdate } from "quasar"
 const props = defineProps({
   modelValue: String,
   MemberID: String,
+  label: String,
 })
 const emit = defineEmits(["update:modelValue"])
 

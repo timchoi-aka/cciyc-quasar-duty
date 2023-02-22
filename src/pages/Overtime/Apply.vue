@@ -66,7 +66,7 @@
             :min="0"
             :max="40"
             readonly
-            v-model="ot_balance"
+            :model-value="ot_balance"
             show-value
             :thickness="0.22"
             color="primary"
@@ -285,7 +285,7 @@ import { FirebaseFunctions, OTCollection } from "boot/firebase";
 import LoadingDialog from "components/LoadingDialog.vue"
 import { useStore } from "vuex";
 import { ref, computed, onMounted } from "vue";
-import { date as qdate } from "quasar";
+import { date as qdate, useQuasar } from "quasar";
 import { httpsCallable } from "@firebase/functions";
 import { getDocs, query, where } from "@firebase/firestore";
 
@@ -294,7 +294,8 @@ onMounted(() => {
 })
 
 // variables
-const $store = useStore();
+const $store = useStore()
+const $q = useQuasar()
 const confirmDialog = ref(false)
 const OTHistory = ref([])
 const applicationList = ref([])
@@ -358,10 +359,20 @@ const columns = ref([
 ])
 
 // computed
+const userProfileLogout = () => $store.dispatch("userModule/logout")
+const isLogin = computed(() => $store.getters["userModule/isLogin"])
 const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const uid = computed(() => $store.getters["userModule/getUID"])
 const username = computed(() => $store.getters["userModule/getUsername"])
-const ot_balance = computed(() => $store.getters["userModule/getOTBalance"])
+const ot_balance = computed(() => $store.getters["userModule/getOTBalance"]? $store.getters["userModule/getOTBalance"]: 0)
+
+// logout if timeout
+if (!isLogin.value) {
+  userProfileLogout().then(() => {
+    $q.notify({ message: "系統超時，請重新登入。" });
+  })
+  .catch((error) => console.log("error", error));
+}
 
 // function
 function isValidDate(index) {

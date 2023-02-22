@@ -39,7 +39,7 @@
 <script setup>
 import { onMessage } from "firebase/messaging";
 import { ref, computed, inject } from "vue";
-import { useQuasar } from 'quasar'
+import { useQuasar, date as qdate } from 'quasar'
 
 const $q = useQuasar()
 const messaging = inject('messaging')
@@ -49,9 +49,9 @@ const currentPage = ref(1)
 
 onMessage(messaging, (payload) => {
   messageQueue.value.push({
-    title: payload.data.title,
-    body: payload.data.body,
-    datetime: payload.data.datetime,
+    title: payload.notification.title,
+    body: payload.notification.body,
+    datetime: qdate.formatDate(new Date(), "YYYY年M月D日HH時mm分"),
     read: false
   })
   $q.localStorage.set("notification", messageQueue.value)

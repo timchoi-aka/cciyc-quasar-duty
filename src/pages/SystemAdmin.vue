@@ -10,21 +10,24 @@
   <q-btn @click="addSALDeadline" label="addSALDeadline"></q-btn>
   <q-btn @click="addCustomClaims" label="Add Custom Claims"></q-btn>
   <q-btn @click="testNotify" label="Test Notify"></q-btn>
+  <q-btn @click="subscribeAllUserTopics" label="Subscribe All Topics"></q-btn>
 </template>
 
 <script setup>
 import { ref, computed } from "vue";
 import { useStore } from "vuex";
+import { getToken } from "firebase/messaging";
 import {
   usersCollection,
   leaveCollection,
   scheduleCollection,
   FirebaseFunctions,
   FirebaseAuth,
+  FirebaseMessaging,
 } from "boot/firebase";
 import { date as qdate } from "quasar";
 import { httpsCallable } from "firebase/functions";
-import { getDocs, query, where } from "@firebase/firestore";
+import { getDocs, query, where, orderBy } from "@firebase/firestore";
 
 // variables
 const $store = useStore(); 
@@ -32,6 +35,44 @@ const $store = useStore();
 // computed
 const hasuraClaim = computed(() => $store.getters["userModule/getHasuraClaim"])
 const uid = computed(() => $store.getters["userModule/getUID"])
+
+function subscribeAllUserTopics() {
+  const userDocQuery = query(usersCollection,
+    where("enable", "==", true),
+    where("rank", "!=", "tmp"),
+    orderBy("rank")
+  )
+  const userList = []
+  getDocs(userDocQuery).then((userDoc) => {
+    userDoc.forEach((user) => {
+      if (!user.data().privilege.systemAdmin) {
+        userList.push(
+          user.data().uid,   
+        );
+      }
+    });
+
+    // subscribe also to the special topic "holidayApprove"
+    userList.push("holidayApprove")
+    getToken(FirebaseMessaging, {vapidKey: "BFu5VzDUwOVWSQ--MUDmSEPt9AYN9QlTPIzijXKzQVqrIdpKi1goG9l3L8_fDJFr5mojwX5Eo2tDC1XiMmIfSXA"}).then((currentToken) => {
+      if (currentToken) {
+        const subscribeTopic = httpsCallable(FirebaseFunctions, "notification-subscribeTopic");
+        userList.forEach((user) => {
+          console.log("registering to topic " + user)
+          subscribeTopic({
+            topic: user,
+            token: currentToken,
+          })
+        })
+      } else {
+        // Show permission request UI
+        console.log('No registration token available. Request permission to generate one.');
+      }
+    }).catch((err) => {
+      console.log('An error occurred while retrieving token. ', err);
+    });
+  })
+}
 
 function testNotify() {
   const testNoti = httpsCallable(FirebaseFunctions,

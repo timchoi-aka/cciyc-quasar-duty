@@ -27,7 +27,7 @@ const functions = getFunctions(getApp(), "asia-east2");
 if (process.env.NODE_ENV === "development") {
 //if(window.location.hostname === 'localhost') {
   // connect to real firebase auth for token test
-  //connectAuthEmulator(auth, "http://localhost:9099");
+  // connectAuthEmulator(auth, "http://localhost:9099");
   connectFirestoreEmulator(db, 'localhost', 8081);
   connectFunctionsEmulator(functions, "localhost", 5001);
   
@@ -63,21 +63,26 @@ export async function requestPermission() {
 export async function getCurrentUser() {
   // after login, get the messaging token
   return new Promise((resolve, reject) => {
-      const unsubscribe = onAuthStateChanged(auth, user => {
-          unsubscribe();
-          resolve(user);
-      }, reject);
-
-      const refreshToken = onIdTokenChanged(auth, user => {
-        refreshToken();
-        if (user) {
-          getIdToken(user).then((token) => {
-            sessionStorage.setItem("access-token", token)
-            //console.log("token:" + token)
-          })
-        }
-        resolve(user);
+    const unsubscribe = onAuthStateChanged(auth, user => {
+      unsubscribe();
+      resolve(user);
     }, reject);
+
+    const refreshToken = onIdTokenChanged(auth, user => {
+      refreshToken();
+      if (user) {
+        getIdToken(user).then((token) => {
+          sessionStorage.setItem("access-token", token)
+          //console.log("token:" + token)
+        })
+      }
+      resolve(user);
+    }, reject);
+
+    /*
+    if (sessionStorage.getItem("vuex")) resolve
+    else reject
+    */
   })
 }
 

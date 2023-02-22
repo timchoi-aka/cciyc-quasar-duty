@@ -316,7 +316,7 @@ const unapprovedPrepaidColumns = ref([
   },
 ])
 // setting current module
-$store.dispatch("currentModule/setCurrentModule", "event");
+// $q.localStorage.set("module", "event");
 
 // queries
 const { result: eventList, onError } = useSubscription(MY_EVENT_SEARCH, searchCondition.value);

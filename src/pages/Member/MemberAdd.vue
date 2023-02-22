@@ -312,7 +312,7 @@ const duplicateMemberObject = ref([])
 // save current module
 const $store = useStore();
 const $q = useQuasar()
-$store.dispatch("currentModule/setCurrentModule", "member");
+// $q.localStorage.set("module", "member");
 
 // queries
 // load graphql subscription on latest member id

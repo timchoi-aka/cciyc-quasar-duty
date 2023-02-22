@@ -8,7 +8,9 @@
   </q-page>
 </template>
 <script setup>
+import { useQuasar } from "quasar";
 import { useStore } from "vuex";
 const $store = useStore();
-$store.dispatch("currentModule/setCurrentModule", "event");
+const $q = useQuasar()
+$store.dispatch("userModule/switchModule", "member");
 </script>

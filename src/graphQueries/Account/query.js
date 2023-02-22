@@ -19,6 +19,7 @@ export const RECEIPTS_BY_NO = gql`
       c_name
       b_clear
       b_refund
+      b_delete
       c_mem_id
     }
   }

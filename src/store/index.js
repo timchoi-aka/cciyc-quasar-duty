@@ -1,7 +1,6 @@
 import { store } from 'quasar/wrappers'
 import { createStore } from 'vuex'
 import userModule from "./userModule"
-import currentModule from "./currentModule"
 import createPersistedState from 'vuex-persistedstate'
 
 // import example from './module-example'
@@ -22,7 +21,6 @@ export default store(function (/* { ssrContext } */) {
     })],
 
     modules: {
-      currentModule,
       userModule,
     },
 
