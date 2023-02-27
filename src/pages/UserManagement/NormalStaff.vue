@@ -115,6 +115,15 @@
                   @click="changeParttime(props.key)"
                 />
               </div>
+              <div class="col-xs-3 justify-center" style="text-align: center">
+                <div class="text-caption">財務</div>
+                <q-btn
+                  round
+                  :color="props.row.privilege_finance ? 'positive' : 'negative'"
+                  :label="props.row.privilege_finance ? '有' : '沒有'"
+                  @click="changeFinance(props.key)"
+                />
+              </div>
             </q-card-section>
             <q-separator inet class="q-mt-sm" />
             <q-card-section
@@ -294,6 +303,18 @@
             :color="props.value ? 'positive' : 'negative'"
             :label="props.value ? '有' : '沒有'"
             @click="changeParttime(props.key)"
+          />
+        </q-td>
+      </template>
+
+      <!-- template of column "finance" -->
+      <template v-slot:body-cell-privilege_finance="props">
+        <q-td :props="props">
+          <q-btn
+            round
+            :color="props.value ? 'positive' : 'negative'"
+            :label="props.value ? '有' : '沒有'"
+            @click="changeFinance(props.key)"
           />
         </q-td>
       </template>
@@ -528,6 +549,14 @@ const tableFields = ref([
     style: "font-size: 1.2vw; text-align: center; width: 3vw; max-width: 3vw;",
   },
   {
+    name: "privilege_finance",
+    label: "財務",
+    field: "privilege_finance",
+    headerStyle:
+      "font-size: 1.5vw; text-align: center; width: 3vw; max-width: 3vw;",
+    style: "font-size: 1.2vw; text-align: center; width: 3vw; max-width: 3vw;",
+  },
+  {
     name: "order",
     label: "排序",
     field: "order",
@@ -645,6 +674,20 @@ function changeLeaveApprove(uid) {
   });
 }
 
+function changeFinance(uid) {
+  // call https functions to change leaveApprove privilege
+  const toggleFinance = httpsCallable(FirebaseFunctions, 
+    "user-toggleFinance"
+  );
+  awaitServerResponse.value++;
+  toggleFinance(uid).then((result) => {
+    users.value[
+      users.value.findIndex((value) => value.uid == uid)
+    ].privilege_finance = result.data;
+    awaitServerResponse.value--;
+  });
+}
+
 function changeLeaveManage(uid) {
   // call https functions to change leaveApprove privilege
   const toggleLeaveManage = httpsCallable(FirebaseFunctions, "user-toggleLeaveManage");
@@ -756,6 +799,7 @@ getDocs(userQuery).then((userDoc) => {
       privilege_userManagement: d.privilege.userManagement,
       privilege_probation: d.privilege.probation? d.privilege.probation: false,
       parttime: d.parttime? d.parttime: false,
+      privilege_finance: d.privilege.finance? d.privilege.finance: false,
       order: d.order,
       dateOfEntry: d.dateOfEntry,
       dateOfExit: d.dateOfExit,

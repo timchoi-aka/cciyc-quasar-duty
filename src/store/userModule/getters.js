@@ -68,6 +68,14 @@ export function getUserProfile(state) {
   }
  }
 
+export function getFinance(state) {
+  if (Object.keys(state.userProfile).length) {
+    return state.userProfile.privilege.finance;
+   } else {
+     return null;
+   }
+}
+
 export function getSystemAdmin(state) {
   if (Object.keys(state.userProfile).length) {
     return state.userProfile.privilege.systemAdmin;

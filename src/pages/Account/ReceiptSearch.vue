@@ -64,6 +64,7 @@
       binary-state-sort
       @row-click="rowDetail"
     >
+    <!-- 
       <template v-slot:top-right>
         <q-btn
           color="primary"
@@ -73,6 +74,7 @@
           @click="exportExcel(ReceiptData, receiptListColumns, '收據' + search.startDate + '-' + search.endDate)"
         />
       </template>
+    -->
       <!-- loading -->
       <template v-slot:loading>
         <q-inner-loading showing color="primary" />
@@ -157,16 +159,15 @@ const search = ref({
   c_mem_id: "",
   i_receipt_type: "",
   status: statusOptions.value[0],
-  startDate: qdate.formatDate(new Date(), "YYYY/MM/DD"),
-  endDate: qdate.formatDate(new Date(), "YYYY/MM/DD"),
+  startDate: null,
+  endDate: null,
+  // startDate: null,
+  // endDate: null,
 })
 
 const searchCondition = ref({
   condition: {
-    _and: [
-      {d_create: {"_gte" : qdate.formatDate(qdate.startOfDate(qdate.extractDate(search.value.startDate, "YYYY/MM/DD"), "day"), "YYYY-MM-DDTHH:mm:ss")}},
-      {d_create: {"_lte" : qdate.formatDate(qdate.endOfDate(qdate.extractDate(search.value.startDate, "YYYY/MM/DD"), "day"), "YYYY-MM-DDTHH:mm:ss")}}
-    ]
+    c_receipt_no: {"_eq": "xxxx-xxxx"}
   }
 })
 
@@ -286,10 +287,12 @@ function clearSearch() {
     c_mem_id: "",
     i_receipt_type: "",
     status: statusOptions.value[0],
-    startDate: qdate.formatDate(new Date(), "YYYY/MM/DD"),
-    endDate: qdate.formatDate(new Date(), "YYYY/MM/DD"),
+    startDate: null,
+    endDate: null,
   }
-  delete searchCondition.value.condition
+  searchCondition.value.condition = {
+    c_receipt_no: {"_eq": "xxxx-xxxx"}
+  }
   // refetch()
 }
 
@@ -314,13 +317,17 @@ function submitSearch() {
     default:
       break;    
   }
-
-  searchCondition.value.condition["_and"].push(
-    {d_create: {"_gte" : qdate.formatDate(qdate.startOfDate(qdate.extractDate(search.value.startDate, "YYYY/MM/DD"), "day"), "YYYY-MM-DDTHH:mm:ss")}}
-  )
-  searchCondition.value.condition["_and"].push(
-    {d_create: {"_lte" : qdate.formatDate(qdate.endOfDate(qdate.extractDate(search.value.endDate, "YYYY/MM/DD"), "day"), "YYYY-MM-DDTHH:mm:ss")}}
-  )
+  if (search.value.startDate) {
+    searchCondition.value.condition["_and"].push(
+      {d_create: {"_gte" : qdate.formatDate(qdate.startOfDate(qdate.extractDate(search.value.startDate, "YYYY/MM/DD"), "day"), "YYYY-MM-DDTHH:mm:ss")}}
+    )
+  }
+  
+  if (search.value.endDate) {
+    searchCondition.value.condition["_and"].push(
+      {d_create: {"_lte" : qdate.formatDate(qdate.endOfDate(qdate.extractDate(search.value.endDate, "YYYY/MM/DD"), "day"), "YYYY-MM-DDTHH:mm:ss")}}
+    )
+  }
 }
 
 // functions

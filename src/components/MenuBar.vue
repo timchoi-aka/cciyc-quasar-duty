@@ -37,6 +37,7 @@
   <q-tabs v-if="username && module == 'account'" inline-label class="desktop-only" align="left">
     <q-route-tab to="/account/other" icon="public" label="雜項收入" />
     <q-route-tab to="/account/receipt/" icon="public" label="收據一覽" />
+    <q-route-tab to="/account/inventory/" icon="public" label="物資管理" />
     <q-route-tab to="/account/log" icon="public" label="系統記錄" />
   </q-tabs>
 </template>

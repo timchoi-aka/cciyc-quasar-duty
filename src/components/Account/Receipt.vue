@@ -41,8 +41,8 @@
         <q-tooltip class="bg-white text-primary">列印</q-tooltip>  
       </q-btn>
       <q-space/>
-      <div v-if="!Receipt.b_delete"><q-btn label="刪除" icon="delete" class="bg-negative text-white q-mx-sm" flat @click="deleteDialog = true"/></div>
-      <div v-if="!Receipt.b_refund"><q-btn label="退款" icon="currency_exchange" class="bg-negative text-white q-mx-sm" flat @click="refundDialog = true"/></div>
+      <div v-if="!Receipt.b_delete && isFinance"><q-btn label="刪除" icon="delete" class="bg-negative text-white q-mx-sm" flat @click="deleteDialog = true"/></div>
+      <div v-if="!Receipt.b_refund && isFinance"><q-btn label="退款" icon="currency_exchange" class="bg-negative text-white q-mx-sm" flat @click="refundDialog = true"/></div>
       <q-space/>
       <q-btn class="bg-primary text-white col-shrink" dense flat icon="close" v-close-popup>
         <q-tooltip class="bg-white text-primary">關閉</q-tooltip>
@@ -98,7 +98,7 @@
           <div class="highlight_2">經手人</div>
           <div>issued by</div>
         </span>
-        <span class="col-7 self-center highlight_2">{{Receipt.c_user_id}}</span>
+        <span class="col-7 self-center highlight_2">{{staffNameMapping[Receipt.c_user_id]? staffNameMapping[Receipt.c_user_id]: Receipt.c_user_id}}</span>
       </div>
       <div class="row col-12 justify-center q-px-md highlight_3">收據字體會退色，若需要保留，請自行影印。</div>
       <div class="row col-12 q-px-md wrap highlight_3">The receipt will eventually fade out.  Please make a photocopy for a more lasting document.</div>
@@ -119,10 +119,21 @@ import { useStore } from "vuex";
 const props = defineProps({
   c_receipt_no: String,
 })
+const staffNameMapping = {
+  "lswu": "胡小姐",
+  "ywho": "何先生",
+  "mwchan": "陳小姐",
+  "lsfung": "馮小姐",
+  "pswong": "黃小姐",
+  "kyma": "馬姑娘",
+  "hlng": "吳先生",
+  "myli": "李姑娘",
+}
 
 const $q = useQuasar()
 const $store = useStore();
 const username = computed(() => $store.getters["userModule/getUsername"])
+const isFinance = computed(() => $store.getters["userModule/getFinance"])
 const userProfileLogout = () => $store.dispatch("userModule/logout")
 const deleteCheck = ref("")
 const deleteDialog = ref(false)
@@ -159,7 +170,9 @@ const { mutate: addReceiptPrintCount, onDone: addReceiptPrintCount_Completed, on
 const { mutate: refund, onDone: refund_Completed, onError: refund_Error } = useMutation(REFUND_BY_RECEIPT_NO)
 const { mutate: deleteReceipt, onDone: deleteReceipt_Completed, onError: deleteReceipt_Error } = useMutation(DELETE_BY_RECEIPT_NO)
 
+// computed
 const Receipt = computed(() => result.value?.tbl_account_by_pk??[])
+
 
 // function
 function showRemark(rem) {

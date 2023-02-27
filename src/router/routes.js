@@ -174,6 +174,20 @@ const routes = [
           }
         ]
       },
+      { 
+        path: 'inventory',
+        component: () => import('src/pages/Account/InventoryHome.vue'), meta: {requiresAuth: true },
+        children: [
+          { 
+            path: 'list',
+            component: () => import('src/pages/Account/InventoryList.vue'), meta: {requiresAuth: true }
+          },
+          { 
+            path: 'take_record',
+            component: () => import('src/pages/Account/InventoryTakeRecord.vue'), meta: {requiresAuth: true }
+          },
+        ]
+      },
       {
         path: 'log',
         component: () => import('src/pages/Account/LogViewer.vue'), meta: {requiresAuth: true},

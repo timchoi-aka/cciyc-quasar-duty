@@ -74,11 +74,11 @@ function subscribeAllUserTopics() {
   })
 }
 
-function testNotify() {
+async function testNotify() {
   const testNoti = httpsCallable(FirebaseFunctions,
     "systemAdmin-testNotify"
   );
-
+  await new Promise(callback => setTimeout(callback, 5000))
   testNoti({
     title: "a test title",
     body: "the test body",

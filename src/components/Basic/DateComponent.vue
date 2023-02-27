@@ -6,6 +6,7 @@
     filled
     :model-value="props.modelValue"
     hide-hint
+    clearable
     hide-bottom-space
     @update:model-value="(value) => $emit('update:modelValue', value)">
       <template v-slot:append>

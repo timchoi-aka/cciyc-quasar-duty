@@ -66,29 +66,46 @@
   </div>
   
   <q-tabs v-model="activeTab" inline-label align="left" class="desktop-only bg-primary text-white">
-    <q-tab name="All" icon="source" :label="'全部('+ReceiptData.length+')'" />
+    <q-tab name="accountReport" icon="source" label="會計報表" />
+    <q-tab name="All" icon="source" :label="'收據細列表('+ReceiptData.length+')'" />
     <!--
     <q-tab name="Error" icon="error" :label="'錯誤('+ErrorData.length+'人)'" />
     -->
-    <q-tab name="delete" icon="source" :label="'已刪除('+DeletedData.length+')'" />
-    <q-tab name="accountReport" icon="source" label="會計報表" />
+    <q-tab name="delete" icon="source" :label="'刪除收據細列表('+DeletedData.length+')'" />
+    
   </q-tabs>
   
   <q-tab-panels
+    id="printMe" 
     v-model="activeTab"
     animated
     swipeable
     transition-prev="jump-up"
     transition-next="jump-up"
   >
-    <q-tab-panel name="All" class="q-ma-none q-pa-sm text-body1"> 
+    <q-tab-panel name="All" class="q-ma-none q-pa-sm"> 
+      <div class="col-12 row items-center hideOnScreen">
+        <img src="~assets/cciyc_logo.svg" style="width: 90px; height: 90px;" class="col-1"/>
+        <div class="print-title col-7 row q-mx-md items-center">
+          <div class="col-12">長洲鄉事委員會青年綜合服務中心</div>
+          <div class="col-12">Cheung Chau Rural Committee Integrated Youth Centre</div>
+        </div>
+      </div>
+      <div class="col-12 row hideOnScreen justify-around q-py-none q-my-none">
+        <div class="col-auto q-mx-md items-end">範圍：{{ reportStartDate }} - {{  reportEndDate }}</div>
+        <div v-if="reportEvent" class="col-auto q-mx-md items-end">活動編號：{{ qdate.formatDate(reportEvent, "YYYY年M月D日") }}</div>
+        <div v-if="reportStaff" class="col-auto q-mx-md items-end">負責人：{{ reportStaff }}</div>
+      </div>
+      <div class="col-12 row hideOnScreen justify-end items-end q-py-none q-my-none">列印日期：{{ qdate.formatDate(new Date(), "YYYY年M月D日") }}</div>
+      <!-- 收據細列表 -->
       <q-table
         dense
         flat
-        title="全部收據"
         :rows="ReceiptData"
         :columns="receiptListColumns"
         :pagination="defaultPagination"
+        hide-pagination
+        :rows-per-page-options="[0]"
         color="primary"
         row-key="c_receipt_no"
         :loading="loading"
@@ -108,159 +125,63 @@
           </q-td>
         </template>
 
-        <!-- export -->
-        <template v-slot:top-right>
-          <q-btn
-            color="primary"
-            icon-right="archive"
-            label="匯出Excel"
-            no-caps
-            @click="exportExcel(ReceiptData, receiptListColumns, '全部收據')"
-          />
+        <!-- top -->
+        <template v-slot:top class="row">
+          <div class="q-my-none q-py-none row col-12 items-end" style="line-height: 10px;">
+            <div class="col-auto items-end text-bold">收據細列表</div>
+            <q-space/>
+            <q-btn icon="print" flat class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end" v-print="printObj">
+              <q-tooltip class="bg-white text-primary">列印</q-tooltip>  
+            </q-btn>
+            <q-btn
+              color="primary"
+              icon-right="archive"
+              class="hideOnPrint"
+              label="匯出Excel"
+              no-caps
+              @click="exportExcel(ReceiptData, receiptListColumns, '收據細列表' + reportStartDate + '-' + reportEndDate)"
+            />
+          </div>
         </template>
-      </q-table>
-    </q-tab-panel>
-    <!--
-    <q-tab-panel name="Quit" class="q-ma-none q-pa-sm text-body1"> 
-      <q-table
-        dense
-        flat
-        title="退會會員數據"
-        :rows="QuitData"
-        :columns="memberListColumns"
-        :pagination="defaultPagination"
-        color="primary"
-        row-key="c_mem_id"
-        :loading="loading"
-        binary-state-sort
-        @row-click="rowDetail"
-      >
-        <template v-slot:top-right>
-          <q-btn
-            color="primary"
-            icon-right="archive"
-            label="匯出Excel"
-            no-caps
-            @click="exportExcel(QuitData, memberListColumns, '退會會員數據')"
-          />
-        </template>
-      </q-table>
-    </q-tab-panel>
 
-    <q-tab-panel name="Youth" class="q-ma-none q-pa-sm text-body1"> 
-      <q-table
-        dense
-        flat
-        title="青年會員數據"
-        :rows="YouthData"
-        :columns="memberListColumns"
-        :pagination="defaultPagination"
-        color="primary"
-        row-key="c_mem_id"
-        :loading="loading"
-        binary-state-sort
-        @row-click="rowDetail"
-      >
-        <template v-slot:top-right>
-          <q-btn
-            color="primary"
-            icon-right="archive"
-            label="匯出Excel"
-            no-caps
-            @click="exportExcel(YouthData, memberListColumns, '青年會員數據_' + qdate.formatDate(reportDate, 'YYYY-MM'))"
-          />
+         <!-- bottom total row -->
+         <template v-slot:bottom-row="props">
+          <q-tr>
+            <q-td
+              v-for="index in props.cols.length"
+              class="text-center"
+              style="line-height: 10px;"
+            > {{props.cols[index-1].name == 'u_price_after_discount'? "總金額(HKD): " : "" }}
+              {{ (ReceiptData.reduce((x,v) => props.cols[index-1].name == 'u_price_after_discount'? x + v[props.cols[index-1].name]: '', 0)).toLocaleString() }}
+            </q-td>
+          </q-tr>
         </template>
       </q-table>
     </q-tab-panel>
-
-    <q-tab-panel name="Family_15" class="q-ma-none q-pa-sm text-body1"> 
-      <q-table
-        dense
-        flat
-        title="家人(<15)會員數據"
-        :rows="Family_15Data"
-        :columns="memberListColumns"
-        :pagination="defaultPagination"
-        color="primary"
-        row-key="c_mem_id"
-        :loading="loading"
-        binary-state-sort
-        @row-click="rowDetail"
-      >
-        <template v-slot:top-right>
-          <q-btn
-            color="primary"
-            icon-right="archive"
-            label="匯出Excel"
-            no-caps
-            @click="exportExcel(Family_15Data, memberListColumns, '家人(14歲或以下)會員數據_' + qdate.formatDate(reportDate, 'YYYY-MM'))"
-          />
-        </template>
-      </q-table>
-    </q-tab-panel>
-
-    <q-tab-panel name="Family_24" class="q-ma-none q-pa-sm text-body1"> 
-      <q-table
-        dense
-        flat
-        title="家人(>24)會員數據"
-        :rows="Family_24Data"
-        :columns="memberListColumns"
-        :pagination="defaultPagination"
-        color="primary"
-        row-key="c_mem_id"
-        :loading="loading"
-        binary-state-sort
-        @row-click="rowDetail"
-      >
-        <template v-slot:top-right>
-          <q-btn
-            color="primary"
-            icon-right="archive"
-            label="匯出Excel"
-            no-caps
-            @click="exportExcel(Family_24Data, memberListColumns, '家人(25歲或以上)會員數據_' + qdate.formatDate(reportDate, 'YYYY-MM'))"
-          />
-        </template>
-      </q-table>
-    </q-tab-panel>
-
-    <q-tab-panel name="Expired" class="q-ma-none q-pa-sm text-body1"> 
-      <q-table
-        dense
-        flat
-        title="過期會員數據"
-        :rows="ExpiredData"
-        :columns="memberListColumns"
-        :pagination="defaultPagination"
-        color="primary"
-        row-key="c_mem_id"
-        :loading="loading"
-        binary-state-sort
-        @row-click="rowDetail"
-      >
-        <template v-slot:top-right>
-          <q-btn
-            color="primary"
-            icon-right="archive"
-            label="匯出Excel"
-            no-caps
-            @click="exportExcel(ExpiredData, memberListColumns, '過期會員數據_' + qdate.formatDate(reportDate, 'YYYY-MM'))"
-          />
-        </template>
-      </q-table>
-    </q-tab-panel>
-    -->
-
     
-    <q-tab-panel name="delete" class="q-ma-none q-pa-sm text-body1"> 
+    <q-tab-panel name="delete" class="q-ma-none q-pa-md"> 
+      <div class="col-12 row items-center hideOnScreen">
+        <img src="~assets/cciyc_logo.svg" style="width: 90px; height: 90px;" class="col-1"/>
+        <div class="print-title col-7 row q-mx-md items-center">
+          <div class="col-12">長洲鄉事委員會青年綜合服務中心</div>
+          <div class="col-12">Cheung Chau Rural Committee Integrated Youth Centre</div>
+        </div>
+      </div>
+      <div class="col-12 row hideOnScreen justify-around q-py-none q-my-none">
+        <div class="col-auto q-mx-md items-end">範圍：{{ reportStartDate }} - {{  reportEndDate }}</div>
+        <div v-if="reportEvent" class="col-auto q-mx-md items-end">活動編號：{{ qdate.formatDate(reportEvent, "YYYY年M月D日") }}</div>
+        <div v-if="reportStaff" class="col-auto q-mx-md items-end">負責人：{{ reportStaff }}</div>
+      </div>
+      <div class="col-12 row hideOnScreen justify-end items-end q-py-none q-my-none">列印日期：{{ qdate.formatDate(new Date(), "YYYY年M月D日") }}</div>
+      <!-- 刪除收據 -->
       <q-table
         dense
         flat
-        title="刪除收據表"
         :rows="DeletedData"
         :columns="receiptListColumns"
         :pagination="defaultPagination"
+        hide-pagination
+        :rows-per-page-options="[0]"
         color="primary"
         row-key="c_receipt_no"
         :loading="loading"
@@ -272,23 +193,23 @@
           <q-inner-loading showing color="primary" />
         </template>
 
-        <!-- status -->
-        <template v-slot:body-cell-c_status="props">
-          <q-td :props="props">
-            <div v-if="props.row.b_refund">退款</div>
-            <div v-if="props.row.b_delete">刪除</div>
-          </q-td>
-        </template>
-
-        <!-- export -->
-        <template v-slot:top-right>
-          <q-btn
-            color="primary"
-            icon-right="archive"
-            label="匯出Excel"
-            no-caps
-            @click="exportExcel(DeletedData, receiptListColumns, '刪除收據表' + reportStartDate + '-' + reportEndDate)"
-          />
+        <!-- top -->
+        <template v-slot:top class="row">
+          <div class="q-my-none q-py-none row col-12 items-end" style="line-height: 10px;">
+            <div class="col-auto items-end text-bold">刪除收據細列表</div>
+            <q-space/>
+            <q-btn icon="print" flat class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end" v-print="printObj">
+              <q-tooltip class="bg-white text-primary">列印</q-tooltip>  
+            </q-btn>
+            <q-btn
+              color="primary"
+              class="hideOnPrint"
+              icon-right="archive"
+              label="匯出Excel"
+              no-caps
+              @click="exportExcel(DeletedData, receiptListColumns, '刪除收據細列表' + reportStartDate + '-' + reportEndDate)"
+            />
+          </div>
         </template>
 
         <!-- bottom total row -->
@@ -296,10 +217,10 @@
           <q-tr>
             <q-td
               v-for="index in props.cols.length"
-              class="text-center bg-grey-2"
-              style="font-size: 1vw"
-            >
-              {{ DeletedData.reduce((x,v) => props.cols[index-1].name == 'u_price_after_discount'? x + v[props.cols[index-1].name]: '', 0) }}
+              class="text-center"
+              style="line-height: 10px;"
+            > {{props.cols[index-1].name == 'u_price_after_discount'? "總金額(HKD): " : "" }}
+              {{ (DeletedData.reduce((x,v) => props.cols[index-1].name == 'u_price_after_discount'? x + v[props.cols[index-1].name]: '', 0)).toLocaleString() }}
             </q-td>
           </q-tr>
         </template>
@@ -307,17 +228,35 @@
     </q-tab-panel>
     
     <!-- 會計報表 -->
-    <!--title="會計報表(PF)"-->
-    <q-tab-panel name="accountReport" class="q-ma-none q-pa-sm text-body1"> 
+    <q-tab-panel name="accountReport" class="q-ma-none q-pa-sm"> 
+      <div class="col-12 row items-center hideOnScreen">
+        <img src="~assets/cciyc_logo.svg" style="width: 90px; height: 90px;" class="col-1"/>
+        <div class="print-title col-7 row q-mx-md items-center">
+          <div class="col-12">長洲鄉事委員會青年綜合服務中心</div>
+          <div class="col-12">Cheung Chau Rural Committee Integrated Youth Centre</div>
+        </div>
+      </div>
+      <div class="col-12 row hideOnScreen justify-around q-py-none q-my-none">
+        <div class="col-auto q-mx-md items-end">範圍：{{ reportStartDate }} - {{  reportEndDate }}</div>
+        <div v-if="reportEvent" class="col-auto q-mx-md items-end">活動編號：{{ qdate.formatDate(reportEvent, "YYYY年M月D日") }}</div>
+        <div v-if="reportStaff" class="col-auto q-mx-md items-end">負責人：{{ reportStaff }}</div>
+      </div>
+      <div class="col-12 row hideOnScreen justify-end items-end q-py-none q-my-none">列印日期：{{ qdate.formatDate(new Date(), "YYYY年M月D日") }}</div>
+      <!-- PF -->
       <q-table
+        v-if="PFData.length > 0"
         dense
         flat
         :rows="PFData"
         :columns="accountReportColumns"
         :pagination="accountReportPagination"
+        hide-pagination
+        :rows-per-page-options="[0]"
         color="primary"
+        class="q-mt-md"
         :loading="loading"
         binary-state-sort
+        no-data-label="沒有資料"
         @row-click="eventDetail"
       >
         <!-- loading -->
@@ -333,18 +272,87 @@
           </q-td>
         </template>
 
-        <!-- export -->
+        <!-- top -->
         <template v-slot:top>
-          <div>會計報表</div>
-          <q-select class="q-mx-md" :options="['PF', 'CF', 'RF', 'MF', 'SF', '續會員費','新會員費']" v-model="typeToggle"/>
-          <q-space/>
-          <q-btn
-            color="primary"
-            icon-right="archive"
-            label="匯出Excel"
-            no-caps
-            @click="exportExcel(PFData, accountReportColumns, '會計報表(PF)-' + reportStartDate + '-' + reportEndDate)"
-          />
+          <div class="q-my-none q-py-none row col-12 items-end">
+            <div class="col-auto items-end text-bold">會計報表(PF)</div>
+            <q-space/>
+            <q-btn icon="print" flat class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end" v-print="printObj">
+              <q-tooltip class="bg-white text-primary">列印</q-tooltip>  
+            </q-btn>
+            <q-btn
+              color="primary"
+              class="hideOnPrint items-end"
+              icon-right="archive"
+              label="匯出Excel"
+              no-caps
+              @click="exportExcel(PFData, accountReportColumns, '會計報表(PF)-' + reportStartDate + '-' + reportEndDate)"
+            />
+          </div>
+        </template>
+        
+        <!-- bottom total row -->
+        <template v-slot:bottom-row="props">
+          <q-tr>
+            <q-td
+              v-for="index in props.cols.length"
+              class="text-center"
+              style="line-height: 10px;"
+            > {{ props.cols[index-1].name == 'number'? "總數: " : "" }}
+              {{ props.cols[index-1].name == 'number'? PFData.reduce((x,v) => x + v[props.cols[index-1].name], 0): '' }}
+              {{ props.cols[index-1].name == 'total'? "PF-總金額(HKD): " : "" }}
+              {{ props.cols[index-1].name == 'total'? (PFData.reduce((x,v) => x + v[props.cols[index-1].name], 0)).toLocaleString(): '' }}
+            </q-td>
+          </q-tr>
+        </template>
+      </q-table>
+
+      <!-- MF -->
+      <q-table
+        v-if="MFData.length > 0"
+        dense
+        flat
+        :rows="MFData"
+        :columns="accountReportColumns"
+        :pagination="accountReportPagination"
+        color="primary"
+        class="q-mt-md"
+        :loading="loading"
+        binary-state-sort
+        hide-pagination
+        :rows-per-page-options="[0]"
+        no-data-label="沒有資料"
+      >
+        <!-- loading -->
+        <template v-slot:loading>
+          <q-inner-loading showing color="primary" />
+        </template>
+
+        <!-- status -->
+        <template v-slot:body-cell-c_status="props">
+          <q-td :props="props">
+            <div v-if="props.row.b_refund">退款</div>
+            <div v-if="props.row.b_delete">刪除</div>
+          </q-td>
+        </template>
+
+        <!-- top -->
+        <template v-slot:top>
+          <div class="q-my-none q-py-none row col-12 items-end" style="line-height: 10px;">
+            <div class="col-auto items-end text-bold">會計報表(MF)</div>
+            <q-space/>
+            <q-btn icon="print" flat class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end" v-print="printObj">
+              <q-tooltip class="bg-white text-primary">列印</q-tooltip>  
+            </q-btn>
+            <q-btn
+              color="primary"
+              class="hideOnPrint"
+              icon-right="archive"
+              label="匯出Excel"
+              no-caps
+              @click="exportExcel(MFData, accountReportColumns, '會計報表(MF)-' + reportStartDate + '-' + reportEndDate)"
+            />
+          </div>
         </template>
 
         <!-- bottom total row -->
@@ -352,10 +360,333 @@
           <q-tr>
             <q-td
               v-for="index in props.cols.length"
-              class="text-center bg-grey-2"
-              style="font-size: 1vw"
-            >
-              {{ PFData.reduce((x,v) => props.cols[index-1].name == 'total'? x + v[props.cols[index-1].name]: '', 0) }}
+              class="text-center"
+              style="line-height: 10px;"
+            > {{ props.cols[index-1].name == 'number'? "總數: " : "" }}
+              {{ props.cols[index-1].name == 'number'? MFData.reduce((x,v) => x + v[props.cols[index-1].name], 0): '' }}
+              {{ props.cols[index-1].name == 'total'? "MF-總金額(HKD): " : "" }}
+              {{ props.cols[index-1].name == 'total'? (MFData.reduce((x,v) => x + v[props.cols[index-1].name], 0)).toLocaleString(): '' }}
+            </q-td>
+          </q-tr>
+        </template>
+      </q-table>
+
+      <!-- SF -->
+      <q-table
+        v-if="SFData.length > 0"
+        dense
+        flat
+        :rows="SFData"
+        :columns="accountReportColumns"
+        :pagination="accountReportPagination"
+        color="primary"
+        class="q-mt-md"
+        :loading="loading"
+        binary-state-sort
+        hide-pagination
+        :rows-per-page-options="[0]"
+        no-data-label="沒有資料"
+        @row-click="eventDetail"
+      >
+        <!-- loading -->
+        <template v-slot:loading>
+          <q-inner-loading showing color="primary" />
+        </template>
+
+        <!-- status -->
+        <template v-slot:body-cell-c_status="props">
+          <q-td :props="props">
+            <div v-if="props.row.b_refund">退款</div>
+            <div v-if="props.row.b_delete">刪除</div>
+          </q-td>
+        </template>
+
+        <!-- top -->
+        <template v-slot:top>
+          <div class="q-my-none q-py-none row col-12 items-end" style="line-height: 10px;">
+            <div class="col-auto items-end text-bold">會計報表(SF)</div>
+            <q-space/>
+            <q-btn icon="print" flat class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end" v-print="printObj">
+              <q-tooltip class="bg-white text-primary">列印</q-tooltip>  
+            </q-btn>
+            <q-btn
+              color="primary"
+              class="hideOnPrint"
+              icon-right="archive"
+              label="匯出Excel"
+              no-caps
+              @click="exportExcel(SFData, accountReportColumns, '會計報表(SF)-' + reportStartDate + '-' + reportEndDate)"
+            />
+          </div>
+        </template>
+
+        <!-- bottom total row -->
+        <template v-slot:bottom-row="props">
+          <q-tr>
+            <q-td
+              v-for="index in props.cols.length"
+              class="text-center"
+              style="line-height: 10px;"
+            > {{ props.cols[index-1].name == 'number'? "總數: " : "" }}
+              {{ props.cols[index-1].name == 'number'? SFData.reduce((x,v) => x + v[props.cols[index-1].name], 0): '' }}
+              {{ props.cols[index-1].name == 'total'? "SF-總金額(HKD): " : "" }}
+              {{ props.cols[index-1].name == 'total'? (SFData.reduce((x,v) => x + v[props.cols[index-1].name], 0)).toLocaleString(): '' }}
+            </q-td>
+          </q-tr>
+        </template>
+      </q-table>
+
+      <!-- RF -->
+      <q-table
+        v-if="RFData.length > 0"
+        dense
+        flat
+        :rows="RFData"
+        :columns="accountReportColumns"
+        :pagination="accountReportPagination"
+        color="primary"
+        class="q-mt-md"
+        :loading="loading"
+        binary-state-sort
+        hide-pagination
+        :rows-per-page-options="[0]"
+        no-data-label="沒有資料"
+      >
+        <!-- loading -->
+        <template v-slot:loading>
+          <q-inner-loading showing color="primary" />
+        </template>
+
+        <!-- status -->
+        <template v-slot:body-cell-c_status="props">
+          <q-td :props="props">
+            <div v-if="props.row.b_refund">退款</div>
+            <div v-if="props.row.b_delete">刪除</div>
+          </q-td>
+        </template>
+
+        <!-- top -->
+        <template v-slot:top>
+          <div class="q-my-none q-py-none row col-12 items-end" style="line-height: 10px;">
+            <div class="col-auto items-end text-bold">會計報表(RF)</div>
+            <q-space/>
+            <q-btn icon="print" flat class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end" v-print="printObj">
+              <q-tooltip class="bg-white text-primary">列印</q-tooltip>  
+            </q-btn>
+            <q-btn
+              color="primary"
+              class="hideOnPrint"
+              icon-right="archive"
+              label="匯出Excel"
+              no-caps
+              @click="exportExcel(RFData, accountReportColumns, '會計報表(RF)-' + reportStartDate + '-' + reportEndDate)"
+            />
+          </div>
+        </template>
+
+        <!-- bottom total row -->
+        <template v-slot:bottom-row="props">
+          <q-tr>
+            <q-td
+              v-for="index in props.cols.length"
+              class="text-center"
+              style="line-height: 10px;"
+            > {{ props.cols[index-1].name == 'number'? "總數: " : "" }}
+              {{ props.cols[index-1].name == 'number'? RFData.reduce((x,v) => x + v[props.cols[index-1].name], 0): '' }}
+              {{ props.cols[index-1].name == 'total'? "RF-總金額(HKD): " : "" }}
+              {{ props.cols[index-1].name == 'total'? (RFData.reduce((x,v) => x + v[props.cols[index-1].name], 0)).toLocaleString(): '' }}
+            </q-td>
+          </q-tr>
+        </template>
+      </q-table>
+
+      <!-- CF -->
+      <q-table
+        v-if="CFData.length > 0"
+        dense
+        flat
+        :rows="CFData"
+        :columns="accountReportColumns"
+        :pagination="accountReportPagination"
+        color="primary"
+        class="q-mt-md"
+        :loading="loading"
+        binary-state-sort
+        hide-pagination
+        :rows-per-page-options="[0]"
+        no-data-label="沒有資料"
+      >
+        <!-- loading -->
+        <template v-slot:loading>
+          <q-inner-loading showing color="primary" />
+        </template>
+
+        <!-- status -->
+        <template v-slot:body-cell-c_status="props">
+          <q-td :props="props">
+            <div v-if="props.row.b_refund">退款</div>
+            <div v-if="props.row.b_delete">刪除</div>
+          </q-td>
+        </template>
+
+        <!-- top -->
+        <template v-slot:top>
+          <div class="q-my-none q-py-none row col-12 items-end" style="line-height: 10px;">
+            <div class="col-auto items-end text-bold">會計報表(CF)</div>
+            <q-space/>
+            <q-btn icon="print" flat class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end" v-print="printObj">
+              <q-tooltip class="bg-white text-primary">列印</q-tooltip>  
+            </q-btn>
+            <q-btn
+              color="primary"
+              class="hideOnPrint"
+              icon-right="archive"
+              label="匯出Excel"
+              no-caps
+              @click="exportExcel(CFData, accountReportColumns, '會計報表(CF)-' + reportStartDate + '-' + reportEndDate)"
+            />
+          </div>
+        </template>
+
+        <!-- bottom total row -->
+        <template v-slot:bottom-row="props">
+          <q-tr>
+            <q-td
+              v-for="index in props.cols.length"
+              class="text-center"
+              style="line-height: 10px;"
+            > {{ props.cols[index-1].name == 'number'? "總數: " : "" }}
+              {{ props.cols[index-1].name == 'number'? CFData.reduce((x,v) => x + v[props.cols[index-1].name], 0): '' }}
+              {{ props.cols[index-1].name == 'total'? "CF-總金額(HKD): " : "" }}
+              {{ props.cols[index-1].name == 'total'? (CFData.reduce((x,v) => x + v[props.cols[index-1].name], 0)).toLocaleString(): '' }}
+            </q-td>
+          </q-tr>
+        </template>
+      </q-table>
+
+      <!-- 新會員費 -->
+      <q-table
+        v-if="NewMemberData.length > 0"
+        dense
+        flat
+        :rows="NewMemberData"
+        :columns="accountReportColumns"
+        :pagination="accountReportPagination"
+        color="primary"
+        class="q-mt-md"
+        :loading="loading"
+        binary-state-sort
+        hide-pagination
+        :rows-per-page-options="[0]"
+        no-data-label="沒有資料"
+      >
+        <!-- loading -->
+        <template v-slot:loading>
+          <q-inner-loading showing color="primary" />
+        </template>
+
+        <!-- status -->
+        <template v-slot:body-cell-c_status="props">
+          <q-td :props="props">
+            <div v-if="props.row.b_refund">退款</div>
+            <div v-if="props.row.b_delete">刪除</div>
+          </q-td>
+        </template>
+
+        <!-- top -->
+        <template v-slot:top>
+          <div class="q-my-none q-py-none row col-12 items-end" style="line-height: 10px;">
+            <div class="col-auto items-end text-bold">會計報表(新會員費)</div>
+            <q-space/>
+            <q-btn icon="print" flat class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end" v-print="printObj">
+              <q-tooltip class="bg-white text-primary">列印</q-tooltip>  
+            </q-btn>
+            <q-btn
+              color="primary"
+              class="hideOnPrint"
+              icon-right="archive"
+              label="匯出Excel"
+              no-caps
+              @click="exportExcel(NewMemberData, accountReportColumns, '會計報表(新會員費)-' + reportStartDate + '-' + reportEndDate)"
+            />
+          </div>
+        </template>
+
+        <!-- bottom total row -->
+        <template v-slot:bottom-row="props">
+          <q-tr>
+            <q-td
+              v-for="index in props.cols.length"
+              class="text-center"
+              style="line-height: 10px;"
+            > {{ props.cols[index-1].name == 'number'? "總數: " : "" }}
+              {{ props.cols[index-1].name == 'number'? NewMemberData.reduce((x,v) => x + v[props.cols[index-1].name], 0): '' }}
+              {{ props.cols[index-1].name == 'total'? "新會員費-總金額(HKD): " : "" }}
+              {{ props.cols[index-1].name == 'total'? (NewMemberData.reduce((x,v) => x + v[props.cols[index-1].name], 0)).toLocaleString(): '' }}
+            </q-td>
+          </q-tr>
+        </template>
+      </q-table>
+
+      <!-- 續會員費 -->
+      <q-table
+        v-if="RenewMemberData.length > 0"
+        dense
+        flat
+        :rows="RenewMemberData"
+        :columns="accountReportColumns"
+        :pagination="accountReportPagination"
+        color="primary"
+        class="q-mt-md"
+        :loading="loading"
+        binary-state-sort
+        hide-pagination
+        :rows-per-page-options="[0]"
+        no-data-label="沒有資料"
+      >
+        <!-- loading -->
+        <template v-slot:loading>
+          <q-inner-loading showing color="primary" />
+        </template>
+
+        <!-- status -->
+        <template v-slot:body-cell-c_status="props">
+          <q-td :props="props">
+            <div v-if="props.row.b_refund">退款</div>
+            <div v-if="props.row.b_delete">刪除</div>
+          </q-td>
+        </template>
+
+        <!-- top -->
+        <template v-slot:top>
+          <div class="q-my-none q-py-none row col-12 items-end" style="line-height: 10px;">
+            <div class="col-auto items-end text-bold">會計報表(續會員費)</div>
+            <q-space/>
+            <q-btn icon="print" flat class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end" v-print="printObj">
+              <q-tooltip class="bg-white text-primary">列印</q-tooltip>  
+            </q-btn>
+            <q-btn
+              color="primary"
+              class="hideOnPrint"
+              icon-right="archive"
+              label="匯出Excel"
+              no-caps
+              @click="exportExcel(RenewMemberData, accountReportColumns, '會計報表(續會員費)-' + reportStartDate + '-' + reportEndDate)"
+            />
+          </div>
+        </template>
+
+        <!-- bottom total row -->
+        <template v-slot:bottom-row="props">
+          <q-tr>
+            <q-td
+              v-for="index in props.cols.length"
+              class="text-center"
+              style="line-height: 10px;"
+            > {{ props.cols[index-1].name == 'number'? "總數: " : "" }}
+              {{ props.cols[index-1].name == 'number'? RenewMemberData.reduce((x,v) => x + v[props.cols[index-1].name], 0): '' }}
+              {{ props.cols[index-1].name == 'total'? "續會員費-總金額(HKD): " : "" }}
+              {{ props.cols[index-1].name == 'total'? (RenewMemberData.reduce((x,v) => x + v[props.cols[index-1].name], 0)).toLocaleString(): '' }}
             </q-td>
           </q-tr>
         </template>
@@ -388,7 +719,7 @@ const EventDetailModal = ref(false)
 const showEventID = ref("")
 const showReceiptNo = ref("")
 const activeTab = ref("All")
-const typeToggle = ref("PF")
+// const typeToggle = ref("PF")
 const staffNameMapping = {
   "胡麗嫦": "lswu",
   "何有永": "ywho",
@@ -419,82 +750,108 @@ const receiptTypeOptions =
   ]
 
 const defaultPagination = ref({
-  rowsPerPage: 30,
+  rowsPerPage: 0,
   sortBy: "c_receipt_no",
 })
 
 const accountReportPagination = ref({
-  rowsPerPage: 30,
+  rowsPerPage: 0,
   sortBy: "c_act_code",
 })
 
 const receiptListColumns = ref([
   {
-    name: "c_status",
-    label: "狀態",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
     name: "c_receipt_no",
     label: "收據",
     field: "c_receipt_no",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
+    headerStyle: {
+      textAlign: "center",
+      lineHeight: "10px",
+    },
+    headerClasses: "bg-blue-2",
+    style: {
+      borderTop: '1px solid',
+      textAlign: 'center',
+      lineHeight: "10px",
+    },
   },
   {
     name: "d_clear",
     label: "日期",
     field: "d_clear",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
     sortable: true,
+    headerStyle: {
+      textAlign: "center",
+      lineHeight: "10px",
+    },
+    headerClasses: "bg-blue-2",
+    style: {
+      borderTop: '1px solid',
+      textAlign: 'center',
+      lineHeight: "10px",
+    },
     format: (val) => qdate.formatDate(val, "YYYY年M月D日")
-  },
-  {
-    name: "i_receipt_type",
-    label: "種類",
-    field: "i_receipt_type",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-    format: (val) => receiptTypeOptions[receiptTypeOptions.findIndex((x) => x.value == val)].label
   },
   {
     name: "c_type",
     label: "會計類別",
     field: "c_type",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
     sortable: true,
+    headerStyle: {
+      textAlign: "center",
+      lineHeight: "10px",
+    },
+    headerClasses: "bg-blue-2",
+    style: {
+      borderTop: '1px solid',
+      textAlign: 'center',
+      lineHeight: "10px",
+    },
   },
   {
     name: "c_name",
     label: "付款人",
     field: "c_name",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
+    headerStyle: {
+      textAlign: "center",
+      lineHeight: "10px",
+    },
+    headerClasses: "bg-blue-2",
+    style: {
+      borderTop: '1px solid',
+      textAlign: 'center',
+      lineHeight: "10px",
+    },
   },
   {
     name: "c_desc",
     label: "收費項目",
     field: "c_desc",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
+    headerStyle: {
+      textAlign: "center",
+      lineHeight: "10px",
+    },
+    headerClasses: "bg-blue-2",
+    style: {
+      borderTop: '1px solid',
+      textAlign: 'center',
+      lineHeight: "10px",
+    },
   },
   {
     name: "u_price_after_discount",
     label: "金額(HKD)",
     field: "u_price_after_discount",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
+    headerStyle: {
+      textAlign: "center",
+      lineHeight: "10px",
+    },
+    headerClasses: "bg-blue-2",
+    style: {
+      borderTop: '1px solid',
+      textAlign: 'center',
+      lineHeight: "10px",
+    },
   },
 ])
 
@@ -503,44 +860,87 @@ const accountReportColumns = ref([
     name: "c_act_code",
     label: "活動編號",
     field: "c_act_code",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
+    headerStyle: {
+      textAlign: "center",
+      lineHeight: "10px",
+    },
+    headerClasses: "bg-blue-2",
+    style: {
+      borderTop: '1px solid',
+      textAlign: 'center',
+      lineHeight: "10px",
+    },
   },
   {
     name: "c_desc",
     label: "收費項目",
     field: "c_desc",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
+    sortable: true,
+    headerStyle: {
+      textAlign: "center",
+      lineHeight: "10px",
+    },
+    headerClasses: "bg-blue-2",
+    style: {
+      borderTop: '1px solid',
+      textAlign: 'center',
+      lineHeight: "10px",
+    },
   },
   {
     name: "amount",
     label: "金額(HKD)",
     field: "amount",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
     sortable: true,
+    headerStyle: {
+      textAlign: "center",
+      lineHeight: "10px",
+    },
+    headerClasses: "bg-blue-2",
+    style: {
+      borderTop: '1px solid',
+      textAlign: 'center',
+      lineHeight: "10px",
+    },
   },
   {
     name: "number",
     label: "數量",
     field: "number",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
+    headerStyle: {
+      textAlign: "center",
+      lineHeight: "10px",
+    },
+    headerClasses: "bg-blue-2",
+    style: {
+      borderTop: '1px solid',
+      textAlign: 'center',
+      lineHeight: "10px",
+    },
   },
   {
     name: "total",
     label: "總金額",
     field: "total",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
+    headerStyle: {
+      textAlign: "center",
+      lineHeight: "10px",
+    },
+    headerClasses: "bg-blue-2",
+    style: {
+      borderTop: '1px solid',
+      textAlign: 'center',
+      lineHeight: "10px",
+    },
   },
 ])
+
+const printObj = ref({
+  id: "printMe",
+  preview: true,
+  previewTitle: "列印預覽", // The title of the preview window. The default is 打印预览
+  popTitle: "收據報表",
+})
 
 // query - load graphql subscription on account list
 const { result, loading, refetch} = useQuery(gql`
@@ -573,18 +973,170 @@ const { result, loading, refetch} = useQuery(gql`
   }));
 
 // computed
-const ReceiptData = computed(() => result.value?.tbl_account??[])
-const DeletedData = computed(() => ReceiptData.value? ReceiptData.value.filter((x) => x.b_delete): [])
+const AllData = computed(() => result.value?.tbl_account??[])
+const ReceiptData = computed(() => AllData.value? AllData.value.filter((x) => !x.b_delete): [])
+const DeletedData = computed(() => AllData.value? AllData.value.filter((x) => x.b_delete): [])
 const PFData = computed(() => {
   let res = []
   if (ReceiptData.value) {
     ReceiptData.value.forEach((rec) => {
-      if (rec.c_type == typeToggle.value && !rec.b_delete && !rec.b_refund) {
+      if (rec.c_type == 'PF' && !rec.b_delete && !rec.b_refund) {
         let i = res.findIndex((element) => element.c_act_code == rec.c_act_code && element.amount == rec.u_price_after_discount)
         if (i == -1) {
           res.push({
             c_act_code: rec.c_act_code,
             c_desc: rec.c_desc,
+            c_type: rec.c_type,
+            amount: rec.u_price_after_discount,
+            number: 1,
+            total: rec.u_price_after_discount
+          })
+        } else {
+          res[i].number = res[i].number + 1
+          res[i].total = res[i].total + rec.u_price_after_discount
+        }
+      }
+    })
+  }
+  return res
+})
+
+const MFData = computed(() => {
+  let res = []
+  if (ReceiptData.value) {
+    ReceiptData.value.forEach((rec) => {
+      if (rec.c_type == 'MF' && !rec.b_delete && !rec.b_refund) {
+        let i = res.findIndex((element) => element.c_act_code == rec.c_act_code && element.amount == rec.u_price_after_discount)
+        if (i == -1) {
+          res.push({
+            c_act_code: rec.c_act_code,
+            c_desc: rec.c_desc,
+            c_type: rec.c_type,
+            amount: rec.u_price_after_discount,
+            number: 1,
+            total: rec.u_price_after_discount
+          })
+        } else {
+          res[i].number = res[i].number + 1
+          res[i].total = res[i].total + rec.u_price_after_discount
+        }
+      }
+    })
+  }
+  return res
+})
+
+const CFData = computed(() => {
+  let res = []
+  if (ReceiptData.value) {
+    ReceiptData.value.forEach((rec) => {
+      if (rec.c_type == 'CF' && !rec.b_delete && !rec.b_refund) {
+        let i = res.findIndex((element) => element.c_act_code == rec.c_act_code && element.amount == rec.u_price_after_discount)
+        if (i == -1) {
+          res.push({
+            c_act_code: rec.c_act_code,
+            c_desc: rec.c_desc,
+            c_type: rec.c_type,
+            amount: rec.u_price_after_discount,
+            number: 1,
+            total: rec.u_price_after_discount
+          })
+        } else {
+          res[i].number = res[i].number + 1
+          res[i].total = res[i].total + rec.u_price_after_discount
+        }
+      }
+    })
+  }
+  return res
+})
+
+const RFData = computed(() => {
+  let res = []
+  if (ReceiptData.value) {
+    ReceiptData.value.forEach((rec) => {
+      if (rec.c_type == 'RF' && !rec.b_delete && !rec.b_refund) {
+        let i = res.findIndex((element) => element.c_act_code == rec.c_act_code && element.amount == rec.u_price_after_discount)
+        if (i == -1) {
+          res.push({
+            c_act_code: rec.c_act_code,
+            c_desc: rec.c_desc,
+            c_type: rec.c_type,
+            amount: rec.u_price_after_discount,
+            number: 1,
+            total: rec.u_price_after_discount
+          })
+        } else {
+          res[i].number = res[i].number + 1
+          res[i].total = res[i].total + rec.u_price_after_discount
+        }
+      }
+    })
+  }
+  return res
+})
+
+const SFData = computed(() => {
+  let res = []
+  if (ReceiptData.value) {
+    ReceiptData.value.forEach((rec) => {
+      if (rec.c_type == 'SF' && !rec.b_delete && !rec.b_refund) {
+        let i = res.findIndex((element) => element.c_act_code == rec.c_act_code && element.amount == rec.u_price_after_discount)
+        if (i == -1) {
+          res.push({
+            c_act_code: rec.c_act_code,
+            c_desc: rec.c_desc,
+            c_type: rec.c_type,
+            amount: rec.u_price_after_discount,
+            number: 1,
+            total: rec.u_price_after_discount
+          })
+        } else {
+          res[i].number = res[i].number + 1
+          res[i].total = res[i].total + rec.u_price_after_discount
+        }
+      }
+    })
+  }
+  return res
+})
+
+const NewMemberData = computed(() => {
+  let res = []
+  if (ReceiptData.value) {
+    ReceiptData.value.forEach((rec) => {
+      if (rec.c_type == '新會員費' && !rec.b_delete && !rec.b_refund) {
+        let i = res.findIndex((element) => element.c_act_code == rec.c_act_code && element.amount == rec.u_price_after_discount)
+        if (i == -1) {
+          res.push({
+            c_act_code: rec.c_act_code,
+            c_desc: rec.c_desc,
+            c_type: rec.c_type,
+            amount: rec.u_price_after_discount,
+            number: 1,
+            total: rec.u_price_after_discount
+          })
+        } else {
+          res[i].number = res[i].number + 1
+          res[i].total = res[i].total + rec.u_price_after_discount
+        }
+      }
+    })
+  }
+  return res
+})
+
+const RenewMemberData = computed(() => {
+  let res = []
+  if (ReceiptData.value) {
+    ReceiptData.value.forEach((rec) => {
+      if (rec.c_type == '續會員費' && !rec.b_delete && !rec.b_refund) {
+        let i = res.findIndex((element) => element.c_act_code == rec.c_act_code && element.amount == rec.u_price_after_discount)
+        if (i == -1) {
+          res.push({
+            c_act_code: rec.c_act_code,
+            c_desc: rec.c_desc,
+            c_type: rec.c_type,
             amount: rec.u_price_after_discount,
             number: 1,
             total: rec.u_price_after_discount
@@ -671,3 +1223,32 @@ function reset() {
   reportStaff.value = null
 }
 </script>
+
+<script>
+import print from "vue3-print-nb";
+
+export default {
+  name: "ReceiptReport",
+  directives: {
+    print,
+  },
+}
+</script>
+
+<style lang="scss" scoped>
+@media screen {
+  .hideOnScreen {
+    display: none
+  }
+}
+
+@media print {
+  .hideOnPrint {
+    display: none;
+  }
+  .print-title {
+    font-size: 0.4rem;
+    line-height: 25px;
+  }
+}
+</style>
