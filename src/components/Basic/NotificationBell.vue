@@ -49,9 +49,9 @@ const currentPage = ref(1)
 
 onMessage(messaging, (payload) => {
   messageQueue.value.push({
-    title: payload.notification.title,
-    body: payload.notification.body,
-    datetime: qdate.formatDate(new Date(), "YYYY年M月D日HH時mm分"),
+    title: payload.data.title,
+    body: payload.data.body,
+    datetime: qdate.formatDate(payload.data.datetime, "YYYY年M月D日HH時mm分"),
     read: false
   })
   $q.localStorage.set("notification", messageQueue.value)

@@ -82,7 +82,6 @@ async function testNotify() {
   testNoti({
     title: "a test title",
     body: "the test body",
-    link: "http://localhost:8080/#/system-admin",
   }).then((result) => {
     console.log(JSON.stringify(result));
   })

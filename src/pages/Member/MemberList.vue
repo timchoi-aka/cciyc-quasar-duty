@@ -124,6 +124,9 @@
           </q-input>
         </q-td>
         <q-td>
+
+        </q-td>
+        <q-td>
           <q-btn-toggle
             dense
             v-model="searchFilter.sex"
@@ -206,7 +209,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { useStore } from "vuex";
 import { date as qdate, useQuasar } from "quasar";
 import MemberDetail from "components/Member/MemberDetail.vue";
@@ -214,6 +217,8 @@ import { MEMBER_GET_ALL } from "/src/graphQueries/Member/query.js";
 import { useSubscription } from "@vue/apollo-composable"
 import LoadingDialog from "components/LoadingDialog.vue"
 import PrintReceipt from "components/Account/PrintReceipt.vue"
+import useMember from "components/Member/MemberData"
+import dateUtil from "src/lib/calculateAge"
 
 // save current module
 const $store = useStore();
@@ -228,6 +233,12 @@ const printReceiptModal = ref(false)
 const printReceiptMember = ref("")
 const showMemberID = ref("")
 const Member = ref([])
+const displayOptions = ref({
+  loadReceipt: true,
+  loadMembership: true,
+  loadDetail: true,
+})
+const searchCriteria = ref({})
 
 // table parameters
 const searchFilter = ref({
@@ -280,6 +291,15 @@ const memberListColumns = ref([
     headerClasses: "bg-grey-2",
   },
   {
+    name: "age",
+    label: "年齡",
+    field: "d_birth",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+    format: (val) => dateUtil.calculateAge(val)
+  },
+  {
     name: "c_sex",
     label: "性別",
     field: "c_sex",
@@ -289,7 +309,7 @@ const memberListColumns = ref([
   },
   {
     name: "c_mobile",
-    label: "手提電話",
+    label: "手提",
     field: "c_mobile",
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
@@ -365,8 +385,15 @@ const udf1List = ref([
 ])
 
  // query - load graphql subscription on member list
- const { result, loading } = useSubscription(MEMBER_GET_ALL);
-      
+const { result, loading } = useSubscription(MEMBER_GET_ALL);
+// const { members, loadMember, loading } = useMember(searchCriteria, displayOptions);
+
+/*
+onMounted(async () => {
+  loadMember()
+})
+*/
+
 // computed  
 const filter = computed(() => ({
   memberIDFilter: searchFilter.value.memberID,
@@ -381,6 +408,7 @@ const filter = computed(() => ({
 const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const uid = computed(() => $store.getters["userModule/getUID"])
 const MemberData = computed(() => result.value?.Member??[])
+// const MemberData = computed(() => members.value? members.value : [])
 
 // function
 function rowDetail(evt, row, index) {
@@ -408,9 +436,6 @@ function resetFilter() {
   };
 }
 
-function changeMember(value) {
-  console.log("change in parent:" + value)
-}
 
 function tableFilter(rows, terms) {
   // rows contain the entire data

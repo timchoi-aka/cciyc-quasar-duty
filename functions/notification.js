@@ -51,19 +51,20 @@ exports.notify = async (uid, data) => {
   });
 };
 
-exports.publishTopic = async (topic, data, channelID = "", link = "") => {
+// exports.publishTopic = async (topic, data, channelID = "", link = "") => {
+exports.publishTopic = async (topic, data) => {
   const message = {
-    /*
     data: {
       title: data.title,
       body: data.body,
       datetime: formatDateTime(new Date()),
     },
-    */
+    /*
     notification: {
       title: data.title,
       body: data.body,
     },
+    */
     /*
     android: {
       data: {

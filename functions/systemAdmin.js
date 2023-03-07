@@ -27,7 +27,7 @@ exports.testNotify = functions.region("asia-east2").https.onCall(async (data, co
   if (!loginUserData.privilege.systemAdmin) {
     throw new functions.https.HttpsError(
         "unauthenticated",
-        "only system admin can run upgrade",
+        "only system admin can run test notification",
     );
   }
   // notify(context.auth.uid, ({title: "test title", body: "test body"}));
@@ -36,9 +36,7 @@ exports.testNotify = functions.region("asia-east2").https.onCall(async (data, co
       {
         title: data.title,
         body: data.body,
-      },
-      "測試",
-      data.link);
+      });
 });
 
 exports.setCustomClaims = functions.region("asia-east2").https.onCall(async (data, context) => {
