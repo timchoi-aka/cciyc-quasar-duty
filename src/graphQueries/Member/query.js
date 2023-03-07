@@ -78,12 +78,12 @@ query GetMemDetailAndRelationByPK($c_mem_id: String = "") {
     c_sex
     c_tel
     c_udf_1
-    c_update_user
     d_birth
     d_enter_1
     d_exit_1
     d_expired_1
     d_renew_1
+    c_update_user
     d_update
     d_write
     m_addscom
