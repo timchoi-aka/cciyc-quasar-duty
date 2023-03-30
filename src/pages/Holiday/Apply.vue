@@ -118,7 +118,7 @@ const monthlyBalance = computed(() => {
     else return 0
   } else return 0
 })
-const periodEnd = computed(() => (new Date()).getMonth() < 3? 
+const periodEnd = computed(() => (new Date()).getMonth() < 3?
                                   qdate.buildDate({
                                     year: (new Date()).getFullYear(),
                                     month: 3,
@@ -149,18 +149,17 @@ function changeRenderYear(years) {
 // get user data
 getDoc(doc(FireDB, "users", uid.value)).then((userDoc) => {
   const rank = userDoc.data().rank;
-  const isParttime = userDoc.data().parttime? userDoc.data().parttime: false
-  const dateOfExit = userDoc.data().dateOfExit ? userDoc.data().dateOfExit.toDate() : null;
-  const dateOfEntry = userDoc.data().dateOfEntry.toDate();
+  const dateOfExit = userDoc.data().employment[userDoc.data().employment.length-1].dateOfExit?.toDate()??null;
+  const dateOfEntry = userDoc.data().employment[0].dateOfEntry.toDate();
 
   // get leaveConfig
   getDoc(leaveConfig).then((leaveConfigDoc) => {
     const leaveConfigData = leaveConfigDoc.data();
-    const tiers = leaveConfigData[rank];
+
     // get AL starting balance
     const systemStartBalance = leaveConfigData[uid.value][0].al;
     // determine year end
-    const now = new Date();    
+    const now = new Date();
     // console.log("systemStartBalance:" + systemStartBalance)
     // determine data retrieval boundary combining periodEnd and dateOfExit
     const dataBoundary =
@@ -168,12 +167,12 @@ getDoc(doc(FireDB, "users", uid.value)).then((userDoc) => {
         ? qdate.subtractFromDate(dateOfExit, { milliseconds: 1 })
         : periodEnd.value;
 
-    const leaveDocQuery = query(leaveCollection, 
+    const leaveDocQuery = query(leaveCollection,
       where("uid", "==", uid.value),
       where("status", "==", "批准"),
       where("type", "==", "AL")
     )
-    
+
     getDocs(leaveDocQuery).then((leaveDocData) => {
       let leaveData = [];
       leaveDocData.forEach((doc) => {
@@ -208,6 +207,22 @@ getDoc(doc(FireDB, "users", uid.value)).then((userDoc) => {
             "month"
           ) / 12;
         //console.log("yearServed:" + yearServed)
+        let currentEmployment
+        userDoc.data().employment.forEach((employment) => {
+          if (new Date(employment.dateOfEntry.toDate()-28800000) <= monthLoop && (!employment.dateOfExit || new Date(employment.dateOfExit.toDate()-28800000) >= monthLoop)) {
+            currentEmployment = employment
+          }
+        })
+
+        const tiers = currentEmployment? leaveConfigData[currentEmployment.rank]:
+          {
+            t1: 0,
+            t2: 0,
+            t3: 0,
+            t4: 0,
+            t5: 0
+          };
+
         let tier = 0;
         const tiersConfig = [0, 5, 8, 10, 12];
         for (let j = tiersConfig.length; j > 0; j--) {
@@ -216,7 +231,7 @@ getDoc(doc(FireDB, "users", uid.value)).then((userDoc) => {
             break;
           }
         }
-        let perMonthGain = isParttime? tier / 2 / 12: tier / 12;
+        let perMonthGain = tier / 12;
         if (
             monthLoop == systemStart || (qdate.formatDate(dataBoundary, "YYYYMMDD") != qdate.formatDate(qdate.endOfDate(dataBoundary, 'month'), "YYYYMMDD") && qdate.getDateDiff(dataBoundary, monthLoop) <
             qdate.daysInMonth(monthLoop) - 1)

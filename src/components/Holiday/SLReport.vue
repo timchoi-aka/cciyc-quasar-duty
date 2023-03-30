@@ -122,7 +122,7 @@ const props = defineProps({
 const $store = useStore()
 const holidaySummary = ref([])
 const sl_monthStart = ref(0)
-const dateOfEntry = ref(0) 
+const dateOfEntry = ref(0)
 const dateOfExit = ref(0)
 const yearStart = ref(0)
 const yearEnd = ref(0)
@@ -130,8 +130,8 @@ const tableFields = ref(["日期"])
 const tableData = ref([])
 const date = ref([])
 const uidMap = ref([])
-      
-   
+
+
 // computed
 const getReportYear = computed(() => props.renderYear + props.renderYearOffset -1)
 const uid = computed(() => $store.getters["userModule/getUID"])
@@ -142,7 +142,7 @@ function getMonthYear(date) {
   if (typeof date === "function") return;
   return qdate.formatDate(new Date(date), "MM/YYYY");
 }
- 
+
 function totalLeaveRecord() {
   if (holidaySummary.value.length == 0) return;
   let recordStart = qdate.buildDate({
@@ -166,17 +166,17 @@ function totalAnnualLeaveDays(name) {
   let sum = tableData.value.reduce((a, b) => ({ [name]: a[name] + b[name] }));
   return sum[name];
 }
-    
+
 getDoc(leaveConfig).then((leaveDoc) => {
   const leaveConfigData = leaveDoc.data()
   const now = new Date();
   const systemStart = qdate.startOfDate(new Date(2021, 3, 1), "month");
-  
+
   getDoc(doc(FireDB, 'users', reportUser.value)).then((reportUserDoc)=> {
     // console.log(JSON.stringify("reportUser: " + JSON.stringify(this.reportUser)));
     const reportUserProfile = reportUserDoc.data();
     const tiers = leaveConfigData[reportUserProfile.rank];
-    const isParttime = reportUserDoc.data().parttime? reportUserDoc.data().parttime: false
+
     // determine yearly start (1/4 of 2021)
     yearStart.value =
         now.getMonth() <= 2
@@ -196,11 +196,11 @@ getDoc(leaveConfig).then((leaveDoc) => {
       );
     //this.reportUser.value = reportUserProfile.uid;
     //this.reportUser.label = reportUserProfile.name;
-    
-    dateOfEntry.value = reportUserProfile.dateOfEntry.toDate();
-    dateOfExit.value = reportUserProfile.dateOfExit
-        ? reportUserProfile.dateOfExit.toDate()
-        : new Date("9999/12/31");
+
+    dateOfEntry.value = reportUserProfile.employment[0].dateOfEntry.toDate();
+    dateOfExit.value = reportUserProfile.employment[reportUserProfile.employment.length-1].dateOfExit
+        ?.toDate()
+        ?? new Date("9999/12/31");
      // console.log("dateOfEntry: " + dateOfEntry.value);
      // console.log("thisYearStart: " + yearStart.value);
      // console.log("thisYearEnd: " + yearEnd.value);
@@ -209,7 +209,7 @@ getDoc(leaveConfig).then((leaveDoc) => {
 
     let sl_monthEnd;
     let monthLoop = systemStart;
-    
+
     // if (props.renderYearOffset == 0) {
     sl_monthEnd = leaveConfigData.hasOwnProperty(reportUserProfile.uid)
       ? leaveConfigData[reportUserProfile.uid][0].al
@@ -219,7 +219,7 @@ getDoc(leaveConfig).then((leaveDoc) => {
     // carry over from last year
     // pushing last year carry over
     // holidaySummary.valueLastYear[props.renderYearOffset] = {
-    
+
     //  holidaySummary.valueLastYear.push({
     //    date: monthLoop,
     //    sl_monthEnd: sl_monthEnd, // year carry over, for example 28
@@ -230,11 +230,11 @@ getDoc(leaveConfig).then((leaveDoc) => {
 
 
     // get all SL record
-    const slScheduleQuery = query(scheduleCollection, 
+    const slScheduleQuery = query(scheduleCollection,
       where("uid", "==", reportUserProfile.uid),
       where("type", "in", ['SL', 'SSL'])
     )
-    
+
     getDocs(slScheduleQuery).then((slScheduleDoc) => {
       let slSchedule = [];
       slScheduleDoc.forEach((doc) => {
@@ -283,7 +283,7 @@ getDoc(leaveConfig).then((leaveDoc) => {
               slot: slot,
               type: leave.type
             });
-            
+
             //console.log(
             //  "alSchedule size before splice: " + Object.keys(alSchedule).length
             //);
@@ -301,7 +301,7 @@ getDoc(leaveConfig).then((leaveDoc) => {
           12;
 
         //console.log("yearServed: " + yearServed);
-       
+
         let lastMonth = false;
         let lastWorkingDate = qdate.addToDate(dateOfExit.value, { days: -1 });
 
@@ -329,7 +329,7 @@ getDoc(leaveConfig).then((leaveDoc) => {
         qdate.getDateDiff(monthLoop, yearEnd.value, "day") < 0 &&
         monthLoop <= dateOfExit.value
       );
-      
+
       //if (Object.keys(holidaySummary.valueLastYear).length <= props.renderYearOffset + 1) {
       //  holidaySummary.valueLastYear.push({
       //    date: holidaySummary.value[11].date,
@@ -338,11 +338,11 @@ getDoc(leaveConfig).then((leaveDoc) => {
       //    al_monthEnd: holidaySummary.value[11].al_monthEnd,
       //  });
       //}
-      
+
       //store.dispatch("setALReportHistory", holidaySummary.valueLastYear);
       //console.log("holidaySummary: " + JSON.stringify(holidaySummary.value));
       // holidaySummary.valueLastYear.push(holidaySummary.value);
-      
+
     })
   })
 })

@@ -1,7 +1,7 @@
 import { FireDB, FirebaseAuth, FirebaseMessaging, FirebaseFunctions /*getAuth, signInWithCredential*/ } from "boot/firebase.js";
 import { getToken } from "firebase/messaging";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
-import { collection, getDoc, doc, getDocs, Timestamp } from "firebase/firestore"; 
+import { collection, getDoc, doc, getDocs, Timestamp } from "firebase/firestore";
 import { Notify } from 'quasar'
 import { httpsCallable } from "firebase/functions";
 import { LocalStorage } from "quasar"
@@ -20,7 +20,7 @@ export async function login({ commit }) {
   provider.setCustomParameters({
     'login_hint': 'user@cciyc.com'
   });
-  
+
   signInWithPopup(FirebaseAuth, provider).then((result) => {
     // This gives you a Google Access Token. You can use it to access the Google API.
     const credential = GoogleAuthProvider.credentialFromResult(result);
@@ -28,12 +28,12 @@ export async function login({ commit }) {
     sessionStorage.setItem("access-token", token);
     // The signed-in user info.
     const user = result.user;
-    
+
     getDoc(doc(FireDB, "users", user.uid)).then((userDoc) => {
       if (userDoc.exists()) {
         let d = userDoc.data();
-        d.dateOfEntry = new Date(userDoc.data().dateOfEntry.toDate().setHours(0))
-        d.dateOfExit = userDoc.data().dateOfExit? new Date(userDoc.data().dateOfExit.toDate().setHours(0)): null
+        // d.dateOfEntry = new Date(userDoc.data().dateOfEntry.toDate().setHours(0))
+        // d.dateOfExit = userDoc.data().dateOfExit? new Date(userDoc.data().dateOfExit.toDate().setHours(0)): null
         commit('setUserProfile', d);
         commit('setAuth', user);
         commit('setModule', LocalStorage.has('module')? LocalStorage.getItem('module'): 'duty')
@@ -41,7 +41,7 @@ export async function login({ commit }) {
         Notify.create({
           message: userDoc.data().name + " 登入成功."
         })
-        
+
         // get messaging token
         getToken(FirebaseMessaging, {vapidKey: "BFu5VzDUwOVWSQ--MUDmSEPt9AYN9QlTPIzijXKzQVqrIdpKi1goG9l3L8_fDJFr5mojwX5Eo2tDC1XiMmIfSXA"}).then((currentToken) => {
           if (currentToken) {
@@ -78,7 +78,7 @@ export async function login({ commit }) {
       // The AuthCredential type that was used.
       const credential = GoogleAuthProvider.credentialFromError(error);
       // ...
-  }); 
+  });
 }
 
 export async function logout({ commit }) {
@@ -87,7 +87,7 @@ export async function logout({ commit }) {
     // Sign-out successful.
     // clear userProfile and redirect to /login
     commit('setUserProfile', {})
-    commit('setAuth', {})    
+    commit('setAuth', {})
     commit('setModule', {})
     sessionStorage.removeItem("access-token");
     this.$router.push('/').catch(()=>{});

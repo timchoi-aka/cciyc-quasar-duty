@@ -323,7 +323,7 @@ import LoadingDialog from "components/LoadingDialog.vue"
 import { getDocs, query, where, orderBy, onSnapshot } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 
-/* 
+/*
 onMounted(() => {
   const getPublicHoliday = httpsCallable(FirebaseFunctions, "holiday-getPublicHoliday");
   getPublicHoliday().then(result => holiday.value = result.data)
@@ -337,7 +337,7 @@ const props = defineProps({
   printOnly: Boolean,
 })
 
-// variables  
+// variables
 const tempInputValue = ref("")
 const qcardExpanded = ref([])
 const queryStartDate = props.renderDate? ref(qdate.startOfDate( qdate.subtractFromDate(props.renderDate, { days: qdate.formatDate(props.renderDate, "d")}), 'day')): ""
@@ -393,7 +393,7 @@ const colString = computed(() => columns.value.reduce(function (previousValue, c
   }
   return previousValue;
 }, []))
-      
+
 // functions
 function defaultOpeningSession(props) {
   const defaultSessions = [5,6,8,9,11,12,14,15,17,18,20]
@@ -437,7 +437,7 @@ function getHoliday(date) {
     return publicHoliday.value[i].summary;
   }
 }
- 
+
 function loadDefault(row) {
   for (const [index, item] of Object.entries(row.defaultSchedule)) {
     if (!(columns.value[Number(index) + 1].name + ".approved" in editingRow.value)) {
@@ -492,12 +492,12 @@ async function updateTable() {
     editingRow.value = {};
   }
 }
- 
+
 const validateEditingRow = computed(() => {
   if (Object.keys(editingRow.value).length == 0) return false;
   if (isSystemAdmin.value || isCenterIC.value) return false;
   const constrains = ["al", "sal", "sl", "ssl"];
-  for (const [key, value] of Object.entries(editingRow.value)) {    
+  for (const [key, value] of Object.entries(editingRow.value)) {
     if (
       key != "uid" &&
       key != "name" &&
@@ -544,18 +544,18 @@ function canModifyTable(uid) {
 }
 
 // query definition and start querying
-const userDocQuery = query(usersCollection, 
+const userDocQuery = query(usersCollection,
   where("enable", "==", true),
   where("privilege.systemAdmin", "==", false),
   orderBy("order")
 )
 
-const scheduleDocQuery = query(scheduleCollection, 
+const scheduleDocQuery = query(scheduleCollection,
   where("date", ">=", queryStartDate.value),
   where("date", "<=", queryEndDate.value)
 )
 
-const sessionDocQuery = query(sessionCollection, 
+const sessionDocQuery = query(sessionCollection,
   where("date", ">=", queryStartDate.value),
   where("date", "<=", queryEndDate.value)
 )
@@ -568,7 +568,7 @@ const leaveDocQuery = query(leaveCollection,
 sessionSnapshot.value = onSnapshot(sessionDocQuery, (snapshot) => {
   snapshot.docChanges().forEach((change) => {
     let d = change.doc.data();
-    
+
     if (change.type == "added") {
       // console.log("added: " + d.uid + ":" + dateSlot + "[" + d.type + "]")
       let i = openSessions.value.findIndex((element) => element == (qdate.formatDate(d.date.toDate(), "YYYY-MM-DD") + "|" + d.slot));
@@ -587,8 +587,8 @@ sessionSnapshot.value = onSnapshot(sessionDocQuery, (snapshot) => {
 
 getDocs(userDocQuery).then((userDoc) => {
   userDoc.forEach((doc) => {
-    const dateOfEntry = doc.data().dateOfEntry?.toDate()??''
-    const dateOfExit = doc.data().dateOfExit? doc.data().dateOfExit.toDate() : new Date("9999/12/31")
+    const dateOfEntry = doc.data().employment[0].dateOfEntry?.toDate()??''
+    const dateOfExit = doc.data().employment[doc.data().employment.length-1].dateOfExit?.toDate()??new Date("9999/12/31")
     if (
       qdate.isBetweenDates(queryStartDate.value, dateOfEntry, dateOfExit, {
         inclusiveFrom: true,

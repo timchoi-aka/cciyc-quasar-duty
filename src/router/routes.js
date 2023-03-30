@@ -9,6 +9,16 @@ const routes = [
     component: () => import('src/pages/Test.vue'),
   },
   {
+    path: '/website',
+    component: () => import('src/pages/Website/WebsiteHome.vue'), meta: { requiresAuth: true},
+    children: [
+      {
+        path: 'news',
+        component: () => import('src/pages/Website/NewsPage.vue'), meta: { requiresAuth: true},
+      }
+    ]
+  },
+  {
     path: '/member',
     component: () => import('src/pages/MemberHome.vue'), meta: {requiresAuth: true},
     children: [
@@ -160,33 +170,33 @@ const routes = [
     path: '/account',
     component: () => import('src/pages/AccountHome.vue'), meta: {requiresAuth: true},
     children: [
-      { 
+      {
         path: 'other',
         component: () => import('src/pages/Account/OtherIncome.vue'), meta: {requiresAuth: true }
       },
-      { 
+      {
         path: 'receipt',
         component: () => import('src/pages/Account/ReceiptHome.vue'), meta: {requiresAuth: true },
         children: [
-          { 
+          {
             path: 'search',
             component: () => import('src/pages/Account/ReceiptSearch.vue'), meta: {requiresAuth: true }
           },
-          { 
+          {
             path: 'report',
             component: () => import('src/pages/Account/Report.vue'), meta: {requiresAuth: true }
           }
         ]
       },
-      { 
+      {
         path: 'inventory',
         component: () => import('src/pages/Account/InventoryHome.vue'), meta: {requiresAuth: true },
         children: [
-          { 
+          {
             path: 'list',
             component: () => import('src/pages/Account/InventoryList.vue'), meta: {requiresAuth: true }
           },
-          { 
+          {
             path: 'take_record',
             component: () => import('src/pages/Account/InventoryTakeRecord.vue'), meta: {requiresAuth: true }
           },

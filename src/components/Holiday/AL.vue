@@ -16,7 +16,7 @@
       <template v-slot:body-cell-Date="props">
         <q-td
           style="font-size: 2vw; text-align: center"
-          
+
           :class="[getHoliday(props.row.Date) ? 'isHoliday' : '']"
         >
           <div v-if="$q.screen.lt.sm" v-html="qdate.formatDate(props.row.Date, 'MM/DD')" />
@@ -114,7 +114,7 @@ const userQuery = query(usersCollection,
   orderBy("rank"),
   orderBy("order")
 )
-  
+
 // load users data
 getDocs(userQuery).then((userDoc) => {
   var rows = [];
@@ -143,10 +143,12 @@ getDocs(userQuery).then((userDoc) => {
     } else {
       // check if user has left the company
       // put the user to the valid staff if he's still working
+      let dateOfEntry = doc.data().employment[0].dateOfEntry.toDate()
+      let dateOfExit = doc.data().employment[doc.data().employment.length-1].dateOfExit?.toDate()??null
       let validStaff = true
-      if (qdate.getDateDiff(doc.data().dateOfEntry.toDate(), startOfMonth) > 0) validStaff = false
-      if (doc.data().dateOfExit) {
-        if (qdate.getDateDiff(doc.data().dateOfExit.toDate(), endOfMonth) < 0) validStaff = false
+      if (qdate.getDateDiff(dateOfEntry, startOfMonth) > 0) validStaff = false
+      if (dateOfExit) {
+        if (qdate.getDateDiff(dateOfExit, endOfMonth) < 0) validStaff = false
       }
       if (validStaff) {
         users.push({
@@ -190,8 +192,8 @@ getDocs(userQuery).then((userDoc) => {
       rows[rows.length - 1][user.uid] = 0;
     });
   }
-  
-  const scheduleQuery = query(scheduleCollection, 
+
+  const scheduleQuery = query(scheduleCollection,
     where("date", ">=", startOfMonth),
     where("date", "<=", endOfMonth),
     where("type", "==", "AL")
@@ -211,7 +213,7 @@ getDocs(userQuery).then((userDoc) => {
         });
       }
     });
-    
+
     // add up AL items array and update table
     items.forEach((item) => {
       let i = rows.findIndex(

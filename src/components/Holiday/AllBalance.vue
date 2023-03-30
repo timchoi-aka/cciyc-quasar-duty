@@ -96,7 +96,7 @@ const columns = ref([
 ])
 
 // computed
-const periodEnd = computed(() => props.renderDate? props.renderDate.getMonth() < 3? 
+const periodEnd = computed(() => props.renderDate? props.renderDate.getMonth() < 3?
                                   qdate.buildDate({
                                     year: props.renderDate.getFullYear(),
                                     month: 3,
@@ -120,7 +120,7 @@ const tableRow = computed(() => {
   let result = []
   let yearlyResult = balance.value.filter(a => qdate.formatDate(a.month, "YYYYMMDD") == qdate.formatDate(qdate.subtractFromDate(periodEnd.value, {hour: 8}), "YYYYMMDD"))
   let monthlyResult = balance.value.filter(a => qdate.formatDate(a.month, "YYYYMMDD") == qdate.formatDate(qdate.endOfDate(props.renderDate, 'month'), "YYYYMMDD"))
-  
+
   balance.value.forEach((record) => {
     let i = result.findIndex((element) => element.uid == record.uid)
     if (i == -1) {
@@ -154,34 +154,32 @@ getDocs(usersQuery).then((userDocs) => {
   userDocs.forEach((userDoc) => {
     const uid = userDoc.data().uid
     const name = userDoc.data().name
-    const rank = userDoc.data().rank
-    const isParttime = userDoc.data().parttime? userDoc.data().parttime: false
+
     const salBalance = userDoc.data().balance.sal
     const otBalance = userDoc.data().balance.ot
-    const dateOfExit = userDoc.data().dateOfExit ? userDoc.data().dateOfExit.toDate() : null;
-    const dateOfEntry = userDoc.data().dateOfEntry.toDate();
+    const dateOfExit = userDoc.data().employment[userDoc.data().employment.length-1].dateOfExit?.toDate()??null;
+    const dateOfEntry = userDoc.data().employment[0].dateOfEntry.toDate();
 
     // get leaveConfig
     getDoc(leaveConfig).then((leaveConfigDoc) => {
       const leaveConfigData = leaveConfigDoc.data();
-      const tiers = leaveConfigData[rank];
       // get AL starting balance
       const systemStartBalance = leaveConfigData[uid]? leaveConfigData[uid][0].al: 0
       // determine year end
-      const now = new Date();    
-      
+      const now = new Date();
+
       // determine data retrieval boundary combining periodEnd and dateOfExit
       const dataBoundary =
         dateOfExit && dateOfExit < periodEnd.value
           ? qdate.subtractFromDate(dateOfExit, { milliseconds: 1 })
           : periodEnd.value;
 
-      const leaveDocQuery = query(leaveCollection, 
+      const leaveDocQuery = query(leaveCollection,
         where("uid", "==", uid),
         where("status", "==", "批准"),
         where("type", "==", "AL")
       )
-      
+
       getDocs(leaveDocQuery).then((leaveDocData) => {
         let leaveData = [];
         leaveDocData.forEach((doc) => {
@@ -190,7 +188,7 @@ getDocs(usersQuery).then((userDocs) => {
             leaveData.push(doc.data());
           }
         });
-        
+
         let totalGain = 0
         let totalALTaken = 0
         let monthlyALTaken = 0
@@ -205,17 +203,31 @@ getDocs(usersQuery).then((userDocs) => {
           second: 59,
           millisecond: 999
         })
-        
+
         let monthLoop = systemStart;
         do {
-          
+
           const yearServed =
             qdate.getDateDiff(
               qdate.endOfDate(monthLoop, "month"),
               dateOfEntry,
               "month"
             ) / 12;
-          
+          let currentEmployment
+          userDoc.data().employment.forEach((employment) => {
+            if (new Date(employment.dateOfEntry.toDate()-28800000) <= monthLoop && (!employment.dateOfExit || qdate.endOfDate(new Date(employment.dateOfExit.toDate()-28800000),"day") >= monthLoop)) {
+              currentEmployment = employment
+            }
+          })
+
+          const tiers = currentEmployment? leaveConfigData[currentEmployment.rank]:
+            {
+              t1: 0,
+              t2: 0,
+              t3: 0,
+              t4: 0,
+              t5: 0
+            };
           let tier = 0;
           const tiersConfig = [0, 5, 8, 10, 12];
           for (let j = tiersConfig.length; j > 0; j--) {
@@ -224,8 +236,9 @@ getDocs(usersQuery).then((userDocs) => {
               break;
             }
           }
-          let perMonthGain = isParttime? tier/2/12: tier / 12;
-          
+
+          let perMonthGain = tier / 12;
+
           if (
             monthLoop == systemStart || (qdate.formatDate(dataBoundary, "YYYYMMDD") != qdate.formatDate(qdate.endOfDate(dataBoundary, 'month'), "YYYYMMDD") && qdate.getDateDiff(dataBoundary, monthLoop) <
             qdate.daysInMonth(monthLoop) - 1)

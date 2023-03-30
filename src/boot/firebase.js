@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getMessaging } from "firebase/messaging";
-import { getAuth, onAuthStateChanged, onIdTokenChanged, getIdToken } from "firebase/auth";
+import { getAuth, onAuthStateChanged, onIdTokenChanged, getIdToken, connectAuthEmulator } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator, collection, doc } from "firebase/firestore";
 import { getApp } from "firebase/app";
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
@@ -30,17 +30,17 @@ if (process.env.NODE_ENV === "development") {
   // connectAuthEmulator(auth, "http://localhost:9099");
   connectFirestoreEmulator(db, 'localhost', 8081);
   connectFunctionsEmulator(functions, "localhost", 5001);
-  
+
   self.FIREBASE_APPCHECK_DEBUG_TOKEN = "D0934CAD-09BB-46E6-ABCD-EB7BD32B9365";
   console.log("Debug Mode Enabled")
 }
 
-// Pass your reCAPTCHA v3 site key (public key) to activate(). Make sure this
-// key is the counterpart to the secret key you set in the Firebase console.
-const appCheck = initializeAppCheck(app, {
-  provider: new ReCaptchaV3Provider('6Ldn54UiAAAAAHwOOAqgnuVJ78Mgs2f6D-VfiB6H'),
-  isTokenAutoRefreshEnabled: true
-});
+  // Pass your reCAPTCHA v3 site key (public key) to activate(). Make sure this
+  // key is the counterpart to the secret key you set in the Firebase console.
+  const appCheck = initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider('6Ldn54UiAAAAAHwOOAqgnuVJ78Mgs2f6D-VfiB6H'),
+    isTokenAutoRefreshEnabled: true
+  });
 
 /*
 import { getIdToken, onAuthStateChanged } from "firebase/auth";

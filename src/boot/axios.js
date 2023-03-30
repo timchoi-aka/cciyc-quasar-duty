@@ -14,12 +14,29 @@ const api = axios.create({
   baseURL: "https://hasura.cciyc.com:4430/v1/graphql/",
 });
 
-
 api.interceptors.request.use(async (config) => {
   var token = await FirebaseAuth.currentUser.getIdToken();
   config.headers["Authorization"] = `Bearer ${token}`
   config.params = config.params || {};
   // config.params["locale"] = api.defaults.locale;
+  return config;
+});
+
+const API_URL = 'https://api.openai.com/v1/chat/completions';
+const chatAPI = axios.create({
+  baseURL: API_URL,
+  headers: {
+    common: {
+      "content-type": "application/json",
+    },
+  },
+})
+
+// const API_KEY = process.env.OPENAI_APIKEY;
+const API_KEY = ""
+chatAPI.interceptors.request.use(async (config) => {
+  config.headers["Authorization"] = `Bearer ${API_KEY}`
+  config.params = config.params || {};
   return config;
 });
 
@@ -33,6 +50,8 @@ export default boot(({ app }) => {
   app.config.globalProperties.$api = api;
   // ^ ^ ^ this will allow you to use this.$api (for Vue Options API form)
   //       so you can easily perform requests against your app's API
+
+  app.config.globalProperties.$chatAPI = chatAPI;
 });
 
-export { api };
+export { api, chatAPI };

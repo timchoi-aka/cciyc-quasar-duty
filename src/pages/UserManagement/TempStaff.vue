@@ -333,7 +333,6 @@ const newStaff = ref({
         uid: "",
         order: 0,
         enable: true,
-        parttime: false,
         privilege: {
           scheduleModify: false,
           leaveManage: false,
@@ -448,12 +447,15 @@ function changeDateOfExit(uid, date) {
 function initializeNewStaffObject() {
   newStaff.value = ref({
     name: "",
-    dateOfEntry: new Date(),
+    employment: [
+      {
+        dateOfEntry: new Date(),
+      }
+    ],
     email: "n/a",
     uid: "",
     order: 0,
     enable: true,
-    parttime: false,
     privilege: {
       scheduleModify: false,
       leaveManage: false,
@@ -497,7 +499,7 @@ function initializeNewStaffObject() {
     "",
   ])
 }
-    
+
 function deleteTempStaff() {
   const delTmp = httpsCallable(FirebaseFunctions, "user-delTempStaff");
   awaitServerResponse.value++;
@@ -511,7 +513,7 @@ function deleteTempStaff() {
       console.err(JSON.stringify(err));
     });
 }
-    
+
 function addTempStaff() {
   const addTmp = httpsCallable(FirebaseFunctions, "user-addTempStaff");
   awaitServerResponse.value++;
@@ -552,7 +554,7 @@ function changeEnable(uid) {
       result.data;
   });
 }
-    
+
 function updateTempUserTable() {
   users.value = [];
   // get tmp users
@@ -561,20 +563,20 @@ function updateTempUserTable() {
     where("privilege.systemAdmin", "==", false),
     where("privilege.tmp", "==", true)
   )
-  
+
   getDocs(userQuery).then((userDoc) => {
     userDoc.forEach((user) => {
       let d = user.data();
-      if (d.dateOfEntry != undefined) {
-        d.dateOfEntry = new Date(d.dateOfEntry.toDate());
+      if (d.employment[0].dateOfEntry != undefined) {
+        d.employment[0].dateOfEntry = new Date(d.employment[0].dateOfEntry.toDate());
       } else {
-        d.dateOfEntry = new Date();
+        d.employment[0].dateOfEntry = new Date();
       }
 
-      if (d.dateOfExit != undefined) {
-        d.dateOfExit = new Date(d.dateOfExit.toDate());
+      if (d.employment[0].dateOfExit != undefined) {
+        d.employment[0].dateOfExit = new Date(d.employment[0].dateOfExit.toDate());
       } else {
-        d.dateOfExit = "";
+        d.employment[0].dateOfExit = "";
       }
 
       users.value.push({
@@ -582,8 +584,12 @@ function updateTempUserTable() {
         enable: "enable" in d ? d.enable : true,
         uid: d.uid,
         order: d.order,
-        dateOfEntry: d.dateOfEntry,
-        dateOfExit: d.dateOfExit,
+        employment: [
+          {
+            dateOfEntry: d.employment[0].dateOfEntry,
+            dateOfExit: d.employment[0].dateOfExit,
+          }
+        ]
       });
     });
   })

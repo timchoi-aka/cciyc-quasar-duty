@@ -457,6 +457,7 @@ exports.updatePendingCount = functions.region("asia-east2").firestore
     });
 
 // API 2.0 Scheduled task to updated AL Balance
+/* cancel using new function
 exports.updateALBalance = functions.region("asia-east2").pubsub.schedule("0 0 1 * *").timeZone("Asia/Hong_Kong").onRun(async (context) => {
   const usersDocRef = FireDB.collection("users");
   const usersDoc = await usersDocRef.where("privilege.tmp", "==", false).where("privilege.systemAdmin", "==", false).get();
@@ -483,7 +484,7 @@ exports.updateALBalance = functions.region("asia-east2").pubsub.schedule("0 0 1 
   const tiersConfig = [0, 5, 8, 10, 12];
 
   for (const usr of userData) {
-    const tiers = leaveConfigData[usr.rank];
+    // const tiers = leaveConfigData[usr.rank];
     const salBeginBalance = leaveConfigData[usr.uid][0].sal? leaveConfigData[usr.uid][0].sal:0;
     const today = new Date();
     const entryDate = new Date(usr.dateOfEntry.toDate().getTime() + 28800000);
@@ -497,6 +498,21 @@ exports.updateALBalance = functions.region("asia-east2").pubsub.schedule("0 0 1 
       const monthDiff = counter.getMonth() - entryDate.getMonth();
       const yearServed = Math.floor((yearDiff*12 + monthDiff)/12);
       let tier = 0;
+
+      let tiers;
+      // console.log("usr employment length:" + usr.employment.length);
+      if (usr.employment) {
+        for (let i = 0; i < usr.employment.length; i++) {
+          if (counter >= usr.employment[i].dateOfEntry.toDate() && (!usr.employment[i].dateOfExit || counter <= usr.employment[i].dateOfExit.toDate())) {
+            tiers = leaveConfigData[usr.employment[i].rank];
+            // console.log("tiers in loop:" + tiers);
+          }
+        }
+      } else {
+        tiers = leaveConfigData[usr.rank];
+      }
+      if (!tiers) break;
+
       for (let j = tiersConfig.length; j > 0; j--) {
         if (yearServed >= tiersConfig[j - 1]) {
           tier = tiers["t" + j];
@@ -514,12 +530,6 @@ exports.updateALBalance = functions.region("asia-east2").pubsub.schedule("0 0 1 
     const alBalance = parseFloat(leaveConfigData[usr.uid][0]["al"]) + parseFloat(leaveGain) - parseFloat(ALTaken);
     // console.log(usr.name + "[" + usr.rank + ":" + tier + "]: " + ALTaken);
     // console.log(usr.name + " starts with " + leaveConfigData[usr.uid][0]["al"] + " gained " + leaveGain + " ALTaken " + ALTaken + " balance: " + alBalance);
-    /* leaveData.forEach((data) => {
-      if (data.uid == usr.uid) {
-        console.log(data.date + "[" + data.slot + "]");
-      }
-    });
-    */
     const salBalance = parseFloat(salBeginBalance) - parseFloat(salLeaveData.filter((element) => element.uid == usr.uid).length/2);
     const ref = FireDB.collection("users").doc(usr.uid);
     const refData = await ref.get();
@@ -538,7 +548,7 @@ exports.updateALBalance = functions.region("asia-east2").pubsub.schedule("0 0 1 
     console.log("AL / SAL Balance updated at: " + new Date());
   });
 });
-
+*/
 
 // API 2.0 - add a leave application
 exports.addLeave = functions.region("asia-east2").https.onCall(async (data, context) => {
@@ -574,5 +584,500 @@ exports.addLeave = functions.region("asia-east2").https.onCall(async (data, cont
       publishTopic(queue.topic, queue.message, "假期", "https://duty.cciyc.com/#/duty/dutytable");
     });
     console.log(logData);
+  });
+});
+
+// migrate AL to leaveBalance document
+exports.migrateALBalance = functions.region("asia-east2").https.onCall(async (data, context) => {
+  // App Check token. (If the request includes an invalid App Check
+  // token, the request will be rejected with HTTP error 401.)
+  if (context.app == undefined) {
+    throw new functions.https.HttpsError(
+        "failed-precondition",
+        "The function must be called from an App Check verified app.");
+  }
+
+  // only authenticated users can run this
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated users can add requests",
+    );
+  }
+
+  const usersDocRef = FireDB.collection("users");
+  const usersDoc = await usersDocRef.get();
+  const userData = [];
+  const leaveData = [];
+  const salLeaveData = [];
+
+  const leaveDocRef = FireDB.collection("leave");
+  const leaveBalanceRef = FireDB.collection("dashboard").doc("leaveBalance");
+  let leaveBalanceData;
+  leaveBalanceRef.get().then((doc) => {
+    if (doc.exists) {
+      leaveBalanceData = doc.data();
+    } else {
+      leaveBalanceData = {};
+    }
+  });
+  const leaveDoc = await leaveDocRef.where("status", "==", "批准").where("validity", "==", true).where("type", "==", "AL").orderBy("uid").get();
+  const salLeaveDoc = await leaveDocRef.where("status", "==", "批准").where("validity", "==", true).where("type", "==", "SAL").orderBy("uid").get();
+  usersDoc.forEach((doc) => {
+    userData.push(doc.data());
+  });
+  leaveDoc.forEach((doc) => {
+    leaveData.push(doc.data());
+  });
+  salLeaveDoc.forEach((doc) => {
+    salLeaveData.push(doc.data());
+  });
+
+  const batch = FireDB.batch();
+  const leaveConfigRef = FireDB.collection("dashboard").doc("leaveConfig");
+  const leaveConfigDoc = await leaveConfigRef.get();
+  const leaveConfigData = leaveConfigDoc.data();
+  const tiersConfig = [0, 5, 8, 10, 12];
+  const reportData = {};
+
+  for (const usr of userData) {
+    reportData[usr.uid] = [];
+
+    /* expect outcome: {
+      uid: [
+        {
+          date: end_of_a_month,
+          rank: user_rank,
+          yearServed: year.month,
+          alMonthStart: al_balance_last_month,
+          alGain: alGain,
+          alTaken: alTaken,
+          alMonthEnd: al_balance_month_end,
+          salMonthStart: sal_balance_last_month,
+          salTaken: salTaken,
+          salMonthEnd: sal_balance_month_end
+        }
+      ]
+    } */
+    // const salBeginBalance = leaveConfigData[usr.uid][0].sal? leaveConfigData[usr.uid][0].sal:0;
+    const today = new Date();
+    let entryDate = "";
+    if (usr.dateOfEntry) {
+      entryDate = new Date(usr.dateOfEntry.toDate().getTime() + 28800000);
+    } else {
+      entryDate = new Date(usr.employment[0].dateOfEntry.toDate().getTime() + 28800000);
+    }
+
+    let exitDate = null;
+    if (usr.employment) {
+      if (usr.employment[usr.employment.length-1].dateOfExit) {
+        exitDate = new Date(usr.employment[usr.employment.length-1].dateOfExit.toDate().getTime() + 28800000);
+      }
+    } else if (usr.dateOfExit) {
+      exitDate = new Date(usr.dateOfExit.toDate().getTime() + 28800000);
+    }
+    // console.log("dateOfEntry:" + entryDate);
+    // console.log("dateOfExit:" + exitDate);
+    // const systemMonthStart = new Date(2021, 3, 1);
+    const systemMonthStart = new Date(Date.UTC(2021, 3, 1, 0, 0, 0, 0));
+    // const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const thisMonthStart = new Date(Date.UTC(today.getFullYear(), today.getMonth(), 1));
+    const periodEnd = exitDate? exitDate: thisMonthStart;
+    const periodStart = entryDate < systemMonthStart? systemMonthStart: entryDate;
+    // calculate initial entry
+    // const systemStart = new Date(2021, 2, 31, 23, 59, 59, 999);
+    const systemStart = new Date(Date.UTC(2021, 2, 31, 23, 59, 59, 999));
+    const initialYearDiff = systemStart.getFullYear() - entryDate.getFullYear();
+    const initialMonthDiff = systemStart.getMonth() - entryDate.getMonth();
+    const yearServed = Math.floor((initialYearDiff*12 + initialMonthDiff)/12);
+    const monthServed = Math.floor((initialYearDiff*12 + initialMonthDiff)%12);
+    let previousALBalance = 0;
+    let previousSALBalance = 0;
+    if (entryDate < systemStart) {
+      if (leaveBalanceData[usr.uid]) {
+        previousALBalance = parseFloat(leaveBalanceData[usr.uid][0].alMonthEnd);
+        previousSALBalance = parseFloat(leaveBalanceData[usr.uid][0].salMonthEnd);
+      } else if (leaveConfigData[usr.uid]) {
+        previousALBalance = parseFloat(leaveConfigData[usr.uid][0].al? leaveConfigData[usr.uid][0].al: 0);
+        previousSALBalance = parseFloat(leaveConfigData[usr.uid][0].sal? parseFloat(leaveConfigData[usr.uid][0].sal): 0);
+      }
+      reportData[usr.uid].push({
+        date: Timestamp.fromDate(systemStart),
+        rank: usr.rank,
+        yearServed: yearServed + "." + monthServed,
+        alMonthEnd: previousALBalance,
+        salMonthEnd: previousSALBalance,
+      });
+    }
+
+    // let counter = systemMonthStart;
+    let leaveGain = 0;
+    for (let counter = periodStart; counter <= periodEnd; counter = updateCounter(counter)) {
+      let tiers;
+      // console.log("usr employment length:" + usr.employment.length);
+      if (usr.employment) {
+        for (let i = 0; i < usr.employment.length; i++) {
+          if (counter >= usr.employment[i].dateOfEntry.toDate() && (!usr.employment[i].dateOfExit || counter <= usr.employment[i].dateOfExit.toDate())) {
+            tiers = leaveConfigData[usr.employment[i].rank];
+            // console.log("tiers in loop:" + tiers);
+          }
+        }
+      } else {
+        tiers = leaveConfigData[usr.rank];
+      }
+      if (!tiers) break;
+      // year difference, and month difference, then calculate exact year difference
+      const yearDiff = counter.getFullYear() - entryDate.getFullYear();
+      const monthDiff = counter.getMonth() - entryDate.getMonth();
+      // const periodStart = new Date(counter.getFullYear(), counter.getMonth(), 1, 0, 0, 0, 0);
+      const periodStart = new Date(Date.UTC(counter.getFullYear(), counter.getMonth(), 1, 0, 0, 0, 0));
+      // const periodEnd = new Date(counter.getFullYear(), counter.getMonth()+1, 0, 23, 59, 59, 999);
+      const periodEnd = new Date(Date.UTC(counter.getFullYear(), counter.getMonth()+1, 0, 23, 59, 59, 999));
+      const yearServed = Math.floor((yearDiff*12 + monthDiff)/12);
+      const monthServed = Math.floor((yearDiff*12 + monthDiff)%12);
+      if (yearServed < 0) continue;
+      let tier = 0;
+      for (let j = tiersConfig.length; j > 0; j--) {
+        if (yearServed >= tiersConfig[j - 1]) {
+          tier = tiers["t" + j];
+          break;
+        }
+      }
+      if (exitDate) {
+        if (exitDate.getFullYear() == counter.getFullYear() && exitDate.getMonth() == counter.getMonth()) {
+          const endOfMonth = new Date(exitDate.getFullYear(), exitDate.getMonth(), 0);
+          if (exitDate.getDay() != endOfMonth.getDay()) {
+            tier = 0;
+          }
+        }
+      }
+
+      // console.log("yearServed:" + yearServed + " dateOfEntry:" + entryDate + " counter:" + counter + " tier:" + tier);
+      // accumulated leaveGain
+      // leaveGain += tier/12;
+
+      // leaveGain of 1 month
+      leaveGain = tier/12;
+      const leaveTaken = parseFloat(leaveData.filter((row) => row.uid == usr.uid && Date.parse(row.date) >= periodStart && Date.parse(row.date) <= periodEnd).length/2);
+      const salLeaveTaken = parseFloat(salLeaveData.filter((row) => row.uid == usr.uid && Date.parse(row.date) >= periodStart && Date.parse(row.date) <= periodEnd).length/2);
+      reportData[usr.uid].push({
+        date: Timestamp.fromDate(new Date(Date.UTC(counter.getFullYear(), counter.getMonth() + 1, 0, 23, 59, 59, 999))),
+        rank: usr.rank,
+        yearServed: yearServed + "." + monthServed,
+        alMonthStart: previousALBalance,
+        alGain: tier/12,
+        alTaken: leaveTaken,
+        alMonthEnd: previousALBalance + leaveGain - leaveTaken,
+        salMonthStart: previousSALBalance,
+        salTaken: salLeaveTaken,
+        salMonthEnd: previousSALBalance - salLeaveTaken,
+      });
+      previousALBalance = previousALBalance + leaveGain - leaveTaken;
+      previousSALBalance = previousSALBalance - salLeaveTaken;
+    } // end for loop
+
+    const ref = FireDB.collection("users").doc(usr.uid);
+    const refData = await ref.get();
+    if (usr.dateOfEntry && usr.dateOfExit) {
+      batch.update(ref, {
+        employment: [{
+          dateOfEntry: usr.dateOfEntry,
+          dateOfExit: usr.dateOfExit,
+          rank: usr.rank,
+        }],
+      });
+      batch.update(ref, {
+        al: previousALBalance,
+        sal: previousSALBalance,
+        ot: refData.data().balance.ot,
+      });
+    } else if (usr.dateOfEntry) {
+      batch.update(ref, {
+        employment: [{
+          dateOfEntry: usr.dateOfEntry,
+          rank: usr.rank,
+        }],
+      });
+    }
+    // clean up old data
+    if (usr.dateOfEntry) batch.update(ref, {dateOfEntry: FieldValue.delete()});
+    if (usr.dateOfExit) batch.update(ref, {dateOfExit: FieldValue.delete()});
+    if (usr.parttime) batch.update(ref, {parttime: FieldValue.delete()});
+
+    // console.log(usr.name + " date diff: " + yearDiff + ":" + monthDiff + ":" + diff );
+    // const ALTaken = leaveData.filter((row) => row.uid == usr.uid).length/2;
+    // const alBalance = parseFloat(leaveConfigData[usr.uid][0]["al"]) + parseFloat(leaveGain) - parseFloat(ALTaken);
+    // console.log(usr.name + "[" + usr.rank + ":" + tier + "]: " + ALTaken);
+    // console.log(usr.name + " starts with " + leaveConfigData[usr.uid][0]["al"] + " gained " + leaveGain + " ALTaken " + ALTaken + " balance: " + alBalance);
+    /* leaveData.forEach((data) => {
+      if (data.uid == usr.uid) {
+        console.log(data.date + "[" + data.slot + "]");
+      }
+    });
+    */
+    // const salBalance = parseFloat(salBeginBalance) - parseFloat(salLeaveData.filter((element) => element.uid == usr.uid).length/2);
+    // const ref = FireDB.collection("users").doc(usr.uid);
+    // const refData = await ref.get();
+    /*
+    batch.update(ref, {
+      balance: {
+        al: alBalance,
+        sal: salBalance,
+        ot: refData.data().balance.ot,
+      },
+    });
+    */
+    // console.log("result:" + JSON.stringify(result));
+  }
+  // console.log("reportData:" + JSON.stringify(reportData));
+  // console.log(JSON.stringify(leaveData));
+  // return leaveBalanceRef.set(reportData);
+  return await batch.commit().then(() => {
+    console.log("AL / SAL Balance migrated at: " + new Date());
+    leaveBalanceRef.set(reportData);
+  });
+});
+
+// eslint-disable-next-line require-jsdoc
+function updateCounter(counter) {
+  if (counter.getMonth() == 11) {
+    return new Date(Date.UTC(counter.getFullYear() + 1, 0, 1, 0, 0, 0, 0));
+  } else {
+    return new Date(Date.UTC(counter.getFullYear(), counter.getMonth()+1, 1, 0, 0, 0, 0));
+  }
+}
+
+// migrate AL to leaveBalance document
+exports.updateALBalanceToUserObject = functions.region("asia-east2").pubsub.schedule("0 0 1 * *").timeZone("Asia/Hong_Kong").onRun(async (context) => {
+  const usersDocRef = FireDB.collection("users");
+  const usersDoc = await usersDocRef.get();
+  const userData = [];
+  const leaveData = [];
+  const salLeaveData = [];
+
+  const leaveDocRef = FireDB.collection("leave");
+  const leaveBalanceRef = FireDB.collection("dashboard").doc("leaveBalance");
+  let leaveBalanceData;
+  leaveBalanceRef.get().then((doc) => {
+    if (doc.exists) {
+      leaveBalanceData = doc.data();
+    } else {
+      leaveBalanceData = {};
+    }
+  });
+  const leaveDoc = await leaveDocRef.where("status", "==", "批准").where("validity", "==", true).where("type", "==", "AL").orderBy("uid").get();
+  const salLeaveDoc = await leaveDocRef.where("status", "==", "批准").where("validity", "==", true).where("type", "==", "SAL").orderBy("uid").get();
+  usersDoc.forEach((doc) => {
+    userData.push(doc.data());
+  });
+  leaveDoc.forEach((doc) => {
+    leaveData.push(doc.data());
+  });
+  salLeaveDoc.forEach((doc) => {
+    salLeaveData.push(doc.data());
+  });
+
+  const batch = FireDB.batch();
+  const leaveConfigRef = FireDB.collection("dashboard").doc("leaveConfig");
+  const leaveConfigDoc = await leaveConfigRef.get();
+  const leaveConfigData = leaveConfigDoc.data();
+  const tiersConfig = [0, 5, 8, 10, 12];
+  const reportData = {};
+
+  for (const usr of userData) {
+    reportData[usr.uid] = [];
+
+    /* expect outcome: {
+      uid: [
+        {
+          date: end_of_a_month,
+          rank: user_rank,
+          yearServed: year.month,
+          alMonthStart: al_balance_last_month,
+          alGain: alGain,
+          alTaken: alTaken,
+          alMonthEnd: al_balance_month_end,
+          salMonthStart: sal_balance_last_month,
+          salTaken: salTaken,
+          salMonthEnd: sal_balance_month_end
+        }
+      ]
+    } */
+    // const salBeginBalance = leaveConfigData[usr.uid][0].sal? leaveConfigData[usr.uid][0].sal:0;
+    const today = new Date();
+    let entryDate = "";
+    if (usr.dateOfEntry) {
+      entryDate = new Date(usr.dateOfEntry.toDate().getTime() + 28800000);
+    } else {
+      entryDate = new Date(usr.employment[0].dateOfEntry.toDate().getTime() + 28800000);
+    }
+
+    let exitDate = null;
+    if (usr.employment) {
+      if (usr.employment[usr.employment.length-1].dateOfExit) {
+        exitDate = new Date(usr.employment[usr.employment.length-1].dateOfExit.toDate().getTime() + 28800000);
+      }
+    } else if (usr.dateOfExit) {
+      exitDate = new Date(usr.dateOfExit.toDate().getTime() + 28800000);
+    }
+    // console.log("dateOfEntry:" + entryDate);
+    // console.log("dateOfExit:" + exitDate);
+    // const systemMonthStart = new Date(2021, 3, 1);
+    const systemMonthStart = new Date(Date.UTC(2021, 3, 1, 0, 0, 0, 0));
+    // const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const thisMonthStart = new Date(Date.UTC(today.getFullYear(), today.getMonth(), 1));
+    const periodEnd = exitDate? exitDate: thisMonthStart;
+    const periodStart = entryDate < systemMonthStart? systemMonthStart: entryDate;
+    // calculate initial entry
+    // const systemStart = new Date(2021, 2, 31, 23, 59, 59, 999);
+    const systemStart = new Date(Date.UTC(2021, 2, 31, 23, 59, 59, 999));
+    const initialYearDiff = systemStart.getFullYear() - entryDate.getFullYear();
+    const initialMonthDiff = systemStart.getMonth() - entryDate.getMonth();
+    const yearServed = Math.floor((initialYearDiff*12 + initialMonthDiff)/12);
+    const monthServed = Math.floor((initialYearDiff*12 + initialMonthDiff)%12);
+    let previousALBalance = 0;
+    let previousSALBalance = 0;
+    if (entryDate < systemStart) {
+      if (leaveBalanceData[usr.uid]) {
+        previousALBalance = parseFloat(leaveBalanceData[usr.uid][0].alMonthEnd);
+        previousSALBalance = parseFloat(leaveBalanceData[usr.uid][0].salMonthEnd);
+      } else if (leaveConfigData[usr.uid]) {
+        previousALBalance = parseFloat(leaveConfigData[usr.uid][0].al? leaveConfigData[usr.uid][0].al: 0);
+        previousSALBalance = parseFloat(leaveConfigData[usr.uid][0].sal? parseFloat(leaveConfigData[usr.uid][0].sal): 0);
+      }
+      reportData[usr.uid].push({
+        date: Timestamp.fromDate(systemStart),
+        rank: usr.rank,
+        yearServed: yearServed + "." + monthServed,
+        alMonthEnd: previousALBalance,
+        salMonthEnd: previousSALBalance,
+      });
+    }
+
+    // let counter = systemMonthStart;
+    let leaveGain = 0;
+    for (let counter = periodStart; counter <= periodEnd; counter = updateCounter(counter)) {
+      let tiers;
+      // console.log("usr employment length:" + usr.employment.length);
+      if (usr.employment) {
+        for (let i = 0; i < usr.employment.length; i++) {
+          if (counter >= usr.employment[i].dateOfEntry.toDate() && (!usr.employment[i].dateOfExit || counter <= usr.employment[i].dateOfExit.toDate())) {
+            tiers = leaveConfigData[usr.employment[i].rank];
+            // console.log("tiers in loop:" + tiers);
+          }
+        }
+      } else {
+        tiers = leaveConfigData[usr.rank];
+      }
+      if (!tiers) break;
+      // year difference, and month difference, then calculate exact year difference
+      const yearDiff = counter.getFullYear() - entryDate.getFullYear();
+      const monthDiff = counter.getMonth() - entryDate.getMonth();
+      // const periodStart = new Date(counter.getFullYear(), counter.getMonth(), 1, 0, 0, 0, 0);
+      const periodStart = new Date(Date.UTC(counter.getFullYear(), counter.getMonth(), 1, 0, 0, 0, 0));
+      // const periodEnd = new Date(counter.getFullYear(), counter.getMonth()+1, 0, 23, 59, 59, 999);
+      const periodEnd = new Date(Date.UTC(counter.getFullYear(), counter.getMonth()+1, 0, 23, 59, 59, 999));
+      const yearServed = Math.floor((yearDiff*12 + monthDiff)/12);
+      const monthServed = Math.floor((yearDiff*12 + monthDiff)%12);
+      if (yearServed < 0) continue;
+      let tier = 0;
+      for (let j = tiersConfig.length; j > 0; j--) {
+        if (yearServed >= tiersConfig[j - 1]) {
+          tier = tiers["t" + j];
+          break;
+        }
+      }
+      if (exitDate) {
+        if (exitDate.getFullYear() == counter.getFullYear() && exitDate.getMonth() == counter.getMonth()) {
+          const endOfMonth = new Date(exitDate.getFullYear(), exitDate.getMonth(), 0);
+          if (exitDate.getDay() != endOfMonth.getDay()) {
+            tier = 0;
+          }
+        }
+      }
+
+      // console.log("yearServed:" + yearServed + " dateOfEntry:" + entryDate + " counter:" + counter + " tier:" + tier);
+      // accumulated leaveGain
+      // leaveGain += tier/12;
+
+      // leaveGain of 1 month
+      leaveGain = tier/12;
+      const leaveTaken = parseFloat(leaveData.filter((row) => row.uid == usr.uid && Date.parse(row.date) >= periodStart && Date.parse(row.date) <= periodEnd).length/2);
+      const salLeaveTaken = parseFloat(salLeaveData.filter((row) => row.uid == usr.uid && Date.parse(row.date) >= periodStart && Date.parse(row.date) <= periodEnd).length/2);
+      reportData[usr.uid].push({
+        date: Timestamp.fromDate(new Date(Date.UTC(counter.getFullYear(), counter.getMonth() + 1, 0, 23, 59, 59, 999))),
+        rank: usr.rank,
+        yearServed: yearServed + "." + monthServed,
+        alMonthStart: previousALBalance,
+        alGain: tier/12,
+        alTaken: leaveTaken,
+        alMonthEnd: previousALBalance + leaveGain - leaveTaken,
+        salMonthStart: previousSALBalance,
+        salTaken: salLeaveTaken,
+        salMonthEnd: previousSALBalance - salLeaveTaken,
+      });
+      previousALBalance = previousALBalance + leaveGain - leaveTaken;
+      previousSALBalance = previousSALBalance - salLeaveTaken;
+    } // end for loop
+
+    const ref = FireDB.collection("users").doc(usr.uid);
+    const refData = await ref.get();
+    if (usr.dateOfEntry && usr.dateOfExit) {
+      batch.update(ref, {
+        employment: [{
+          dateOfEntry: usr.dateOfEntry,
+          dateOfExit: usr.dateOfExit,
+          rank: usr.rank,
+        }],
+      });
+      batch.update(ref, {
+        al: previousALBalance,
+        sal: previousSALBalance,
+        ot: refData.data().balance.ot,
+      });
+    } else if (usr.dateOfEntry) {
+      batch.update(ref, {
+        employment: [{
+          dateOfEntry: usr.dateOfEntry,
+          rank: usr.rank,
+        }],
+      });
+    }
+    // clean up old data
+    if (usr.dateOfEntry) batch.update(ref, {dateOfEntry: FieldValue.delete()});
+    if (usr.dateOfExit) batch.update(ref, {dateOfExit: FieldValue.delete()});
+    if (usr.parttime) batch.update(ref, {parttime: FieldValue.delete()});
+
+    // console.log(usr.name + " date diff: " + yearDiff + ":" + monthDiff + ":" + diff );
+    // const ALTaken = leaveData.filter((row) => row.uid == usr.uid).length/2;
+    // const alBalance = parseFloat(leaveConfigData[usr.uid][0]["al"]) + parseFloat(leaveGain) - parseFloat(ALTaken);
+    // console.log(usr.name + "[" + usr.rank + ":" + tier + "]: " + ALTaken);
+    // console.log(usr.name + " starts with " + leaveConfigData[usr.uid][0]["al"] + " gained " + leaveGain + " ALTaken " + ALTaken + " balance: " + alBalance);
+    /* leaveData.forEach((data) => {
+      if (data.uid == usr.uid) {
+        console.log(data.date + "[" + data.slot + "]");
+      }
+    });
+    */
+    // const salBalance = parseFloat(salBeginBalance) - parseFloat(salLeaveData.filter((element) => element.uid == usr.uid).length/2);
+    // const ref = FireDB.collection("users").doc(usr.uid);
+    // const refData = await ref.get();
+    /*
+    batch.update(ref, {
+      balance: {
+        al: alBalance,
+        sal: salBalance,
+        ot: refData.data().balance.ot,
+      },
+    });
+    */
+    // console.log("result:" + JSON.stringify(result));
+  }
+  // console.log("reportData:" + JSON.stringify(reportData));
+  // console.log(JSON.stringify(leaveData));
+  // return leaveBalanceRef.set(reportData);
+  return await batch.commit().then(() => {
+    console.log("AL / SAL Balance migrated at: " + new Date());
+    leaveBalanceRef.set(reportData);
   });
 });

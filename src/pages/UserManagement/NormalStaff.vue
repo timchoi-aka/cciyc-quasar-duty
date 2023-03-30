@@ -211,113 +211,194 @@
         </div>
       </template>
 
-      <!-- template of column "enable" -->
-      <template v-slot:body-cell-enable="props">
-        <q-td :props="props">
-          <q-btn
-            round
-            :color="props.value ? 'positive' : 'negative'"
-            :label="props.value ? '有' : '沒有'"
-            @click="changeEnable(props.key)"
-          />
-        </q-td>
+      <!-- row template -->
+      <template v-slot:body="props">
+        <q-tr :props="props">
+          <!-- name -->
+          <q-td style="font-size: 1.2vw; text-align: center; width: 3vw;">
+            {{ props.row.name }}
+          </q-td>
+          <!-- enable? -->
+          <q-td style="font-size: 1.2vw; text-align: center; width: 3vw;">
+            <q-btn
+              round
+              :color="props.row.enable ? 'positive' : 'negative'"
+              :label="props.row.enable ? '有' : '沒有'"
+              @click="changeEnable(props.key)"
+            />
+          </q-td>
+
+          <!-- leaveApprove? -->
+          <q-td style="font-size: 1.2vw; text-align: center; width: 3vw;">
+            <q-btn
+              round
+              :color="props.row.privilege_leaveApprove ? 'positive' : 'negative'"
+              :label="props.row.privilege_leaveApprove ? '有' : '沒有'"
+              @click="changeLeaveApprove(props.key)"
+            />
+          </q-td>
+
+          <!-- leaveManage? -->
+          <q-td style="font-size: 1.2vw; text-align: center; width: 3vw;">
+            <q-btn
+              round
+              :color="props.row.privilege_leaveManage ? 'positive' : 'negative'"
+              :label="props.row.privilege_leaveManage ? '有' : '沒有'"
+              @click="changeLeaveManage(props.key)"
+            />
+          </q-td>
+
+          <!-- sal? -->
+          <q-td style="font-size: 1.2vw; text-align: center; width: 3vw;">
+            <q-btn
+              round
+              :color="props.row.privilege_sal ? 'positive' : 'negative'"
+              :label="props.row.privilege_sal ? '有' : '沒有'"
+              @click="changeSal(props.key)"
+            />
+          </q-td>
+
+          <!-- scheduleModify? -->
+          <q-td style="font-size: 1.2vw; text-align: center; width: 3vw;">
+            <q-btn
+              round
+              :color="props.row.privilege_scheduleModify ? 'positive' : 'negative'"
+              :label="props.row.privilege_scheduleModify ? '有' : '沒有'"
+              @click="changeScheduleModify(props.key)"
+            />
+          </q-td>
+
+          <!-- userManagement? -->
+          <q-td style="font-size: 1.2vw; text-align: center; width: 3vw;">
+            <q-btn
+              round
+              :color="props.row.privilege_userManagement ? 'positive' : 'negative'"
+              :label="props.row.privilege_userManagement ? '有' : '沒有'"
+              @click="changeUserManagement(props.key)"
+            />
+          </q-td>
+
+          <!-- probation? -->
+          <q-td style="font-size: 1.2vw; text-align: center; width: 3vw;">
+            <q-btn
+              round
+              :color="props.row.privilege_probation ? 'positive' : 'negative'"
+              :label="props.row.privilege_probation ? '有' : '沒有'"
+              @click="changeProbation(props.key)"
+            />
+          </q-td>
+
+           <!-- finance? -->
+           <q-td style="font-size: 1.2vw; text-align: center; width: 3vw;">
+            <q-btn
+              round
+              :color="props.row.privilege_finance ? 'positive' : 'negative'"
+              :label="props.row.privilege_finance ? '有' : '沒有'"
+              @click="changeFinance(props.key)"
+            />
+          </q-td>
+
+          <!-- order? -->
+          <q-td style="font-size: 1.2vw; text-align: center; width: 3vw;">
+            <div class="q-mx-sm">
+              {{ props.row.order }}
+              <q-btn
+                :disable="props.row.order == 1"
+                round
+                size="xs"
+                color="positive"
+                icon="keyboard_arrow_up"
+                @click="changeOrder(props.key, 'UP')"
+              />
+              <q-btn
+                :disable="props.row.order == users.length"
+                round
+                size="xs"
+                color="negative"
+                icon="keyboard_arrow_down"
+                @click="changeOrder(props.key, 'DOWN')"
+              />
+            </div>
+          </q-td>
+
+          <!-- extra info button -->
+          <q-td style="font-size: 1.2vw; text-align: center; width: 3vw;">
+            <q-btn color="primary" round dense @click="props.expand = !props.expand" :icon="props.expand ? 'remove' : 'add'" />
+          </q-td>
+        </q-tr>
+
+        <!-- expanding row-->
+        <q-tr v-show="props.expand" :props="props">
+          <q-td colspan="100%">
+            <q-tabs v-model="activeTab" inline-label align="left" class="desktop-only bg-warning text-black">
+              <q-tab name="employment" icon="source" label="受聘記錄" />
+              <q-tab name="schedule" icon="event" label="預設更表" />
+            </q-tabs>
+
+            <q-tab-panels
+              v-model="activeTab"
+              animated
+              swipeable
+              transition-prev="jump-up"
+              transition-next="jump-up"
+            >
+              <q-tab-panel name="employment" class="q-ma-none q-pa-sm text-body1">
+                <q-btn v-if="!editEmployment" label="修改" icon="edit" class="bg-primary text-white q-my-md" @click="startEditEmployment(props.key)"/>
+                <q-btn v-if="editEmployment" label="新增受聘記錄" icon="add" class="bg-primary text-white q-my-md" @click="newEmploymentRecord.push({dateOfEntry: null, dateOfExit: null, rank: null})"/>
+                <q-btn v-if="editEmployment" label="取消修改" icon="cancel" class="bg-negative text-white q-my-md" @click="cancelEmploymentRecordChange"/>
+                <q-btn v-if="editEmployment && JSON.stringify(newEmploymentRecord) != JSON.stringify(props.row.employment)" label="儲存" icon="save" class="bg-positive text-white q-my-md" @click="saveEmploymentRecord(props.key)"/>
+                <div v-if="!editEmployment" v-for="employ in props.row.employment" class="row">
+                  <div class="col-1">入職日期：</div>
+                  <div class="col-2">{{ qdate.formatDate(employ.dateOfEntry, "YYYY年M月D日")}}</div>
+                  <div class="q-ml-md col-1">離職日期：</div>
+                  <div class="col-2">{{ qdate.formatDate(employ.dateOfExit, "YYYY年M月D日")}}</div>
+                  <div class="q-ml-md col-1">職級：</div>
+                  <div class="col-1">{{ rankInputReverseMap[employ.rank]}}</div>
+                </div>
+                <div v-else v-for="(employ, index) in newEmploymentRecord" class="row">
+                  <div class="col-1">入職日期：</div>
+                  <div class="col-2"><DateComponent v-model="employ.dateOfEntry" label="人職日期"/></div>
+                  <div class="q-ml-md col-1">離職日期：</div>
+                  <div class="col-2"><DateComponent v-model="employ.dateOfExit" label="離職日期"/></div>
+                  <div class="q-ml-md col-1">職級：</div>
+                  <div class="col-1">
+                    <q-select
+                      :label="rankInputReverseMap[newEmploymentRecord[index].rank]"
+                      hide-bottom-space
+                      v-model="newEmploymentRecord[index].rank"
+                      :options="rankInputOptions"
+                    />
+                  </div>
+                  <q-btn v-if="index > 0" class="bg-negative text-white" label="刪除" icon="delete" @click="newEmploymentRecord.splice(index, 1)"/>
+                </div>
+              </q-tab-panel>
+              <q-tab-panel name="schedule" class="q-ma-none q-pa-sm text-body1 row">
+                <div class="col-12 row">
+                  <span class="text-center column col" v-for="(item, index) in props.row.defaultSchedule">
+                    <div>{{ scheduleIndex[index] }}</div>
+                    <div>
+                      <q-chip :label="item">
+                        <q-popup-edit filled v-model="props.row.defaultSchedule[index]" :title="scheduleIndex[index]" auto-save v-slot="scope">
+                          <q-input type="number" v-model="scope.value"/>
+                        </q-popup-edit>
+                      </q-chip>
+                    </div>
+                  </span>
+                  <q-btn class="bg-primary text-white" label="儲存" @click="saveSchedule(props.key)"/>
+                </div>
+              </q-tab-panel>
+            </q-tab-panels>
+          </q-td>
+        </q-tr>
       </template>
 
-      <!-- template of column "leaveApprove" -->
-      <template v-slot:body-cell-privilege_leaveApprove="props">
-        <q-td :props="props">
-          <q-btn
-            round
-            :color="props.value ? 'positive' : 'negative'"
-            :label="props.value ? '有' : '沒有'"
-            @click="changeLeaveApprove(props.key)"
-          />
-        </q-td>
-      </template>
 
-      <!-- template of column "leaveManage" -->
-      <template v-slot:body-cell-privilege_leaveManage="props">
-        <q-td :props="props">
-          <q-btn
-            round
-            :color="props.value ? 'positive' : 'negative'"
-            :label="props.value ? '有' : '沒有'"
-            @click="changeLeaveManage(props.key)"
-          />
-        </q-td>
-      </template>
 
-      <!-- template of column "sal" -->
-      <template v-slot:body-cell-privilege_sal="props">
-        <q-td :props="props">
-          <q-btn
-            round
-            :color="props.value ? 'positive' : 'negative'"
-            :label="props.value ? '有' : '沒有'"
-            @click="changeSal(props.key)"
-          />
-        </q-td>
-      </template>
 
-      <!-- template of column "scheduleModify" -->
-      <template v-slot:body-cell-privilege_scheduleModify="props">
-        <q-td :props="props">
-          <q-btn
-            round
-            :color="props.value ? 'positive' : 'negative'"
-            :label="props.value ? '有' : '沒有'"
-            @click="changeScheduleModify(props.key)"
-          />
-        </q-td>
-      </template>
 
-      <!-- template of column "userManagement" -->
-      <template v-slot:body-cell-privilege_userManagement="props">
-        <q-td :props="props">
-          <q-btn
-            round
-            :color="props.value ? 'positive' : 'negative'"
-            :label="props.value ? '有' : '沒有'"
-            @click="changeUserManagement(props.key)"
-          />
-        </q-td>
-      </template>
 
-      <!-- template of column "probation" -->
-      <template v-slot:body-cell-privilege_probation="props">
-        <q-td :props="props">
-          <q-btn
-            round
-            :color="props.value ? 'positive' : 'negative'"
-            :label="props.value ? '有' : '沒有'"
-            @click="changeProbation(props.key)"
-          />
-        </q-td>
-      </template>
 
-      <!-- template of column "parttime" -->
-      <template v-slot:body-cell-parttime="props">
-        <q-td :props="props">
-          <q-btn
-            round
-            :color="props.value ? 'positive' : 'negative'"
-            :label="props.value ? '有' : '沒有'"
-            @click="changeParttime(props.key)"
-          />
-        </q-td>
-      </template>
 
-      <!-- template of column "finance" -->
-      <template v-slot:body-cell-privilege_finance="props">
-        <q-td :props="props">
-          <q-btn
-            round
-            :color="props.value ? 'positive' : 'negative'"
-            :label="props.value ? '有' : '沒有'"
-            @click="changeFinance(props.key)"
-          />
-        </q-td>
-      </template>
 
       <!-- template of column "rank" -->
       <template v-slot:body-cell-rank="props">
@@ -403,50 +484,36 @@
           </q-btn>
         </q-td>
       </template>
-
-      <!-- template of column "order" -->
-      <template v-slot:body-cell-order="props">
-        <q-td :props="props" class="content-center">
-          <div class="q-mx-sm">
-            {{ props.value }}
-            <q-btn
-              :disable="props.value == 1"
-              round
-              size="xs"
-              color="positive"
-              icon="keyboard_arrow_up"
-              @click="changeOrder(props.key, 'UP')"
-            />
-            <q-btn
-              :disable="props.value == users.length"
-              round
-              size="xs"
-              color="negative"
-              icon="keyboard_arrow_down"
-              @click="changeOrder(props.key, 'DOWN')"
-            />
-          </div>
-        </q-td>
-      </template>
     </q-table>
   </div>
 </template>
 
 <script setup>
 import { usersCollection, FirebaseFunctions } from "boot/firebase";
-import { date as qdate } from "quasar";
+import { date as qdate, useQuasar } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
 import { httpsCallable } from "@firebase/functions";
 import { ref, computed } from "vue"
 import { query, where, getDocs } from "firebase/firestore"
+import DateComponent from "src/components/Basic/DateComponent.vue";
+
 
 // variables
+const $q = useQuasar()
 const awaitServerResponse = ref(0)
 const proxyDate = ref("")
 const users = ref([])
-
-const rankInputOptions = ref(["ASWO", "SWA", "WW", "OA", "CA", "PA", "GA", "TMP"])
-
+const activeTab = ref("employment")
+const rankInputOptions = ref(["ASWO", "SWA", "WW", "OA", "CA", "PA", "GA", "GW", "GA_PT", "TMP"])
+const scheduleIndex = ref([
+  "日早", "日午", "日晚",
+  "一早", "一午", "一晚",
+  "二早", "二午", "二晚",
+  "三早", "三午", "三晚",
+  "四早", "四午", "四晚",
+  "五早", "五午", "五晚",
+  "六早", "六午", "六晚",
+])
 const rankInputMap = ref({
   ASWO: "aswo",
   SWA: "swa",
@@ -455,8 +522,12 @@ const rankInputMap = ref({
   CA: "ca",
   PA: "pa",
   GA: "ga",
+  GW: "gw",
+  GA_PT: "ga_pt",
   TMP: "tmp",
 })
+const editEmployment = ref(false)
+const newEmploymentRecord = ref()
 
 const rankInputReverseMap = ref({
   aswo: "ASWO",
@@ -466,6 +537,8 @@ const rankInputReverseMap = ref({
   ca: "CA",
   pa: "PA",
   ga: "GA",
+  gw: "GW",
+  ga_pt: "GA_PT",
   tmp: "TMP",
 })
 
@@ -541,14 +614,6 @@ const tableFields = ref([
     style: "font-size: 1.2vw; text-align: center; width: 3vw; max-width: 3vw;",
   },
   {
-    name: "parttime",
-    label: "兼職",
-    field: "parttime",
-    headerStyle:
-      "font-size: 1.5vw; text-align: center; width: 3vw; max-width: 3vw;",
-    style: "font-size: 1.2vw; text-align: center; width: 3vw; max-width: 3vw;",
-  },
-  {
     name: "privilege_finance",
     label: "財務",
     field: "privilege_finance",
@@ -568,27 +633,9 @@ const tableFields = ref([
     style: "font-size: 1.2vw; text-align: center; width: 3vw; max-width: 5vw;",
   },
   {
-    name: "dateOfEntry",
-    label: "入職日期",
-    field: "dateOfEntry",
-    format: (value) => (value ? qdate.formatDate(value, "YYYY年M月D日") : ""),
-    headerStyle:
-      "font-size: 1.5vw; text-align: center; width: 3vw; max-width: 5vw;",
-    style: "font-size: 1.2vw; text-align: center; width: 3vw; max-width: 5vw;",
-  },
-  {
-    name: "dateOfExit",
-    label: "離職日期",
-    field: "dateOfExit",
-    format: (value) => (value ? qdate.formatDate(value, "YYYY年M月D日") : ""),
-    headerStyle:
-      "font-size: 1.5vw; text-align: center; width: 3vw; max-width: 5vw;",
-    style: "font-size: 1.2vw; text-align: center; width: 3vw; max-width: 5vw;",
-  },
-  {
-    name: "rank",
-    label: "職級",
-    field: "rank",
+    name: "others",
+    label: "其他",
+    field: "others",
     headerStyle:
       "font-size: 1.5vw; text-align: center; width: 3vw; max-width: 5vw;",
     style: "font-size: 1.2vw; text-align: center; width: 3vw; max-width: 5vw;",
@@ -620,7 +667,7 @@ function changeDateOfEntry(uid, date) {
     awaitServerResponse.value--;
   });
 }
-    
+
 function changeRank(uid, rank) {
   const changeRank = httpsCallable(FirebaseFunctions, "user-changeRank");
   awaitServerResponse.value++;
@@ -648,7 +695,7 @@ function changeOrder(uid, dir) {
     awaitServerResponse.value--;
   });
 }
-    
+
 function changeEnable(uid) {
   // call https functions to change leaveApprove privilege
   const toggleEnable = httpsCallable(FirebaseFunctions, "user-toggleEnable");
@@ -659,10 +706,10 @@ function changeEnable(uid) {
     awaitServerResponse.value--;
   });
 }
-    
+
 function changeLeaveApprove(uid) {
   // call https functions to change leaveApprove privilege
-  const toggleLeaveApprove = httpsCallable(FirebaseFunctions, 
+  const toggleLeaveApprove = httpsCallable(FirebaseFunctions,
     "user-toggleLeaveApprove"
   );
   awaitServerResponse.value++;
@@ -676,7 +723,7 @@ function changeLeaveApprove(uid) {
 
 function changeFinance(uid) {
   // call https functions to change leaveApprove privilege
-  const toggleFinance = httpsCallable(FirebaseFunctions, 
+  const toggleFinance = httpsCallable(FirebaseFunctions,
     "user-toggleFinance"
   );
   awaitServerResponse.value++;
@@ -699,7 +746,7 @@ function changeLeaveManage(uid) {
     awaitServerResponse.value--;
   });
 }
- 
+
 function changeUserManagement(uid) {
   // call https functions to change leaveApprove privilege
   const toggleUserManagement = httpsCallable(FirebaseFunctions,
@@ -755,7 +802,7 @@ function changeSal(uid) {
 
 function changeScheduleModify(uid) {
   // call https functions to change scheduleModify privilege
-  const toggleScheduleModify = httpsCallable(FirebaseFunctions, 
+  const toggleScheduleModify = httpsCallable(FirebaseFunctions,
     "user-toggleScheduleModify"
   );
   awaitServerResponse.value++;
@@ -767,8 +814,58 @@ function changeScheduleModify(uid) {
   });
 }
 
+function saveSchedule(uid) {
+  let i = users.value.findIndex((e) => e.uid == uid)
+  console.log("new schedule:" + users.value[i].defaultSchedule)
+}
+
+function startEditEmployment(uid) {
+  let i = users.value.findIndex((e) => e.uid == uid)
+  editEmployment.value = true
+  newEmploymentRecord.value = JSON.parse(JSON.stringify(users.value[i].employment))
+}
+
+function saveEmploymentRecord(uid) {
+  let object = JSON.parse(JSON.stringify(newEmploymentRecord.value))
+  object.forEach((entry) => {
+    if (!entry.rank) {
+      return $q.notify({ message: "請輸入職級！", icon: 'error', color: 'negative', textColor: 'white' })
+    }
+    entry.dateOfEntry = entry.dateOfEntry? qdate.formatDate(qdate.extractDate(entry.dateOfEntry, "YYYY/MM/DD"), "YYYY-MM-DDT00:00:00"): null
+    entry.dateOfExit = entry.dateOfExit? qdate.formatDate(qdate.extractDate(entry.dateOfExit, "YYYY/MM/DD"), "YYYY-MM-DDT00:00:00"): null
+    entry.rank = entry.rank? rankInputMap.value[entry.rank]? rankInputMap.value[entry.rank]: entry.rank: null
+  })
+
+  // call https functions to update employment record
+  const saveEmployment = httpsCallable(FirebaseFunctions, "user-saveEmployment");
+  awaitServerResponse.value++;
+  saveEmployment({
+    uid: uid,
+    employment: object
+  }).then((result) => {
+    // console.log("result:" + JSON.stringify(result))
+    users.value[users.value.findIndex((e) => e.uid == uid)].employment = []
+    result.data.forEach((data) => {
+      users.value[users.value.findIndex((e) => e.uid == uid)].employment.push({
+        dateOfEntry: data.dateOfEntry? qdate.formatDate(data.dateOfEntry, "YYYY/MM/DD"): new Date(),
+        dateOfExit: data.dateOfExit? qdate.formatDate(data.dateOfExit, "YYYY/MM/DD"): "",
+        rank: data.rank
+      })
+    })
+
+    newEmploymentRecord.value = {}
+    editEmployment.value = false
+    awaitServerResponse.value--
+  });
+}
+
+function cancelEmploymentRecordChange() {
+  editEmployment.value = false
+  newEmploymentRecord.value = {}
+}
+
 // module logic
-const userQuery = query(usersCollection, 
+const userQuery = query(usersCollection,
   where("privilege.systemAdmin", "==", false),
   where("privilege.tmp", "!=", true)
 )
@@ -776,6 +873,13 @@ const userQuery = query(usersCollection,
 getDocs(userQuery).then((userDoc) => {
   userDoc.forEach((user) => {
     let d = user.data();
+    let employment = user.data().employment;
+
+    employment.forEach((e) => {
+      e.dateOfEntry = e.dateOfEntry? qdate.formatDate(new Date(e.dateOfEntry.toDate().getTime() + 28800000), "YYYY/MM/DD"): new Date();
+      e.dateOfExit = e.dateOfExit? qdate.formatDate(new Date(e.dateOfExit.toDate().getTime() + 28800000), "YYYY/MM/DD"): "";
+    })
+    /*
     if (d.dateOfEntry != undefined) {
       d.dateOfEntry = new Date(d.dateOfEntry.toDate());
     } else {
@@ -787,6 +891,7 @@ getDocs(userQuery).then((userDoc) => {
     } else {
       d.dateOfExit = "";
     }
+    */
 
     users.value.push({
       name: d.name,
@@ -801,9 +906,8 @@ getDocs(userQuery).then((userDoc) => {
       parttime: d.parttime? d.parttime: false,
       privilege_finance: d.privilege.finance? d.privilege.finance: false,
       order: d.order,
-      dateOfEntry: d.dateOfEntry,
-      dateOfExit: d.dateOfExit,
-      rank: d.rank,
+      employment: employment,
+      defaultSchedule: d.defaultSchedule,
     });
   });
 })

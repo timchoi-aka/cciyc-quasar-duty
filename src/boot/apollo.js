@@ -155,6 +155,15 @@ export default boot(
             },
             tbl_sel_acc_type: {
               keyFields: ["c_type"]
+            },
+            HTX_News: {
+              keyFields: ["NewsID"]
+            },
+            HTX_Article: {
+              keyFields: ['ArticleID']
+            },
+            HTX_About_Article: {
+              keyFields: ['ArticleID']
             }
           }
         }

@@ -68,7 +68,7 @@
       <q-list v-if="uid && module == 'event'">
         <EssentialLink v-for="link in eventList" :key="link.title" v-bind="link" />
       </q-list>
-      
+
       <q-space/>
 
       <div v-if="UAT" class="row">
@@ -78,13 +78,14 @@
         <q-btn class="col" name="finance" icon="money" label="財務" @click="setCurrentModule('account')"/>
       </div>
     </q-drawer>
-    
+
     <!-- right drawer -->
     <q-drawer :width="100" v-model="rightDrawerOpen" side="right" overlay elevated class="column justify-around" behavior="mobile">
         <q-btn v-close-popup class="col-grow" name="duty" icon="event" label="編更" to="/duty/dutytable"/>
         <q-btn v-close-popup class="col-grow" name="member" icon="public" label="會員" to="/member/list"/>
         <q-btn v-close-popup class="col-grow" name="event" icon="festival" label="活動" to="/event/my-event"/>
         <q-btn v-close-popup class="col-grow" name="finance" icon="money" label="財務" to="/account/receipt/search"/>
+        <q-btn v-if="isSystemAdmin" v-close-popup class="col-grow" name="web" icon="home" label="網站" to="/website/news"/>
     </q-drawer>
 
     <q-page-container>

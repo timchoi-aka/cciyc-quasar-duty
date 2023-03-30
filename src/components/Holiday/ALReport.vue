@@ -122,7 +122,7 @@ const $store = useStore()
 const holidaySummary = ref([])
 const holidaySummaryLastYear = ref([])
 const al_monthStart = ref(0)
-const dateOfEntry = ref(0) 
+const dateOfEntry = ref(0)
 const dateOfExit = ref(0)
 const yearStart = ref(0)
 const yearEnd = ref(0)
@@ -130,8 +130,8 @@ const tableFields = ref(["日期"])
 const tableData = ref([])
 const date = ref([])
 const uidMap = ref([])
-      
-   
+
+
 // computed
 const getReportYear = computed(() => props.renderYear + props.renderYearOffset)
 const uid = computed(() => $store.getters["userModule/getUID"])
@@ -161,7 +161,7 @@ function totalPerMonthGain() {
     .filter((row) => qdate.isBetweenDates(row.date, recordStart, recordEnd))
     .reduce((a, b) => a + b.perMonthGain, 0);
 }
- 
+
 function totalLeaveRecord() {
   if (holidaySummary.value.length == 0) return;
   let recordStart = qdate.buildDate({
@@ -196,7 +196,7 @@ function getLastYearGain(yearStart) {
       .reduce((a, b) => a + b.perMonthGain, 0);
   }
 }
-    
+
 function getLastYearUsed(yearStart) {
   if (yearStart == 0) return;
   if (getReportYear.value == 2021) {
@@ -215,7 +215,7 @@ function getLastYearUsed(yearStart) {
       .reduce((a, b) => a + b.leaveTotal, 0);
   }
 }
-    
+
 function getCarryOver(yearStart) {
   if (yearStart == 0) return;
   if (getReportYear.value == 2021) {
@@ -241,17 +241,15 @@ function totalAnnualLeaveDays(name) {
   let sum = tableData.value.reduce((a, b) => ({ [name]: a[name] + b[name] }));
   return sum[name];
 }
-    
+
 getDoc(leaveConfig).then((leaveDoc) => {
   const leaveConfigData = leaveDoc.data()
   const now = new Date();
   const systemStart = qdate.startOfDate(new Date(2021, 3, 1), "month");
-  
+
   getDoc(doc(FireDB, 'users', reportUser.value)).then((reportUserDoc)=> {
     // console.log(JSON.stringify("reportUser: " + JSON.stringify(this.reportUser)));
     const reportUserProfile = reportUserDoc.data();
-    const tiers = leaveConfigData[reportUserProfile.rank];
-    const isParttime = reportUserDoc.data().parttime? reportUserDoc.data().parttime: false
     // determine yearly start (1/4 of 2021)
     yearStart.value =
         now.getMonth() <= 2
@@ -271,11 +269,11 @@ getDoc(leaveConfig).then((leaveDoc) => {
       );
     //this.reportUser.value = reportUserProfile.uid;
     //this.reportUser.label = reportUserProfile.name;
-    
-    dateOfEntry.value = reportUserProfile.dateOfEntry.toDate();
-    dateOfExit.value = reportUserProfile.dateOfExit
-        ? reportUserProfile.dateOfExit.toDate()
-        : new Date("9999/12/31");
+
+    dateOfEntry.value = reportUserProfile.employment[0].dateOfEntry.toDate();
+    dateOfExit.value = reportUserProfile.employment[reportUserProfile.employment.length-1].dateOfExit
+        ?.toDate()
+        ?? new Date("9999/12/31");
      // console.log("dateOfEntry: " + dateOfEntry.value);
      // console.log("thisYearStart: " + yearStart.value);
      // console.log("thisYearEnd: " + yearEnd.value);
@@ -284,7 +282,7 @@ getDoc(leaveConfig).then((leaveDoc) => {
 
     let al_monthEnd;
     let monthLoop = systemStart;
-    
+
     // if (props.renderYearOffset == 0) {
     al_monthEnd = leaveConfigData.hasOwnProperty(reportUserProfile.uid)
       ? leaveConfigData[reportUserProfile.uid][0].al
@@ -294,7 +292,7 @@ getDoc(leaveConfig).then((leaveDoc) => {
     // carry over from last year
     // pushing last year carry over
     // holidaySummary.valueLastYear[props.renderYearOffset] = {
-    
+
     //  holidaySummary.valueLastYear.push({
     //    date: monthLoop,
     //    al_monthEnd: al_monthEnd, // year carry over, for example 28
@@ -305,11 +303,11 @@ getDoc(leaveConfig).then((leaveDoc) => {
 
 
     // get all AL record
-    const alScheduleQuery = query(scheduleCollection, 
+    const alScheduleQuery = query(scheduleCollection,
       where("uid", "==", reportUserProfile.uid),
       where("type", "==", "AL")
     )
-    
+
     getDocs(alScheduleQuery).then((alScheduleDoc) => {
       let alSchedule = [];
       alScheduleDoc.forEach((doc) => {
@@ -357,7 +355,7 @@ getDoc(leaveConfig).then((leaveDoc) => {
               date: leave.date,
               slot: slot,
             });
-            
+
             //console.log(
             //  "alSchedule size before splice: " + Object.keys(alSchedule).length
             //);
@@ -375,6 +373,21 @@ getDoc(leaveConfig).then((leaveDoc) => {
           12;
 
         //console.log("yearServed: " + yearServed);
+        let currentEmployment
+        reportUserProfile.employment.forEach((employment) => {
+          if (new Date(employment.dateOfEntry.toDate()-28800000) <= monthLoop && (!employment.dateOfExit || new Date(employment.dateOfExit.toDate()-28800000) >= monthLoop)) {
+            currentEmployment = employment
+          }
+        })
+
+        const tiers = currentEmployment? leaveConfigData[currentEmployment.rank]:
+          {
+            t1: 0,
+            t2: 0,
+            t3: 0,
+            t4: 0,
+            t5: 0
+          };
         let tier = 0;
         for (let j = tiersConfig.length; j > 0; j--) {
           if (yearServed >= tiersConfig[j - 1]) {
@@ -383,7 +396,7 @@ getDoc(leaveConfig).then((leaveDoc) => {
           }
         }
         //console.log(tier)
-        let perMonthGain = isParttime? tier/2/12: tier / 12;
+        let perMonthGain = tier / 12;
         let lastMonth = false;
         let lastWorkingDate = qdate.addToDate(dateOfExit.value, { days: -1 });
 
@@ -417,7 +430,7 @@ getDoc(leaveConfig).then((leaveDoc) => {
         qdate.getDateDiff(monthLoop, yearEnd.value, "day") < 0 &&
         monthLoop <= dateOfExit.value
       );
-      
+
       //if (Object.keys(holidaySummary.valueLastYear).length <= props.renderYearOffset + 1) {
       //  holidaySummary.valueLastYear.push({
       //    date: holidaySummary.value[11].date,
@@ -426,11 +439,11 @@ getDoc(leaveConfig).then((leaveDoc) => {
       //    al_monthEnd: holidaySummary.value[11].al_monthEnd,
       //  });
       //}
-      
+
       //store.dispatch("setALReportHistory", holidaySummary.valueLastYear);
       //console.log("holidaySummary: " + JSON.stringify(holidaySummary.value));
       // holidaySummary.valueLastYear.push(holidaySummary.value);
-      
+
     })
   })
 })

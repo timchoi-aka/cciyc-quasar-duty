@@ -11,6 +11,7 @@
   <q-btn @click="addCustomClaims" label="Add Custom Claims"></q-btn>
   <q-btn @click="testNotify" label="Test Notify"></q-btn>
   <q-btn @click="subscribeAllUserTopics" label="Subscribe All Topics"></q-btn>
+  <q-btn @click="migrateALBalance" label="Migrate AL Balance"></q-btn>
 </template>
 
 <script setup>
@@ -30,7 +31,7 @@ import { httpsCallable } from "firebase/functions";
 import { getDocs, query, where, orderBy } from "@firebase/firestore";
 
 // variables
-const $store = useStore(); 
+const $store = useStore();
 
 // computed
 const hasuraClaim = computed(() => $store.getters["userModule/getHasuraClaim"])
@@ -47,7 +48,7 @@ function subscribeAllUserTopics() {
     userDoc.forEach((user) => {
       if (!user.data().privilege.systemAdmin) {
         userList.push(
-          user.data().uid,   
+          user.data().uid,
         );
       }
     });
@@ -123,7 +124,7 @@ function migrateOTBalance() {
       console.err(JSON.stringify(err));
     });
 }
- 
+
 function upgradeUserProfile() {
   const upgrade = httpsCallable(FirebaseFunctions, "systemAdmin-upgradeUserObject");
   upgrade()
@@ -160,12 +161,27 @@ function housekeepSchedule() {
 function addNewRank() {
   const addRank = httpsCallable(FirebaseFunctions, "systemAdmin-addNewRank");
   addRank({
-    rank: "tmp",
-    t1: 0,
-    t2: 0,
-    t3: 0,
-    t4: 0,
-    t5: 0,
+    rank: "gw",
+    t1: 12,
+    t2: 18,
+    t3: 18,
+    t4: 24,
+    t5: 30,
+  })
+    .then((result) => {
+      console.log(JSON.stringify(result));
+    })
+    .catch((err) => {
+      console.err(JSON.stringify(err));
+    });
+
+  addRank({
+    rank: "ga_pt",
+    t1: 6,
+    t2: 9,
+    t3: 9,
+    t4: 9,
+    t5: 12,
   })
     .then((result) => {
       console.log(JSON.stringify(result));
@@ -176,7 +192,7 @@ function addNewRank() {
 }
 
 function findDanglingHoliday() {
-  const findDangling = httpsCallable(FirebaseFunctions, 
+  const findDangling = httpsCallable(FirebaseFunctions,
     "systemAdmin-findDanglingHoliday"
   );
   findDangling()
@@ -195,7 +211,7 @@ async function getApprovedHoliday() {
     where("type", "==", "AL"),
     orderBy("date")
   )
-  
+
   const leaveDoc = await getDocs(leaveDocQuery)
 
   leaveDoc.forEach((doc) => {
@@ -211,6 +227,17 @@ async function addCustomClaims() {
   const setCustomClaims = httpsCallable(FirebaseFunctions, "systemAdmin-setCustomClaims");
   setCustomClaims().then((result) => {
       console.log(result);
-  })  
+  })
+}
+
+function migrateALBalance() {
+  const migrate = httpsCallable(FirebaseFunctions, "holiday-migrateALBalance");
+  migrate()
+    .then((result) => {
+      console.log(JSON.stringify(result));
+    })
+    .catch((err) => {
+      console.error(JSON.stringify(err));
+    });
 }
 </script>

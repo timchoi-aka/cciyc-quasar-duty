@@ -598,3 +598,34 @@ exports.changeDateOfEntry = functions.region("asia-east2").https.onCall(async (d
     };
   });
 });
+
+exports.saveEmployment = functions.region("asia-east2").https.onCall(async (data, context) => {
+  const loginUserDoc = FireDB
+      .collection("users")
+      .doc(context.auth.uid);
+  const loginUser = await loginUserDoc.get();
+  const loginUserData = loginUser.data();
+  if (loginUserData.privilege.userManagement != true) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only user management admin can change user privilege",
+    );
+  }
+
+  const changeUserDoc = FireDB.collection("users").doc(data.uid);
+  const changeUser = await changeUserDoc.get();
+  const changeUserData = changeUser.data();
+  const employmentData = JSON.parse(JSON.stringify(data.employment));
+  // console.log("employmentData:" + JSON.stringify(employmentData));
+  employmentData.forEach((d) => {
+    d.dateOfEntry = d.dateOfEntry? Timestamp.fromDate(new Date(d.dateOfEntry)): null;
+    d.dateOfExit = d.dateOfExit? Timestamp.fromDate(new Date(d.dateOfExit)): null;
+  });
+  return await changeUserDoc.update({
+    "employment": employmentData,
+  }).then(() => {
+    console.log("USER: " +
+    changeUserData.name + "[受聘記錄]:" + JSON.stringify(data.employment));
+    return data.employment;
+  });
+});

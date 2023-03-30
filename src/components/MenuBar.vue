@@ -40,6 +40,9 @@
     <q-route-tab to="/account/inventory/" icon="public" label="物資管理" />
     <q-route-tab to="/account/log" icon="public" label="系統記錄" />
   </q-tabs>
+  <q-tabs v-if="username && module == 'website'" inline-label class="desktop-only" align="left">
+    <q-route-tab to="/website/news" icon="public" label="最新消息" />
+  </q-tabs>
 </template>
 
 <script setup>
