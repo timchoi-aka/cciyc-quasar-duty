@@ -20,6 +20,14 @@ export function getUserProfile(state) {
   }
  }
 
+ export function getEmployment(state) {
+  if (Object.keys(state.userProfile).length) {
+   return state.userProfile.employment;
+  } else {
+    return null;
+  }
+ }
+
  export function getPhotoURL(state) {
   if (Object.keys(state.userProfile).length) {
    return state.auth.photoURL;

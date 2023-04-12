@@ -21,7 +21,7 @@
           <span class="q-mx-md">SL 病假</span>
           <span class="q-mx-md">(覆)覆診</span>
           <span v-if="numberOfHoliday > 0">
-            <q-icon name="report_problem" size="lg" color="negative" />{{
+            <q-icon name="report_problem" :size="$q.screen.gt.sm? 'lg': 'sm'" color="negative" />{{
               numberOfHoliday
             }}日公眾假期返{{ numberOfWorkingSessions }}節
           </span>
@@ -47,9 +47,9 @@ const $q = useQuasar();
 
 // computed
 const columns = computed(() => [...dateUtil.generateTableColumns(props.renderDate)])
-const publicHoliday = computed(() => holiday? holiday.vcalendar[0].vevent.map(({dtstart, summary}) => ({date: dtstart[0], summary: summary})): [])    
-    
-  
+const publicHoliday = computed(() => holiday? holiday.vcalendar[0].vevent.map(({dtstart, summary}) => ({date: dtstart[0], summary: summary})): [])
+
+
 const numberOfHoliday = computed(() => {
   var result = 0;
   if (columns.value) {
@@ -84,7 +84,7 @@ td {
   vertical-align: top;
 }
 
-@media screen {
+@media screen and (min-width: 600px) {
   table {
     width: 97.2vw;
     background-color: lightgray;
@@ -102,6 +102,35 @@ td {
     padding: 5px !important;
     width: 88.2vw;
     border: 0.5px solid black;
+  }
+
+  table .content span {
+    margin-right: 2vw;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  table {
+    width: 97.2vw;
+    background-color: lightgray;
+  }
+
+  table .caption {
+    width: 9vw;
+    padding: 0 !important;
+    vertical-align: top;
+    text-align: center;
+    border: 0.5px solid black;
+    font-size: 3vw;
+  }
+
+  table .content {
+    padding: 5px !important;
+    width: 88.2vw;
+    border: 0.5px solid black;
+    font-size: 3vw;
+    display: flex;
+    flex-wrap: wrap;
   }
 
   table .content span {

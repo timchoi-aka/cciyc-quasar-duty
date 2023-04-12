@@ -190,6 +190,31 @@ exports.userDeleted = functions.region("asia-east2").auth.user().onDelete((user)
   return doc.delete();
 });
 
+exports.updateDefaultSchedule = functions.region("asia-east2").https.onCall(async (data, context) => {
+  const loginUserDoc = FireDB
+      .collection("users")
+      .doc(context.auth.uid);
+  const loginUser = await loginUserDoc.get();
+  const loginUserData = loginUser.data();
+  if (loginUserData.privilege.userManagement != true) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only user management admin can change user privilege",
+    );
+  }
+
+  const changeUserDoc = FireDB.collection("users").doc(data.uid);
+  const changeUser = await changeUserDoc.get();
+  const changeUserData = changeUser.data();
+  return await changeUserDoc.update({
+    "defaultSchedule": data.schedule,
+  }).then(() => {
+    console.log("USER: " +
+    changeUserData.name + "[defaultSchedule]:" + data.schedule);
+    return data.schedule;
+  });
+});
+
 exports.toggleEnable = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
       .collection("users")

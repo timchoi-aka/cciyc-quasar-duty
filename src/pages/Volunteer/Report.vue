@@ -11,7 +11,7 @@
       <div class="q-mx-sm"><q-btn icon="search" class="bg-primary text-white" label="搜尋" @click="search"/></div>
       <div class="q-mx-sm"><q-btn class="bg-primary text-white" label="顯示全部記錄" @click="showAll"/></div>
     </div>
-    
+
     <div v-else class="row fit" style="margin-top: 70px;">
       <div class="col-12">日期由：</div>
       <div class="col-12"><DateComponent v-model="searchOptions.startDate"/></div>
@@ -21,7 +21,7 @@
       <div class="col-3 q-my-sm"><q-btn icon="search" class="bg-primary text-white" label="搜尋" @click="refetch"/></div>
       <div class="col-3 q-my-sm"><q-btn class="bg-primary text-white" label="顯示全部記錄" @click="showAll"/></div>
     </div>
-    
+
     <q-table
       dense
       flat
@@ -46,7 +46,7 @@
         />
       </template>
     </q-table>
-    
+
   </q-page>
 </template>
 
@@ -66,7 +66,7 @@ const $q = useQuasar()
 const showDeleteDialog = ref(false)
 const showModificationDialog = ref(false)
 const searchOptions = ref({
-  startDate: '', 
+  startDate: '',
   endDate: ''
 })
 const reportTypeOptions = ref([
@@ -115,7 +115,7 @@ const defaultPagination = ref({
 const selectedRow = ref([])
 const modifyingRow = ref({})
 
-const VolunteerTableColumns = ref([ 
+const VolunteerTableColumns = ref([
   {
     name: "c_mem_id",
     label: "會員編號",
@@ -124,7 +124,7 @@ const VolunteerTableColumns = ref([
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
     format: (val) => String(val)
-  }, 
+  },
   {
     name: "c_name",
     label: "中文姓名",
@@ -132,7 +132,7 @@ const VolunteerTableColumns = ref([
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
-  }, 
+  },
   {
     name: "c_name_other",
     label: "英文姓名",
@@ -140,7 +140,7 @@ const VolunteerTableColumns = ref([
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
-  }, 
+  },
   {
     name: "c_sex",
     label: "性別",
@@ -148,7 +148,7 @@ const VolunteerTableColumns = ref([
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
-  }, 
+  },
   {
     name: "age",
     label: "年齡",
@@ -156,7 +156,7 @@ const VolunteerTableColumns = ref([
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
-  }, 
+  },
   {
     name: "age_group",
     label: "年齡組別",
@@ -164,7 +164,7 @@ const VolunteerTableColumns = ref([
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
-  }, 
+  },
   {
     name: "hours",
     label: "服務時數",
@@ -172,7 +172,7 @@ const VolunteerTableColumns = ref([
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
-  }, 
+  },
   {
     name: "prize",
     label: "獎項",
@@ -180,12 +180,12 @@ const VolunteerTableColumns = ref([
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
-  }, 
+  },
 ])
 // query
 const { result, refetch, loading } = useQuery(gql`
 query GetVolunteerBetweenDates(
-  $startDate: datetime2 = "", 
+  $startDate: datetime2 = "",
   $endDate: datetime2 = "") {
   Volunteer(where: {_and: {event_date: {_gte: $startDate}}, event_date: {_lte: $endDate}}) {
     c_act_code
@@ -221,9 +221,9 @@ const volunteerData = computed(() => {
       if (i == -1) {
         let age = dateUtil.calculateAge(record.Volunteer_to_Member.d_birth)
         let ageGroup = ''
-        
+
         if (reportType.value.label == '社署標準') {
-          ageGroup = age >= 60? 'D (60歲或以上)': age >= 26? 'C (26歲或以上)': age >= 13? 'B (13歲或以上)': 'A (12歲或以下)' 
+          ageGroup = age >= 60? 'D (60歲或以上)': age >= 26? 'C (26歲或以上)': age >= 13? 'B (13歲或以上)': 'A (12歲或以下)'
         } else {
           ageGroup = age >= 25? '25歲或以上': age >= 15? '15-24歲': '14歲或以下'
         }
@@ -241,7 +241,7 @@ const volunteerData = computed(() => {
       }
     })
     let prize = ''
-        
+
     res.forEach((record) => {
       reportType.value.value.forEach((rank) => {
         if (record.hours >= rank.hours) record.prize = rank.prize
@@ -254,7 +254,7 @@ const volunteerData = computed(() => {
 // functions
 function exportExcel(datasource, columns, filename) {
   let content = Excel.jsonToXLS(datasource, columns)
-  
+
   const status = exportFile(
     filename + '.xls',
     content,
@@ -268,7 +268,7 @@ function exportExcel(datasource, columns, filename) {
       color: 'negative',
       icon: 'warning'
     })
-  }  
+  }
 }
 
 function search() {
@@ -333,24 +333,24 @@ function confirmDelete() {
   selectedRow.value.forEach((record) => {
     logContent += "【" + qdate.formatDate(record.event_date, "YYYY年M月D日") + "-活動：" + record.c_act_code.trim() + "-會員：" + record.c_mem_id.trim() + "-" + record.hours + "小時】、"
   })
-  
+
   let logObject = {
     "username": username.value,
     "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     "module": "會員系統",
     "action": "刪除義工記錄: " + logContent
   }
-  
+
   awaitServerResponse.value++
   delVolunteer({
     logObject: logObject,
     volObject: volObject,
   })
-  
+
 }
 
 // callback
-/* 
+/*
 delVolunteer_Completed((result) => {
   refetch()
   selectedRow.value = []
@@ -369,10 +369,10 @@ editVolunteer_Completed((result) => {
 */
 // UI functions
 function notifyClientSuccess(result) {
-  awaitServerResponse.value--  
+  awaitServerResponse.value--
   $q.notify({
     message: "刪除" + result.data.delete_Volunteer.affected_rows + "條義工記錄。",
   })
-  
+
 }
 </script>

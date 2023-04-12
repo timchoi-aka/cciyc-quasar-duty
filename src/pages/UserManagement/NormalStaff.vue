@@ -107,15 +107,6 @@
                 />
               </div>
               <div class="col-xs-3 justify-center" style="text-align: center">
-                <div class="text-caption">兼職</div>
-                <q-btn
-                  round
-                  :color="props.row.parttime ? 'positive' : 'negative'"
-                  :label="props.row.parttime ? '有' : '沒有'"
-                  @click="changeParttime(props.key)"
-                />
-              </div>
-              <div class="col-xs-3 justify-center" style="text-align: center">
                 <div class="text-caption">財務</div>
                 <q-btn
                   round
@@ -127,85 +118,54 @@
             </q-card-section>
             <q-separator inet class="q-mt-sm" />
             <q-card-section
-              style="font-size: 1vw"
-              class="row justify-around items-center q-pa-none q-pb-sm"
+              class="q-pa-none q-pb-sm"
             >
-              <div class="col-xs-8 justify-center q-mx-xs text-body2">
-                <div>
-                  入職日期：<span
-                    v-html="
-                      props.row.dateOfEntry
-                        ? qdate.formatDate(props.row.dateOfEntry, 'YYYY-MM-DD')
-                        : ''
-                    "
-                  />
-                  <q-btn icon="event" round color="primary" class="q-mx-xs">
-                    <q-popup-proxy
-                      @before-show="proxyDate = props.row.dateOfEntry"
-                      cover
-                      transition-show="scale"
-                      transition-hide="scale"
-                    >
-                      <q-date v-model="proxyDate">
-                        <div class="row items-center justify-end q-gutter-sm">
-                          <q-btn label="取消" color="primary" flat v-close-popup />
-                          <q-btn
-                            label="確定"
-                            color="primary"
-                            flat
-                            @click="changeDateOfEntry(props.row.uid, proxyDate)"
-                            v-close-popup
-                          />
-                        </div>
-                      </q-date>
-                    </q-popup-proxy>
-                  </q-btn>
-                </div>
-                <div>
-                  離職日期：<span
-                    v-html="
-                      props.row.dateOfExit
-                        ? qdate.formatDate(props.row.dateOfExit, 'YYYY-MM-DD')
-                        : ''
-                    "
-                  />
-                  <q-btn icon="event" round color="primary" class="q-mx-xs">
-                    <q-popup-proxy
-                      @before-show="proxyDate = props.row.dateOfExit"
-                      cover
-                      transition-show="scale"
-                      transition-hide="scale"
-                    >
-                      <q-date v-model="proxyDate">
-                        <div class="row items-center justify-end q-gutter-sm">
-                          <q-btn label="取消" color="primary" flat v-close-popup />
-                          <q-btn
-                            label="確定"
-                            color="primary"
-                            flat
-                            @click="changeDateOfExit(props.row.uid, proxyDate)"
-                            v-close-popup
-                          />
-                        </div>
-                      </q-date>
-                    </q-popup-proxy>
-                  </q-btn>
-                </div>
-              </div>
-              <div class="col-xs-3 justify-center q-mx-xs">
-                <q-select
-                  :label="rankInputReverseMap[props.row.rank]"
-                  hide-bottom-space
-                  hint="職級"
-                  v-model="props.newRank"
-                  :options="rankInputOptions"
-                  @update:model-value="
-                    (val) => {
-                      changeRank(props.key, val);
-                    }
-                  "
-                />
-              </div>
+              <q-chip size="lg" class="bg-primary text-white" label="受聘記錄"/>
+                  <q-btn v-if="!editEmployment" label="修改" icon="edit" class="bg-primary text-white q-my-md" @click="startEditEmployment(props.key)"/>
+                  <q-btn v-if="editEmployment" label="新增" icon="add" class="bg-primary text-white q-my-md" @click="newEmploymentRecord.push({dateOfEntry: null, dateOfExit: null, rank: null})"/>
+                  <q-btn v-if="editEmployment" label="取消" icon="cancel" class="bg-negative text-white q-my-md" @click="cancelEmploymentRecordChange"/>
+                  <q-btn v-if="editEmployment && JSON.stringify(newEmploymentRecord) != JSON.stringify(props.row.employment)" label="儲存" icon="save" class="bg-positive text-white q-my-md" @click="saveEmploymentRecord(props.key)"/>
+                  <div v-if="!editEmployment" v-for="employ in props.row.employment" class="row text-h6">
+                    <div class="col-4">入職日期：</div>
+                    <div class="col-8">{{ qdate.formatDate(employ.dateOfEntry, "YYYY年M月D日")}}</div>
+                    <div class="col-4">離職日期：</div>
+                    <div class="col-8">{{ qdate.formatDate(employ.dateOfExit, "YYYY年M月D日")}}</div>
+                    <div class="col-4">職級：</div>
+                    <div class="col-8">{{ rankInputReverseMap[employ.rank]}}</div>
+                  </div>
+                  <div v-else v-for="(employ, index) in newEmploymentRecord" class="row">
+                    <div class="col-4">入職日期：</div>
+                    <div class="col-8"><DateComponent v-model="employ.dateOfEntry" label="人職日期"/></div>
+                    <div class="col-4">離職日期：</div>
+                    <div class="col-8"><DateComponent v-model="employ.dateOfExit" label="離職日期"/></div>
+                    <div class="col-4">職級：</div>
+                    <div class="col-4">
+                      <q-select
+                        :label="rankInputReverseMap[newEmploymentRecord[index].rank]"
+                        hide-bottom-space
+                        v-model="newEmploymentRecord[index].rank"
+                        :options="rankInputOptions"
+                      />
+                    </div>
+                    <q-btn v-if="index > 0" class="bg-negative text-white" label="刪除" icon="delete" @click="newEmploymentRecord.splice(index, 1)"/>
+                  </div>
+               </q-card-section>
+               <q-card-section
+                  class="row justify-around items-center q-pa-none q-pb-sm"
+                ><q-chip size="lg" class="bg-primary text-white" label="預設更表"/>
+                  <div class="col-12 row">
+                    <span class="text-center column col-2" v-for="(item, index) in props.row.defaultSchedule">
+                      <div>{{ scheduleIndex[index] }}</div>
+                      <div>
+                        <q-chip :label="item">
+                          <q-popup-edit filled v-model="props.row.defaultSchedule[index]" :title="scheduleIndex[index]" auto-save v-slot="scope">
+                            <q-input type="number" v-model="scope.value"/>
+                          </q-popup-edit>
+                        </q-chip>
+                      </div>
+                    </span>
+                    <q-btn class="bg-primary text-white" label="儲存" @click="saveSchedule(props.key)"/>
+                  </div>
             </q-card-section>
           </q-card>
         </div>
@@ -330,7 +290,7 @@
         <!-- expanding row-->
         <q-tr v-show="props.expand" :props="props">
           <q-td colspan="100%">
-            <q-tabs v-model="activeTab" inline-label align="left" class="desktop-only bg-warning text-black">
+            <q-tabs v-model="activeTab" inline-label align="left" class="bg-warning text-black">
               <q-tab name="employment" icon="source" label="受聘記錄" />
               <q-tab name="schedule" icon="event" label="預設更表" />
             </q-tabs>
@@ -816,7 +776,20 @@ function changeScheduleModify(uid) {
 
 function saveSchedule(uid) {
   let i = users.value.findIndex((e) => e.uid == uid)
-  console.log("new schedule:" + users.value[i].defaultSchedule)
+
+  // call https functions to change scheduleModify privilege
+  const updateDefaultSchedule = httpsCallable(FirebaseFunctions,
+    "user-updateDefaultSchedule"
+  );
+  awaitServerResponse.value++;
+  updateDefaultSchedule({
+    uid: uid,
+    schedule: users.value[i].defaultSchedule,
+  }).then((result) => {
+    users.value[i].defaultSchedule = result.data;
+    awaitServerResponse.value--;
+    $q.notify({ message: "成功儲存。" })
+  });
 }
 
 function startEditEmployment(uid) {

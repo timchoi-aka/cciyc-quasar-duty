@@ -193,8 +193,12 @@ const routes = [
         component: () => import('src/pages/Account/InventoryHome.vue'), meta: {requiresAuth: true },
         children: [
           {
-            path: 'list',
-            component: () => import('src/pages/Account/InventoryList.vue'), meta: {requiresAuth: true }
+            path: 'add',
+            component: () => import('src/pages/Account/InventoryAdd.vue'), meta: {requiresAuth: true }
+          },
+          {
+            path: 'delete',
+            component: () => import('src/pages/Account/InventoryDelete.vue'), meta: {requiresAuth: true }
           },
           {
             path: 'take_record',

@@ -85,7 +85,7 @@ const defaultPagination = ref({
 
 // computed
 const publicHoliday = computed(() => holiday? holiday.vcalendar[0].vevent.map(({dtstart, summary}) => ({date: dtstart[0], summary: summary})): [])
-     
+
 // functions
 function totalAnnualLeaveDays(name) {
   if (name == "Date") return "總數";
@@ -93,7 +93,7 @@ function totalAnnualLeaveDays(name) {
   let sum = tableData.value.reduce((a, b) => ({ [name]: a[name] + b[name] }));
   return sum[name];
 }
-   
+
 function getHoliday(date) {
   let i = publicHoliday.value.findIndex(
     (element) =>
@@ -105,7 +105,7 @@ function getHoliday(date) {
     return publicHoliday.value[i].summary;
   }
 }
-  
+
 
 // setup date scope
 let startOfMonth = qdate.startOfDate(props.renderDate, 'month')
@@ -161,7 +161,7 @@ getDocs(userDocQuery).then((userDoc) => {
     for (let curDate = startOfMonth; curDate <= endOfMonth; curDate = qdate.addToDate(curDate, {"day":1})) {
       let rowData = {};
       rowData.Date = curDate;
-      
+
       uidMap.forEach((user) => {
         const uid = user.uid;
         const curDateCount = schedules.reduce(
@@ -192,15 +192,6 @@ getDocs(userDocQuery).then((userDoc) => {
   background-color: $red-2;
 }
 
-.q-table__container::v-deep(.q-table__title) {
-  font-size: 2vw !important;
-}
-
-.q-table__container::v-deep(.nameColumn) {
-  font-size: 1.5vw;
-  text-decoration: bold;
-  text-align: center;
-}
 
 @media screen {
 }

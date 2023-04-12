@@ -174,7 +174,7 @@
               @click="selectActivity(props.row.id)"
               :class="[selectedActivity == props.row.id ? 'bg-blue-1' : '']"
             >
-              <q-item-section class="text-h5">
+              <q-item-section class="text-body1">
                 <strong class="col"> {{ props.row.id }} - {{ props.row.name }} </strong>
               </q-item-section>
               <q-space />
@@ -216,7 +216,7 @@
                 class="row"
               >
                 <span v-for="eDate in props.row.eventDate" style="display: contents">
-                  <q-chip color="blue-2" class="col">
+                  <q-chip size="lg" color="blue-2" class="col">
                     {{ qdate.formatDate(eDate, "YYYY年M月D日") }}
                   </q-chip>
                 </span>
@@ -516,7 +516,7 @@ const editingRow = ref({
   eventDateDisplay: [],
   firestoreDate: [],
 })
-      
+
 const new_activity = ref({
   id: 0,
   name: "",
@@ -601,7 +601,7 @@ const columns = ref([
     headerStyle: "width: 8%; font-size: 130%;",
   },
 ])
-  
+
 // computed
 const filter = computed(() => ({
   search: activityNameFilter.value,
@@ -618,7 +618,7 @@ const username = computed(() => $store.getters["userModule/getUsername"])
 const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"])
 const isScheduleModify = computed(() => $store.getters["userModule/getScheduleModify"])
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
-   
+
 // functions
 function selectActivity(id) {
   if (isModifying.value) return;
@@ -647,7 +647,7 @@ function editRow(id) {
     });
   }
 }
-    
+
 function confirmCancelAddModal() {
   $q.dialog({
     title: "請確認",
@@ -668,7 +668,7 @@ function confirmCancelAddModal() {
     };
   });
 }
-    
+
 function startNewActivity() {
   new_activity.value.id = rows.value.reduce((a, b) => Math.max(a, b.id), 0) + 1;
 }
@@ -715,7 +715,7 @@ function confirmAddModal() {
         //showNotification(error.message);
         console.log(error.message);
       });
-      
+
   });
 }
 
@@ -726,7 +726,7 @@ function deleteEventDate(dataset, value) {
     1
   );
 }
-    
+
 function setEventDateDisplay(dataset, value) {
   let selectedDates = new String(value).split(",");
   dataset.eventDateDisplay = [];
@@ -770,7 +770,7 @@ function tableFilter(rows, terms) {
 
   return filteredRows;
 }
- 
+
 function confirmCancelSaveModal() {
   $q.dialog({
     title: "請確認",

@@ -29,9 +29,9 @@
     </q-card>
   </q-dialog>
   <div class="row justify-center">
-    
+
     <div class="row items-center q-mx-md"><q-btn label="上月" @click="reportDate = qdate.formatDate(qdate.endOfDate(qdate.subtractFromDate(reportDate, {month: 1}), 'month'), 'YYYY/MM/DD')" class="bg-primary text-white items-center"/></div>
-    
+
     <div>
       <q-input filled v-model="reportDate" mask="date" :rules="['date']">
         <template v-slot:prepend>
@@ -50,11 +50,11 @@
         </template>
       </q-input>
     </div>
-    
+
     <div class="row items-center q-mx-md"><q-btn label="下月" @click="reportDate = qdate.formatDate(qdate.endOfDate(qdate.addToDate(reportDate, {month: 1}), 'month'), 'YYYY/MM/DD')" class="bg-primary text-white items-center"/></div>
   </div>
-  
-  
+
+
   <!--<q-date v-model="reportDate" default-view="Months"/>-->
   <q-tabs v-model="activeTab" inline-label align="left" class="desktop-only bg-primary text-white">
     <q-tab name="All" icon="source" :label="'全部('+MemberData.length+'人)'" />
@@ -64,6 +64,7 @@
     <q-tab name="Quit" icon="pin_drop" :label="'退會('+QuitData.length+'人)'" />
     <q-tab name="Expired" icon="pin_drop" :label="'截數月過期('+ExpiredData.length+'人)'" />
     <q-tab name="Error" icon="error" :label="'錯誤('+ErrorData.length+'人)'" />
+    <q-tab name="Duplicate" icon="error" :label="'重覆('+DuplicateData.length+'人)'" />
   </q-tabs>
 
   <q-tab-panels
@@ -73,7 +74,7 @@
     transition-prev="jump-up"
     transition-next="jump-up"
   >
-    <q-tab-panel name="All" class="q-ma-none q-pa-sm text-body1"> 
+    <q-tab-panel name="All" class="q-ma-none q-pa-sm text-body1">
       <q-table
         dense
         flat
@@ -99,7 +100,7 @@
       </q-table>
     </q-tab-panel>
 
-    <q-tab-panel name="Quit" class="q-ma-none q-pa-sm text-body1"> 
+    <q-tab-panel name="Quit" class="q-ma-none q-pa-sm text-body1">
       <q-table
         dense
         flat
@@ -125,7 +126,7 @@
       </q-table>
     </q-tab-panel>
 
-    <q-tab-panel name="Youth" class="q-ma-none q-pa-sm text-body1"> 
+    <q-tab-panel name="Youth" class="q-ma-none q-pa-sm text-body1">
       <q-table
         dense
         flat
@@ -151,7 +152,7 @@
       </q-table>
     </q-tab-panel>
 
-    <q-tab-panel name="Family_15" class="q-ma-none q-pa-sm text-body1"> 
+    <q-tab-panel name="Family_15" class="q-ma-none q-pa-sm text-body1">
       <q-table
         dense
         flat
@@ -177,7 +178,7 @@
       </q-table>
     </q-tab-panel>
 
-    <q-tab-panel name="Family_24" class="q-ma-none q-pa-sm text-body1"> 
+    <q-tab-panel name="Family_24" class="q-ma-none q-pa-sm text-body1">
       <q-table
         dense
         flat
@@ -203,7 +204,7 @@
       </q-table>
     </q-tab-panel>
 
-    <q-tab-panel name="Expired" class="q-ma-none q-pa-sm text-body1"> 
+    <q-tab-panel name="Expired" class="q-ma-none q-pa-sm text-body1">
       <q-table
         dense
         flat
@@ -229,7 +230,7 @@
       </q-table>
     </q-tab-panel>
 
-    <q-tab-panel name="Error" class="q-ma-none q-pa-sm text-body1"> 
+    <q-tab-panel name="Error" class="q-ma-none q-pa-sm text-body1">
       <q-table
         dense
         flat
@@ -250,6 +251,32 @@
             label="匯出Excel"
             no-caps
             @click="exportExcel(ErrorData, memberListColumns, '錯誤會員數據')"
+          />
+        </template>
+      </q-table>
+    </q-tab-panel>
+
+    <q-tab-panel name="Duplicate" class="q-ma-none q-pa-sm text-body1">
+      <q-table
+        dense
+        flat
+        title="重覆會員數據"
+        :rows="DuplicateData"
+        :columns="memberListColumns"
+        :pagination="defaultPagination"
+        color="primary"
+        row-key="c_mem_id"
+        :loading="loading"
+        binary-state-sort
+        @row-click="rowDetail"
+      >
+        <template v-slot:top-right>
+          <q-btn
+            color="primary"
+            icon-right="archive"
+            label="匯出Excel"
+            no-caps
+            @click="exportExcel(DuplicateData, memberListColumns, '重覆會員數據')"
           />
         </template>
       </q-table>
@@ -295,6 +322,7 @@ const memberListColumns = ref([
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
+    sortable: true,
   },
   {
     name: "c_name_other",
@@ -443,30 +471,43 @@ const MemberData = computed(() => {
   return res
 })
 const QuitData = computed(() => MemberData.value? MemberData.value.filter((x) => x.d_exit_1 != null): [])
-const YouthData = computed(() => MemberData.value? 
+const YouthData = computed(() => MemberData.value?
   MemberData.value.filter((x) => Report.sisFilter(reportDate, 'youth', x)
 ) : [])
 
-const Family_15Data = computed(() => MemberData.value? MemberData.value.filter((x) => 
+const Family_15Data = computed(() => MemberData.value? MemberData.value.filter((x) =>
   Report.sisFilter(reportDate, 'child', x)
 ) : [])
 
-const Family_24Data = computed(() => MemberData.value? MemberData.value.filter((x) => 
+const Family_24Data = computed(() => MemberData.value? MemberData.value.filter((x) =>
   Report.sisFilter(reportDate, 'family', x)
 ): [])
 
-const ErrorData = computed(() => MemberData.value? MemberData.value.filter((x) => 
+const ErrorData = computed(() => MemberData.value? MemberData.value.filter((x) =>
   (
-    x.d_birth == null || 
-    x.d_birth > reportDate.value || 
+    x.d_birth == null ||
+    x.d_birth > reportDate.value ||
     x.d_enter_1 == null
   ) &&
   x.c_udf_1 != "社區義工" &&
   (
-    (x.d_expired_1 == null) || 
+    (x.d_expired_1 == null) ||
     (x.d_expired_1 && qdate.getDateDiff(x.d_expired_1, reportDate.value) > 0)
   )
   ): [])
+
+const DuplicateData = computed(() => {
+  let res = [];
+  if (MemberData.value) {
+    MemberData.value.forEach((x) => {
+      // console.log("c_name:" + x.c_name + " - d_birth:" + x.d_birth)
+      if (MemberData.value.filter((member) => member.c_name == x.c_name && member.d_birth == x.d_birth).length > 1) {
+        res.push(x)
+      }
+    })
+  }
+  return res
+})
 
 const ExpiredData = computed(() => MemberData.value? MemberData.value.filter((x) =>
   !x.d_exit_1 &&
@@ -477,7 +518,7 @@ const ExpiredData = computed(() => MemberData.value? MemberData.value.filter((x)
 // functions
 function exportExcel(datasource, columns, filename) {
   let content = Excel.jsonToXLS(datasource, columns)
-  
+
   const status = exportFile(
     filename + '.xls',
     content,
@@ -490,7 +531,7 @@ function exportExcel(datasource, columns, filename) {
       color: 'negative',
       icon: 'warning'
     })
-  }  
+  }
 }
 
 function rowDetail(evt, row, index) {

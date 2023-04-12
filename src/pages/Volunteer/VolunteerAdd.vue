@@ -4,7 +4,7 @@
     <q-dialog v-model="waitingAsync" position="bottom">
       <LoadingDialog message="處理中"/>
     </q-dialog>
-    
+
     <q-tabs v-model="activeTab" inline-label align="left" class="desktop-only bg-primary text-white q-ma-none" style="margin-top: 55px;">
       <q-tab name="Normal" icon="source" label="一般輸入" />
       <q-tab name="EventBase" icon="event" label="按活動輸入" />
@@ -17,7 +17,7 @@
       transition-prev="jump-up"
       transition-next="jump-up"
     >
-      <q-tab-panel name="Normal" class="q-ma-none q-pa-sm text-body1"> 
+      <q-tab-panel name="Normal" class="q-ma-none q-pa-sm text-body1">
         <q-btn icon="add" class="bg-primary text-white q-ma-md" label="新增" @click="VolunteerRecord.push({c_act_code: '', eventDate: '', memberInfo: emptyRecord, hours: 0})"/>
         <q-btn icon="save" class="bg-primary text-white q-ma-md" label="儲存" @click="save(VolunteerRecord)"/>
         <div v-if="VolunteerRecord.length">
@@ -55,7 +55,7 @@
         </div>
       </q-tab-panel>
 
-      <q-tab-panel name="EventBase" class="q-ma-none q-pa-sm text-body1"> 
+      <q-tab-panel name="EventBase" class="q-ma-none q-pa-sm text-body1">
         <q-chip size="lg" class="bg-primary text-white">活動資料</q-chip>
         <div class="row">
           <div class="col-2">活動編號</div><div class="col-10"><EventSelection v-model="EventBaseData.c_act_code"/></div>
@@ -65,6 +65,7 @@
         <q-chip size="lg" class="bg-primary text-white">會員資料</q-chip>
 
         <div class="row">
+          <q-btn icon="add" class="bg-primary text-white q-ma-md" label="新增全部已報名會員" @click="addAllRegistered"/>
           <q-btn icon="add" class="bg-primary text-white q-ma-md" label="新增" @click="EventBaseVolunteerRecord.push({...emptyRecord})"/>
           <q-btn icon="save" class="bg-primary text-white q-ma-md" label="儲存" @click="transformAndSave(EventBaseVolunteerRecord)"/>
         </div>
@@ -79,13 +80,13 @@
 </template>
 
 <script setup>
-import { unref, ref, computed } from "vue"
+import { ref, computed } from "vue"
 import { useStore } from "vuex";
 import MemberSelection from "components/Member/MemberSelection.vue"
 import EventSelection from "components/Event/EventSelection.vue"
 import MemberInfoByID from "components/Member/MemberInfoByID.vue"
 import DateComponent from "components/Basic/DateComponent.vue"
-import { useMutation } from "@vue/apollo-composable"
+import { useMutation, useQuery } from "@vue/apollo-composable"
 import { gql } from "graphql-tag"
 import { date as qdate, useQuasar } from "quasar"
 import LoadingDialog from "components/LoadingDialog.vue"
@@ -105,7 +106,7 @@ const EventBaseData = ref({
 // query
 const { mutate: addVolunteer, onDone: addVolunteer_Completed, onError: addVolunteer_Error } = useMutation(gql`
 mutation AddVolunteer(
-  $logObject: Log_insert_input! = {}, 
+  $logObject: Log_insert_input! = {},
   $volObject: [Volunteer_insert_input!] = {},
   ) {
   insert_Volunteer(objects: $volObject) {
@@ -122,31 +123,74 @@ mutation AddVolunteer(
   }
 }`)
 
+const { result: ApplicantData } = useQuery(gql`
+query ApplicantsByActCode($c_act_code: String = "") {
+  tbl_act_reg (where: {c_act_code: {_eq: $c_act_code}, b_refund: {_eq: false}}) {
+    i_age
+    d_reg
+    d_refund
+    c_type
+    c_tel
+    c_sex
+    c_remarks
+    ID
+    b_refund
+    c_act_code
+    c_mem_id
+    c_name
+    c_receipt_no
+  }
+}`,
+  () => ({
+    c_act_code: EventBaseData.value.c_act_code
+  }));
+
+
 // computed
 const $store = useStore();
 const username = computed(() => $store.getters["userModule/getUsername"])
 const waitingAsync = computed(() => awaitServerResponse > 0)
+const Applicants = computed(() => ApplicantData.value?.tbl_act_reg??[])
 
 // functions
+function addAllRegistered() {
+  //console.log(Applicants.value.map(x => x.c_mem_id))
+   let allMember = [...new Set(Applicants.value.map(x => x.c_mem_id))]
+
+
+  allMember.forEach((data) => {
+    EventBaseVolunteerRecord.value.push({
+      c_mem_id: data,
+      u_fee: 0,
+      c_name: '',
+      remark: '',
+      c_sex: '',
+      i_age: '',
+      c_tel: '',
+      d_expired_1: ''
+    })
+  })
+}
+
 function transformAndSave(record) {
   let vr = []
   //console.log(unref(record))
-  
+
   record.forEach((rec) => {
     vr.push({
       c_act_code: EventBaseData.value.c_act_code? EventBaseData.value.c_act_code.trim(): '',
       eventDate: EventBaseData.value.eventDate,
       hours: EventBaseData.value.hours,
       memberInfo: {
-        c_mem_id: rec.c_mem_id,  
+        c_mem_id: rec.c_mem_id,
       }
     })
   })
-  
+
   const occurrences = vr.map(x=>x.memberInfo.c_mem_id).reduce(function (acc, curr) {
     return acc[curr] ? ++acc[curr] : acc[curr] = 1, acc
   }, {});
-  
+
   let i = Object.values(occurrences).findIndex((x) => x>1)
   if (i != -1) {
     $q.notify({
@@ -162,7 +206,7 @@ function transformAndSave(record) {
 
 function save(record) {
   let volObject = []
-  
+
   record.forEach((rec) => {
     if (rec.memberInfo.c_mem_id && rec.c_act_code && rec.eventDate && rec.hours) {
       volObject.push({
@@ -191,7 +235,7 @@ function save(record) {
     "module": "會員系統",
     "action": "新增義工記錄: " + JSON.stringify(volObject)
   }
-  
+
   awaitServerResponse.value++
   addVolunteer({
     logObject: logObject,

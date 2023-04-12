@@ -1,10 +1,5 @@
 <template>
   <q-page>
-    <!-- loading dialog -->
-    <q-dialog v-model="waitingAsync" position="bottom">
-      <LoadingDialog message="資料讀取中"/>
-    </q-dialog>
-
     <q-page-sticky style="z-index: 1;" position="top" expand>
       <q-tabs
         dense
@@ -40,18 +35,17 @@
       </q-tabs>
     </q-page-sticky>
     <q-separator class="q-mt-xl" />
-    
+
     <router-view class="q-mt-lg q-mb-xl" />
-  
+
   </q-page>
 </template>
 
 <script setup>
 import { useStore } from "vuex";
-import { leaveCollection, dashboardCollection, usersCollection } from "boot/firebase";
+import { leaveCollection, dashboardCollection, usersCollection, FireDB } from "boot/firebase";
 import { ref, computed, onUnmounted } from "vue";
 import { date as qdate, useQuasar } from "quasar";
-import LoadingDialog from "components/LoadingDialog.vue"
 import { query, where, onSnapshot, doc, getDoc, Timestamp } from "firebase/firestore"
 
 // unregister listeners
@@ -78,12 +72,8 @@ const systemStart = new Date("2021/04/01");
 
 
 // computed
-const waitingAsync = computed(() => awaitServerResponse.value > 0)
-const rank = computed(() => $store.getters["userModule/getRank"])  
 const uid = computed(() => $store.getters["userModule/getUID"])
 const isLeaveApprove = computed(() => $store.getters["userModule/getLeaveApprove"])
-const dateOfEntry = computed(() => $store.getters["userModule/getDateOfEntry"])
-const dateOfExit = computed(() => $store.getters["userModule/getDateOfExit"])
 const isSAL = computed(() => $store.getters["userModule/getSAL"])
 const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"])
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
@@ -98,7 +88,7 @@ const leaveQuery = query(leaveCollection,
 )
 const dashboardQuery = doc(dashboardCollection, "notification")
 const leaveConfigRef = doc(dashboardCollection, "leaveConfig")
-const leaveApprovedQuery = query(leaveCollection, 
+const leaveApprovedQuery = query(leaveCollection,
   where("uid", "==", uid.value),
   where("status", "==", "批准"),
   where("type", "==", "AL")
@@ -129,42 +119,61 @@ leaveApprovedListener.value = onSnapshot(leaveApprovedQuery, (snapshot) => {
   });
 });
 
-getDoc(leaveConfigRef).then((doc) => {
-  systemStartBalance.value = doc.data()[uid.value][0].al
-  
-  let tiers = doc.data()[rank.value]
-  let monthEnd = qdate.endOfDate(new Date(), "month");
-  dataBoundary.value = dateOfExit.value && dateOfExit.value < monthEnd ? dateOfExit.value : monthEnd
-    
-  // begin with system start date
-  let monthLoop = systemStart;
-  do {
-    const yearServed =
-      qdate.getDateDiff(
-        qdate.endOfDate(monthLoop, "month"),
-        dateOfEntry.value,
-        "month"
-      ) / 12;
+getDoc(leaveConfigRef).then((leaveConfigDoc) => {
+  getDoc(doc(FireDB, "users", uid.value)).then((userDoc) => {
+    systemStartBalance.value = leaveConfigDoc.data()[uid.value][0].al
+    const dateOfExit = userDoc.data().employment[userDoc.data().employment.length-1].dateOfExit? new Date(userDoc.data().employment[userDoc.data().employment.length-1].dateOfExit.toDate() - 28800000): null
+    const dateOfEntry = new Date(userDoc.data().employment[0].dateOfEntry.toDate() - 28800000);
 
-    let tier = 0;
-    const tiersConfig = [0, 5, 8, 10, 12];
-    for (let j = tiersConfig.length; j > 0; j--) {
-      if (yearServed >= tiersConfig[j - 1]) {
-        tier = tiers["t" + j];
-        break;
+    // let tiers = doc.data()[rank.value]
+    let monthEnd = qdate.endOfDate(new Date(), "month");
+    dataBoundary.value = dateOfExit && dateOfExit < monthEnd ? dateOfExit : monthEnd
+
+    // begin with system start date
+    let monthLoop = systemStart;
+    do {
+      const yearServed =
+        qdate.getDateDiff(
+          qdate.endOfDate(monthLoop, "month"),
+          dateOfEntry,
+          "month"
+        ) / 12;
+      let currentEmployment
+      userDoc.data().employment.forEach((e) => {
+        if (new Date(e.dateOfEntry.toDate()-28800000) <= monthLoop && (!e.dateOfExit || new Date(e.dateOfExit.toDate()-28800000) >= monthLoop)) {
+          currentEmployment = e
+        }
+      })
+
+      const tiers = currentEmployment? leaveConfigDoc.data()[currentEmployment.rank]:
+        {
+          t1: 0,
+          t2: 0,
+          t3: 0,
+          t4: 0,
+          t5: 0
+        };
+
+      let tier = 0;
+      const tiersConfig = [0, 5, 8, 10, 12];
+      for (let j = tiersConfig.length; j > 0; j--) {
+        if (yearServed >= tiersConfig[j - 1]) {
+          tier = tiers["t" + j];
+          break;
+        }
       }
-    }
-    let perMonthGain = tier / 12;
-    let lastWorkingDate = qdate.addToDate(dataBoundary.value, { days: -1 });
-    
-    if (
-      qdate.getDateDiff(dataBoundary.value, monthLoop) <
-      qdate.daysInMonth(lastWorkingDate)
-    ) {
-      perMonthGain = 0;
-    }
-    totalGain.value += perMonthGain;
-    monthLoop = qdate.addToDate(monthLoop, { month: 1 });
-  } while (qdate.getDateDiff(monthLoop, dataBoundary.value, "day") < 0);
+      let perMonthGain = tier / 12;
+      let lastWorkingDate = qdate.addToDate(dataBoundary.value, { days: -1 });
+
+      if (
+        qdate.getDateDiff(dataBoundary.value, monthLoop) <
+        qdate.daysInMonth(lastWorkingDate)
+      ) {
+        perMonthGain = 0;
+      }
+      totalGain.value += perMonthGain;
+      monthLoop = qdate.addToDate(monthLoop, { month: 1 });
+    } while (qdate.getDateDiff(monthLoop, dataBoundary.value, "day") < 0);
+  })
 })
 </script>

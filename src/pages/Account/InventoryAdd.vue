@@ -59,9 +59,16 @@
           <q-td key="c_funding" :props="props">
             {{ props.row.c_funding }}
             <q-popup-edit v-model="props.row.c_funding" auto-save v-slot="scope">
-              <q-input type="text" label="經費來源" v-model="scope.value" dense autofocus @keyup.enter="scope.set" />
+              <q-select label="經費來源" :options="sourceOfFund" v-model="scope.value" dense autofocus @keyup.enter="scope.set" />
             </q-popup-edit>
           </q-td>
+          <q-td key="i_qty" :props="props">
+            {{ props.row.i_qty }}
+            <q-popup-edit v-model="props.row.i_qty" auto-save v-slot="scope">
+              <q-input label="數量" type="number" v-model="scope.value" dense autofocus @keyup.enter="scope.set" />
+            </q-popup-edit>
+          </q-td>
+          <!--
           <q-td key="d_destroy" :props="props">
             {{ props.row.d_destroy? qdate.formatDate(props.row.d_destroy, "YYYY/MM/DD"): null }}
             <q-popup-edit v-model="props.row.d_destroy" auto-save v-slot="scope">
@@ -75,9 +82,11 @@
             </q-popup-edit>
           </q-td>
           <q-td key="b_confirm" :props="props">
+            <q-btn label="批核" v-if="isCenterIC"/>
             <q-icon v-if="props.row.b_confirm" name="check" color="green"/>
             <q-icon v-else name="cancel" color="red"/>
           </q-td>
+          -->
         </q-tr>
       </template>
   </q-table>
@@ -98,7 +107,7 @@ const $q = useQuasar()
 const $store = useStore();
 const InventoryData = ref([])
 const deleteData = ref([])
-
+const sourceOfFund = ref(['S','BG','D','NS','SWDF'])
 const pagination = ref({
   rowsPerPage: 30,
 })
@@ -164,11 +173,20 @@ const InventoryColumn = ref([
   {
     name: "c_funding",
     label: "經費來源",
-    field: "i_people_count_a",
+    field: "c_funding",
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
   },
+  {
+    name: "i_qty",
+    label: "數量",
+    field: "i_qty",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  /*
   {
     name: "d_destroy",
     label: "廢棄日期",
@@ -193,7 +211,8 @@ const InventoryColumn = ref([
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
-  }, 
+  },
+  */
 ])
 
 // query
@@ -203,25 +222,23 @@ query AllInventory {
     f_cost
     d_purchase
     c_name
-    d_destroy
     c_model
     c_location
     c_funding
     ID
-    b_confirm
-    c_destroy_reason
+    i_qty
   }
 }`)
 
 const { mutate: updateInventoryStat, onDone: updateInventoryStat_Completed } = useMutation(gql`
   mutation updateInventoryStat(
-    $logObject: Log_insert_input! = {}, 
+    $logObject: Log_insert_input! = {},
     $objects: [Inventory_insert_input!] = {}) {
     insert_Inventory(
-      objects: $objects, 
+      objects: $objects,
       if_matched: {
-        match_columns: ID, 
-        update_columns: [f_cost, d_purchase, c_name, d_destroy, c_model, c_location, c_funding, b_confirm, c_destroy_reason]
+        match_columns: ID,
+        update_columns: [f_cost, d_purchase, c_name, c_model, c_location, c_funding, i_qty]
       }) {
       affected_rows
     }
@@ -245,13 +262,11 @@ function addRow() {
     ID: "",
     c_name: "",
     c_model: "",
-    c_location: null, 
+    c_location: null,
     d_purchase: qdate.formatDate(new Date(), "YYYY/MM/DD"),
     f_cost: 0,
     c_funding: "",
-    d_destroy: null,
-    c_destroy_reason: "",
-    b_confirm: false,
+    i_qty: 1,
   })
 }
 
@@ -265,7 +280,7 @@ function save() {
       "module": "會計系統",
       "action": "修改物資記錄 - 舊資料：" + JSON.stringify(serverStat.value) + "。新資料：" + JSON.stringify(InventoryData.value)
     })
-    
+
     InventoryData.value.forEach((data) => {
       if (data.ID) {
         saveObject.push({
@@ -276,17 +291,15 @@ function save() {
           d_purchase: data.d_purchase? qdate.formatDate(data.d_purchase, "YYYY-MM-DDT00:00:00"): null,
           f_cost: data.f_cost? data.f_cost: 0,
           c_funding: data.c_funding? data.c_funding.trim(): "",
-          d_destroy: data.d_destroy? qdate.formatDate(data.d_destroy, "YYYY-MM-DDT00:00:00"): null,
-          c_destroy_reason: data.c_destroy_reason? data.c_destroy_reason.trim(): "",
-          b_confirm: data.b_confirm,
+          i_qty: data.i_qty? data.i_qty: 0,
         })
       } else {
         $q.notify({ message: "沒有填寫物資編號！", icon: 'error', color: 'negative', textColor: 'white' })
         valid = false
       }
-      
-    })  
-    
+
+    })
+
     if (valid) {
       updateInventoryStat({
         objects: saveObject,
@@ -304,7 +317,7 @@ function deleteRow(ID) {
 
 // callback
 onResult((result) => {
-  InventoryData.value = result.data? JSON.parse(JSON.stringify(result.data.Inventory)): []  
+  InventoryData.value = result.data? JSON.parse(JSON.stringify(result.data.Inventory)): []
 })
 
 updateInventoryStat_Completed((result) => {

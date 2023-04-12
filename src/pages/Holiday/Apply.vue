@@ -60,7 +60,7 @@
             :min="0"
             :max="100"
             readonly
-            v-model="annualBalance"
+            :model-value="annualBalance"
             show-value
             :thickness="0.22"
             color="primary"
@@ -72,7 +72,7 @@
           <q-knob
             :min="0"
             readonly
-            v-model="sal_balance"
+            :model-value="sal_balance"
             show-value
             :thickness="0.22"
             color="primary"
@@ -81,7 +81,6 @@
         </div>
       </div>
     </div>
-
     <div class="row q-mx-xs justify-center">
       <ALApply :renderDate="renderDate" :renderYearOffset="renderYearOffset" :key="renderDate + renderYearOffset"/>
     </div>
@@ -148,9 +147,9 @@ function changeRenderYear(years) {
 
 // get user data
 getDoc(doc(FireDB, "users", uid.value)).then((userDoc) => {
-  const rank = userDoc.data().rank;
-  const dateOfExit = userDoc.data().employment[userDoc.data().employment.length-1].dateOfExit?.toDate()??null;
-  const dateOfEntry = userDoc.data().employment[0].dateOfEntry.toDate();
+  // const rank = userDoc.data().rank;
+  const dateOfExit = userDoc.data().employment[userDoc.data().employment.length-1].dateOfExit? new Date(userDoc.data().employment[userDoc.data().employment.length-1].dateOfExit.toDate() - 28800000): null
+  const dateOfEntry = new Date(userDoc.data().employment[0].dateOfEntry.toDate() - 28800000);
 
   // get leaveConfig
   getDoc(leaveConfig).then((leaveConfigDoc) => {
