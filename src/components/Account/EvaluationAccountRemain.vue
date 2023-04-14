@@ -8,7 +8,7 @@
     <q-card v-if="claimResult.length" class="row">
       <q-card-section class="text-body2 bg-grey-2 text-left text-bold col-12 q-ma-none q-pa-sm">申請餘款記錄(共：${{ claimResult.filter((x) => x.approved || (!x.approved && !x.approve_date)).reduce((a,v) => a += v.amount,0) }})</q-card-section>
       <q-card-section class="row fit justify-left q-ma-none q-pa-sm">
-        <div class="col-12 row items-center content-start prepaid-item" v-for="record in claimResult">
+        <div class="col-12 row items-center content-start prepaid-item" v-for="(record, index) in claimResult" :key="index">
           <span class="col-4 text-left">{{ qdate.formatDate(record.apply_date, "YYYY年M月D日") }}</span>
           <span class="col-2">${{ record.amount }}</span>
           <span class="col-2"><q-chip v-if="record.approved" label="已批" class="bg-positive text-white" dense/><q-chip v-if="!record.approved && record.approve_date" label="拒批" dense class="bg-red text-white"/><q-chip v-if="!record.approved && !record.approve_date" label="未批" class="bg-warning text-white" dense/></span>
@@ -59,7 +59,7 @@ const $q = useQuasar()
 
 // queries
 const { result: getEvaluationResult } = useSubscription(gql`
-  subscription GetExpenseByEvalUUID(
+  subscription Remain_GetExpenseByEvalUUID(
     $eval_uuid: uniqueidentifier = "00000000-0000-0000-0000-000000000000",
     ) {
     Event_Evaluation_Account(where: {
@@ -75,7 +75,7 @@ const { result: getEvaluationResult } = useSubscription(gql`
   }));
 
 const { result: getPrepaidResult } = useSubscription(gql`
-  subscription GetPrepaidAmountByEvalUUID(
+  subscription Remain_GetPrepaidAmountByEvalUUID(
     $eval_uuid: uniqueidentifier = "00000000-0000-0000-0000-000000000000",
     ) {
     Event_Prepaid(where: {
@@ -99,7 +99,7 @@ const { result: getPrepaidResult } = useSubscription(gql`
   }));
 
 const { mutate: addRemainRequest, onDone: addRemainRequest_Completed } = useMutation(gql`
-  mutation addPrepaid(
+  mutation Remain_addPrepaid(
     $logObject: Log_insert_input! = {}, 
     $object: Event_Prepaid_insert_input = {}
     ) {

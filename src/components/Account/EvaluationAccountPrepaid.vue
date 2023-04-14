@@ -8,7 +8,7 @@
     <q-card v-if="prepaidResult.length" class="row">
       <q-card-section class="text-body2 bg-grey-2 text-left text-bold col-12 q-ma-none q-pa-sm">預支記錄(共：${{ prepaidResult.filter((x) => x.approved || (!x.approved && !x.approve_date)).reduce((a,v) => a += v.amount,0) }}) - 預支上限：${{ total*0.8 }}</q-card-section>
       <q-card-section class="row fit justify-left q-ma-none q-pa-sm">
-        <div class="col-12 row items-center content-start prepaid-item" v-for="record in prepaidResult">
+        <div class="col-12 row items-center content-start prepaid-item" v-for="(record, index) in prepaidResult" :key="index">
           <span class="col-4 text-left">{{ qdate.formatDate(record.apply_date, "YYYY年M月D日") }}</span>
           <span class="col-2">${{ record.amount }}</span>
           <span class="col-2"><q-chip v-if="record.approved" label="已批" class="bg-positive text-white" dense/><q-chip v-if="!record.approved && record.approve_date" label="拒批" dense class="bg-red text-white"/><q-chip v-if="!record.approved && !record.approve_date" label="未批" class="bg-warning text-white" dense/></span>
@@ -67,7 +67,7 @@ const $q = useQuasar()
 
 // queries
 const { result: getEvaluationResult } = useSubscription(gql`
-  subscription GetExpenseByEvalUUID(
+  subscription Prepaid_GetExpenseByEvalUUID(
     $eval_uuid: uniqueidentifier = "00000000-0000-0000-0000-000000000000",
     ) {
     Event_Evaluation_Account(where: {
@@ -83,7 +83,7 @@ const { result: getEvaluationResult } = useSubscription(gql`
   }));
 
 const { result: getPrepaidResult, onError: getPrepaidResult_Error, refetch: getPrepaidResult_Refetch } = useQuery(gql`
-  query GetPrepaidAmountByEvalUUID(
+  query Prepaid_GetPrepaidAmountByEvalUUID(
     $eval_uuid: uniqueidentifier = "00000000-0000-0000-0000-000000000000",
     ) {
     Event_Prepaid(where: {
@@ -106,7 +106,7 @@ const { result: getPrepaidResult, onError: getPrepaidResult_Error, refetch: getP
   }));
 
 const { mutate: addPrepaidRequest, onDone: addPrepaidRequest_Completed, onError: addPrepaidRequest_Error } = useMutation(gql`
-  mutation addPrepaid(
+  mutation Prepaid_addPrepaid(
     $logObject: Log_insert_input! = {}, 
     $object: Event_Prepaid_insert_input = {}
     ) {

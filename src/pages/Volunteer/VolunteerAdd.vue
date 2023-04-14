@@ -124,7 +124,7 @@ mutation AddVolunteer(
 }`)
 
 const { result: ApplicantData } = useQuery(gql`
-query ApplicantsByActCode($c_act_code: String = "") {
+query VolunteerAdd_ApplicantsByActCode($c_act_code: String = "") {
   tbl_act_reg (where: {c_act_code: {_eq: $c_act_code}, b_refund: {_eq: false}}) {
     i_age
     d_reg

@@ -16,7 +16,7 @@ const emit = defineEmits(["update:modelValue"])
 
 const { result, onResult } = useQuery(
   gql`
-  query getNameFromID($c_mem_id: String = "") {
+  query Member_getNameFromID($c_mem_id: String = "") {
     Member_by_pk(c_mem_id: $c_mem_id) {
       c_mem_id
       d_birth

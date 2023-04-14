@@ -593,7 +593,7 @@ const os2Columns = ref([
 
 // query - load graphql subscription on member list
 const { result, loading } = useSubscription(gql`
-  subscription getEvent {
+  subscription Event_getEvent {
     HTX_Event(order_by: {c_act_code: desc}, offset: 1) {
       c_act_code
       c_act_name

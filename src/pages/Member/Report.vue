@@ -428,7 +428,7 @@ const memberListColumns = ref([
 
 // query - load graphql subscription on member list
 const { result, loading } = useSubscription(gql`
-  subscription getMember {
+  subscription Member_getMember {
     Member(order_by: {c_mem_id: desc}, offset: 1) {
       c_mem_id
       b_mem_type1

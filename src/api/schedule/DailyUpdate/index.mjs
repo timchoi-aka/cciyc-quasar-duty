@@ -3,7 +3,7 @@ const adminSecret = process.env["adminSecret"]
 const hgeEndpoint = process.env["hgeEndpoint"]
 
 const query = `
-query getMemberNameFromID($c_mem_ids: [String!]) {
+query DailyUpdate_getMemberNameFromID($c_mem_ids: [String!]) {
   Member {
     c_mem_id,
     b_mem_type1,
@@ -56,7 +56,7 @@ mutation updateMemberStatus(
 }`;
 
 const mutation_updateYouthMemberStatus = `
-mutation updateYouthMemberStatus(
+mutation DailyUpdate_updateYouthMemberStatus(
   $c_mem_id: String = "", 
   $b_mem_type10: Boolean = false,
   $d_expired_1: datetime2,

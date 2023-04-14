@@ -34,7 +34,7 @@ export default function useMember(param, displayOptions) {
   }
   
   const { onResult: latestMemberID_Result } = useSubscription(gql`
-    subscription getLatestMemberID {
+    subscription Member_getLatestMemberID {
       Member(limit: 1, order_by: {c_mem_id: desc}, offset: 1) {
         c_mem_id
       }
@@ -135,7 +135,7 @@ export default function useMember(param, displayOptions) {
         }
       }
     }
-    subscription getMember(
+    subscription MemberData_getMember(
       $where: Member_bool_exp = {},
       $loadDetailReceipt: Boolean! = false,
       $loadDetail: Boolean! = false,

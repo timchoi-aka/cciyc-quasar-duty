@@ -110,7 +110,7 @@ watch([updateQueue.value, consolidateQueue.value, updateMembershipQueue.value], 
 
 // query
 const { mutate: UpdateYouthMemberStatus } = useMutation(gql`
-  mutation updateYouthMemberStatus(
+  mutation MemberAdmin_updateYouthMemberStatus(
     $c_mem_id: String = "", 
     $c_udf_1: String = "",
     $b_mem_type1: Boolean = false,
@@ -156,7 +156,7 @@ const { mutate: updateMembership, onDone: updateMembership_Completed } = useMuta
 
 /* per record, small transactions but too many transactions
 const { mutate: updateMembership, onDone: updateMembership_Completed } = useMutation(gql`
-  mutation updateMembership(
+  mutation perRecord_updateMembership(
     $c_mem_id: String = "", 
     $c_udf_1: String = "",
     $b_mem_type1: Boolean = false,
@@ -215,7 +215,7 @@ const Members = ref([])
 const Relations = ref([])
 
 const { onResult } = useQuery(gql`
-  query getMemberNameFromID($c_mem_ids: [String!]) {
+  query MemberAdmin_getMemberNameFromID($c_mem_ids: [String!]) {
     Member(where: {c_mem_id: {_in: $c_mem_ids}}) {
       c_mem_id,
       b_mem_type1,

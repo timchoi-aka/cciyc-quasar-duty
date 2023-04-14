@@ -250,7 +250,7 @@ const receiptListColumns = ref([
 
  // query - load graphql subscription on account list
  const { result, loading, } = useSubscription(gql`
- subscription getAllReceipt ($condition: tbl_account_bool_exp = {c_receipt_no: {_eq: ""}}) {
+ subscription Account_getAllReceipt ($condition: tbl_account_bool_exp = {c_receipt_no: {_eq: ""}}) {
   tbl_account(order_by: {c_receipt_no: desc}, where: $condition) {
     c_receipt_no
     b_OtherIncome

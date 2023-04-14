@@ -72,7 +72,7 @@ const $store = useStore();
 
 // query
 const { result } = useQuery(gql`
-query Event_by_pk($c_act_code: String!) {
+query Detail_Event_by_pk($c_act_code: String!) {
   HTX_Event_by_pk(c_act_code: $c_act_code) {
     c_act_code
     b_freeofcharge

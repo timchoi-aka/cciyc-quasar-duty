@@ -20,7 +20,7 @@ const props = defineProps({
 
 // query
 const { result: data } = useSubscription(gql`
-  subscription getLog($module: String! = "") {
+  subscription Component_getLog($module: String! = "") {
     Log(order_by: {datetime: desc}, where: {module: {_eq: $module}}) {
       log_id
       action

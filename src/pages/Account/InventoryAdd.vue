@@ -231,7 +231,7 @@ query AllInventory {
 }`)
 
 const { mutate: updateInventoryStat, onDone: updateInventoryStat_Completed } = useMutation(gql`
-  mutation updateInventoryStat(
+  mutation Account_updateInventoryStat(
     $logObject: Log_insert_input! = {},
     $objects: [Inventory_insert_input!] = {}) {
     insert_Inventory(

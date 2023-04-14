@@ -14,7 +14,12 @@
     <q-card-section v-if="Object.keys(inventoryData).length > 0">
       <q-btn label="新增報銷紀錄" icon="add" class="bg-primary text-white" @click="destroyRecords.push({ d_destroy: '', c_destroy_reason: '', i_qty: 1, b_confirm: false})"/>
       <q-btn v-if="destroyRecords.length > 0" label="儲存" icon="save" class="bg-positive text-white" @click="save"/>
-      <div v-for="(record, index) in allDestroyRecords" class="row">
+      <div v-for="(record, index) in inventoryData.Inventory_to_Destroy" class="row">
+        <div class="col-2">報銷日期：{{qdate.formatDate(record.d_destroy, "YYYY年M月D日")}}</div>
+        <div class="col-2">報銷原因：{{record.c_destroy_reason}}</div>
+        <div class="col-2">報銷數量：{{record.i_qty}}</div>
+      </div>
+      <div v-for="(record, index) in destroyRecords" class="row">
         <div class="col-2"><DateComponent v-model="allDestroyRecords[index].d_destroy" label="報銷日期"/></div>
         <div class="col-2"><q-input type="text" v-model="allDestroyRecords[index].c_destroy_reason" label="報銷原因"/></div>
         <div class="col-2"><q-input type="number" v-model="allDestroyRecords[index].i_qty" label="報銷數量"/></div>
@@ -32,7 +37,7 @@ import { useQuery, useMutation, useSubscription } from "@vue/apollo-composable"
 import InventoryLocation from "components/Inventory/LocationSelection.vue"
 import { ref, computed } from "vue"
 import gql from "graphql-tag";
-import { useQuasar, date as qdate } from "quasar";
+import { useQuasar, date as qdate, uid } from "quasar";
 import { useStore } from "vuex";
 import InventorySelection from "src/components/Inventory/InventorySelection.vue";
 import DateComponent from "src/components/Basic/DateComponent.vue";
@@ -167,24 +172,22 @@ query InventoryByID($ID: String = "") {
       ID
       b_confirm
       d_destroy
-      d_destroy_reason
+      c_destroy_reason
       uuid
+      i_qty
     }
   }
 }`, () => ({
   ID: searchID.value? searchID.value: ""
 }))
 
-const { mutate: updateInventoryStat, onDone: updateInventoryStat_Completed } = useMutation(gql`
-  mutation updateInventoryStat(
+const { mutate: deleteInventory, onDone: deleteInventory_Completed } = useMutation(gql`
+  mutation InventoryDelete_insertInventoryDelete(
     $logObject: Log_insert_input! = {},
-    $objects: [Inventory_insert_input!] = {}) {
-    insert_Inventory(
+    $objects: [Inventory_Destroy_insert_input!] = {}) {
+    insert_Inventory_Destroy(
       objects: $objects,
-      if_matched: {
-        match_columns: ID,
-        update_columns: [f_cost, d_purchase, c_name, c_model, c_location, c_funding, i_qty]
-      }) {
+    ) {
       affected_rows
     }
     insert_Log_one(object: $logObject) {
@@ -218,30 +221,30 @@ function save() {
       "action": "報銷物資 - 編號：" + searchID.value + "。報銷記錄：" + JSON.stringify(destroyRecords.value)
     })
 
-    InventoryData.value.forEach((data) => {
-      if (data.ID) {
+    destroyRecords.value.forEach((data) => {
+      if (data.d_destroy) {
         saveObject.push({
-          ID: data.ID.trim(),
-          c_name: data.c_name? data.c_name.trim(): "",
-          c_model: data.c_model? data.c_model.trim(): "",
-          c_location: data.c_location? data.c_location.trim(): "",
-          d_purchase: data.d_purchase? qdate.formatDate(data.d_purchase, "YYYY-MM-DDT00:00:00"): null,
-          f_cost: data.f_cost? data.f_cost: 0,
-          c_funding: data.c_funding? data.c_funding.trim(): "",
+          uuid: uid(),
+          ID: inventoryData.value.ID.trim(),
+          d_destroy: data.d_destroy? qdate.formatDate(data.d_destroy, "YYYY-MM-DDT00:00:00"): null,
+          c_destroy_reason: data.c_destroy_reason? data.c_destroy_reason.trim():"",
           i_qty: data.i_qty? data.i_qty: 0,
+          b_confirm: false,
         })
       } else {
-        $q.notify({ message: "沒有填寫物資編號！", icon: 'error', color: 'negative', textColor: 'white' })
+        $q.notify({ message: "沒有填寫報銷日期！", icon: 'error', color: 'negative', textColor: 'white' })
         valid = false
       }
-
     })
 
     if (valid) {
-      updateInventoryStat({
+      
+      deleteInventory({
         objects: saveObject,
         logObject: logObject.value,
       })
+      
+     
     }
   }
 }
@@ -253,10 +256,10 @@ function deleteRow(ID) {
 }
 
 // callback
-updateInventoryStat_Completed((result) => {
+deleteInventory_Completed((result) => {
   refetch()
   $q.notify({
-    message: "儲存成功！"
+    message: "報銷成功！"
   })
 })
 </script>

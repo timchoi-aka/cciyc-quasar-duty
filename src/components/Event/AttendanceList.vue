@@ -35,7 +35,7 @@ const Applicants = ref([])
 
 // queries
 const { onResult, refetch } = useQuery(gql`
-  query ApplicantsByActCodeAndDate(
+  query Event_ApplicantsByActCodeAndDate(
     $c_act_code: String! = "", 
     $d_date: datetime2,
     ) {
