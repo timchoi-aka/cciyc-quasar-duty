@@ -4,8 +4,8 @@ import { getAuth, onAuthStateChanged, onIdTokenChanged, getIdToken, connectAuthE
 import { getFirestore, connectFirestoreEmulator, collection, doc } from "firebase/firestore";
 import { getApp } from "firebase/app";
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
-
-const { initializeAppCheck, ReCaptchaV3Provider } = require("firebase/app-check");
+import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
+// const { initializeAppCheck, ReCaptchaV3Provider } = require("firebase/app-check");
 
 const firebaseConfig = {
   apiKey: "AIzaSyBn3kOruwr2QZlFuecSiPswBdm6ijulxvM",
@@ -27,17 +27,18 @@ const functions = getFunctions(getApp(), "asia-east2");
 if (process.env.NODE_ENV === "development") {
 //if(window.location.hostname === 'localhost') {
   // connect to real firebase auth for token test
-  // connectAuthEmulator(auth, "http://localhost:9099");
-  connectFirestoreEmulator(db, 'localhost', 8081);
-  connectFunctionsEmulator(functions, "localhost", 5001);
+  // connectAuthEmulator(auth, "http://127.0.0.1:9099");
+  connectFirestoreEmulator(db, '127.0.0.1', 8081);
+  connectFunctionsEmulator(functions, "127.0.0.1", 5001);
 
   self.FIREBASE_APPCHECK_DEBUG_TOKEN = "D0934CAD-09BB-46E6-ABCD-EB7BD32B9365";
   console.log("Debug Mode Enabled")
-}
+} 
 
   // Pass your reCAPTCHA v3 site key (public key) to activate(). Make sure this
   // key is the counterpart to the secret key you set in the Firebase console.
-  const appCheck = initializeAppCheck(app, {
+  // const appCheck = initializeAppCheck(app, {
+  initializeAppCheck(app, {
     provider: new ReCaptchaV3Provider('6Ldn54UiAAAAAHwOOAqgnuVJ78Mgs2f6D-VfiB6H'),
     isTokenAutoRefreshEnabled: true
   });

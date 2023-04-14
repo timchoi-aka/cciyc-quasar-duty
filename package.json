@@ -7,7 +7,7 @@
   "private": true,
   "scripts": {
     "test": "echo \"No test specified\" && exit 0",
-    "emu": "firebase emulators:start --import ./functions/latest --export-on-exit",
+    "emu": "firebase emulators:start --only functions,firestore,pubsub --import ./functions/latest",
     "build:dev": "quasar dev",
     "serve": "run-p emu build:dev",
     "build": "quasar build"
@@ -27,14 +27,15 @@
     "@vue/compiler-sfc": "^3.2.37",
     "axios": "^1.1.2",
     "core-js": "^3.23.5",
-    "firebase": "^9.12.1",
     "firebase-admin": "^11.0.0",
     "firebase-functions": "^4.1.0",
+    "firebase-tools": "^11.26.0",
     "graphql": "^16.6.0",
     "graphql-tag": "^2.12.6",
     "graphql-ws": "^5.11.2",
     "npm-run-all": "^4.1.5",
     "quasar": "^2.11.6",
+    "run-p": "^0.0.0",
     "vue": "^3.2.37",
     "vue-router": "^4.1.2",
     "vue3-print-nb": "^0.1.4",
@@ -42,10 +43,13 @@
     "vuex-persistedstate": "^4.1.0"
   },
   "devDependencies": {
+    "@firebase/firestore": "^3.10.0",
     "@quasar/app-webpack": "^3.5.7",
     "@quasar/quasar-app-extension-apollo": "^2.0.0-beta.5",
     "electron": "^21.2.0",
-    "electron-packager": "^15.5.2"
+    "electron-packager": "^15.5.2",
+    "firebase": "^9.19.1",
+    "strip-ansi": "^3.0.1"
   },
   "browserslist": [
     "last 10 Chrome versions",
