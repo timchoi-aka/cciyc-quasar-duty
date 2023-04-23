@@ -49,3 +49,5 @@ exports.housekeep = require("./housekeep.js");
 // - housekeep.updateMemberStatus
 
 exports.notification = require("./notification.js");
+
+exports.healthcare = require("./healthcare.js")

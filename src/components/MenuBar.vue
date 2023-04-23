@@ -3,6 +3,7 @@
     <q-route-tab to="/duty/dutytable" icon="calendar_month" label="編更系統" />
     <q-route-tab v-if="!isTmp" to="/holiday/al-view" icon="festival" label="假期系統" />
     <q-route-tab v-if="!isTmp" to="/overtime/ot-view" icon="schedule" label="超時系統" />
+    <q-route-tab v-if="!isTmp" to="/healthcare" icon="health_and_safety" label="員工醫療" />
     <q-route-tab
         v-if="isUserManagement"
         to="/user/normal"

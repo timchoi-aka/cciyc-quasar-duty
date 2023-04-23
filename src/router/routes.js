@@ -19,6 +19,25 @@ const routes = [
     ]
   },
   {
+    path: '/healthcare',
+    component: () => import('src/pages/HealthCareHome.vue'), meta: { requiresAuth: true},
+    children: [
+      {
+        path: 'apply',
+        component: () => import('src/pages/HealthCare/Apply.vue'), meta: { requiresAuth: true},
+      },
+      {
+        path: 'balance',
+        component: () => import('src/pages/HealthCare/Balance.vue'), meta: { requiresAuth: true},
+      },
+      {
+        path: 'approve',
+        component: () => import('src/pages/HealthCare/Approve.vue'), meta: { requiresAuth: true},
+      }
+    ]
+  },
+  
+  {
     path: '/member',
     component: () => import('src/pages/MemberHome.vue'), meta: {requiresAuth: true},
     children: [
