@@ -214,26 +214,29 @@
                 <div class="col-xs-2 col-sm-2 col-md-2 text-h6">日期:</div>
                 <div class="col-xs-10 col-sm-4 col-md-4">
                   <q-input
+                    v-model="applicationList[props.rowIndex].date"
                     borderless
-                    bottom-slots
-                    v-model="
-                      applicationList[applicationList.indexOf(props.row)].date
-                    "
                     filled
-                    error-message="這日期已有記錄！"
+                    debounce="500"
+                    error-message="這日期已有超時補假記錄！"
                     :error="!isValidDate(applicationList.indexOf(props.row))"
-                    type="date"
-                    @update:model-value="
-                      (value) => {
-                        applicationList[
-                          applicationList.indexOf(props.row)
-                        ].date = value;
-                      }
-                    "
                   >
-                    <template v-slot:append>
-                      <q-icon name="event" />
-                    </template>
+                  <template v-slot:append>
+                    <q-icon name="event" class="cursor-pointer">
+                      <q-popup-proxy
+                        cover
+                        transition-show="scale"
+                        transition-hide="scale"
+                      >
+                        <q-date v-model="applicationList[props.rowIndex].date"
+                        >
+                          <div class="row items-center justify-end">
+                            <q-btn v-close-popup label="關閉" color="primary" flat />
+                          </div>
+                        </q-date>
+                      </q-popup-proxy>
+                    </q-icon>
+                  </template>
                   </q-input>
                 </div>
 
