@@ -81,7 +81,7 @@
             square
             @click="
               applicationList.push({
-                date: qdate.formatDate(new Date(), 'YYYY-MM-DD'),
+                date: qdate.formatDate(new Date(), 'YYYY/MM/DD'),
                 type: 'OT',
                 hours: '0',
                 remarks: '',
@@ -90,7 +90,7 @@
           />
         </div>
       </div>
-
+      
       <!-- header row -->
       <q-table
         dense
@@ -103,23 +103,34 @@
         color="primary"
         row-key="date"
       >
+
         <!-- date cell template -->
         <template v-slot:body-cell-date="props">
           <q-td class="q-pa-sm" style="font-size: 1.5vw; text-align: center"
             ><q-input
+              v-model="applicationList[props.rowIndex].date"
               borderless
-              v-model="applicationList[applicationList.indexOf(props.row)].date"
               filled
+              debounce="500"
               error-message="這日期已有超時補假記錄！"
               :error="!isValidDate(applicationList.indexOf(props.row))"
-              type="date"
-              @update:model-value="
-                (value) => {
-                  applicationList[applicationList.indexOf(props.row)].date =
-                    value;
-                }
-              "
             >
+            <template v-slot:append>
+              <q-icon name="event" class="cursor-pointer">
+                <q-popup-proxy
+                  cover
+                  transition-show="scale"
+                  transition-hide="scale"
+                >
+                  <q-date v-model="applicationList[props.rowIndex].date"
+                  >
+                    <div class="row items-center justify-end">
+                      <q-btn v-close-popup label="關閉" color="primary" flat />
+                    </div>
+                  </q-date>
+                </q-popup-proxy>
+              </q-icon>
+            </template>
             </q-input>
           </q-td>
         </template>
@@ -320,7 +331,7 @@ const columns = ref([
     label: "日期",
     field: "date",
     style: "font-size: 1.5vw; text-align: center",
-    headerStyle: "font-size: 1.5vw; text-align: center; width: 10vw;",
+    headerStyle: "font-size: 1.5vw; text-align: center; width: 13vw;",
     headerClasses: "bg-grey-2 nameColumn",
   },
   {
@@ -462,7 +473,7 @@ function fetchAllOTRecords() {
 
   getDocs(OTQuery).then((OTRecords) => {
     OTRecords.forEach((doc) => {
-      OTHistory.value.push(qdate.formatDate(doc.data().date, "YYYY-MM-DD"));
+      OTHistory.value.push(qdate.formatDate(doc.data().date, "YYYY/MM/DD"));
     });
   })
 }
