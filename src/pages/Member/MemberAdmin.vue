@@ -378,8 +378,10 @@ updateMemberStatus_Completed((result) => {
 })
 
 onResult((result) => {
-  Members.value = JSON.parse(JSON.stringify(result.data.Member))
-  Relations.value = JSON.parse(JSON.stringify(result.data.Relation))
+  if (result.data) {
+    Members.value = JSON.parse(JSON.stringify(result.data.Member))
+    Relations.value = JSON.parse(JSON.stringify(result.data.Relation))
+  }
 })
 
 updateMembership_Completed((result) => {

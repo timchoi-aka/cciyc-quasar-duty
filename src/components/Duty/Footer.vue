@@ -5,9 +5,15 @@
         <th class="caption" rowspan="2">備註</th>
         <th class="content">
           <div>中心服務時間：</div>
-          <div>
+          <div v-if="renderDate < new Date('2023-05-22T00:00:00')">
             <span class="q-mx-md">星期一至五：2PM-10PM</span>
             <span class="q-mx-md">星期六：2PM-6PM</span>
+            <span class="q-mx-md">星期日休息</span>
+          </div>
+          <div v-else>
+            <span class="q-mx-md">星期一、三：6PM-10PM</span>
+            <span class="q-mx-md">星期二、四、五：2PM-6PM</span>
+            <span class="q-mx-md">星期六：10AM-10PM</span>
             <span class="q-mx-md">星期日休息</span>
           </div>
         </th>

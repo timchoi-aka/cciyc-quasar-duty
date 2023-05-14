@@ -497,11 +497,12 @@ const ErrorData = computed(() => MemberData.value? MemberData.value.filter((x) =
   ): [])
 
 const DuplicateData = computed(() => {
+  let now = new Date()
   let res = [];
   if (MemberData.value) {
     MemberData.value.forEach((x) => {
       // console.log("c_name:" + x.c_name + " - d_birth:" + x.d_birth)
-      if (MemberData.value.filter((member) => member.c_name == x.c_name && member.d_birth == x.d_birth).length > 1) {
+      if (MemberData.value.filter((member) => member.c_name == x.c_name && member.d_birth == x.d_birth && (qdate.extractDate(member.d_expired_1, "YYYY-MM-DDTHH:mm:ss") > now && qdate.extractDate(x.d_expired_1, "YYYY-MM-DDTHH:mm:ss") > now)).length > 1) {
         res.push(x)
       }
     })
