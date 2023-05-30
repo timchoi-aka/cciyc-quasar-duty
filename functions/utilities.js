@@ -13,9 +13,9 @@ const formatDate = (date, delim, format) => {
 
   if (day.length < 2) day = "0" + day;
 
-  if (format == "YYYYMMDD") return [year + twoDigitMonth + day].join(delim);
+  if (format == "YYYYMMDD") return [year, twoDigitMonth, day].join(delim);
 
-  if (format === "MDDYYYY") return [month + day + year].join(delim);
+  if (format === "MDDYYYY") return [month, day, year].join(delim);
 
   if (format === "DDMMYYYY") return [day + "/" + twoDigitMonth + "/" + year];
 };

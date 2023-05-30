@@ -8,7 +8,7 @@
     <div class="col-4 row items-start">
       <q-form @submit="apply" class="col-12 row items-center">
         <div class="col-6"><DateComponent v-model="healthCareObject.date" label="申領日期"/></div>
-        <div class="col-4"><q-input v-model="healthCareObject.amount" label="申領金額" type="number" :rules="[val => (val > 0 && val <= 200) || '申領金額 0-200']"/></div>
+        <div class="col-4"><q-input v-model="healthCareObject.amount" label="申領金額" type="number" :rules="[val => (val > 0 && val <= maxRemaining) || '申領金額 0-'+maxRemaining]"/></div>
         <div class="col-2"><q-btn label="新增" size="md" class="bg-positive text-white" type="submit"/></div>
       </q-form>
       <div class="col-12 items-start">
@@ -22,8 +22,12 @@
           @row-click="(event, row, index) => printObject = row">
           <template v-slot:body-cell-status="props">
             <q-td :props="props">
-              <q-icon v-if="props.row.status == '已批'" class="bg-white text-positive" name="check"></q-icon>
-              <q-icon v-if="props.row.status == '拒絕'" class="bg-white text-negative" name="cancel"></q-icon>
+              <q-icon v-if="props.row.status == '批准'" class="text-positive" name="check">
+                <q-tooltip class="bg-white text-positive">已獲批</q-tooltip>
+              </q-icon>
+              <q-icon v-if="props.row.status == '拒絕'" class="text-negative" name="cancel">
+                <q-tooltip class="bg-white text-negative">申請被拒</q-tooltip>
+              </q-icon>
               <q-btn v-if="props.row.status == '未批'" icon="delete" color="negative" @click="deleteApplication(props.row.id)" size="md" padding="none" outline>
                 <q-tooltip class="bg-white text-negative">取消申請</q-tooltip>
               </q-btn>
@@ -48,6 +52,7 @@ import LoadingDialog from "components/LoadingDialog.vue"
 import { httpsCallable } from "firebase/functions";
 import { useStore } from "vuex";
 import Voucher from 'src/components/HealthCare/Voucher.vue'
+import dateUtil from "src/lib/date.js";
 
 const $q = useQuasar()
 const $store = useStore()
@@ -107,14 +112,17 @@ const printObject = ref(new healthCare())
 const uid = computed(() => $store.getters["userModule/getUID"])
 const username = computed(() => $store.getters["userModule/getUsername"])
 const waitingAsync = computed(() => awaitServerResponse > 0)
-
+const maxRemaining = computed(() => maxAmount.value - healthcare.value.reduce((a,b) => b.status == "批准"? a + b.amount: a, 0 ) > 200? 200: maxAmount.value - healthcare.value.reduce((a,b) => b.status == "批准"? a + b.amount: a, 0 ))
 getDoc(healthcareConfig).then((healthcareConfigDoc) => {
   maxAmount.value = healthcareConfigDoc.data().amount
 })
 
 // query definition and start querying
+const fy = dateUtil.getFY(new Date())
 const healthcareDocQuery = query(healthcareCollection,
   where("uid", "==", uid.value),
+  where("date", ">=", fy.periodStart),
+  where("date", "<=", fy.periodEnd),
   orderBy("date")
 )
 
@@ -143,7 +151,7 @@ function apply() {
   awaitServerResponse.value++;
   applyHealthCare({ 
     date: qdate.formatDate(qdate.extractDate(healthCareObject.value.date, "YYYY/MM/DD"), "YYYY-MM-DDT00:00:00"),
-    amount: healthCareObject.value.amount,
+    amount: parseFloat(healthCareObject.value.amount),
     status: healthCareObject.value.status,
     username: username.value,
   }).then(() => {

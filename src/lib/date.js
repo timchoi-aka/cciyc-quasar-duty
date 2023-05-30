@@ -70,10 +70,25 @@ function generateTableColumns(renderDate, withSlot = true) {
   return columns
 }
 
+function getFY(date) {
+  if (date.getMonth() >= 3) {
+    return {
+      periodStart: new Date(date.getFullYear(), 3, 1),
+      periodEnd: new Date(date.getFullYear()+1, 2, 31)
+    }
+  } else {
+    return {
+      periodStart: new Date(date.getFullYear() - 1, 3, 1),
+      periodEnd: new Date(date.getFullYear(), 2, 31)
+    }
+  }
+}
+
 export default {
   daysOfWeek,
   mergeDateSlot,
   splitDateSlot,
   tConvert,
-  generateTableColumns
+  generateTableColumns,
+  getFY
 }

@@ -29,7 +29,6 @@
     "core-js": "^3.23.5",
     "firebase-admin": "^11.0.0",
     "firebase-functions": "^4.1.0",
-    "firebase-tools": "^11.26.0",
     "graphql": "^16.6.0",
     "graphql-tag": "^2.12.6",
     "graphql-ws": "^5.11.2",

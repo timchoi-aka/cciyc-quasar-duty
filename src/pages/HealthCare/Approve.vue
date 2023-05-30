@@ -1,6 +1,5 @@
 <template>
   <q-page class="full-width q-pa-sm">
-    {{ rows }}
     <!-- confirm dialog -->
     <q-dialog v-model="showApproveDialog">
       <q-card style="width: 70vw; border-radius: 30px">
@@ -24,7 +23,7 @@
             v-html="
               application.username +
               ' - ' +
-              application.date.toDate() +
+              qdate.formatDate(application.date.toDate(), 'YYYY年M月D日') +
               ' 【$' +
               application.amount +
               '】 '
@@ -72,7 +71,7 @@
             v-html="
               application.username +
               ' - ' +
-              application.date.toDate() +
+              qdate.formatDate(application.date.toDate(), 'YYYY年M月D日') +
               ' 【$' +
               application.amount +
               '】 '
@@ -122,29 +121,9 @@
           >
             <div v-if="!$q.screen.lt.sm">
               <div class="row items-center">
-                <span class="col-2">{{ application.usernamename }}</span>
+                <span class="col-2">{{ application.username }}</span>
                 <span class="col-3">
-                  <span v-html="qdate.formatDate(application.date, 'DD/MM/YYYY')" />
-                  <q-btn icon="event" round color="primary">
-                    <q-popup-proxy
-                      @before-show="proxyDate = application.date"
-                      cover
-                      transition-show="scale"
-                      transition-hide="scale"
-                    >
-                      <q-date v-model="proxyDate" mask="YYYY-MM-DD">
-                        <div class="row items-center justify-end q-gutter-sm">
-                          <q-btn label="取消" color="primary" flat v-close-popup />
-                          <q-btn
-                            label="確定"
-                            color="primary"
-                            flat
-                            v-close-popup
-                          />
-                        </div>
-                      </q-date>
-                    </q-popup-proxy>
-                  </q-btn>
+                  <span v-html="qdate.formatDate(new Timestamp(application.date.seconds, application.date.nanoseconds).toDate(), 'YYYY年M月D日')" />
                 </span>
                 <span class="col-2 offset-1">
                   <q-input
@@ -162,28 +141,8 @@
                   <div class="col-xs-6">員工：{{ application.username }}</div>
                 </div>
                 <div class="col-xs-7 items-center">
-                  日期：
-                  <span v-html="qdate.formatDate(application.date, 'DD/MM/YYYY')" />
-                  <q-btn icon="event" round color="primary" class="q-mx-xs">
-                    <q-popup-proxy
-                      @before-show="proxyDate = application.date"
-                      cover
-                      transition-show="scale"
-                      transition-hide="scale"
-                    >
-                      <q-date v-model="proxyDate" mask="YYYY-MM-DD">
-                        <div class="row items-center justify-end q-gutter-sm">
-                          <q-btn label="取消" color="primary" flat v-close-popup />
-                          <q-btn
-                            label="確定"
-                            color="primary"
-                            flat
-                            v-close-popup
-                          />
-                        </div>
-                      </q-date>
-                    </q-popup-proxy>
-                  </q-btn>
+                  日期： 
+                  <span v-html="qdate.formatDate(new Timestamp(application.date.seconds, application.date.nanoseconds).toDate(), 'YYYY年M月D日')" />
                 </div>
                 <div class="col-xs-5 row items-center">
                   <div class="col-xs-5">金額：</div>
@@ -212,7 +171,6 @@
           <q-btn
             v-close-popup
             @click="confirmModify"
-            :disable="invalidInModification()"
             flat
             color="teal"
             label="確認修改"
@@ -313,9 +271,6 @@
         v-model:selected="selectedRow"
         no-results-label="沒有合乎篩選條件的資料"
       >
-       
-      <!-- to be done -->
-
         <!-- grid template -->
         <template v-slot:item="props">
           <div class="col-xs-12 col-sm-6 col-md-4 full-width">
@@ -401,6 +356,15 @@
             </q-card>
           </div>
         </template>
+
+        <!-- remark template -->
+        <template v-slot:body-cell-remarks="props">
+          <q-td style="font-size: 1.5vw; text-align: center">
+            <div v-for="remark in props.value" :key="remark">
+              {{ remark }}
+            </div>
+          </q-td>
+        </template>
       </q-table>
     </div>
     <q-dialog v-model="waitingAsync" position="bottom">
@@ -415,23 +379,9 @@ import { ref, computed, onMounted } from "vue";
 import { date as qdate, useQuasar } from "quasar";
 import { useStore } from "vuex";
 import LoadingDialog from "components/LoadingDialog.vue"
-import { getDocs, query, where, orderBy } from "@firebase/firestore";
+import { getDocs, query, where, orderBy, Timestamp } from "@firebase/firestore";
 import { httpsCallable } from "@firebase/functions";
-
-class user {
-  constructor(o) {
-    this.balance = o.balance
-    this.defaultSchedule = o.defaultSchedule
-    this.email = o.email
-    this.employment = o.employment
-    this.enable = o.enable
-    this.name = o.name
-    this.order = o.order
-    this.privilege = o.privilege
-    this.rank = o.rank
-    this.uid = o.uid
-  }
-}
+import { User } from "components/class/user";
 
 onMounted(() => {
   const userQuery = query(usersCollection,
@@ -441,12 +391,11 @@ onMounted(() => {
 
   getDocs(userQuery).then((userDoc) => {
     userDoc.forEach((doc) => {
-      const u = new user(doc.data())
-      console.log(u.name + ":" + u.isValidEmployment())
-      if (doc.data().enable) {
+      const u = new User(doc.data())
+      if (u.isValidEmployment()) {
         userList.value.push({
-          value: doc.data().uid,
-          label: doc.data().name,
+          value: u.uid,
+          label: u.name,
         });
       }
     });
@@ -518,6 +467,14 @@ const columns = ref([
     headerClasses: "bg-grey-2",
   },
   {
+    name: "remarks",
+    label: "附註",
+    field: "remarks",
+    style: "font-size: 1.5vw; text-align: center",
+    headerStyle: "font-size: 1.5vw; text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
     name: "status",
     label: "狀態",
     field: "status",
@@ -547,11 +504,6 @@ if (!isLogin.value) {
 }
 
 // functions    
-function invalidInModification() {
-  return modifyingRow.value.findIndex((element) => "invalidEdit" in element) != -1;
-}
-
-
 function singleApprove(row) {
   selectedRow.value = [row];
   showApproveDialog.value = true;
@@ -601,106 +553,67 @@ function customFilter(rows, terms) {
 }
 
 function confirmApprove() {
-  let leaveData = [];
   let now = new Date();
 
-  let combinedRemarks = "";
-  if (applicationRemarks.value.length > 0) {
-    combinedRemarks =
-      "批准：" +
-      username.value +
-      "-" +
-      applicationRemarks.value +
-      " " +
-      qdate.formatDate(now, "YYYY年MM月DD日HH時mm分ss秒");
-  } else {
-    combinedRemarks = "批准：" + qdate.formatDate(now, "YYYY年MM月DD日HH時mm分ss秒");
-  }
-
+  const remarks = "批准：" + qdate.formatDate(now, "YYYY年MM月DD日HH時mm分ss秒");
+  
   for (let doc of selectedRow.value) {
-    doc.remarks = [...doc.remarks, combinedRemarks];
+    doc.remarks = [...doc.remarks, remarks];
     doc.status = "批准";
   }
 
-  const approveLeaveByDocid = httpsCallable(FirebaseFunctions,
-    "ot-approveLeaveByDocid"
+  const approveHealthCareByDocid = httpsCallable(FirebaseFunctions,
+    "healthcare-approveHealthCareByDocid"
   );
-
+  
   awaitServerResponse.value++;
-  approveLeaveByDocid(selectedRow.value).then(() => {
+  approveHealthCareByDocid(selectedRow.value).then(() => {
     awaitServerResponse.value--;
     refreshHolidayTable();
     selectedRow.value = [];
   });
-
-  applicationRemarks.value = "";
 }
     
 function confirmReject() {
-  let leaveData = JSON.parse(JSON.stringify(selectedRow.value));
   let now = new Date();
 
-  let combinedRemarks = "";
-  if (applicationRemarks.value.length > 0) {
-    combinedRemarks =
-      "拒絕：" +
-      username.value +
-      "-" +
-      applicationRemarks.value +
-      " " +
-      qdate.formatDate(now, "YYYY年MM月DD日HH時mm分ss秒");
-  } else {
-    combinedRemarks = "拒絕：" + qdate.formatDate(now, "YYYY年MM月DD日HH時mm分ss秒");
-  }
-
-  for (let doc of leaveData) {
-    doc.remarks = [...doc.remarks, combinedRemarks];
+  const remarks = "拒絕：" + qdate.formatDate(now, "YYYY年MM月DD日HH時mm分ss秒");
+  
+  for (let doc of selectedRow.value) {
+    doc.remarks = [...doc.remarks, remarks];
     doc.status = "拒絕";
   }
 
-  const rejectLeaveByDocid = httpsCallable(FirebaseFunctions, "ot-rejectLeaveByDocid");
-
+  const rejectHealthCareByDocid = httpsCallable(FirebaseFunctions,
+    "healthcare-rejectHealthCareByDocid"
+  );
+  
   awaitServerResponse.value++;
-  rejectLeaveByDocid(leaveData).then(() => {
+  rejectHealthCareByDocid(selectedRow.value).then(() => {
     awaitServerResponse.value--;
     refreshHolidayTable();
     selectedRow.value = [];
   });
-
-  applicationRemarks.value = "";
 }
     
 function confirmModify() {
   let now = new Date();
 
-  let combinedRemarks = "";
-  if (applicationRemarks.value.length > 0) {
-    combinedRemarks =
-      "修改：" +
-      username.value +
-      "-" +
-      applicationRemarks.value +
-      " " +
-      qdate.formatDate(now, "YYYY年MM月DD日HH時mm分ss秒");
-  } else {
-    combinedRemarks = "修改：" + qdate.formatDate(now, "YYYY年MM月DD日HH時mm分ss秒");
-  }
+  const remarks = "修改：" + qdate.formatDate(now, "YYYY年MM月DD日HH時mm分ss秒");
 
   for (let doc of modifyingRow.value) {
-    doc.remarks = [...doc.remarks, combinedRemarks];
-    doc.date = new Date(doc.date);
+    doc.remarks = [...doc.remarks, remarks];
   }
 
-  const modifyLeaveByDocid = httpsCallable(FirebaseFunctions, "ot-modifyLeaveByDocid");
+  const modifyHealthCareByDocid = httpsCallable(FirebaseFunctions, "healthcare-modifyHealthCareByDocid");
 
   awaitServerResponse.value++;
-  modifyLeaveByDocid(modifyingRow.value).then(() => {
+  modifyHealthCareByDocid(modifyingRow.value).then(() => {
     awaitServerResponse.value--;
     refreshHolidayTable();
     selectedRow.value = [];
   });
 
-  applicationRemarks.value = "";
   modifyingRow.value = [];
 }
     
@@ -712,13 +625,15 @@ function refreshHolidayTable() {
   getDocs(HCQuery).then((applications) => {
     applications.forEach((doc) => {
       if (doc.id != "config") {
+        let d = doc.data()
         rows.value.push({
           docid: doc.id,
-          username: doc.data().username,
-          uid: doc.data().uid,
-          date: doc.data().date,
-          amount: doc.data().amount,
-          status: doc.data().status,
+          username: d.username,
+          uid: d.uid,
+          date: d.date,
+          amount: d.amount,
+          status: d.status,
+          remarks: d.remarks? [...d.remarks]: [],
         });
       }  
     });
