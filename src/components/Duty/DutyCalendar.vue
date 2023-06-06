@@ -394,7 +394,7 @@ const colString = computed(() => columns.value.reduce(function (previousValue, c
 
 // functions
 function defaultOpeningSession(props) {
-  const defaultSessions = [5,6,8,9,11,12,14,15,17,18,20]
+  const defaultSessions = [6,8,9,12,14,15,17,18,19,20,21]
   defaultSessions.forEach((session) => {
     toggleOpeningSession(props.cols[session].name)
   })

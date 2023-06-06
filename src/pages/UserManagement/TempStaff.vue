@@ -447,11 +447,7 @@ function changeDateOfExit(uid, date) {
 function initializeNewStaffObject() {
   newStaff.value = ref({
     name: "",
-    employment: [
-      {
-        dateOfEntry: new Date(),
-      }
-    ],
+    dateOfEntry: new Date(),
     email: "n/a",
     uid: "",
     order: 0,
