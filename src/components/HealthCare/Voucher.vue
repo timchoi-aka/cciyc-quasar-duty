@@ -17,7 +17,7 @@
       </div>
       <div class="row col-12 justify-left q-ml-lg">
         <div class="col-12 q-my-md highlight_2">商鋪/受款人：{{ props.data.username }}</div>
-        <div class="col-12 q-my-md highlight_2">祈付：員工醫療</div>
+        <div class="col-12 q-my-md highlight_2">祈付：員工醫療（{{ qdate.formatDate(props.data.date, "YYYY年M月D日") }}）</div>
         <div class="col-12 q-my-md highlight_2">金額：{{ convertToChinese(props.data.amount) }}</div>
         <div class="col-6 q-my-md highlight_2">港幣：HK${{ props.data.amount }}</div>
         <div class="col-6 q-my-md highlight_2">支票號碼：</div>
@@ -113,7 +113,7 @@ export default {
 </script>
 
 <style scoped>
-@media screen {
+@media screen and (min-width: 600px) {
   .print-area {
     width: 80%;
     margin: 0; 
@@ -130,6 +130,26 @@ export default {
 
   .highlight_3 {
     font-size: 0.8rem;
+  }
+}
+
+@media screen and (max-width: 546px) {
+  .print-area {
+    width: 100%;
+    margin: 0; 
+    overflow: hidden; 
+    border: 1px solid
+  }
+  .highlight_1 {
+    font-size: 1rem;
+  }
+
+  .highlight_2 {
+    font-size: 0.8rem;
+  }
+
+  .highlight_3 {
+    font-size: 0.6rem;
   }
 }
 
@@ -151,7 +171,7 @@ export default {
   }
 
   .highlight_3 {
-    font-size: 0.8rem;
+    font-size: 0.6rem;
   }
 }
 </style>

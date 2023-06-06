@@ -33,8 +33,15 @@ exports.addTempStaff = functions.region("asia-east2").https.onCall(async (data, 
   const newDocRef = FireDB.collection("users").doc();
 
   newStaff.uid = newDocRef.id;
-  newStaff.dateOfEntry = entryTimestamp;
+  newStaff.employment = [
+    {
+      dateOfEntry: entryTimestamp,
+      rank: "tmp",
+    },
+  ];
+  newStaff.rank = "tmp";
   newStaff.order = userCount;
+  newStaff.defaultSchedule = ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""];
 
   return await newDocRef.set(newStaff).then(() => {
     console.log("USERS: " + context.auth.token.name + "新增了臨時員工" + data.name);

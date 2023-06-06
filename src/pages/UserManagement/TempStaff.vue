@@ -415,7 +415,7 @@ const tableFields = ref([
   {
     name: "dateOfExit",
     label: "離職日期",
-    field: "dateOfExit",
+    field: "employment[0].dateOfExit",
     format: (value) => (value ? qdate.formatDate(value, "YYYY年M月D日") : ""),
     headerStyle: "font-size: 1.5vw; text-align: center;",
     style: "font-size: 1.2vw; text-align: center;",
@@ -584,12 +584,8 @@ function updateTempUserTable() {
         enable: "enable" in d ? d.enable : true,
         uid: d.uid,
         order: d.order,
-        employment: [
-          {
-            dateOfEntry: d.employment[0].dateOfEntry,
-            dateOfExit: d.employment[0].dateOfExit,
-          }
-        ]
+        dateOfEntry: d.employment[0].dateOfEntry,
+        dateOfExit: d.employment[0].dateOfExit,
       });
     });
   })

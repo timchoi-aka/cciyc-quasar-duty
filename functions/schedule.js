@@ -71,17 +71,28 @@ exports.updateSchedule = functions.region("asia-east2").https.onCall(async (data
     );
   }
 
-  /* app check
-  if (context.app == undefined) {
+  // only leave admin can run this
+  const runUser = await FireDB.collection("users").doc(context.auth.uid).get();
+  const runUserData = runUser.data();
+
+  /*
+  if (runUserData.privilege.scheduleModify != true) {
     throw new functions.https.HttpsError(
-        'failed-precondition',
-        'The function must be called from an App Check verified app.')
+        "unauthenticated",
+        "only schedule modifier can modify schedules");
   }
   */
+
   const batch = FireDB.batch();
 
   let logData = "";
   for (const data of datas) {
+    if (runUserData.privilege.scheduleModify != true && data.uid != runUserData.uid) {
+      throw new functions.https.HttpsError(
+          "unauthenticated",
+          "only schedule modifier can modify schedules");
+    }
+
     const firebaseDate = Timestamp.fromDate(new Date(data.date));
     // get user and schedule buckets
     const userDoc = FireDB

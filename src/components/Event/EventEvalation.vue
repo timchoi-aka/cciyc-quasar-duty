@@ -254,7 +254,7 @@ const props = defineProps({
 const splitterModel = ref(50) // default split at 50%
 const edit = ref(false)
 const awaitServerResponse = ref(0)
-const waitingAsync = computed(() => awaitServerResponse > 0)
+const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const $q = useQuasar()
 const editObject = ref({})
 const $store = useStore();

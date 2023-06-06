@@ -301,7 +301,7 @@ mutation DelVolunteer(
 // computed
 const $store = useStore();
 const username = computed(() => $store.getters["userModule/getUsername"])
-const waitingAsync = computed(() => awaitServerResponse > 0)
+const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const volunteerData = computed(() => {
   let res = []
   if (result.value) {

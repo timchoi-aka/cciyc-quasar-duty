@@ -334,7 +334,7 @@ getDocs(usersQuery).then((userDoc) => {
 
 const username = computed(() => $store.getters["userModule/getUsername"])
 //const UserList = computed(() => userDoc.docs? userDoc.docs.map(a => a.data().name): [])
-const waitingAsync = computed(() => awaitServerResponse > 0)
+const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const userProfileLogout = () => $store.dispatch("userModule/logout")
 
 //function

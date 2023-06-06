@@ -183,7 +183,7 @@ const $store = useStore();
 const username = computed(() => $store.getters["userModule/getUsername"])
 const isUAT = computed(() => $store.getters["userModule/getUAT"])
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
-const waitingAsync = computed(() => awaitServerResponse > 0)
+const waitingAsync = computed(() => awaitServerResponse.value > 0)
 
 // function
 function deletePrepaid(uuid) {

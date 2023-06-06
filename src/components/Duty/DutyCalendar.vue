@@ -1,9 +1,7 @@
 <template>
   <!-- loading dialog -->
-  <q-dialog v-model="waitingAsync" position="bottom">
-    <LoadingDialog message="儲存中"/>
-  </q-dialog>
-
+  <LoadingDialog message="儲存中" v-model="awaitServerResponse"/>
+  
   <!-- dutycalender table -->
   <q-table
     dense
@@ -318,7 +316,7 @@ import { useStore } from "vuex";
 import { onMounted, ref, computed, onUnmounted } from "vue";
 import dateUtil from "src/lib/date.js";
 import holiday from "assets/holiday.json";
-import { date as qdate } from "quasar";
+import { date as qdate, useQuasar } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
 import { getDocs, query, where, orderBy, onSnapshot } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
@@ -338,6 +336,7 @@ const props = defineProps({
 })
 
 // variables
+const $q = useQuasar()
 const tempInputValue = ref("")
 const qcardExpanded = ref([])
 const queryStartDate = props.renderDate? ref(qdate.startOfDate( qdate.subtractFromDate(props.renderDate, { days: qdate.formatDate(props.renderDate, "d")}), 'day')): ""
@@ -361,7 +360,6 @@ const slotMap = ref({
 
 // computed
 const publicHoliday = computed(() => holiday? holiday.vcalendar[0].vevent.map(({dtstart, summary}) => ({date: dtstart[0], summary: summary})): [])
-const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const myUID = computed(() => $store.getters["userModule/getUID"])
 const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"])
 const isScheduleModify = computed(() => $store.getters["userModule/getScheduleModify"])

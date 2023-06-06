@@ -72,7 +72,7 @@ exports.editActivityCustomName = functions.region("asia-east2").https.onCall(asy
                   data.date;
 
   const dateEntries = activityDoc.data().date;
-  const i = dateEntries.findIndex((element) => formatDate(new Date(element.date.toMillis() + 8*60*60*1000), "-", "YYYYMMDD") == formatDate(data.date, "", "YYYYMMDD"));
+  const i = dateEntries.findIndex((element) => formatDate(new Date(element.date.toMillis() + 8*60*60*1000), "", "YYYYMMDD") == formatDate(data.date, "", "YYYYMMDD"));
 
   dateEntries[i] = {
     date: dateEntries[i].date,

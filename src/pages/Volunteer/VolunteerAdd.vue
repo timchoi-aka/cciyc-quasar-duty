@@ -149,7 +149,7 @@ query VolunteerAdd_ApplicantsByActCode($c_act_code: String = "") {
 // computed
 const $store = useStore();
 const username = computed(() => $store.getters["userModule/getUsername"])
-const waitingAsync = computed(() => awaitServerResponse > 0)
+const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const Applicants = computed(() => ApplicantData.value?.tbl_act_reg??[])
 
 // functions

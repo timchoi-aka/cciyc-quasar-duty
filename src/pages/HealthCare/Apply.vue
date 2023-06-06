@@ -5,39 +5,78 @@
       <LoadingDialog message="處理中"/>
     </q-dialog>
 
-    <div class="col-4 row items-start">
-      <q-form @submit="apply" class="col-12 row items-center">
-        <div class="col-6"><DateComponent v-model="healthCareObject.date" label="申領日期"/></div>
-        <div class="col-4"><q-input v-model="healthCareObject.amount" label="申領金額" type="number" :rules="[val => (val > 0 && val <= maxRemaining) || '申領金額 0-'+maxRemaining]"/></div>
-        <div class="col-2"><q-btn label="新增" size="md" class="bg-positive text-white" type="submit"/></div>
-      </q-form>
-      <div class="col-12 items-start">
-        <q-table
-          flat
-          bordered
-          :rows="healthcare"
-          :columns="columns"
-          :pagination="defaultPagination"
-          row-key="id"
-          @row-click="(event, row, index) => printObject = row">
-          <template v-slot:body-cell-status="props">
-            <q-td :props="props">
-              <q-icon v-if="props.row.status == '批准'" class="text-positive" name="check">
-                <q-tooltip class="bg-white text-positive">已獲批</q-tooltip>
-              </q-icon>
-              <q-icon v-if="props.row.status == '拒絕'" class="text-negative" name="cancel">
-                <q-tooltip class="bg-white text-negative">申請被拒</q-tooltip>
-              </q-icon>
-              <q-btn v-if="props.row.status == '未批'" icon="delete" color="negative" @click="deleteApplication(props.row.id)" size="md" padding="none" outline>
-                <q-tooltip class="bg-white text-negative">取消申請</q-tooltip>
-              </q-btn>
-            </q-td>
-          </template>
-        </q-table>
+    <div v-if="$q.screen.gt.sm" class="row fit">
+      <div class="col-4 row items-start">
+        <q-form @submit="apply" class="col-12 row items-center">
+          <div class="col-6"><DateComponent v-model="healthCareObject.date" label="收據日期"/></div>
+          <div class="col-4"><q-input v-model="healthCareObject.amount" label="申領金額" type="number" :rules="[val => (val > 0 && val <= maxRemaining) || '申領金額 0-'+maxRemaining]"/></div>
+          <div class="col-2"><q-btn label="新增" size="md" class="bg-positive text-white" type="submit"/></div>
+        </q-form>
+        <div class="col-12 items-start">
+          <q-table
+            flat
+            bordered
+            :rows="healthcare"
+            :columns="columns"
+            :pagination="defaultPagination"
+            row-key="id"
+            @row-click="(event, row, index) => printObject = row">
+            <template v-slot:body-cell-status="props">
+              <q-td :props="props">
+                <q-icon v-if="props.row.status == '批准'" class="text-positive" name="check">
+                  <q-tooltip class="bg-white text-positive">已獲批</q-tooltip>
+                </q-icon>
+                <q-icon v-if="props.row.status == '拒絕'" class="text-negative" name="cancel">
+                  <q-tooltip class="bg-white text-negative">申請被拒</q-tooltip>
+                </q-icon>
+                <q-btn v-if="props.row.status == '未批'" icon="delete" color="negative" @click="deleteApplication(props.row.id)" size="md" padding="none" outline>
+                  <q-tooltip class="bg-white text-negative">取消申請</q-tooltip>
+                </q-btn>
+              </q-td>
+            </template>
+          </q-table>
+        </div>
+      </div>
+      <div class="col-8 justify-center items-start">
+        <Voucher v-if="printObject.amount > 0" class="fit" :data="printObject"/>
       </div>
     </div>
-    <div class="col-8 row justify-center items-start">
-      <Voucher v-if="printObject.amount > 0" class="fit" :data="printObject"/>
+    
+    <div v-else>
+      <div class="row col-12 items-start q-mt-md">
+        <q-form @submit="apply" class="col-12 row items-center">
+          <div class="col-6"><DateComponent v-model="healthCareObject.date" label="收據日期"/></div>
+          <div class="col-4"><q-input v-model="healthCareObject.amount" label="申領金額" type="number" :rules="[val => (val > 0 && val <= maxRemaining) || '申領金額 0-'+maxRemaining]"/></div>
+          <div class="col-2"><q-btn label="新增" size="md" class="bg-positive text-white" type="submit"/></div>
+        </q-form>
+        <div class="fit items-start">
+          <q-table
+            flat
+            bordered
+            :rows="healthcare"
+            :columns="columns"
+            :pagination="mobilePagination"
+            row-key="id"
+            @row-click="(event, row, index) => printObject = row">
+            <template v-slot:body-cell-status="props">
+              <q-td :props="props">
+                <q-icon v-if="props.row.status == '批准'" class="text-positive" name="check">
+                  <q-tooltip class="bg-white text-positive">已獲批</q-tooltip>
+                </q-icon>
+                <q-icon v-if="props.row.status == '拒絕'" class="text-negative" name="cancel">
+                  <q-tooltip class="bg-white text-negative">申請被拒</q-tooltip>
+                </q-icon>
+                <q-btn v-if="props.row.status == '未批'" icon="delete" color="negative" @click="deleteApplication(props.row.id)" size="md" padding="none" outline>
+                  <q-tooltip class="bg-white text-negative">取消申請</q-tooltip>
+                </q-btn>
+              </q-td>
+            </template>
+          </q-table>
+        </div>
+        <div class="fit justify-center items-start">
+          <Voucher v-if="printObject.amount > 0" class="fit" :data="printObject"/>
+        </div>
+      </div>
     </div>
   </q-page>
 </template>
@@ -75,11 +114,17 @@ const defaultPagination = ref({
   descending: true,
 })
 
+const mobilePagination = ref({
+  rowsPerPage: 3,
+  sortBy: "date",
+  descending: true,
+})
+
 // table settings
 const columns = ref([
   {
     name: "date",
-    label: "日期",
+    label: "收據日期",
     field: "date",
     sortable: true,
     format: (val) => qdate.formatDate(val, "YYYY年M月D日"),
@@ -111,7 +156,7 @@ const printObject = ref(new healthCare())
 // computed
 const uid = computed(() => $store.getters["userModule/getUID"])
 const username = computed(() => $store.getters["userModule/getUsername"])
-const waitingAsync = computed(() => awaitServerResponse > 0)
+const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const maxRemaining = computed(() => maxAmount.value - healthcare.value.reduce((a,b) => b.status == "批准"? a + b.amount: a, 0 ) > 200? 200: maxAmount.value - healthcare.value.reduce((a,b) => b.status == "批准"? a + b.amount: a, 0 ))
 getDoc(healthcareConfig).then((healthcareConfigDoc) => {
   maxAmount.value = healthcareConfigDoc.data().amount

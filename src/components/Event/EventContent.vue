@@ -249,7 +249,7 @@ getDocs(userDocQuery).then((docs) =>
 const username = computed(() => $store.getters["userModule/getUsername"])
 const Event = computed(() => EventData.value?.HTX_Event_by_pk??[])
 const userProfileLogout = () => $store.dispatch("userModule/logout")
-const waitingAsync = computed(() => awaitServerResponse > 0)
+const waitingAsync = computed(() => awaitServerResponse.value > 0)
 
 // functions
 /**

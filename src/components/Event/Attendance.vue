@@ -123,7 +123,7 @@ const props = defineProps({
 
 // variables
 const awaitServerResponse = ref(0)
-const waitingAsync = computed(() => awaitServerResponse > 0)
+const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const $q = useQuasar()
 const $store = useStore();
 const printObj = ref({
