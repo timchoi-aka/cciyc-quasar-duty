@@ -1,9 +1,7 @@
 <template>
   <div class="q-pa-sm">
     <!-- loading dialog -->
-    <q-dialog v-model="waitingAsync" position="bottom">
-      <LoadingDialog message="儲存中"/>
-    </q-dialog>
+    <LoadingDialog v-model="loading" message="儲存中"/>
 
     <!-- add user dialog -->
     <q-dialog v-model="addDialog">
@@ -23,7 +21,8 @@
             color="primary"
             icon="add"
             label="新增"
-            @click="addTempStaff"
+            :disable="Object.keys(newStaff).length < 2"
+            @click="addStaff(new User({name: newStaff.name, employment: [{ dateOfEntry: Timestamp.fromMillis(Date.parse(newStaff.dateOfEntry, 'YYYY-MM-DD'))}]}))"
           />
         </q-card-actions>
       </q-card>
@@ -51,7 +50,7 @@
             color="red"
             icon="cancel"
             label="確認刪除"
-            @click="deleteTempStaff"
+            @click="deleteStaff(selectedRow)"
           />
         </q-card-actions>
       </q-card>
@@ -109,7 +108,7 @@
                   size="xs"
                   color="positive"
                   icon="keyboard_arrow_up"
-                  @click="changeOrder(props.key, 'UP')"
+                  @click="changeOrder(props.row, 'UP')"
                 />
                 <q-btn
                   :disable="props.row.order == users.length"
@@ -117,7 +116,7 @@
                   size="xs"
                   color="negative"
                   icon="keyboard_arrow_down"
-                  @click="changeOrder(props.key, 'DOWN')"
+                  @click="changeOrder(props.row, 'DOWN')"
                 />
               </div>
             </q-card-section>
@@ -130,7 +129,7 @@
                   dense
                   :color="props.row.enable ? 'positive' : 'negative'"
                   :label="props.row.enable ? '有' : '沒有'"
-                  @click="changeEnable(props.key)"
+                  @click="toggleEnable(props.row)"
                 />
               </div>
               <div class="row justify-center q-mx-xs text-body1">
@@ -144,7 +143,7 @@
                   />
                   <q-btn icon="event" round color="primary" class="q-mx-xs">
                     <q-popup-proxy
-                      @before-show="proxyDate = props.row.dateOfEntry"
+                    @before-show="proxyDate = props.row.getDateOfEntry()? qdate.formatDate(props.row.getDateOfEntry(), 'YYYY-MM-DD'): ''"
                       cover
                       transition-show="scale"
                       transition-hide="scale"
@@ -156,7 +155,7 @@
                             label="確定"
                             color="primary"
                             flat
-                            @click="changeDateOfEntry(props.row.uid, proxyDate)"
+                            @click="props.row.setDateOfEntry(0, Date.parse(proxyDate, 'YYYY-MM-DD'))"
                             v-close-popup
                           />
                         </div>
@@ -186,7 +185,7 @@
                             label="確定"
                             color="primary"
                             flat
-                            @click="changeDateOfExit(props.row.uid, proxyDate)"
+                            @click="setDateOfExit(props.row, proxyDate)"
                             v-close-popup
                           />
                         </div>
@@ -214,7 +213,7 @@
             round
             :color="props.value ? 'positive' : 'negative'"
             :label="props.value ? '有' : '沒有'"
-            @click="changeEnable(props.key)"
+            @click="toggleEnable(props.row)"
           />
         </q-td>
       </template>
@@ -229,7 +228,7 @@
               size="xs"
               color="positive"
               icon="keyboard_arrow_up"
-              @click="changeOrder(props.key, 'UP')"
+              @click="changeOrder(props.row, 'UP')"
             />
             <q-btn
               :disable="props.value == users.length"
@@ -237,7 +236,7 @@
               size="xs"
               color="negative"
               icon="keyboard_arrow_down"
-              @click="changeOrder(props.key, 'DOWN')"
+              @click="changeOrder(props.row, 'DOWN')"
             />
           </div>
         </q-td>
@@ -248,14 +247,14 @@
         <q-td :props="props">
           <span
             v-html="
-              props.row.dateOfEntry
-                ? qdate.formatDate(props.row.dateOfEntry, 'YYYY-MM-DD')
+              props.row.getDateOfEntry()
+                ? qdate.formatDate(props.row.getDateOfEntry(), 'YYYY-MM-DD')
                 : ''
             "
           />
           <q-btn icon="event" round color="primary" class="q-mx-xs">
             <q-popup-proxy
-              @before-show="proxyDate = props.row.dateOfEntry"
+              @before-show="proxyDate = props.row.getDateOfEntry()? qdate.formatDate(props.row.getDateOfEntry(), 'YYYY-MM-DD'): ''"
               cover
               transition-show="scale"
               transition-hide="scale"
@@ -267,7 +266,7 @@
                     label="確定"
                     color="primary"
                     flat
-                    @click="changeDateOfEntry(props.row.uid, proxyDate)"
+                    @click="setDateOfEntry(props.row, proxyDate)"
                     v-close-popup
                   />
                 </div>
@@ -282,14 +281,14 @@
         <q-td :props="props">
           <span
             v-html="
-              props.row.dateOfExit
-                ? qdate.formatDate(props.row.dateOfExit, 'YYYY-MM-DD')
+             props.row.getDateOfExit()
+                ? qdate.formatDate(props.row.getDateOfExit(), 'YYYY-MM-DD')
                 : ''
             "
           />
           <q-btn icon="event" round color="primary" class="q-mx-xs">
             <q-popup-proxy
-              @before-show="proxyDate = props.row.dateOfExit"
+            @before-show="proxyDate = props.row.getDateOfExit()? qdate.formatDate(props.row.getDateOfExit(), 'YYYY-MM-DD'): ''"
               cover
               transition-show="scale"
               transition-hide="scale"
@@ -301,7 +300,7 @@
                     label="確定"
                     color="primary"
                     flat
-                    @click="changeDateOfExit(props.row.uid, proxyDate)"
+                    @click="setDateOfExit(props.row, proxyDate)"
                     v-close-popup
                   />
                 </div>
@@ -315,63 +314,18 @@
 </template>
 
 <script setup>
-import { usersCollection, FirebaseFunctions } from "boot/firebase";
 import { date as qdate } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
-import { ref, computed, onMounted } from "vue"
-import { httpsCallable } from "@firebase/functions";
-import { getDocs, query, where } from "@firebase/firestore";
+import { ref, onMounted } from "vue"
+import { Timestamp } from "@firebase/firestore";
+import User from "components/class/user";
 
 const selectedRow = ref([])
+const proxyDate = ref()
 const addDialog = ref(false)
 const deleteDialog = ref(false)
-const awaitServerResponse = ref(0)
-const newStaff = ref({
-        name: "",
-        dateOfEntry: new Date(),
-        email: "n/a",
-        uid: "",
-        order: 0,
-        enable: true,
-        privilege: {
-          scheduleModify: false,
-          leaveManage: false,
-          leaveApprove: false,
-          logViewer: false,
-          systemAdmin: false,
-          sal: false,
-          userManagement: false,
-          tmp: true,
-        }})
-const balance = ref({
-  al: 0,
-  sal: 0,
-  ot: 0,
-})
-const rank = ref("tmp")
-const defaultSchedule = ref([
-  "",
-  "",
-  "",
-  "",
-  "1",
-  "2",
-  "",
-  "3",
-  "4",
-  "",
-  "5",
-  "6",
-  "",
-  "7",
-  "8",
-  "",
-  "9",
-  "10",
-  "11",
-  "",
-  "",
-])
+const loading = ref(0)
+const newStaff = ref({})
 
 const users = ref([])
 const pagination = ref({
@@ -407,188 +361,98 @@ const tableFields = ref([
   {
     name: "dateOfEntry",
     label: "入職日期",
-    field: "dateOfEntry",
-    format: (value) => (value ? qdate.formatDate(value, "YYYY年M月D日") : ""),
+    field: "employment",
     headerStyle: "font-size: 1.5vw; text-align: center;",
     style: "font-size: 1.2vw; text-align: center;",
   },
   {
     name: "dateOfExit",
     label: "離職日期",
-    field: "employment[0].dateOfExit",
-    format: (value) => (value ? qdate.formatDate(value, "YYYY年M月D日") : ""),
+    field: "employment",
     headerStyle: "font-size: 1.5vw; text-align: center;",
     style: "font-size: 1.2vw; text-align: center;",
   },
 ])
 
-// computed
-const waitingAsync = computed(() => awaitServerResponse.value > 0)
-
-// function
-function changeDateOfEntry(uid, date) {
-  const changeDateOfEntry = httpsCallable(FirebaseFunctions, "user-changeDateOfEntry");
-  changeDateOfEntry({ uid: uid, dateOfEntry: new Date(date) }).then((result) => {
-    users.value[
-      users.value.findIndex((value) => value.uid == result.data.uid)
-    ].dateOfExit = result.data.dateOfEntry;
-  });
-}
-
-function changeDateOfExit(uid, date) {
-  const changeDateOfExit = httpsCallable(FirebaseFunctions, "user-changeDateOfExit");
-  changeDateOfExit({ uid: uid, dateOfExit: new Date(date) }).then((result) => {
-    users.value[
-      users.value.findIndex((value) => value.uid == result.data.uid)
-    ].dateOfExit = result.data.dateOfExit;
-  });
-}
-
-function initializeNewStaffObject() {
-  newStaff.value = ref({
-    name: "",
-    dateOfEntry: new Date(),
-    email: "n/a",
-    uid: "",
-    order: 0,
-    enable: true,
-    privilege: {
-      scheduleModify: false,
-      leaveManage: false,
-      leaveApprove: false,
-      logViewer: false,
-      systemAdmin: false,
-      sal: false,
-      userManagement: false,
-      tmp: true,
-    }
-  })
-
-  balance.value = ref({
-    al: 0,
-    sal: 0,
-    ot: 0,
-  })
-
-  rank.value = ref("tmp")
-  const defaultSchedule = ref([
-    "",
-    "",
-    "",
-    "",
-    "1",
-    "2",
-    "",
-    "3",
-    "4",
-    "",
-    "5",
-    "6",
-    "",
-    "7",
-    "8",
-    "",
-    "9",
-    "10",
-    "11",
-    "",
-    "",
-  ])
-}
-
-function deleteTempStaff() {
-  const delTmp = httpsCallable(FirebaseFunctions, "user-delTempStaff");
-  awaitServerResponse.value++;
-  delTmp(selectedRow.value)
-    .then((result) => {
-      awaitServerResponse.value--;
-      selectedRow.value = [];
-      updateTempUserTable();
+// function v2
+async function setDateOfEntry(user, proxyDate) {
+  loading.value++
+  return new Promise((resolve, reject) => {
+    user.setDateOfEntry(0, Date.parse(proxyDate, 'YYYY-MM-DD')).then((result) => {
+      loading.value--
+      resolve(result)
     })
-    .catch((err) => {
-      console.err(JSON.stringify(err));
-    });
+  });
 }
 
-function addTempStaff() {
-  const addTmp = httpsCallable(FirebaseFunctions, "user-addTempStaff");
-  awaitServerResponse.value++;
-  addTmp(newStaff.value)
-    .then((result) => {
-      awaitServerResponse.value--;
-      initializeNewStaffObject();
-      updateTempUserTable();
+async function setDateOfExit(user, proxyDate) {
+  loading.value++
+  return new Promise((resolve, reject) => {
+    user.setDateOfExit(0, Date.parse(proxyDate, 'YYYY-MM-DD')).then((result) => {
+      loading.value--
+      resolve(result)
     })
-    .catch((err) => {
-      console.err(JSON.stringify(err));
-    });
-}
-
-function changeOrder(uid, dir) {
-  // call https functions to change leaveApprove privilege
-  const changeOrder = httpsCallable(FirebaseFunctions, "user-changeOrder");
-  awaitServerResponse.value++;
-  changeOrder({ uid: uid, dir: dir }).then((result) => {
-    if (result.data.uid1) {
-      users.value[users.value.findIndex((value) => value.uid == result.data.uid1)].order =
-        result.data.order1;
-    }
-
-    if (result.data.uid2) {
-      users.value[users.value.findIndex((value) => value.uid == result.data.uid2)].order =
-        result.data.order2;
-    }
-    awaitServerResponse.value--;
   });
 }
 
-function changeEnable(uid) {
-  // call https functions to change leaveApprove privilege
-  const toggleEnable = httpsCallable(FirebaseFunctions, "user-toggleEnable");
-  toggleEnable(uid).then((result) => {
-    users.value[users.value.findIndex((value) => value.uid == uid)].enable =
-      result.data;
-  });
+async function deleteStaff(userList) {
+  loading.value++;
+  return new Promise((resolve, reject) => {
+    userList.forEach((user) => {
+      user.delete().then((result) => {
+        users.value.splice(users.value.findIndex(u => u.uid === user.uid), 1)
+        selectedRow.value.splice(selectedRow.value.findIndex(u => u.uid === user.uid), 1)
+        loading.value--
+      })
+    })
+    resolve()
+  })
 }
 
-function updateTempUserTable() {
-  users.value = [];
-  // get tmp users
+async function addStaff(user) {
+  loading.value++;
+  return new Promise((resolve, reject) => {
+    user.add().then((result) => {
+      let u = new User(result.data)
+      users.value.push(new User(result.data))
+      loading.value--
+      resolve(result)
+    })
+  })
+}
 
-  const userQuery = query(usersCollection,
-    where("privilege.systemAdmin", "==", false),
-    where("privilege.tmp", "==", true)
-  )
-
-  getDocs(userQuery).then((userDoc) => {
-    userDoc.forEach((user) => {
-      let d = user.data();
-      if (d.employment[0].dateOfEntry != undefined) {
-        d.employment[0].dateOfEntry = new Date(d.employment[0].dateOfEntry.toDate());
-      } else {
-        d.employment[0].dateOfEntry = new Date();
+async function changeOrder(user, dir) {
+  loading.value++;
+  return new Promise((resolve, reject) => {
+    user.setOrder(dir).then((result) => {
+      if (result.data.uid1) {
+        users.value[users.value.findIndex((value) => value.uid == result.data.uid1)].order =
+          result.data.order1;
       }
 
-      if (d.employment[0].dateOfExit != undefined) {
-        d.employment[0].dateOfExit = new Date(d.employment[0].dateOfExit.toDate());
-      } else {
-        d.employment[0].dateOfExit = "";
+      if (result.data.uid2) {
+        users.value[users.value.findIndex((value) => value.uid == result.data.uid2)].order =
+          result.data.order2;
       }
-
-      users.value.push({
-        name: d.name,
-        enable: "enable" in d ? d.enable : true,
-        uid: d.uid,
-        order: d.order,
-        dateOfEntry: d.employment[0].dateOfEntry,
-        dateOfExit: d.employment[0].dateOfExit,
-      });
-    });
-  })
+      loading.value--;
+      resolve(result)
+    })
+  });
 }
 
-onMounted(() => {
-  updateTempUserTable()
+async function toggleEnable(user) {
+  loading.value++;
+  return new Promise((resolve, reject) => {
+    user.toggleEnable().then((result) => {
+      loading.value--;
+      resolve(result);
+    })
+  });
+}
+
+
+onMounted(async () => {
+  users.value = await User.loadTempUsers();
 })
 </script>
 

@@ -53,9 +53,10 @@
       <div class="col-3 normal">結束時間：<span style="border-bottom: 1px solid">{{ qdate.formatDate(qdate.extractDate(Event.d_time_to, "h:mm:ss A"), "h:mm A") }}</span></div>
     </div>
     <div class="row col-12 q-my-sm">
-      <div class="col-4 normal">逢星期：<span style="border-bottom: 1px solid">{{ Event.c_week }}</span></div>
-      <div class="col-4 normal">堂數：<span style="border-bottom: 1px solid">{{ Event.i_lessons }}</span></div>
-      <div class="col-4 normal">參加人數：<span style="border-bottom: 1px solid">{{ Applicants.length }}</span></div>
+      <div class="col-6 normal">地點：<span style="border-bottom: 1px solid">{{ Event.c_dest }}</span></div>
+      <div class="col-2 normal">逢星期：<span style="border-bottom: 1px solid">{{ Event.c_week }}</span></div>
+      <div class="col-2 normal">堂數：<span style="border-bottom: 1px solid">{{ Event.i_lessons }}</span></div>
+      <div class="col-2 normal">參加人數：<span style="border-bottom: 1px solid">{{ Applicants.length }}</span></div>
     </div>
   </div>
   <!-- table header -->
@@ -75,7 +76,7 @@
   <!-- table body -->
   <div class="row col-12 q-mt-none" v-for="(member, index) in Applicants" :key="index">
     <div style="border: 1px solid;" class="col-1 text-center normal">{{ index+1 }}</div>
-    <div style="border: 1px solid;" class="col-2 text-center normal">{{ member.c_name }}</div>
+    <div style="border: 1px solid;" class="col-2 text-center normal">{{ member.c_name }} ({{ member.c_mem_id }})</div>
     <div style="border: 1px solid;" class="col-1 text-center normal">{{ member.i_age }}</div>
     <div style="border: 1px solid;" class="col-6 text-center row">
       <div class="col-grow" style="border-right: 1px solid;" v-for="n in Event.i_lessons">&nbsp;</div>

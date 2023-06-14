@@ -4,7 +4,7 @@
     filled
     class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none"
     use-input
-    clearable
+    :clearable="props.clearable"
     :label="props.label? props.label: '會員編號'"
     input-debounce="0"
     :options="NameOptions"
@@ -29,7 +29,8 @@
       </q-item>
     </template>
     <template v-slot:selected>
-      <div v-if="props.modelValue">{{ props.modelValue }}</div>  
+      <div v-if="props.modelValue">{{ props.modelValue }}</div>
+      <div v-if="props.showName">{{ NameOptions.findIndex((e) => e.value == props.modelValue) >= 0?  " - " + NameOptions[NameOptions.findIndex((e) => e.value == props.modelValue)].c_name: "" }}</div>  
     </template>
     <template v-slot:no-option>          
       沒有結果    
@@ -49,6 +50,14 @@ const props = defineProps({
   modelValue: String,
   MemberID: String,
   label: String,
+  showName: {
+    type: Boolean,
+    default: false,
+  },
+  clearable: {
+    type: Boolean,
+    default: true,
+  }
 })
 const emit = defineEmits(["update:modelValue"])
 

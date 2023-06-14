@@ -1,9 +1,8 @@
 <template>
   <q-page class="row items-start">
     <!-- loading dialog -->
-    <q-dialog v-model="waitingAsync" position="bottom">
-      <LoadingDialog message="處理中"/>
-    </q-dialog>
+    <LoadingDialog message="處理中" v-model="awaitServerResponse"/>
+    
 
     <div v-if="$q.screen.gt.sm" class="row fit">
       <div class="col-4 row items-start">

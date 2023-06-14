@@ -36,7 +36,7 @@ const { result, onResult } = useQuery(
 const Member = computed(() => result.value?.Member_by_pk??{})
 
 onResult((result) => {
-  if (result.data.Member_by_pk) {
+  if (result.data && result.data.Member_by_pk) {
     emit('update:modelValue', {
       c_mem_id: props.modelValue.c_mem_id,
       u_fee: props.modelValue.u_fee,

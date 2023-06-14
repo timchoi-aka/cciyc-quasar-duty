@@ -1,5 +1,7 @@
 <template>
   <q-page>
+    <LoadingDialog v-model="loading" message="讀取中"/>
+
     <div class="row q-px-md">
       <q-select
         v-model="year"
@@ -9,6 +11,8 @@
         @update:model-value="refreshTable"
       />
       <q-space/>
+      <StaffSelection class="col-3" v-model="staff" v-if="isUserManagement" @update:model-value="refreshTable"/>
+      <!--
       <q-select
         v-if="isUserManagement"
         v-model="staff"
@@ -17,6 +21,7 @@
         class="col-3"
         @update:model-value="refreshTable"
       />
+      -->
     </div>
     
     <q-list>
@@ -32,16 +37,19 @@ import { ref, computed, onMounted } from 'vue';
 import { healthcareConfig, healthcareCollection, FirebaseFunctions, usersCollection } from "src/boot/firebase";
 import { getDoc, getDocs, query, where, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
 import { useStore } from "vuex";
-import { User } from "components/class/user";
+import User from "components/class/user";
+import Healthcare from "components/class/healthcare"
+import StaffSelection from "components/Basic/StaffSelection";
+import LoadingDialog from "components/LoadingDialog";
 import { date as qdate, useQuasar } from "quasar";
 
 const $q = useQuasar()
 const $store = useStore()
 const maxAmount = ref(0)
-const awaitServerResponse = ref(0)
+const loading = ref(0)
 const healthcareSnapshot = ref()
 const healthcare = ref([])
-const userList = ref([{value: "", label: "全部"}])
+const userList = ref([])
 const healthcareData = ref([])
 
 const username = computed(() => $store.getters["userModule/getUsername"])
@@ -60,7 +68,7 @@ const rows = computed(() => {
 })
 
 getDoc(healthcareConfig).then((healthcareConfigDoc) => {
-  maxAmount.value = healthcareConfigDoc.data().amount
+  maxAmount.value = healthcareConfigDoc.data() && healthcareConfigDoc.data().amount? healthcareConfigDoc.data().amount: 0
 })
 
 const defaultPagination = ref({
@@ -95,62 +103,19 @@ const years = [
 const year = ref(years[0])
 
 
-onMounted(() => {
-  const userQuery = query(usersCollection,
-    where("privilege.systemAdmin", "==", false),
-    orderBy("order")
-  )
-
-  getDocs(userQuery).then((userDoc) => {
-    userDoc.forEach((doc) => {
-      const u = new User(doc.data())
-      if (u.isValidEmployment()) {
-        userList.value.push({
-          value: u.uid,
-          label: u.name,
-        });
-      }
-    });
+onMounted(async () => {
+  loading.value++
+  refreshTable().then(() => {
+    loading.value--
   })
-
-  refreshTable()
 })
 
-function refreshTable() {
-  let HCQuery;
-  healthcareData.value = []
-  let start = Timestamp.fromDate(year.value.value.periodStart)
-  let end = Timestamp.fromDate(year.value.value.periodEnd)
-  if (staff.value.value) {
-    HCQuery = query(healthcareCollection, 
-      where("uid", "==", staff.value.value),
-      where("date", ">=", start),
-      where("date", "<=", end),
-      where("status", "==", "批准"),
-      )
-  } else {
-    HCQuery = query(healthcareCollection, 
-      where("date", ">=", start),
-      where("date", "<=", end),
-      where("status", "==", "批准"),
-      )
-  }
-
-  getDocs(HCQuery).then((docs) => {
-    docs.forEach((doc) => {
-      if (doc.id != "config") {
-        let d = doc.data()
-        healthcareData.value.push({
-          docid: doc.id,
-          username: d.username,
-          uid: d.uid,
-          date: d.date,
-          amount: d.amount,
-          status: d.status,
-          remarks: d.remarks? [...d.remarks]: [],
-        });
-      }  
-    });
-  })
+async function refreshTable() {
+  return new Promise((resolve, reject) => {
+    Healthcare.loadApproved(staff.value, year.value.value.periodStart, year.value.value.periodEnd).then((result) => {      
+      healthcareData.value = result
+      resolve(result)
+    })
+  });
 }
 </script>

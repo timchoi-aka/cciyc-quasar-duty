@@ -4,6 +4,7 @@
     clearable
     input-debounce="0" 
     filled 
+    multiple
     :options="UserList" 
     :model-value="props.modelValue" 
     @update:model-value="(value) => emit('update:modelValue', value? value: null)"/>
@@ -14,7 +15,10 @@ import { onMounted, ref } from "vue";
 import User from "components/class/user";
 
 const props = defineProps({
-  modelValue: Object,
+  modelValue: {
+   Type: Array,
+   Default: []
+  }
 })
 
 const emit = defineEmits(["update:modelValue"])

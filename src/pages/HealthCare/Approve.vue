@@ -1,5 +1,7 @@
 <template>
   <q-page class="full-width q-pa-sm">
+    <LoadingDialog v-model="loading"/>
+
     <!-- confirm dialog -->
     <q-dialog v-model="showApproveDialog">
       <q-card style="width: 70vw; border-radius: 30px">
@@ -221,15 +223,18 @@
     <div class="row full-width q-mt-md">
       <div class="col-12 col-xs-12 text-h6">篩選：</div>
       <div class="col-md-3 col-xs-4 row justify-left">
+        <StaffSelectionMultiple class="col" v-model="usersSelected" />
+        <!--
         <q-select
           class="col"
           v-model="usersSelected"
           hide-bottom-space
           multiple
-          :options="userList"
+          :options="userOptionsList"
           label="員工"
           filled
         ></q-select>
+        -->
       </div>
       <q-space />
       <q-select
@@ -367,9 +372,6 @@
         </template>
       </q-table>
     </div>
-    <q-dialog v-model="waitingAsync" position="bottom">
-      <LoadingDialog message="讀取資料中"/>
-    </q-dialog>
   </q-page>
 </template>
 
@@ -381,26 +383,17 @@ import { useStore } from "vuex";
 import LoadingDialog from "components/LoadingDialog.vue"
 import { getDocs, query, where, orderBy, Timestamp } from "@firebase/firestore";
 import { httpsCallable } from "@firebase/functions";
-import { User } from "components/class/user";
+import StaffSelectionMultiple from "src/components/Basic/StaffSelectionMultiple.vue";
 
-onMounted(() => {
-  const userQuery = query(usersCollection,
-    where("privilege.systemAdmin", "==", false),
-    orderBy("order")
-  )
-
-  getDocs(userQuery).then((userDoc) => {
-    userDoc.forEach((doc) => {
-      const u = new User(doc.data())
-      if (u.isValidEmployment()) {
-        userList.value.push({
-          value: u.uid,
-          label: u.name,
-        });
-      }
-    });
+onMounted(async () => {
+  loading.value++
+  return new Promise((resolve, reject) => {
+    refreshHolidayTable().then((result) => {
+      rows.value = result
+      loading.value--
+      resolve(result)
+    })
   })
-  refreshHolidayTable()
 })
 
 // variables
@@ -415,9 +408,10 @@ const showRejectDialog = ref(false)
 const statusSelected = ref({ value: "未批", label: "未批" })
 const usersSelected = ref([])
 const selectedRow = ref([])
-const userList = ref([])
+// const userList = User.loadPermUsers()
+// const userOptionsList = computed(() => userList.length > 0? userList : [])
 const pendingApplicationList = ref([])
-const awaitServerResponse = ref(0)
+const loading = ref(0)
 
 // table config
 const statusList = ref([
@@ -489,9 +483,8 @@ const columns = ref([
 const userProfileLogout = () => $store.dispatch("userModule/logout")
 const isLogin = computed(() => $store.getters["userModule/isLogin"])
 const username = computed(() => $store.getters["userModule/getUsername"])
-const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const filterValues = computed(() => ({
-  usersSelected: usersSelected.value,
+  usersSelected: usersSelected.value? usersSelected.value: [],
   statusSelected: statusSelected.value,
 }))
 
@@ -566,11 +559,13 @@ function confirmApprove() {
     "healthcare-approveHealthCareByDocid"
   );
   
-  awaitServerResponse.value++;
+  loading.value++;
   approveHealthCareByDocid(selectedRow.value).then(() => {
-    awaitServerResponse.value--;
-    refreshHolidayTable();
-    selectedRow.value = [];
+    refreshHolidayTable().then((result) => {
+      rows.value = result
+      loading.value--;
+      selectedRow.value = [];
+    });
   });
 }
     
@@ -588,11 +583,13 @@ function confirmReject() {
     "healthcare-rejectHealthCareByDocid"
   );
   
-  awaitServerResponse.value++;
-  rejectHealthCareByDocid(selectedRow.value).then(() => {
-    awaitServerResponse.value--;
-    refreshHolidayTable();
-    selectedRow.value = [];
+  loading.value++;
+  rejectHealthCareByDocid(selectedRow.value).then(() => {    
+    refreshHolidayTable().then((result) => {
+      rows.value = result
+      loading.value--
+      selectedRow.value = [];
+    });
   });
 }
     
@@ -607,38 +604,39 @@ function confirmModify() {
 
   const modifyHealthCareByDocid = httpsCallable(FirebaseFunctions, "healthcare-modifyHealthCareByDocid");
 
-  awaitServerResponse.value++;
+  loading.value++;
   modifyHealthCareByDocid(modifyingRow.value).then(() => {
-    awaitServerResponse.value--;
-    refreshHolidayTable();
-    selectedRow.value = [];
+    refreshHolidayTable().then((result) => {
+      rows.value = result
+      loading.value--
+      selectedRow.value = []
+    })
   });
 
   modifyingRow.value = [];
 }
     
-function refreshHolidayTable() {
-  rows.value = [];
-
-  const HCQuery = query(healthcareCollection)
-
-  getDocs(HCQuery).then((applications) => {
-    applications.forEach((doc) => {
-      if (doc.id != "config") {
-        let d = doc.data()
-        rows.value.push({
-          docid: doc.id,
-          username: d.username,
-          uid: d.uid,
-          date: d.date,
-          amount: d.amount,
-          status: d.status,
-          remarks: d.remarks? [...d.remarks]: [],
-        });
-      }  
-    });
+async function refreshHolidayTable() {
+  return new Promise((resolve, reject) => {
+    const HCQuery = query(healthcareCollection)
+    let result = [];
+    getDocs(HCQuery).then((applications) => {
+      applications.forEach((doc) => {
+        if (doc.id != "config") {
+          let d = doc.data()
+          result.push({
+            docid: doc.id,
+            username: d.username,
+            uid: d.uid,
+            date: d.date,
+            amount: d.amount,
+            status: d.status,
+            remarks: d.remarks? [...d.remarks]: [],
+          });
+        }  
+      });
+      resolve(result)
+    })
   })
 }
 </script>
-
-<style scoped></style>

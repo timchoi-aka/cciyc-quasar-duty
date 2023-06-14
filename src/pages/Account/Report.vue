@@ -60,7 +60,7 @@
       <div class="col-2 q-mx-md"><DateComponent v-model="reportStartDate" label="開始日期"/></div>
       <div class="col-2 q-mx-md"><DateComponent v-model="reportEndDate" label="結束日期"/></div>
       <div class="col-2 q-mx-md"><EventSelection v-model="reportEvent" /></div>
-      <div class="col-2 q-mx-md"><StaffSelection v-model="reportStaff" /></div>
+      <div class="col-2 q-mx-md"><StaffSelection :multiple="false" v-model="reportStaff" /></div>
       <div class="col-1 q-mx-md"><q-btn icon="undo" label="重置" class="bg-primary text-white" @click="reset"/></div>
     </div>
   </div>
@@ -94,7 +94,7 @@
       <div class="col-12 row hideOnScreen justify-around q-py-none q-my-none">
         <div class="col-auto q-mx-md items-end">範圍：{{ reportStartDate }} - {{  reportEndDate }}</div>
         <div v-if="reportEvent" class="col-auto q-mx-md items-end">活動編號：{{ qdate.formatDate(reportEvent, "YYYY年M月D日") }}</div>
-        <div v-if="reportStaff" class="col-auto q-mx-md items-end">負責人：{{ reportStaff }}</div>
+        <div v-if="reportStaff" class="col-auto q-mx-md items-end">負責人：{{ reportStaff.label }}</div>
       </div>
       <div class="col-12 row hideOnScreen justify-end items-end q-py-none q-my-none">列印日期：{{ qdate.formatDate(new Date(), "YYYY年M月D日") }}</div>
       <!-- 收據細列表 -->
@@ -170,7 +170,7 @@
       <div class="col-12 row hideOnScreen justify-around q-py-none q-my-none">
         <div class="col-auto q-mx-md items-end">範圍：{{ reportStartDate }} - {{  reportEndDate }}</div>
         <div v-if="reportEvent" class="col-auto q-mx-md items-end">活動編號：{{ qdate.formatDate(reportEvent, "YYYY年M月D日") }}</div>
-        <div v-if="reportStaff" class="col-auto q-mx-md items-end">負責人：{{ reportStaff }}</div>
+        <div v-if="reportStaff" class="col-auto q-mx-md items-end">負責人：{{ reportStaff.label }}</div>
       </div>
       <div class="col-12 row hideOnScreen justify-end items-end q-py-none q-my-none">列印日期：{{ qdate.formatDate(new Date(), "YYYY年M月D日") }}</div>
       <!-- 刪除收據 -->
@@ -239,7 +239,7 @@
       <div class="col-12 row hideOnScreen justify-around q-py-none q-my-none">
         <div class="col-auto q-mx-md items-end">範圍：{{ reportStartDate }} - {{  reportEndDate }}</div>
         <div v-if="reportEvent" class="col-auto q-mx-md items-end">活動編號：{{ qdate.formatDate(reportEvent, "YYYY年M月D日") }}</div>
-        <div v-if="reportStaff" class="col-auto q-mx-md items-end">負責人：{{ reportStaff }}</div>
+        <div v-if="reportStaff" class="col-auto q-mx-md items-end">負責人：{{ reportStaff.label }}</div>
       </div>
       <div class="col-12 row hideOnScreen justify-end items-end q-py-none q-my-none">列印日期：{{ qdate.formatDate(new Date(), "YYYY年M月D日") }}</div>
       <!-- PF -->
@@ -967,7 +967,7 @@ const { result, loading, refetch} = useQuery(gql`
         {d_create: {"_gte" : qdate.formatDate(qdate.startOfDate(qdate.extractDate(reportStartDate.value, "YYYY/MM/DD"), "day"), "YYYY-MM-DDTHH:mm:ss")}},
         {d_create: {"_lte" : qdate.formatDate(qdate.endOfDate(qdate.extractDate(reportEndDate.value, "YYYY/MM/DD"), "day"), "YYYY-MM-DDTHH:mm:ss")}},
         reportEvent.value? {c_act_code: {"_eq": reportEvent.value}}:{},
-        reportStaff.value? {c_user_id: {"_eq": reportStaff.value in staffNameMapping? staffNameMapping[reportStaff.value]: reportStaff.value}}: {},
+        reportStaff.value? {c_user_id: {"_eq": reportStaff.value.label in staffNameMapping? staffNameMapping[reportStaff.value.label]: reportStaff.value.label}}: {},
       ]
     }
   }));

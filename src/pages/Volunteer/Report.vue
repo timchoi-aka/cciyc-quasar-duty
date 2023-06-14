@@ -1,10 +1,9 @@
 <template>
   <q-page>
-    <!-- loading dialog -->
-    <q-dialog v-model="waitingAsync" position="bottom">
-      <LoadingDialog message="處理中"/>
-    </q-dialog>
-    <div v-if="$q.screen.gt.sm" class="row fit items-start" style="margin-top: 70px;">
+    <!-- loading dialog --> 
+    <LoadingDialog :model-value="loading? 1: 0" message="處理中"/>
+    
+    <div v-if="$q.screen.gt.sm" class="row fit items-center" style="margin-top: 70px;">
       <div class="q-mx-sm"><div>日期由：</div><DateComponent v-model="searchOptions.startDate"/></div>
       <div class="q-mx-sm"><div>至</div><DateComponent v-model="searchOptions.endDate"/></div>
       <div class="q-mx-sm col-2">計算標準：<q-select :options="reportTypeOptions" v-model="reportType"/></div>
@@ -52,19 +51,16 @@
 
 <script setup>
 import { ref, computed } from "vue"
-import { useStore } from "vuex";
 import DateComponent from "components/Basic/DateComponent.vue"
 import { useQuery } from "@vue/apollo-composable"
 import { gql } from "graphql-tag"
-import { date as qdate, is, useQuasar, exportFile } from "quasar"
+import { date as qdate, useQuasar, exportFile } from "quasar"
 import LoadingDialog from "components/LoadingDialog.vue"
 import Excel from "src/lib/exportExcel"
 import dateUtil from "src/lib/calculateAge"
 
 // variables
 const $q = useQuasar()
-const showDeleteDialog = ref(false)
-const showModificationDialog = ref(false)
 const searchOptions = ref({
   startDate: '',
   endDate: ''
@@ -102,18 +98,16 @@ const reportTypeOptions = ref([
 ])
 const reportType = ref(reportTypeOptions.value[0])
 
-const awaitServerResponse = ref(0)
 const queryFilter = ref({
   startDate: '',
   endDate: '',
 })
 const defaultPagination = ref({
   rowsPerPage: 40,
-  sortBy: "hours",
-  descending: true,
+  sortBy: "c_mem_id",
+  // descending: true,
 })
 const selectedRow = ref([])
-const modifyingRow = ref({})
 
 const VolunteerTableColumns = ref([
   {
@@ -205,13 +199,11 @@ query GetVolunteerBetweenDates(
       d_birth
     }
   }
-}`, () => queryFilter.value)
-
+}`, () => queryFilter.value, {
+  fetchPolicy: 'network-only',
+})
 
 // computed
-const $store = useStore();
-const username = computed(() => $store.getters["userModule/getUsername"])
-const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const volunteerData = computed(() => {
   let res = []
   if (result.value) {
@@ -240,7 +232,6 @@ const volunteerData = computed(() => {
         res[i].hours += record.hours
       }
     })
-    let prize = ''
 
     res.forEach((record) => {
       reportType.value.value.forEach((rank) => {
@@ -285,94 +276,5 @@ function showAll() {
     endDate: new Date('3000-01-01')
   }
   refetch()
-}
-
-function modifyRow() {
-  Object.assign(modifyingRow.value, selectedRow.value[0])
-  showModificationDialog.value = true
-}
-
-function confirmModify() {
-  if (!modifyingRow.value.event_date || !modifyingRow.value.c_act_code || !modifyingRow.value.c_mem_id || !is.number(parseFloat(modifyingRow.value.hours))) {
-    $q.notify({
-      message: "請輸入有效資料",
-      color: "negative",
-      textColor: "white",
-      icon: "error"
-    })
-    return
-  }
-
-  let changeObject = {
-    event_date: qdate.formatDate(modifyingRow.value.event_date, "YYYY-MM-DDT00:00:00"),
-    c_mem_id: modifyingRow.value.c_mem_id.trim(),
-    c_act_code: modifyingRow.value.c_act_code.trim(),
-    hours: parseFloat(modifyingRow.value.hours)
-  }
-  let logContent = "舊資料：" + JSON.stringify(selectedRow.value[0]) + " - 新資料：" + JSON.stringify(changeObject)
-
-  let logObject = {
-    "username": username.value,
-    "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-    "module": "會員系統",
-    "action": "修改義工記錄: " + logContent
-  }
-
-  awaitServerResponse.value++
-  editVolunteer({
-    uuid: modifyingRow.value.uuid,
-    volObject: changeObject,
-    logObject: logObject,
-  })
-}
-
-function confirmDelete() {
-  let volObject = selectedRow.value.map((x) => x.uuid)
-  let logContent = ""
-
-  selectedRow.value.forEach((record) => {
-    logContent += "【" + qdate.formatDate(record.event_date, "YYYY年M月D日") + "-活動：" + record.c_act_code.trim() + "-會員：" + record.c_mem_id.trim() + "-" + record.hours + "小時】、"
-  })
-
-  let logObject = {
-    "username": username.value,
-    "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-    "module": "會員系統",
-    "action": "刪除義工記錄: " + logContent
-  }
-
-  awaitServerResponse.value++
-  delVolunteer({
-    logObject: logObject,
-    volObject: volObject,
-  })
-
-}
-
-// callback
-/*
-delVolunteer_Completed((result) => {
-  refetch()
-  selectedRow.value = []
-  awaitServerResponse.value--
-  notifyClientSuccess(result)
-})
-
-editVolunteer_Completed((result) => {
-  refetch()
-  selectedRow.value = []
-  awaitServerResponse.value--
-  $q.notify({
-    message: "成功修改義工記錄。",
-  })
-})
-*/
-// UI functions
-function notifyClientSuccess(result) {
-  awaitServerResponse.value--
-  $q.notify({
-    message: "刪除" + result.data.delete_Volunteer.affected_rows + "條義工記錄。",
-  })
-
 }
 </script>

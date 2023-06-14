@@ -21,8 +21,14 @@
 
 <script setup>
 import { watch, computed } from "vue"
+import { useQuasar } from "quasar"
+
+const $q = useQuasar()
 const props = defineProps({
-  message: String,
+  message: {
+    Type: String,
+    Default: "讀取中..."
+  },
   modelValue: {
     type: Number,
     default: 0

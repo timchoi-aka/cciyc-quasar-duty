@@ -23,15 +23,15 @@ exports.addTempStaff = functions.region("asia-east2").https.onCall(async (data, 
         "only user management admin can add temp users",
     );
   }
-
+  console.log("data: " + JSON.stringify(data));
   const newStaff = JSON.parse(JSON.stringify(data));
   const users = await FireDB.collection("users").where("privilege.tmp", "==", true).get();
   const userCount = users.docs.length + 100;
   const tempUserCount = users.docs.length + 1;
-  const entryTimestamp = Timestamp.fromDate(new Date(newStaff.dateOfEntry));
+  // const entryTimestamp = Timestamp.fromDate(new Date(newStaff.dateOfEntry));
+  const entryTimestamp = new Timestamp(data.employment[0].dateOfEntry.seconds, data.employment[0].dateOfEntry.nanoseconds);
 
   const newDocRef = FireDB.collection("users").doc();
-
   newStaff.uid = newDocRef.id;
   newStaff.employment = [
     {
@@ -41,15 +41,15 @@ exports.addTempStaff = functions.region("asia-east2").https.onCall(async (data, 
   ];
   newStaff.rank = "tmp";
   newStaff.order = userCount;
-  newStaff.defaultSchedule = ["", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", ""];
-
-  return await newDocRef.set(newStaff).then(() => {
+  console.log("newStaff: " + JSON.stringify(newStaff));
+  return await newDocRef.set(newStaff).then((result) => {
     console.log("USERS: " + context.auth.token.name + "新增了臨時員工" + data.name);
     console.log("USERS: 臨時員工總數 - " + tempUserCount);
+    return newStaff;
   });
 });
 
-// API 2.0 - add temp staff
+// API 2.0 - delete temp staff
 exports.delTempStaff = functions.region("asia-east2").https.onCall(async (data, context) => {
   // only authenticated users can run this
   if (!context.auth) {
@@ -235,7 +235,7 @@ exports.toggleEnable = functions.region("asia-east2").https.onCall(async (data, 
     );
   }
 
-  const changeUserDoc = FireDB.collection("users").doc(data);
+  const changeUserDoc = FireDB.collection("users").doc(data.uid);
   const changeUser = await changeUserDoc.get();
   const changeUserData = changeUser.data();
   const newEnable = !changeUserData.enable;
@@ -577,16 +577,21 @@ exports.changeDateOfExit = functions.region("asia-east2").https.onCall(async (da
 
   const exitTimestamp = Timestamp.fromDate(new Date(data.dateOfExit));
   const dateOfExit = new Date(data.dateOfExit);
+
+  const employment = changeUserData.employment;
+  employment[data.index].dateOfExit = exitTimestamp;
+
   dateOfExit.setTime(dateOfExit.getTime() + 8 * 60 * 60 * 1000);
 
   return await changeUserDoc.update({
-    "dateOfExit": exitTimestamp,
+    employment: employment,
   }).then(() => {
     console.log("USER: " +
     loginUserData.name + " 修改了 " + changeUserData.name + "[離職日期]:" + formatDate(dateOfExit, "-", "YYYYMMDD"));
     return {
       uid: changeUserData.uid,
-      dateOfExit: data.dateOfExit,
+      index: data.index,
+      dateOfExit: exitTimestamp,
     };
   });
 });
@@ -617,16 +622,20 @@ exports.changeDateOfEntry = functions.region("asia-east2").https.onCall(async (d
 
   const entryTimestamp = Timestamp.fromDate(new Date(data.dateOfEntry));
   const dateOfEntry = new Date(data.dateOfEntry);
+  const employment = changeUserData.employment;
+  employment[data.index].dateOfEntry = entryTimestamp;
+
   dateOfEntry.setTime(dateOfEntry.getTime() + 8 * 60 * 60 * 1000);
 
   return await changeUserDoc.update({
-    "dateOfEntry": entryTimestamp,
+    employment: employment,
   }).then(() => {
     console.log("USER: " +
     loginUserData.name + " 修改了 " + changeUserData.name + "[入職日期]:" + formatDate(dateOfEntry, "-", "YYYYMMDD"));
     return {
       uid: changeUserData.uid,
-      dateOfEntry: data.dateOfEntry,
+      index: data.index,
+      dateOfEntry: entryTimestamp,
     };
   });
 });
@@ -659,5 +668,61 @@ exports.saveEmployment = functions.region("asia-east2").https.onCall(async (data
     console.log("USER: " +
     changeUserData.name + "[受聘記錄]:" + JSON.stringify(data.employment));
     return data.employment;
+  });
+});
+
+exports.delete = functions.region("asia-east2").https.onCall(async (data, context) => {
+  // only authenticated users can run this
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated users can add requests",
+    );
+  }
+
+  // only user management can run this
+  const loginUserDoc = FireDB
+      .collection("users")
+      .doc(context.auth.uid);
+  const loginUser = await loginUserDoc.get();
+  const loginUserData = loginUser.data();
+  if (loginUserData.privilege.userManagement != true) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only user management admin can delete temp users",
+    );
+  }
+
+  let batch = FireDB.batch();
+
+  let logData = "";
+  let scheduleCount = 0;
+
+  const userRef = FireDB.collection("users").doc(data.uid);
+  const user = await userRef.get();
+  const userData = user.data();
+  batch.delete(userRef);
+  logData += userData.name + " ";
+
+  // commit a batch once every 200 items (200 delete + 200 update)
+  if (batch._ops.length == 200) {
+    await batch.commit();
+    batch = FireDB.batch();
+  }
+
+  const scheduleDoc = await FireDB.collection("schedule").where("uid", "==", data.uid).get();
+  for (const doc of scheduleDoc.docs) {
+    const scheduleRef = FireDB.collection("schedule").doc(doc.id);
+    batch.delete(scheduleRef);
+    scheduleCount++;
+    // commit a batch once every 200 items (200 delete + 200 update)
+    if (batch._ops.length == 200) {
+      await batch.commit();
+      batch = FireDB.batch();
+    }
+  }
+
+  return await batch.commit().then(() => {
+    console.log("USERS: " + context.auth.token.name + "刪除了臨時員工" + logData + ". 移除了" + scheduleCount + "項更表記錄.");
   });
 });

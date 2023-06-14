@@ -3,7 +3,8 @@
   <q-dialog v-model="waitingAsync" position="bottom">
     <LoadingDialog message="處理中" />
   </q-dialog>
-  
+  Number of Members: {{ Members.length }}
+  <hr/>
   <q-btn class="q-mt-md q-mx-md" :disable="migrated_relations.length == 0" @click="startMigrateRelation" label="1. Migrate Relation"/>
   <q-btn class="q-mt-md q-mx-md" :disable="Members.length == 0" @click="consolidateMembership" label="2. Consolidate Membership"/>
   <q-btn class="q-mt-md q-mx-md" :disable="Members.length == 0" @click="updateYouthRelatedMember" label="3. Update Youth Relation"/>
@@ -256,15 +257,17 @@ const { onResult } = useQuery(gql`
   }))
 
 onRelationResult((result) => {
-  result.data.Member.forEach((mem) => {
-    if (mem.c_mem_relative_memid) {
-      migrated_relations.value.push({
-        c_mem_id_1: mem.c_mem_id? mem.c_mem_id: "",
-        c_mem_id_2: mem.c_mem_relative_memid? mem.c_mem_relative_memid: "",
-        relation: mem.c_mem_relation? mem.c_mem_relation: ""
-      })
-    }
-  })
+  if (result.data) { //if result is returned
+    result.data.Member.forEach((mem) => {
+      if (mem.c_mem_relative_memid) {
+        migrated_relations.value.push({
+          c_mem_id_1: mem.c_mem_id? mem.c_mem_id: "",
+          c_mem_id_2: mem.c_mem_relative_memid? mem.c_mem_relative_memid: "",
+          relation: mem.c_mem_relation? mem.c_mem_relation: ""
+        })
+      }
+    })
+  }
 })
 
 // functions

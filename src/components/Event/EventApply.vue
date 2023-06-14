@@ -449,12 +449,14 @@ function printReceipt(c_receipt_no) {
 }
 // callbacks success
 EventFee_Completed((result) => {
-  result.data.tbl_act_fee.forEach((item) => {
-    Fee.value.push({
-      label: item.c_type,
-      value: parseInt(item.u_fee)
+  if (result.data) {
+    result.data.tbl_act_fee.forEach((item) => {
+      Fee.value.push({
+        label: item.c_type,
+        value: parseInt(item.u_fee)
+      })
     })
-  })
+  }
 })
 
 eventRegistration_Completed((result) => {

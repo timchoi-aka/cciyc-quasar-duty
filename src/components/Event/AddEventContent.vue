@@ -159,7 +159,7 @@
         <span class="col-7">細類： <q-select filled :options="group2" v-model="editObject.c_group2"/></span>
       </div>
       <div class="row col-12 q-gutter-lg q-ml-sm">
-        <span class="col-3">對象: <q-select filled :options="whojoin" v-model="editObject.c_whojoin"/></span>
+        <span class="col-3">對象: <q-select filled use-input input-debounce="0" @new-value="newWhojoin" :options="whojoin" v-model="editObject.c_whojoin"/></span>
         <span class="col-3">負責人1: <q-select filled :options="UserList" v-model="editObject.c_respon"/></span>
         <span class="col-3">負責人2: <q-select filled :options="UserList" v-model="editObject.c_respon2"/></span>
       </div>
@@ -406,6 +406,15 @@ function newDest(val, done) {
   if (val.length > 0) {
     if (!dest.value.includes(val)) {
       dest.value.push(val)
+    }
+    done(val, 'toggle')
+  }
+}
+
+function newWhojoin(val, done) {
+  if (val.length > 0) {
+    if (!whojoin.value.includes(val)) {
+      whojoin.value.push(val)
     }
     done(val, 'toggle')
   }

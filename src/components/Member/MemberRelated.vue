@@ -81,7 +81,7 @@ const { onResult } = useQuery(
 
 // query callback
 onResult((data) => {     
-  const result = data.data.Member_by_pk
+  const result = data.data? data.data.Member_by_pk: null
   
   if (!is.object(result)) {
     relatedMember.value.c_mem_id_1 = relatedMember.value.c_mem_id_1 == props.MemberID.trim()? props.MemberID.trim(): ""

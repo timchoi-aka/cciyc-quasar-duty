@@ -1,9 +1,7 @@
 <template>
   <q-page>
     <!-- loading dialog -->
-    <q-dialog v-model="waitingAsync" position="bottom">
-      <LoadingDialog message="處理中"/>
-    </q-dialog>
+    <LoadingDialog message="處理中" v-model="loading"/>
 
     <q-tabs v-model="activeTab" inline-label align="left" class="desktop-only bg-primary text-white q-ma-none" style="margin-top: 55px;">
       <q-tab name="Normal" icon="source" label="一般輸入" />
@@ -33,7 +31,7 @@
               <div class="col-shrink text-bold text-center"><q-btn flat round icon="cancel" :label="index+1" @click="VolunteerRecord.splice(index,1)"/></div>
               <div class="col-2"><EventSelection v-model="VolunteerRecord[index].c_act_code"/></div>
               <div class="col-2 q-px-sm"><DateComponent v-model="VolunteerRecord[index].eventDate"/></div>
-              <div class="col-1"><MemberSelection class="text-white" v-model="VolunteerRecord[index].memberInfo.c_mem_id"/></div>
+              <div class="col-1"><MemberSelection :clearable="false" class="text-white" v-model="VolunteerRecord[index].memberInfo.c_mem_id"/></div>
               <div class="col-5 row text-body1"><MemberInfoByID v-model="VolunteerRecord[index].memberInfo"/></div>
               <div class="col-1"><q-input v-model="VolunteerRecord[index].hours" type="number"/></div>
             </div>
@@ -47,7 +45,7 @@
               </q-btn>
               <div class="col-2">活動編號</div><div class="col-10"><EventSelection v-model="VolunteerRecord[index].c_act_code"/></div>
               <div class="col-2">日期</div><div class="col-10"><DateComponent v-model="VolunteerRecord[index].eventDate"/></div>
-              <div class="col-2">會員資料</div><div class="col-10"><MemberSelection class="text-white" v-model="VolunteerRecord[index].memberInfo.c_mem_id"/></div>
+              <div class="col-2">會員資料</div><div class="col-10"><MemberSelection :clearable="false" class="text-white" v-model="VolunteerRecord[index].memberInfo.c_mem_id"/></div>
               <div class="col-12 row q-my-sm q-pa-sm bg-blue-1"><MemberInfoByID v-model="VolunteerRecord[index].memberInfo"/></div>
               <div class="col-2">時數</div><div class="col-10"><q-input v-model="VolunteerRecord[index].hours" type="number"/></div>
             </q-card-section>
@@ -71,7 +69,7 @@
         </div>
         <div class="row">
           <div v-for="(record, index) in EventBaseVolunteerRecord" :key="index" class="q-mx-md">
-            <span>{{ index+1 }}:</span><MemberSelection class="text-white" v-model="EventBaseVolunteerRecord[index].c_mem_id"/>
+            <span>{{ index+1 }}:</span><q-btn icon="delete" flat size="sm" class="text-negative" @click="EventBaseVolunteerRecord.splice(index,1)"/><MemberSelection :clearable="false" :showName="true" class="text-white" v-model="EventBaseVolunteerRecord[index].c_mem_id"/>
           </div>
         </div>
       </q-tab-panel>
@@ -90,19 +88,47 @@ import { useMutation, useQuery } from "@vue/apollo-composable"
 import { gql } from "graphql-tag"
 import { date as qdate, useQuasar } from "quasar"
 import LoadingDialog from "components/LoadingDialog.vue"
+import { onBeforeRouteLeave } from "vue-router"
 
 // variables
 const $q = useQuasar()
 const VolunteerRecord = ref([])
 const EventBaseVolunteerRecord = ref([])
 const emptyRecord = ref({c_mem_id: '', u_fee: 0, c_name: '', remark: '', c_sex: '', i_age: '', c_tel: '', d_expired_1: ''})
-const awaitServerResponse = ref(0)
+const loading = ref(0)
 const activeTab = ref("EventBase")
 const EventBaseData = ref({
   c_act_code: '',
   eventDate: '',
   hours: 0,
 })
+
+onBeforeRouteLeave((to, from) => {
+  if (EventBaseData.value.c_act_code != "") {
+    return new Promise((resolve, reject) => {
+      $q.dialog({
+        title: "請確認",
+        message: '未儲存，確定離開？',
+        transitionShow: "slide-up",
+        transitionHide: "slide-down",
+        position: "bottom",
+        ok: {
+          push: true,
+          label: "確認",
+          color: "green",
+        },
+        cancel: {
+          push: true,
+          label: "取消",
+          color: 'negative'
+        },
+      }).onOk(() => {
+        resolve(true)
+      })
+    })
+  }
+})
+
 // query
 const { mutate: addVolunteer, onDone: addVolunteer_Completed, onError: addVolunteer_Error } = useMutation(gql`
 mutation AddVolunteer(
@@ -149,14 +175,22 @@ query VolunteerAdd_ApplicantsByActCode($c_act_code: String = "") {
 // computed
 const $store = useStore();
 const username = computed(() => $store.getters["userModule/getUsername"])
-const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const Applicants = computed(() => ApplicantData.value?.tbl_act_reg??[])
 
 // functions
 function addAllRegistered() {
   //console.log(Applicants.value.map(x => x.c_mem_id))
-   let allMember = [...new Set(Applicants.value.map(x => x.c_mem_id))]
+  if (EventBaseVolunteerRecord.value.length > 0) {
+    $q.notify({
+      message: "已有會員",
+      color: "negative",
+      textColor: "white",
+      icon: "error"
+    })
+    return
+  }
 
+  let allMember = [...new Set(Applicants.value.map(x => x.c_mem_id))]
 
   allMember.forEach((data) => {
     EventBaseVolunteerRecord.value.push({
@@ -228,7 +262,6 @@ function save(record) {
     return
   }
 
-
   let logObject = {
     "username": username.value,
     "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
@@ -236,7 +269,7 @@ function save(record) {
     "action": "新增義工記錄: " + JSON.stringify(volObject)
   }
 
-  awaitServerResponse.value++
+  loading.value++
   addVolunteer({
     logObject: logObject,
     volObject: volObject
@@ -252,7 +285,7 @@ addVolunteer_Completed((result) => {
     eventDate: '',
     hours: 0,
   }
-  awaitServerResponse.value--
+  loading.value--
   notifyClientSuccess(result)
 })
 

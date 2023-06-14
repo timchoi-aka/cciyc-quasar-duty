@@ -1,6 +1,6 @@
 <template>
   <q-page>
-    <router-view/>
+    <router-view/> 
     <q-page-sticky position="top" expand>
       <q-tabs
         dense
