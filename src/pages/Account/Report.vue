@@ -1,8 +1,6 @@
 <template>
   <!-- loading dialog -->
-  <q-dialog v-model="loading" position="bottom">
-    <LoadingDialog message="處理中"/>
-  </q-dialog>
+  <LoadingDialog :model-value="loading? 1: 0" message="處理中"/>
 
   <!-- rowDetail modal -->
   <q-dialog v-if="$q.screen.lt.md"
@@ -39,7 +37,7 @@
     transition-show="slide-up"
     transition-hide="slide-down"
   >
-    <EventDetail :EventID="showEventID"/>
+    <EventDetail :EventID="showEventID" @hide-component="EventDetailModal = false"/>
   </q-dialog>
 
   <q-dialog v-else
@@ -51,7 +49,7 @@
     transition-hide="slide-down"
     class="q-pa-none"
   >
-    <EventDetail :EventID="showEventID"/>
+    <EventDetail :EventID="showEventID" />
   </q-dialog>
 
   <!-- date range selector -->
@@ -130,6 +128,7 @@
           <div class="q-my-none q-py-none row col-12 items-end" style="line-height: 10px;">
             <div class="col-auto items-end text-bold">收據細列表</div>
             <q-space/>
+            
             <q-btn icon="print" flat class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end" v-print="printObj">
               <q-tooltip class="bg-white text-primary">列印</q-tooltip>  
             </q-btn>
@@ -937,7 +936,7 @@ const accountReportColumns = ref([
 
 const printObj = ref({
   id: "printMe",
-  preview: true,
+  preview: false,
   previewTitle: "列印預覽", // The title of the preview window. The default is 打印预览
   popTitle: "收據報表",
 })

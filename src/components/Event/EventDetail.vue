@@ -9,7 +9,7 @@
       <q-tab name="Attendance" icon="person_add" label="點名紙" />
       <FavourateEvent :c_act_code="props.EventID" :username="username" />
       <q-space/>
-      <q-btn class="bg-primary text-white" flat icon="close" v-close-popup>
+      <q-btn class="bg-primary text-white" flat icon="close" @click="confirmClose">
         <q-tooltip class="bg-white text-primary">關閉</q-tooltip>
       </q-btn>
     </q-tabs>
@@ -18,6 +18,7 @@
       v-model="activeTab"
       animated
       swipeable
+      keep-alive
       transition-prev="jump-up"
       transition-next="jump-up"
     >
@@ -60,13 +61,14 @@ import EventStat from "components/Event/EventStat.vue"
 import EventApply from "components/Event/EventApply.vue"
 import FavourateEvent from "components/Event/FavourateEvent.vue"
 import Attendance from "components/Event/Attendance.vue"
-
+import { useQuasar } from "quasar"
 // props
 const props = defineProps({
   EventID: String, 
 })
-
+const emits = defineEmits(["hideComponent"])
 // variables
+const $q = useQuasar()
 const activeTab = ref("BasicInfo")
 const $store = useStore();
 
@@ -85,4 +87,14 @@ query Detail_Event_by_pk($c_act_code: String!) {
 const username = computed(() => $store.getters["userModule/getUsername"])
 const isFree = computed(() => result.value? result.value.HTX_Event_by_pk.b_freeofcharge: false)
 
+function confirmClose() {
+  $q.dialog({
+    title: "是否確認關閉？",
+    message: "所有未儲存的資料都會遺失！",
+    persistent: true,
+    cancel: true
+  }).onOk(()=>{
+    return emits("hideComponent")
+  }).onCancel(() => {})
+}
 </script>

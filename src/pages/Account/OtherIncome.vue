@@ -1,9 +1,7 @@
 <template>
   <q-page class="row q-pa-sm">
     <!-- loading dialog -->
-    <q-dialog v-model="waitingAsync" position="bottom">
-      <LoadingDialog message="處理中" />
-    </q-dialog>
+    <LoadingDialog v-model="loading" message="處理中" />
 
     <!-- print receipt modal -->
     <q-dialog v-if="$q.screen.gt.md"
@@ -43,12 +41,13 @@
         </div>
         
         <div class="col-6 row content-start">
-          <div class="col-12"><IncomeTypeSelection v-model="incomeType"/></div>
+          <div class="col-12"><IncomeTypeSelection v-model="incomeType" @update:model-value="updateAmount"/></div>
           <div class="col-12 q-mt-sm">
             <q-input
               v-model="quantity"
               label="數量"
               type="number"
+              @update:model-value="updateAmount"
               />
           </div>
          
@@ -56,12 +55,12 @@
       </q-card-section>
       <q-separator inset/>
       <q-card-actions class="row">
-        <div class="q-mt-sm text-h6 q-mx-sm">
-          總數：${{ incomeType? incomeType.u_fee * quantity: 0 }}
+        <div class="q-mt-sm text-h6 q-mx-sm col-7 row">
+          <span class="col-4">總數：$</span><q-input type="number" v-model="totalAmount" class="col-8"/>
         </div>
         <q-space/>
-        <q-btn label="重置" icon="restart_alt" class="bg-warning text-white q-mx-sm" @click="reset"/>
-        <q-btn label="確認" icon="check" class="bg-positive text-white q-mx-sm" @click="save"/>
+        <q-btn label="重置" icon="restart_alt" class="bg-warning text-white q-mx-sm col-2" @click="reset"/>
+        <q-btn label="確認" icon="check" class="bg-positive text-white q-mx-sm col-2" @click="save"/>
       </q-card-actions>
     </q-card>
   </q-page>
@@ -89,9 +88,10 @@ const MemberObject = ref({
 const accountType = ref()
 const incomeType = ref()
 const quantity = ref(1)
-const awaitServerResponse = ref(0)
 const printReceiptModal = ref(false)
 const ReceiptNo = ref("")
+const totalAmount = ref(0)
+const loading = ref(0)
 
 // query
 const { result: ReceiptData } = useSubscription(
@@ -112,7 +112,6 @@ mutation addOtherIncome (
 }`)
 
 // computed
-const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const username = computed(() => $store.getters["userModule/getUsername"])
 const latestReceiptNO = computed(() => {
   if (ReceiptData.value) {
@@ -129,6 +128,10 @@ function reset() {
   MemberObject.value = {c_mem_id: "9999"}
   incomeType.value = null
   quantity.value = 0
+}
+
+function updateAmount() {
+  totalAmount.value = incomeType.value? incomeType.value.u_fee * quantity.value: 0
 }
 
 function save() {
@@ -158,7 +161,7 @@ function save() {
     c_act_code: null,
     c_type: incomeType.value.c_acc_type? incomeType.value.c_acc_type.trim(): "",
     u_discount: 0,
-    u_price_after_discount: parseFloat(quantity.value * incomeType.value.u_fee),
+    u_price_after_discount: parseFloat(totalAmount.value),
     c_cash_type: "Cash",
     c_cheque_no: "",
     m_remark: remark,
@@ -174,7 +177,7 @@ function save() {
     b_delete: false,
   })
 
-  awaitServerResponse.value++
+  loading.value++
   addOtherIncome({
     logObject: logObject.value,
     accountObject: accountObject.value
@@ -183,8 +186,9 @@ function save() {
 
 // callbacks
 addOtherIncome_Completed((result) => {
-  awaitServerResponse.value--
+  loading.value--
   const receiptNumber = result.data.insert_tbl_account_one?.c_receipt_no??""
+  totalAmount.value = 0
   $q.notify({
     progress: true,
     message:

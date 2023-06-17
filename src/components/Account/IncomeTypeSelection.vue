@@ -62,17 +62,19 @@ query getIncomeType {
 
 // callback
 onResult((result) => {
-  result.data.tbl_sel_acc_Income_type.forEach((res) => {
-    IncomeOptions.value.push({
-      value: res.c_type,
-      c_type_no: res.c_type_no,
-      u_fee: res.u_fee,
-      b_fixed: res.b_fixed,
-      c_acc_type: res.c_acc_type
+  if (result.data) {
+    result.data.tbl_sel_acc_Income_type.forEach((res) => {
+      IncomeOptions.value.push({
+        value: res.c_type,
+        c_type_no: res.c_type_no,
+        u_fee: res.u_fee,
+        b_fixed: res.b_fixed,
+        c_acc_type: res.c_acc_type
+      })
     })
-  })
 
-  OriginalIncomeOptions.value = IncomeOptions.value
+    OriginalIncomeOptions.value = IncomeOptions.value
+  }
 })
 
 

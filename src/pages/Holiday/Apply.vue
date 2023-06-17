@@ -106,7 +106,8 @@ const showAllBalanceModal = ref(false)
 // computed
 const isLeaveApprove = computed(() => $store.getters["userModule/getLeaveApprove"])
 const sal_balance = computed(() => $store.getters["userModule/getSALBalance"])
-const uid = computed(() => $store.getters["userModule/getUID"])
+//const uid = computed(() => $store.getters["userModule/getUID"])
+const uid = ref("egoz4VCb3kSA2NwwT8CyiVSYkv83")
 const isSAL = computed(() => $store.getters["userModule/getSAL"])
 const annualBalance = computed(() => balance.value.length? balance.value[balance.value.length -1].systemStartBalance + balance.value[balance.value.length -1].totalGain - balance.value[balance.value.length -1].totalALTaken: 0)
 const monthlyBalance = computed(() => {
@@ -149,7 +150,8 @@ function changeRenderYear(years) {
 getDoc(doc(FireDB, "users", uid.value)).then((userDoc) => {
   // const rank = userDoc.data().rank;
   const dateOfExit = userDoc.data().employment[userDoc.data().employment.length-1].dateOfExit? new Date(userDoc.data().employment[userDoc.data().employment.length-1].dateOfExit.toDate() - 28800000): null
-  const dateOfEntry = new Date(userDoc.data().employment[0].dateOfEntry.toDate() - 28800000);
+  //const dateOfEntry = new Date(userDoc.data().employment[0].dateOfEntry.toDate() - 28800000);
+  const dateOfEntry = new Date(userDoc.data().employment[0].dateOfEntry.toDate())// no offset
 
   // get leaveConfig
   getDoc(leaveConfig).then((leaveConfigDoc) => {
@@ -180,7 +182,7 @@ getDoc(doc(FireDB, "users", uid.value)).then((userDoc) => {
           leaveData.push(doc.data());
         }
       });
-      // console.log("leaveData:" + leaveData.map(a=>a.date))
+      //console.log("leaveData:" + leaveData.map(a=>a.date))
       let totalGain = 0
       let totalALTaken = 0
       let monthlyALTaken = 0
@@ -205,7 +207,7 @@ getDoc(doc(FireDB, "users", uid.value)).then((userDoc) => {
             dateOfEntry,
             "month"
           ) / 12;
-        //console.log("yearServed:" + yearServed)
+        // console.log("yearServed:" + yearServed)
         let currentEmployment
         userDoc.data().employment.forEach((employment) => {
           if (new Date(employment.dateOfEntry.toDate()-28800000) <= monthLoop && (!employment.dateOfExit || new Date(employment.dateOfExit.toDate()-28800000) >= monthLoop)) {
@@ -237,6 +239,8 @@ getDoc(doc(FireDB, "users", uid.value)).then((userDoc) => {
         ) {
           perMonthGain = 0;
         }
+        // debug log
+        // console.log("monthLoop: " + monthLoop + " perMonthGain: " + perMonthGain + " tier: " + tier + " yearServed: " + yearServed + " dateOfEntry: " + dateOfEntry)
         totalGain += perMonthGain;
         totalALTaken = leaveData.filter(a => qdate.isBetweenDates(a.date, systemStart, monthLoop)).length / 2
         monthlyALTaken = leaveData.filter(a => qdate.isBetweenDates(a.date, qdate.startOfDate(monthLoop, "month"), qdate.endOfDate(monthLoop, "month"))).length / 2

@@ -1,0 +1,160 @@
+<template>
+  <div>
+    <!-- loading dialog -->
+    <LoadingDialog v-model="loading" message="儲存中"/>
+
+    <q-dialog 
+      v-model="bugDetailDialog"
+      persistent
+      maximized
+      full-width
+      full-height
+      transition-show="slide-up"
+      transition-hide="slide-down"
+      >
+      <q-card>
+        <q-card-section class="row bg-primary text-white">
+          <div class="col-grow">
+            {{ bugDetail.docid }}<br/>
+            {{ bugDetail.message }}
+          </div>
+          <q-space/>
+          <q-btn icon="close" flat v-close-popup/>
+        </q-card-section>
+        <q-card-section class="row">
+          <div class="col-6 text-h6 text-bold">{{ bugDetail.username }} @ {{  qdate.formatDate(bugDetail.date, "YYYY年M月D日")}}</div>
+          <div class="col-6 text-h6 text-bold">狀態：{{ bugDetail.status }} </div>
+          <q-separator inset class="q-py-md"/>
+          <!--<q-carousel
+            class="col-12 rounded-borders"
+            v-model="imageNumber"
+            transition-prev="slide-right"
+            transition-next="slide-left"
+            animated
+            control-color="primary"
+          >
+            <q-carousel-slide v-for="(url, index) in bugDetail.filenames" :name="index" :img-src="url">
+              {{ url  }}
+            </q-carousel-slide>
+          </q-carousel>
+          -->
+          <q-img v-for="(url, index) in bugDetail.filenames" :src="url" class="q-py-md" fit="scale-down"/>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+
+    <q-table
+      flat
+      :grid="$q.screen.lt.sm"
+      :rows="bugs"
+      :columns="tableFields"
+      :hide-bottom="true"
+      :pagination="pagination"
+      color="primary"
+      row-key="docid"
+      @row-click="showDetail"
+    >
+    </q-table>
+  </div>
+</template>
+
+<script setup>
+import { bugsCollection, FirebaseFunctions } from "boot/firebase";
+import { date as qdate, useQuasar } from "quasar";
+import LoadingDialog from "components/LoadingDialog.vue"
+import { httpsCallable } from "@firebase/functions";
+import { ref, computed } from "vue"
+import { query, where, getDocs } from "firebase/firestore"
+
+
+
+// variables
+const $q = useQuasar()
+const bugs = ref([])
+const loading = ref(0)
+const bugDetail = ref()
+const bugDetailDialog = ref(false)
+const imageNumber = ref(1)
+
+// table config
+const pagination = ref({
+  sortBy: "order",
+  rowsPerPage: 0,
+})
+
+const tableFields = ref([
+  {
+    name: "docid",
+    label: "ID",
+    field: "docid",
+    headerStyle:
+      "font-size: 1.5vw; text-align: center; width: 3vw;  max-width: 3vw;",
+    style: "font-size: 1.2vw; text-align: center; width: 3vw; max-width: 3vw;",
+  },
+  {
+    name: "username",
+    label: "回報用戶",
+    field: "username",
+    headerStyle:
+      "font-size: 1.5vw; text-align: center; width: 3vw;  max-width: 3vw;",
+    style: "font-size: 1.2vw; text-align: center; width: 3vw; max-width: 3vw;",
+  },
+  {
+    name: "date",
+    label: "錯誤日期",
+    field: "date",
+    headerStyle:
+      "font-size: 1.5vw; text-align: center; width: 3vw; max-width: 3vw;",
+    style: "font-size: 1.2vw; text-align: center; width: 3vw; max-width: 3vw;",
+    format: (val) => qdate.formatDate(val, "YYYY年M月D日")
+  },
+  {
+    name: "message",
+    label: "錯誤內容",
+    field: "message",
+    headerStyle:
+      "font-size: 1.5vw; text-align: center; width: 3vw; max-width: 3vw;",
+    style: "font-size: 1.2vw; text-align: center; width: 3vw; max-width: 3vw;",
+  },
+  {
+    name: "status",
+    label: "狀態",
+    field: "status",
+    headerStyle:
+      "font-size: 1.5vw; text-align: center; width: 3vw; max-width: 3vw;",
+    style: "font-size: 1.2vw; text-align: center; width: 3vw; max-width: 3vw;",
+  },
+])
+
+
+// module logic
+const bugsQuery = query(bugsCollection)
+
+getDocs(bugsQuery).then((bugDoc) => {
+  bugDoc.forEach((bug) => {
+    const prefix = "https://storage.googleapis.com/cciyc_bugreport/"
+    let d = {
+      docid: bug.data().docid,
+      uid: bug.data().uid,
+      username: bug.data().username,
+      status: bug.data().status,
+      date: bug.data().date,
+      message: bug.data().message,
+      filenames: []
+    }
+    
+    bug.data().filenames.forEach((f) => {
+      d.filenames.push(prefix + f)
+    })
+    bugs.value.push(d)
+  });
+})
+
+function showDetail(evt, row, index) {
+  bugDetailDialog.value = true
+  bugDetail.value = row
+}
+</script>
+
+<style scoped></style>
+  

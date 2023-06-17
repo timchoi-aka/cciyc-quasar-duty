@@ -9,6 +9,10 @@ const routes = [
     component: () => import('src/pages/Test.vue'),
   },
   {
+    path: '/bugs',
+    component: () => import('src/pages/BugList.vue'),
+  },
+  {
     path: '/website',
     component: () => import('src/pages/Website/WebsiteHome.vue'), meta: { requiresAuth: true},
     children: [

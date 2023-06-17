@@ -1,8 +1,6 @@
 <template>  
    <!-- loading dialog -->
-   <q-dialog v-model="waitingAsync" position="bottom">
-    <LoadingDialog message="處理中"/>
-  </q-dialog>
+  <LoadingDialog v-model="loading" message="處理中"/>
   
   <div class="col-12 row justify-center">
     <q-chip class="bg-grey-4" size="lg" square :label="props.type"/>
@@ -57,7 +55,7 @@ import DateComponent from "components/Basic/DateComponent.vue"
 const edit = ref(false)
 const editObject = ref({})
 const removeRecord = ref([])
-const awaitServerResponse = ref(0)
+const loading = ref(0)
 const $q = useQuasar()
 
 
@@ -87,7 +85,6 @@ const $store = useStore();
 const username = computed(() => $store.getters["userModule/getUsername"])
 const account = computed(() => result.value?.Event_Evaluation_Account??[])
 const total = computed(() => result.value?.Event_Evaluation_Account_aggregate.aggregate.sum.amount??0)
-const waitingAsync = computed(() => awaitServerResponse.value > 0)
 
 // functions
 function addObject() {
@@ -143,7 +140,7 @@ function save() {
     obj.txn_date = qdate.formatDate(obj.txn_date, "YYYY-MM-DDTHH:mm:ss")
   })
 
-  awaitServerResponse.value++
+  loading.value++
   addEvaluationAccountFromUUID({
     logObject: logObject.value,
     objects: editObject.value,
@@ -156,7 +153,7 @@ function save() {
 // UI functions
 function notifyClientSuccess(result) {
   refetch()
-  awaitServerResponse.value--  
+  loading.value--  
   $q.notify({
     message: "財政預算" + props.c_act_code + "更新完成。",
   })

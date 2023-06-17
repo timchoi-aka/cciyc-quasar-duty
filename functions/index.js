@@ -51,3 +51,4 @@ exports.housekeep = require("./housekeep.js");
 exports.notification = require("./notification.js");
 
 exports.healthcare = require("./healthcare.js");
+exports.file = require("./file.js");

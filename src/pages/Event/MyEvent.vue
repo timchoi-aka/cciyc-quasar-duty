@@ -9,12 +9,13 @@
     v-if="$q.screen.gt.md"
     full-height
     full-width
+    persistent
     v-model="eventDetailDialog"
     transition-show="slide-up"
     transition-hide="slide-down"
     z-index="1"
   >
-    <EventDetail :EventID="selectedEventID"/>
+    <EventDetail :EventID="selectedEventID" @hide-component="() => eventDetailDialog = false"/>
   </q-dialog>
 
   <q-dialog

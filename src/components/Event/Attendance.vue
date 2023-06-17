@@ -43,10 +43,6 @@
       <div class="col-4 normal">負責同事：<span style="border-bottom: 1px solid">{{ Event.c_respon }}</span></div>
     </div>
     <div class="row col-12 q-my-sm">
-      <div class="row col-6 normal"><span>導師：</span><span v-if="Event.c_course_tutor" style="border-bottom: 1px solid">{{ Event.c_course_tutor }}</span><span v-else class="col-9" style="border-bottom: 1px solid">&nbsp;</span></div>
-      <div class="row col-6 normal"><span>導師電話：</span><span class="col-9" style="border-bottom: 1px solid">&nbsp;</span></div>
-    </div>
-    <div class="row col-12 q-my-sm">
       <div class="col-3 normal">開始日期：<span style="border-bottom: 1px solid">{{ Event.d_date_from }}</span></div>
       <div class="col-3 normal">結束日期：<span style="border-bottom: 1px solid">{{ Event.d_date_to }}</span></div>
       <div class="col-3 normal">開始時間：<span style="border-bottom: 1px solid">{{ qdate.formatDate(qdate.extractDate(Event.d_time_from, "h:mm:ss A"), "h:mm A") }}</span></div>
@@ -67,7 +63,7 @@
     <div style="border: 1px solid;" class="col-6 text-center row">
       <div style="border-bottom: 1px solid;" class="col-12 text-center normal">日期</div>
       <div class="row col-12 text-center justify-center">
-        <div class="col-grow normal" style="border: 1px solid;" v-for="n in Event.i_lessons">&nbsp;</div>
+        <div class="col-grow normal" style="border: 1px solid;" v-for="n in (Event.i_lessons<=20? Event.i_lessons: 20)">&nbsp;</div>
       </div>
     </div>
     <div style="border: 1px solid;" class="col-2 text-center normal">備註</div>
@@ -79,7 +75,7 @@
     <div style="border: 1px solid;" class="col-2 text-center normal">{{ member.c_name }} ({{ member.c_mem_id }})</div>
     <div style="border: 1px solid;" class="col-1 text-center normal">{{ member.i_age }}</div>
     <div style="border: 1px solid;" class="col-6 text-center row">
-      <div class="col-grow" style="border-right: 1px solid;" v-for="n in Event.i_lessons">&nbsp;</div>
+      <div class="col-grow" style="border-right: 1px solid;" v-for="n in (Event.i_lessons<=20? Event.i_lessons: 20)">&nbsp;</div>
     </div>
     <div style="border: 1px solid;" class="col-2 text-center">&nbsp;</div>
   </div>
@@ -88,21 +84,21 @@
   <div class="row col-12 q-mt-none">
     <div style="border: 1px solid;" class="col-4 text-center normal">出席人數：</div>
     <div style="border: 1px solid;" class="col-6 text-center row">
-      <div class="col-grow" style="border-right: 1px solid;" v-for="n in Event.i_lessons">&nbsp;</div>
+      <div class="col-grow" style="border-right: 1px solid;" v-for="n in (Event.i_lessons<=20? Event.i_lessons: 20)">&nbsp;</div>
     </div>
     <div style="border: 1px solid;" class="col-2 text-center normal">&nbsp;</div>
   </div>
   <div class="row col-12 q-mt-none">
     <div style="border: 1px solid;" class="col-4 text-center normal">活動節數：</div>
     <div style="border: 1px solid;" class="col-6 text-center row">
-      <div class="col-grow" style="border-right: 1px solid;" v-for="n in Event.i_lessons">&nbsp;</div>
+      <div class="col-grow" style="border-right: 1px solid;" v-for="n in (Event.i_lessons<=20? Event.i_lessons: 20)">&nbsp;</div>
     </div>
     <div style="border: 1px solid;" class="col-2 text-center normal">&nbsp;</div>
   </div>
   <div class="row col-12 q-mt-none">
     <div style="border: 1px solid;" class="col-4 text-center normal">15-24歲青年人數：</div>
     <div style="border: 1px solid;" class="col-6 text-center row">
-      <div class="col-grow" style="border-right: 1px solid;" v-for="n in Event.i_lessons">&nbsp;</div>
+      <div class="col-grow" style="border-right: 1px solid;" v-for="n in (Event.i_lessons<=20? Event.i_lessons: 20)">&nbsp;</div>
     </div>
     <div style="border: 1px solid;" class="col-2 text-center normal">&nbsp;</div>
   </div>

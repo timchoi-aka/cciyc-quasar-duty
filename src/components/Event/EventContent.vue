@@ -1,8 +1,6 @@
 <template>
   <!-- loading dialog -->
-  <q-dialog v-model="waitingAsync" position="bottom">
-    <LoadingDialog message="處理中"/>
-  </q-dialog>
+  <LoadingDialog v-model="loading" message="處理中"/>
 
   <!-- delete modal -->
   <q-dialog v-model="deleteDialog">
@@ -87,13 +85,7 @@
       </div>
       <div class="row col-12 q-gutter-lg q-ml-sm">
         <span class="col-3">對象: <q-select v-if="edit" filled :options="whojoin" v-model="editObject.c_whojoin"/><span v-else>{{Event.c_whojoin}}</span></span>
-        <span class="col-3">負責人1: <q-select v-if="edit" filled :options="UserList" v-model="editObject.c_respon"/><span v-else>{{Event.c_respon}}</span></span>
-        <span class="col-3">負責人2: <q-select v-if="edit" filled :options="UserList" v-model="editObject.c_respon2"/><span v-else>{{Event.c_respon2}}</span></span>
-      </div>
-      <div class="row col-12 q-gutter-lg q-ml-sm">
-        <span class="col-3">工作人員1: <q-select v-if="edit" filled :options="UserList" v-model="editObject.c_worker"/><span v-else>{{Event.c_worker}}</span></span>
-        <span class="col-3">工作人員2: <q-select v-if="edit" filled :options="UserList" v-model="editObject.c_worker2"/><span v-else>{{Event.c_worker2}}</span></span>
-        <span class="col-3">導師: <q-input v-if="edit" filled type="text" v-model="editObject.c_course_tutor"/><span v-else>{{Event.c_course_tutor}}</span></span>
+        <span class="col-3">負責職員: <q-select v-if="edit" filled :options="UserList" v-model="editObject.c_respon"/><span v-else>{{Event.c_respon}}</span></span>
       </div>
     </q-card-section>
 
@@ -124,8 +116,6 @@
         <span class="col-3">解散地點: <q-select v-if="edit" filled use-input input-debounce="0" @new-value="newDest" :options="dest" v-model="editObject.c_end_collect"/><span v-else>{{Event.c_end_collect}}</span></span>
       </div>
       <div class="row col-12 q-gutter-lg q-ml-sm">
-        <span class="col-3">本身主辦: <q-checkbox v-if="edit" v-model="editObject.b_open_own"/><span v-else><q-icon class="text-green" v-if="Event.b_open_own" name="check"/><q-icon class="text-red" v-else name="cancel"/></span></span>
-        <span class="col-3">合辦機構: <q-checkbox v-if="edit" v-model="editObject.b_open_oth"/><span v-else><q-icon class="text-green" v-if="Event.b_open_oth" name="check"/><q-icon class="text-red" v-else name="cancel"/></span></span>
         <span class="col-3">顯示網頁: <q-checkbox v-if="edit" v-model="editObject.IsShow"/><span v-else><q-icon class="text-green" v-if="Event.IsShow" name="check"/><q-icon class="text-red" v-else name="cancel"/></span></span>
       </div>
     </q-card-section>
@@ -171,7 +161,7 @@ const deleteDialog = ref(false)
 const deleteCheck = ref("")
 const serverObject = ref({})
 const saveDialog = ref(false)
-const awaitServerResponse = ref(0)
+const loading = ref(0)
 
 const acc_type = ref([
   'PF', 'CF', 'RF', 'MF', 'SF'
@@ -249,7 +239,6 @@ getDocs(userDocQuery).then((docs) =>
 const username = computed(() => $store.getters["userModule/getUsername"])
 const Event = computed(() => EventData.value?.HTX_Event_by_pk??[])
 const userProfileLogout = () => $store.dispatch("userModule/logout")
-const waitingAsync = computed(() => awaitServerResponse.value > 0)
 
 // functions
 /**
@@ -286,7 +275,7 @@ function saveEdit() {
     "action": "修改活動: " + props.c_act_code + "。新資料:" + JSON.stringify(serverObject.value, null, 2)
   })
   
-  awaitServerResponse.value++
+  loading.value++
   updateEvent({
     logObject: logObject.value,
     object: serverObject.value,
@@ -371,7 +360,7 @@ function newDest(val, done) {
 }
 
 function notifyClientSuccess(result) {
-  awaitServerResponse.value--  
+  loading.value--  
   $q.notify({
     message: "刪除活動" + props.c_act_code + "完成。",
   })

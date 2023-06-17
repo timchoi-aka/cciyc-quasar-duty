@@ -251,6 +251,11 @@ query EVENT_EVALUATION_BY_ACT_CODE($c_act_code: String!) {
     c_type
     c_respon2
     c_respon
+    d_date_from
+    d_date_to
+    d_time_from
+    d_time_to
+    i_lessons
     Event_to_Evaluation {
       attendance
       c_act_code
@@ -296,6 +301,11 @@ query EVENT_EVALUATION_BY_ACT_CODE($c_act_code: String!) {
       uuid
       supervisor_comment
       ic_comment
+      tutor_name
+      tutor_phone
+      partner_agency
+      partner_name
+      partner_phone
     }
   }
 }`

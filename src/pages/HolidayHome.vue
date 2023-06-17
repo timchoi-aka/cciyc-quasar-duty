@@ -63,11 +63,10 @@ const leaveApprovedListener = ref()
 const dashboardListener = ref()
 const pendingALApprovalCount = ref(0)
 const pendingCount = ref(0)
-const awaitServerResponse = ref(0)
 const systemStartBalance = ref(0)
 const totalGain = ref(0)
 const holidayCount = ref(0)
-const dataBoundary = ref(new Date())
+const dataBoundary = ref(qdate.endOfDate(new Date(), 'month'))
 const systemStart = new Date("2021/04/01");
 
 
@@ -75,7 +74,6 @@ const systemStart = new Date("2021/04/01");
 const uid = computed(() => $store.getters["userModule/getUID"])
 const isLeaveApprove = computed(() => $store.getters["userModule/getLeaveApprove"])
 const isSAL = computed(() => $store.getters["userModule/getSAL"])
-const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"])
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
 const SALBalance = computed(() => $store.getters["userModule/getSALBalance"])
 const ALBalance = computed(() => systemStartBalance.value + totalGain.value - holidayCount.value)

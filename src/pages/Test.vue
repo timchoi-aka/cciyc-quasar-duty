@@ -9,6 +9,14 @@ options: {{ displayOptions }}
 <q-toggle v-model="displayOptions.loadDetail" label="詳細資料"/>
 <q-toggle v-model="displayOptions.loadHousekeep" label="輔助資料"/>
 <q-toggle v-model="displayOptions.loadRelation" label="關聯會員"/>
+<q-uploader
+    url="http://localhost:5001/manage-hr/asia-east2/file-saveFileToStorage"
+    color="teal"
+    flat
+    bordered
+    multiple
+    style="max-width: 300px"
+  />
 <q-btn label="搜尋" @click="search"/>
 <q-input type="text" v-model="inputText" label="青年AI"/>
 <q-btn label="聊天" @click="chat"/>
@@ -21,6 +29,8 @@ import useMember from "components/Member/MemberData"
 import { chatAPI } from "boot/axios"
 import { useQuery } from "@vue/apollo-composable";
 import gql from "graphql-tag";
+import { httpsCallable } from "firebase/functions";
+import {FirebaseFunctions} from "boot/firebase";
 
 const memberID = ref("")
 const mobile= ref("")
@@ -196,5 +206,18 @@ async function search() {
   } else delete searchCriteria.value.c_tel
 
   // await loadMember()
+}
+
+async function upload() {
+  const upload = httpsCallable(FirebaseFunctions,
+    "file-saveFileToStorage"
+  );
+  upload()
+    .then((result) => {
+      console.log(JSON.stringify(result));
+    })
+    .catch((err) => {
+      console.err(JSON.stringify(err));
+    });
 }
 </script>

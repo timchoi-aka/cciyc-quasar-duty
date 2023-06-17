@@ -1,6 +1,35 @@
 <template>
   <q-layout id="q-app" view="hHh lpR lFf">
+    <!-- loading dialog -->
+    <LoadingDialog v-model="loading" message="處理中"/>
+
     <q-header elevated class="bg-primary text-white" height-hint="98">
+      <q-dialog v-model="bugReportModal">
+        <q-card>
+          <q-card-section>
+            <div class="text-h6">錯誤回報</div>
+          </q-card-section>
+          <q-card-section class="row">
+            <div class="col-3">錯誤發生日期：</div><div class="col-9"><DateComponent v-model="bugReportObject.date"/></div>
+            <div class="col-3">錯誤描述：</div><div class="col-9"><q-input type="text" v-model="bugReportObject.message"/></div>
+            <div class="col-3">截圖（如有）：</div>
+            <q-uploader
+              class="col-9"
+              :url="upload_API + '/file-saveFileToStorage'"
+              color="primary"
+              flat
+              bordered
+              multiple
+              @uploaded="updateFilenames"
+            />
+          </q-card-section>
+          <q-card-actions align="right">
+            <q-btn label="取消" class="bg-negative text-white" v-close-popup/>
+            <q-btn label="提交" class="bg-primary text-white" @click="submitBugReport"/>
+          </q-card-actions>
+        </q-card>
+      </q-dialog>
+
       <q-toolbar>
         <q-btn
           class="mobile-only"
@@ -19,6 +48,7 @@
         </q-toolbar-title>
 
         <!-- notifications -->
+        <div v-if="username && UAT" class="q-mx-md bg-primary text-white"><q-btn flat class="desktop-only" icon="bug_report" label="錯誤回報" @click="bugReportModal = true"/></div>
         <div v-if="username" class="q-mx-md bg-primary text-white"><NotificationBell/></div>
 
         <div v-if="username" class="desktop-only q-mr-md">
@@ -42,7 +72,7 @@
             color="white"
           />
         </div>
-        <q-btn class="desktop-only" v-if="UAT" dense flat round icon="menu" @click="toggleRightDrawer" />
+        <q-btn class="desktop-only" dense flat round icon="menu" @click="toggleRightDrawer" />
       </q-toolbar>
 
       <MenuBar :key="module"/>
@@ -62,30 +92,31 @@
       <q-list v-if="uid && (module == 'duty')">
         <EssentialLink v-for="link in dutyList" :key="link.title" v-bind="link" />
       </q-list>
-      <q-list v-if="uid && module == 'member'">
+      <q-list v-if="uid && (module == 'member')">
         <EssentialLink v-for="link in memberList" :key="link.title" v-bind="link" />
       </q-list>
-      <q-list v-if="uid && module == 'event'">
+      <q-list v-if="uid && (module == 'event')">
         <EssentialLink v-for="link in eventList" :key="link.title" v-bind="link" />
       </q-list>
 
       <q-space/>
 
-      <div v-if="UAT" class="row">
+      <div class="row col-*">
         <q-btn class="col" name="duty" icon="event" label="編更" @click="setCurrentModule('duty')"/>
-        <q-btn class="col" name="member" icon="public" label="會員" @click="setCurrentModule('member')"/>
-        <q-btn class="col" name="event" icon="festival" label="活動" @click="setCurrentModule('event')"/>
-        <q-btn class="col" name="finance" icon="money" label="財務" @click="setCurrentModule('account')"/>
+        <q-btn v-if="!isTmp" class="col" name="member" icon="public" label="會員" @click="setCurrentModule('member')"/>
+        <q-btn v-if="!isTmp" class="col" name="event" icon="festival" label="活動" @click="setCurrentModule('event')"/>
+        <q-btn v-if="!isTmp" class="col" name="finance" icon="money" label="財務" @click="setCurrentModule('account')"/>
       </div>
+      <div class="row text-h6 q-ml-md q-my-sm">{{ qdate.formatDate(new Date(), "YYYY年M月D日") }}</div>
     </q-drawer>
 
     <!-- right drawer -->
     <q-drawer :width="100" v-model="rightDrawerOpen" side="right" overlay elevated class="column justify-around" behavior="mobile">
         <q-btn v-close-popup class="col-grow" name="duty" icon="event" label="編更" to="/duty/dutytable"/>
-        <q-btn v-close-popup class="col-grow" name="member" icon="public" label="會員" to="/member/list"/>
-        <q-btn v-close-popup class="col-grow" name="event" icon="festival" label="活動" to="/event/my-event"/>
-        <q-btn v-close-popup class="col-grow" name="finance" icon="money" label="財務" to="/account/receipt/search"/>
-        <q-btn v-if="isSystemAdmin" v-close-popup class="col-grow" name="web" icon="home" label="網站" to="/website/news"/>
+        <q-btn v-if="!isTmp" v-close-popup class="col-grow" name="member" icon="public" label="會員" to="/member/list"/>
+        <q-btn v-if="!isTmp" v-close-popup class="col-grow" name="event" icon="festival" label="活動" to="/event/my-event"/>
+        <q-btn v-if="!isTmp" v-close-popup class="col-grow" name="finance" icon="money" label="財務" to="/account/receipt/search"/>
+        <q-btn v-if="!isTmp & isSystemAdmin" v-close-popup class="col-grow" name="web" icon="home" label="網站" to="/website/news"/>
     </q-drawer>
 
     <q-page-container>
@@ -100,15 +131,25 @@ import NotificationBell from "components/Basic/NotificationBell.vue"
 import MenuBar from "components/MenuBar.vue";
 import { ref, computed, provide } from "vue";
 import { useStore } from "vuex";
-import { useQuasar } from "quasar"
+import { useQuasar, date as qdate } from "quasar"
 import { FirebaseMessaging } from 'boot/firebase'
+import { httpsCallable } from "@firebase/functions";
+import { FirebaseFunctions } from "boot/firebase";
+import DateComponent from "./components/Basic/DateComponent.vue";
+import LoadingDialog from "components/LoadingDialog.vue"
 provide('messaging', FirebaseMessaging)
 
+let upload_API;
+if (process.env.NODE_ENV === "development") {
+  upload_API = "http://localhost:5001"
+} else upload_API = "https://asia-east2-manage-hr.cloudfunctions.net"
 // variables
 const leftDrawerOpen = ref(false);
 const rightDrawerOpen = ref(false);
 const $store = useStore();
 const $q = useQuasar();
+const bugReportModal = ref(false)
+const loading = ref(0)
 
 // computed
 // userModule getters
@@ -122,6 +163,17 @@ const isUserManagement = computed(() => $store.getters["userModule/getUserManage
 // currentModule getters
 const module = computed(() => $store.getters["userModule/getModule"])
 
+// bug report object
+const bugReportObject = ref({
+  date: qdate.formatDate(new Date(), "YYYY/MM/DD"),
+  uid: uid.value,
+  username: username.value,
+  message: "",
+  status: "未解決",
+  filenames: [],
+  docid: qdate.formatDate(new Date(), "YYYYMMDDHHmmss")
+})
+
 // menu items
 // links
 const dutyList = computed(() => [
@@ -134,16 +186,23 @@ const dutyList = computed(() => [
   },
   {
     title: "假期系統",
-    caption: "年假，申請，審批",
+    caption: "年假，申請，結餘，審批",
     icon: "festival",
     link: "/holiday",
     enable: !isTmp.value,
   },
   {
     title: "超時系統",
-    caption: "超時，申請，審批",
+    caption: "超時，申請，結餘，審批",
     icon: "schedule",
     link: "/overtime",
+    enable: !isTmp.value,
+  },
+  {
+    title: "員工醫療",
+    caption: "申請醫療津貼，結餘，審批",
+    icon: "health_and_safety",
+    link: "/healthcare",
     enable: !isTmp.value,
   },
   {
@@ -151,14 +210,14 @@ const dutyList = computed(() => [
     caption: "權限，臨時員工",
     icon: "account_circle",
     link: "/user",
-    enable: isUserManagement.value,
+    enable: isUserManagement.value && !isTmp.value,
   },
   {
     title: "系統管理",
     caption: "系統管理員專用",
     icon: "build",
     link: "/system-admin",
-    enable: isSystemAdmin.value,
+    enable: isSystemAdmin.value && !isTmp.value,
   },
 ])
 
@@ -177,21 +236,62 @@ function logout() {
   .catch((error) => console.log("error", error));
 }
 
+async function submitBugReport() {
+  const addBugReport = httpsCallable(FirebaseFunctions,
+    "systemAdmin-addBugReport"
+  );
+
+  loading.value++;
+  addBugReport(bugReportObject.value).then(() => {
+    loading.value--;
+    bugReportObject.value = {
+      date: qdate.formatDate(new Date(), "YYYY/MM/DD"),
+      uid: uid.value,
+      username: username.value,
+      message: "",
+      status: "未解決",
+      filenames: [],
+      docid: qdate.formatDate(new Date(), "YYYYMMDDHHmmss")
+    }
+    bugReportModal.value = false
+    $q.notify({
+      message: "成功提交錯誤報告。",
+    })
+  });
+}
+
+function updateFilenames(filename) {
+  bugReportObject.value.filenames.push(filename.files[0].name)
+}
 
 const memberList = ref([
   {
     title: "會員列表",
     caption: "列出所有有效會員",
-    icon: "calendar_month",
+    icon: "card_membership",
     link: "/member/list",
-    enable: UAT.value,
+    enable: !isTmp.value,
   },
   {
     title: "新增會員",
     caption: "增加新會員",
-    icon: "festival",
+    icon: "person_add",
     link: "/member/add",
-    enable: UAT.value,
+    enable: !isTmp.value,
+  },
+  {
+    title: "義工記錄",
+    caption: "記錄義工時數、報表",
+    icon: "volunteer_activism",
+    link: "/volunteer",
+    enable: !isTmp.value,
+  },
+  {
+    title: "報表",
+    caption: "社署報表",
+    icon: "summarize",
+    link: "/member/report",
+    enable: !isTmp.value,
   },
   {
     title: "系統記錄",

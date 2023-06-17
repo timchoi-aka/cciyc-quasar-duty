@@ -3,9 +3,10 @@
     <q-dialog
       full-height
       full-width
+      persistent
       v-model="eventDetailDialog"
     >
-      <EventDetail :EventID="selectedEventID"/>
+      <EventDetail :EventID="selectedEventID" @hide-component="() => eventDetailDialog = false"/>
     </q-dialog>
 
     <div class="col-2" style="border: 1px solid;">

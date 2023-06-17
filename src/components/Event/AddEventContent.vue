@@ -159,14 +159,8 @@
         <span class="col-7">細類： <q-select filled :options="group2" v-model="editObject.c_group2"/></span>
       </div>
       <div class="row col-12 q-gutter-lg q-ml-sm">
-        <span class="col-3">對象: <q-select filled use-input input-debounce="0" @new-value="newWhojoin" :options="whojoin" v-model="editObject.c_whojoin"/></span>
-        <span class="col-3">負責人1: <q-select filled :options="UserList" v-model="editObject.c_respon"/></span>
-        <span class="col-3">負責人2: <q-select filled :options="UserList" v-model="editObject.c_respon2"/></span>
-      </div>
-      <div class="row col-12 q-gutter-lg q-ml-sm">
-        <span class="col-3">工作人員1: <q-select filled :options="UserList" v-model="editObject.c_worker"/></span>
-        <span class="col-3">工作人員2: <q-select filled :options="UserList" v-model="editObject.c_worker2"/></span>
-        <span class="col-3">導師: <q-input filled type="text" v-model="editObject.c_course_tutor"/></span>
+        <span class="col-3">對象: <q-select filled use-input nput-debounce="300" @filter="saveBuffer" @blur="textBuffer.length > 0? updateBuffer(editObject, 'c_whojoin'): ''" @new-value="newWhojoin" :options="whojoin" v-model="editObject.c_whojoin"/></span>
+        <span class="col-3">負責職員: <q-select filled :options="UserList" v-model="editObject.c_respon"/></span>
       </div>
     </q-card-section>
 
@@ -185,20 +179,18 @@
       <div class="row col-12 q-gutter-lg q-ml-sm">
         <span class="col-3">名額: <q-input filled type="number" v-model="editObject.i_quota_max"/></span>
         <span class="col-3">總堂數: <q-input filled type="number" v-model="editObject.i_lessons"/></span>
-        <span class="col-3">逢星期: <q-select filled use-input input-debounce="0" @new-value="newWeek" :options="week" v-model="editObject.c_week"/></span>
+        <span class="col-3">逢星期: <q-select filled use-input nput-debounce="300" @filter="saveBuffer" @blur="textBuffer.length > 0? updateBuffer(editObject, 'c_week'): ''" @new-value="newWeek" :options="week" v-model="editObject.c_week"/></span>
       </div>
     </q-card-section>
 
     <q-card-section class="row bg-brown-1 q-pl-none q-pt-none q-pb-lg">
       <q-chip class="col-12 bg-brown-3" size="xl">地點</q-chip>
       <div class="row col-12 q-gutter-lg q-ml-sm">
-        <span class="col-3">舉行地點: <q-select filled use-input input-debounce="0" @new-value="newDest" :options="dest" v-model="editObject.c_dest"/></span>
-        <span class="col-3">集合地點: <q-select filled use-input input-debounce="0" @new-value="newDest" :options="dest" v-model="editObject.c_start_collect"/></span>
-        <span class="col-3">解散地點: <q-select filled use-input input-debounce="0" @new-value="newDest" :options="dest" v-model="editObject.c_end_collect"/></span>
+        <span class="col-3">舉行地點: <q-select filled use-input input-debounce="300" @filter="saveBuffer" @blur="textBuffer.length > 0? updateBuffer(editObject, 'c_dest'): ''" @new-value="newDest" :options="dest" v-model="editObject.c_dest"/></span>
+        <span class="col-3">集合地點: <q-select filled use-input input-debounce="300" @filter="saveBuffer" @blur="textBuffer.length > 0? updateBuffer(editObject, 'c_start_collect'): ''" @new-value="newDest" :options="dest" v-model="editObject.c_start_collect"/></span>
+        <span class="col-3">解散地點: <q-select filled use-input input-debounce="300" @filter="saveBuffer" @blur="textBuffer.length > 0? updateBuffer(editObject, 'c_end_collect'): ''" @new-value="newDest" :options="dest" v-model="editObject.c_end_collect"/></span>
       </div>
       <div class="row col-12 q-gutter-lg q-ml-sm">
-        <span class="col-3">本身主辦: <q-checkbox v-model="editObject.b_open_own"/></span>
-        <span class="col-3">合辦機構: <q-checkbox v-model="editObject.b_open_oth"/></span>
         <span class="col-3">顯示網頁: <q-checkbox v-model="editObject.IsShow"/></span>
       </div>
     </q-card-section>
@@ -247,6 +239,7 @@ const loadDialog = ref(false)
 const awaitServerResponse = ref(0)
 const loadEventID = ref("")
 const activeTab = ref("EventInfo")
+const textBuffer = ref("")
 
 const acc_type = ref([
   'PF', 'CF', 'RF', 'MF', 'SF'
@@ -347,6 +340,19 @@ function copyEvent() {
       }
     }
   }
+}
+
+function saveBuffer(buf, onDone) {
+  textBuffer.value = buf
+  onDone(() => {})
+}
+
+function updateBuffer(o, key) {
+  o[key] = textBuffer.value
+  // console.log("textBuffer: " +  textBuffer.value)
+  // console.log("o.value:" + o.value)
+  // console.log(editObject.value.c_dest)
+  textBuffer.value = ""
 }
 
 function save() {

@@ -10,6 +10,7 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
+  <!-- @blur="tmpBuffer.length > 0 ? emit('update:modelValue', tmpBuffer): null" -->
   <q-select
     dense
     filled
@@ -17,7 +18,7 @@
     use-input
     clearable
     :label="props.label? props.label: '物資地點'"
-    input-debounce="0"
+    input-debounce="100"
     new-value-mode="add-unique"
     :options="LocationOptions"
     :model-value="props.modelValue"

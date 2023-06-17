@@ -1,8 +1,6 @@
 <template>
   <!-- loading dialog -->
-  <q-dialog v-model="waitingAsync" position="bottom">
-    <LoadingDialog message="處理中"/>
-  </q-dialog>
+  <LoadingDialog v-model="loading" message="處理中"/>
 
   <!-- confirm submit dialog -->
   <q-dialog v-model="confirmDialog">
@@ -67,13 +65,18 @@
       <div v-if="PlanEval.ic_comment" class="col-12 q-my-sm" style="border: 1px dotted red;">主管評語: {{PlanEval.ic_comment}}</div>
       <div class="col-2 q-my-sm">工作目的: </div><span class="col-10" v-if="edit"><q-input filled type="text" v-model="editObject.objective"/></span><span class="col-10" v-else>{{PlanEval.objective}}</span>
       <div class="col-2 q-my-sm">工作內容: </div><span class="col-10" v-if="edit"><q-input filled type="text" v-model="editObject.objective_detail"/></span><span class="col-10" v-else>{{PlanEval.objective_detail}}</span>
+      <div class="col-2 q-my-sm">合辦機構: </div><span class="col-10" v-if="edit"><q-input filled type="text" v-model="editObject.partner_agency"/></span><span class="col-10" v-else>{{PlanEval.partner_agency}}</span>
+      <div class="col-2 q-my-sm">合辦聯絡人: </div><span class="col-4" v-if="edit"><q-input filled type="text" v-model="editObject.partner_name"/></span><span class="col-4" v-else>{{PlanEval.partner_name}}</span>
+      <div class="col-2 q-my-sm">聯絡人電話: </div><span class="col-4" v-if="edit"><q-input filled type="text" v-model="editObject.partner_phone"/></span><span class="col-4" v-else>{{PlanEval.partner_phone}}</span>
+      <div class="col-2 q-my-sm">導師: </div><span class="col-4" v-if="edit"><q-input filled type="text" v-model="editObject.tutor_name"/></span><span class="col-4" v-else>{{PlanEval.tutor_name}}</span>
+      <div class="col-2 q-my-sm">導師電話: </div><span class="col-4" v-if="edit"><q-input filled type="text" v-model="editObject.tutor_phone"/></span><span class="col-4" v-else>{{PlanEval.tutor_phone}}</span>
     </div>
     <q-splitter
       v-model="splitterModel"
       class="fit">
         <template v-slot:before>
           <div class="q-pa-md text-h6 bg-secondary text-white">
-            計劃
+            計劃 <q-btn flat v-if="edit" icon="download" label="載入活動資料" @click="loadEventToPlan"/>
           </div>
           <div class="row fit q-pa-sm" style="border: 1px solid">
             <q-chip class="fit" square label="基本資料"/>
@@ -138,7 +141,7 @@
         </template>
         <template v-slot:after>
           <div class="q-pa-md text-h6 bg-warning text-white">
-            檢討
+            檢討 <q-btn flat v-if="edit" icon="download" label="載入活動資料" @click="loadEventToEval"/>
           </div>
           <div class="row fit q-pa-sm" style="border: 1px solid">
             <q-chip class="fit" square label="基本資料"/>
@@ -244,6 +247,7 @@ import LoadingDialog from "components/LoadingDialog.vue"
 import DateComponent from "components/Basic/DateComponent.vue"
 import TimeComponent from "components/Basic/TimeComponent.vue"
 import EvaluationAccount from "components/Account/EvaluationAccount.vue"
+import { onBeforeRouteLeave } from "vue-router"
 
 // props
 const props = defineProps({
@@ -253,8 +257,7 @@ const props = defineProps({
 // variables
 const splitterModel = ref(50) // default split at 50%
 const edit = ref(false)
-const awaitServerResponse = ref(0)
-const waitingAsync = computed(() => awaitServerResponse.value > 0)
+const loading = ref(0)
 const $q = useQuasar()
 const editObject = ref({})
 const $store = useStore();
@@ -375,6 +378,22 @@ function saveEdit() {
   edit.value = false
 }
 
+function loadEventToPlan() {
+  editObject.value.plan_start_date = Event.value.d_date_from? qdate.formatDate(qdate.extractDate(Event.value.d_date_from.trim(), "D/M/YYYY"), "YYYY/MM/DD"): ""
+  editObject.value.plan_end_date = Event.value.d_date_to? qdate.formatDate(qdate.extractDate(Event.value.d_date_to.trim(), "D/M/YYYY"), "YYYY/MM/DD"): ""
+  editObject.value.plan_start_time = Event.value.d_time_from? qdate.formatDate(qdate.extractDate(Event.value.d_time_from.trim(), "h:mm:ss A"), "HH:mm:ss"): ""
+  editObject.value.plan_end_time = Event.value.d_time_to? qdate.formatDate(qdate.extractDate(Event.value.d_time_to.trim(), "h:mm:ss A"), "HH:mm:ss"): ""
+  editObject.value.plan_sessions = Event.value.i_lessons? parseInt(Event.value.i_lessons): 0
+}
+
+function loadEventToEval() {
+  editObject.value.eval_start_date = Event.value.d_date_from? qdate.formatDate(qdate.extractDate(Event.value.d_date_from.trim(), "D/M/YYYY"), "YYYY/MM/DD"): ""
+  editObject.value.eval_end_date = Event.value.d_date_to? qdate.formatDate(qdate.extractDate(Event.value.d_date_to.trim(), "D/M/YYYY"), "YYYY/MM/DD"): ""
+  editObject.value.eval_start_time = Event.value.d_time_from? qdate.formatDate(qdate.extractDate(Event.value.d_time_from.trim(), "h:mm:ss A"), "HH:mm:ss"): ""
+  editObject.value.eval_end_time = Event.value.d_time_to? qdate.formatDate(qdate.extractDate(Event.value.d_time_to.trim(), "h:mm:ss A"), "HH:mm:ss"): ""
+  editObject.value.eval_sessions = Event.value.i_lessons? parseInt(Event.value.i_lessons): 0
+}
+
 function ApproveOK() {
   const logObject = ref({
     "username": username.value,
@@ -383,7 +402,7 @@ function ApproveOK() {
     "action": "批核活動計劃/檢討: " + props.EventID.trim() + "。主管評語：" + EvaluationComment.value,
   })
   
-  awaitServerResponse.value++
+  loading.value++
   approveEvaluation({
     logObject: logObject.value,
     ic: username.value,
@@ -403,7 +422,7 @@ function ApproveDeny() {
     "action": "發回活動計劃/檢討: " + props.EventID.trim() + "。主管評語：" + EvaluationComment.value,
   })
 
-  awaitServerResponse.value++
+  loading.value++
   denyEvaluation({
     logObject: logObject.value,
     ic: username.value,
@@ -421,7 +440,12 @@ function purifyRecord() {
   // basic
   editObject.value.objective = editObject.value.objective? editObject.value.objective.trim() : null
   editObject.value.objective_detail = editObject.value.objective_detail? editObject.value.objective_detail.trim() : null
-  
+  editObject.value.partner_agency = editObject.value.partner_agency? editObject.value.partner_agency.trim(): null
+  editObject.value.partner_name = editObject.value.partner_name? editObject.value.partner_name.trim(): null
+  editObject.value.partner_phone = editObject.value.partner_phone? editObject.value.partner_phone.trim(): null
+  editObject.value.tutor_name = editObject.value.tutor_name? editObject.value.tutor_name.trim(): null
+  editObject.value.tutor_phone = editObject.value.tutor_phone? editObject.value.tutor_phone.trim(): null
+
   // plan
   editObject.value.plan_start_date = !editObject.value.plan_start_date? null: qdate.formatDate(editObject.value.plan_start_date, "YYYY-MM-DD")
   editObject.value.plan_end_date = !editObject.value.plan_end_date? null: qdate.formatDate(editObject.value.plan_end_date, "YYYY-MM-DD")
@@ -471,7 +495,7 @@ function onOKClick() {
   //console.log(username.value)
   //console.log(qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"))
   //console.log(logObject.value)
-  awaitServerResponse.value++
+  loading.value++
   submitEvaluation({
     uuid: PlanEval.value.uuid,
     staff_name: username.value, 
@@ -491,7 +515,7 @@ function saveRecord() {
       "action": "修改活動計劃/檢討: " + props.EventID,
     })
     
-    awaitServerResponse.value++
+    loading.value++
     updateEvaluationFromActCode({
       uuid: PlanEval.value.uuid,
       logObject: logObject.value,
@@ -505,7 +529,7 @@ function saveRecord() {
       "action": "新增活動計劃/檢討: " + props.EventID,
     })
     
-    awaitServerResponse.value++
+    loading.value++
     addEvaluationFromActCode({
       evaluationObject: editObject.value,
       logObject: logObject.value
@@ -540,6 +564,11 @@ function clonePlanValue() {
     objective_followup: PlanEval.value?.objective_followup??null,
     objective_detail: PlanEval.value?.objective_detail??null,
     objective_review_method: PlanEval.value?.objective_review_method??null,
+    partner_agency: PlanEval.value?.partner_agency??null,
+    partner_name: PlanEval.value?.partner_name??null,
+    partner_phone: PlanEval.value?.partner_phone??null,
+    tutor_name: PlanEval.value?.tutor_name??null,
+    tutor_phone: PlanEval.value?.tutor_phone??null,
     plan_attend_headcount_children: PlanEval.value?.plan_attend_headcount_children??0,
     plan_attend_headcount_others: PlanEval.value?.plan_attend_headcount_others??0,
     plan_attend_headcount_parent: PlanEval.value?.plan_attend_headcount_parent??0,
@@ -574,9 +603,35 @@ function notifyClientError(error) {
 
 function notifyClientSuccess(c_act_code) {
   refetch()
-  awaitServerResponse.value--  
+  loading.value--  
   $q.notify({
     message: "活動計劃" + c_act_code + "更新完成。",
   })
 }
+
+onBeforeRouteLeave((to, from) => {
+  if (edit) {
+    return new Promise((resolve, reject) => {
+      $q.dialog({
+        title: "請確認",
+        message: '未儲存，確定離開？',
+        transitionShow: "slide-up",
+        transitionHide: "slide-down",
+        position: "bottom",
+        ok: {
+          push: true,
+          label: "確認",
+          color: "green",
+        },
+        cancel: {
+          push: true,
+          label: "取消",
+          color: 'negative'
+        },
+      }).onOk(() => {
+        resolve(true)
+      })
+    })
+  }
+})
 </script>

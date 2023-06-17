@@ -839,7 +839,6 @@ function cancelEmploymentRecordChange() {
 
 // module logic
 const userQuery = query(usersCollection,
-  where("privilege.systemAdmin", "==", false),
   where("privilege.tmp", "!=", true)
 )
 

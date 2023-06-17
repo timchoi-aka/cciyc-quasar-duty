@@ -13,7 +13,7 @@
     transition-show="slide-up"
     transition-hide="slide-down"
   >
-    <EventDetail :EventID="showEventID"/>
+    <EventDetail :EventID="showEventID" @hide-component="() => detailModal = false"/>
   </q-dialog>
 
   <q-dialog v-else
@@ -26,7 +26,7 @@
     class="q-pa-none"
   >
     <q-card style="min-width: 70vw; width: 70vw; max-width: 70vw;">
-      <EventDetail :EventID="showEventID"/>
+      <EventDetail :EventID="showEventID" @hide-component="() => detailModal = false"/>
     </q-card>
   </q-dialog>
   

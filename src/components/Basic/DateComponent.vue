@@ -5,7 +5,7 @@
     :label="props.label? props.label: ''"
     filled
     :model-value="props.modelValue"
-    hide-hint
+    hint="YYYY/MM/DD"
     clearable
     hide-bottom-space
     @update:model-value="(value) => $emit('update:modelValue', value)">
