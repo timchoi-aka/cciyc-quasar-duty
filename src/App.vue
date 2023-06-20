@@ -48,29 +48,23 @@
         </q-toolbar-title>
 
         <!-- notifications -->
-        <div v-if="username && UAT" class="q-mx-md bg-primary text-white"><q-btn flat class="desktop-only" icon="bug_report" label="錯誤回報" @click="bugReportModal = true"/></div>
-        <div v-if="username" class="q-mx-md bg-primary text-white"><NotificationBell/></div>
+        <div v-if="username && UAT" class="q-ml-sm bg-primary text-white"><q-btn flat class="desktop-only" icon="bug_report" label="錯誤回報" @click="bugReportModal = true"/></div>
+        <div v-if="username" class="q-mx-sm bg-primary text-white"><NotificationBell/></div>
 
         <div v-if="username" class="desktop-only q-mr-md">
-          <q-chip>
-            <q-avatar v-if="photoURL">
-              <img :src="photoURL" />
-            </q-avatar>
-            {{ username }}
-          </q-chip>
-        </div>
-
-        <div v-if="username">
+          <q-avatar rounded left v-if="photoURL" size="42px">
+            <img :src="photoURL" />
+          </q-avatar>
           <q-btn
-            class="flex flex-center q-px-lg q-py-sm"
+            class="q-px-sm q-py-sm"
             size="md"
             flat
             text-color="white"
             :label="'登出: ' + username"
             icon="logout"
             @click="logout"
-            color="white"
-          />
+            >
+          </q-btn>
         </div>
         <q-btn class="desktop-only" dense flat round icon="menu" @click="toggleRightDrawer" />
       </q-toolbar>

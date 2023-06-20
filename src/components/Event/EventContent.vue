@@ -48,7 +48,7 @@
         <q-btn v-if="edit" icon="cancel" flat @click="edit = false">
           <q-tooltip class="bg-white text-primary">取消</q-tooltip>
         </q-btn>
-        <q-btn v-if="!edit" icon="delete" class="text-negative" flat @click="deleteDialog = true">
+        <q-btn v-if="!edit && isCenterIC" icon="delete" class="text-negative" flat @click="deleteDialog = true">
           <q-tooltip class="bg-white text-negative">刪除</q-tooltip>
         </q-btn>
       </q-chip>
@@ -108,15 +108,38 @@
       </div>
     </q-card-section>
 
-    <q-card-section class="row bg-brown-1 q-pl-none q-pt-none q-pb-lg">
-      <q-chip class="col-12 bg-brown-3" size="lg">地點</q-chip>
-      <div class="row col-12 q-gutter-lg q-ml-sm">
-        <span class="col-3">舉行地點: <q-select v-if="edit" filled use-input input-debounce="0" @new-value="newDest" :options="dest" v-model="editObject.c_dest"/><span v-else>{{Event.c_dest}}</span></span>
-        <span class="col-3">集合地點: <q-select v-if="edit" filled use-input input-debounce="0" @new-value="newDest" :options="dest" v-model="editObject.c_start_collect"/><span v-else>{{Event.c_start_collect}}</span></span>
-        <span class="col-3">解散地點: <q-select v-if="edit" filled use-input input-debounce="0" @new-value="newDest" :options="dest" v-model="editObject.c_end_collect"/><span v-else>{{Event.c_end_collect}}</span></span>
+    <q-card-section class="row col-12 bg-brown-1 q-pl-none q-pt-none q-pb-lg">
+      <div class="col-6 row items-start content-start">
+        <q-chip class="col-12 row bg-brown-3" size="lg">地點</q-chip>
+        <div class="row col-12 q-gutter-lg q-ml-sm items-start">
+          <span class="col-11">舉行地點: <q-select v-if="edit" filled use-input input-debounce="0" @new-value="newDest" :options="dest" v-model="editObject.c_dest"/><span v-else>{{Event.c_dest}}</span></span>
+          <span class="col-11">集合地點: <q-select v-if="edit" filled use-input input-debounce="0" @new-value="newDest" :options="dest" v-model="editObject.c_start_collect"/><span v-else>{{Event.c_start_collect}}</span></span>
+          <span class="col-11">解散地點: <q-select v-if="edit" filled use-input input-debounce="0" @new-value="newDest" :options="dest" v-model="editObject.c_end_collect"/><span v-else>{{Event.c_end_collect}}</span></span>
+        </div>
       </div>
-      <div class="row col-12 q-gutter-lg q-ml-sm">
-        <span class="col-3">顯示網頁: <q-checkbox v-if="edit" v-model="editObject.IsShow"/><span v-else><q-icon class="text-green" v-if="Event.IsShow" name="check"/><q-icon class="text-red" v-else name="cancel"/></span></span>
+      <div class="col-6 row items-start content-start">
+        <q-chip class="col-12 bg-brown-2" size="lg">網頁</q-chip>
+        <div class="row col-12 q-gutter-lg q-ml-sm">
+          <span class="col-12 row">顯示網頁: <q-checkbox v-if="edit" v-model="editObject.IsShow"/><span v-else><q-icon class="text-green" v-if="Event.IsShow" name="check"/><q-icon class="text-red" v-else name="cancel"/></span></span>
+          <span class="col-12 row">網頁海報: 
+            <div class="col-12 row" v-if="edit">
+              <q-uploader
+                class="col-11"
+                :url="upload_API + '/file-saveFileToStorage'"
+                color="primary"
+                flat
+                :auto-upload="true"
+                bordered
+                :headers="[{'Access-Control-Allow-Origin': '*'}]"
+                @uploaded="updateFilenames"
+              />
+            </div>
+            <div class="col-12 row" v-else>
+              <q-img v-if="Event.poster" class="col-11" :src="Event.poster" fit="scale-down"/>
+              <div v-else>沒有海報</div>
+            </div>
+          </span>
+        </div>
       </div>
     </q-card-section>
 
@@ -162,7 +185,8 @@ const deleteCheck = ref("")
 const serverObject = ref({})
 const saveDialog = ref(false)
 const loading = ref(0)
-
+const upload_API = process.env.NODE_ENV === "development" ? "http://localhost:5001": "https://asia-east2-manage-hr.cloudfunctions.net"
+const WEB_IMG_PREFIX = "https://storage.googleapis.com/cciyc-web/"
 const acc_type = ref([
   'PF', 'CF', 'RF', 'MF', 'SF'
 ])
@@ -238,6 +262,7 @@ getDocs(userDocQuery).then((docs) =>
 
 const username = computed(() => $store.getters["userModule/getUsername"])
 const Event = computed(() => EventData.value?.HTX_Event_by_pk??[])
+const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
 const userProfileLogout = () => $store.dispatch("userModule/logout")
 
 // functions
@@ -260,6 +285,11 @@ function startEdit() {
   editObject.value.d_time_to = editObject.value.d_time_to? qdate.formatDate(qdate.extractDate(editObject.value.d_time_to, "h:mm:ss A"), "HH:mm"): null
   editObject.value.IsShow = editObject.value.IsShow == 1? true: false
   edit.value = true
+}
+
+// update web url
+function updateFilenames(filename) {
+  editObject.value.poster = WEB_IMG_PREFIX + filename.files[0].name
 }
 
 function saveEdit() {
@@ -367,11 +397,8 @@ function notifyClientSuccess(result) {
 }
 
 function notifyClientError(error) {
-  userProfileLogout()
-    .then(() => {
-      $q.notify({ message: "系統錯誤，請重新登入." });
-    })
-    .catch((error) => console.log("error", error));
+  $q.notify({ message: "系統錯誤，請重新登入." })
+  console.log("error", error)
 }
 
 // callback success

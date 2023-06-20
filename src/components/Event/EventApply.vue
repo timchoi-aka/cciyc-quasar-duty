@@ -106,7 +106,7 @@
   </template>
   <template v-slot:body-cell-b_refund="props">
     <q-td :props="props">
-      <q-btn v-if="!props.row.b_refund" icon="undo" color="negative" @click="confirmUnregister(props.row)" size="md" padding="none" outline/>
+      <div v-if="!props.row.b_refund"><q-btn v-if="isCenterIC || isFinance" icon="undo" color="negative" @click="confirmUnregister(props.row)" size="md" padding="none" outline/></div>
       <div v-else>已退出</div>
     </q-td>
   </template>
@@ -171,10 +171,13 @@ const { mutate: freeEventUnregistration, onDone: freeEventUnregistration_Complet
 
 // computed
 const username = computed(() => $store.getters["userModule/getUsername"])
+const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
+const isFinance = computed(() => $store.getters["userModule/getFinance"])
 const ApplyHistory = computed(() => result.value?.tbl_act_reg??[])
 const Event = computed(() => EventData.value?.HTX_Event_by_pk??[])
 const Fee = ref([])
 const userProfileLogout = () => $store.dispatch("userModule/logout")
+
 const latestReceiptNO = computed(() => {
   if (ReceiptData.value) {
     let token = ReceiptData.value.tbl_account[0].c_receipt_no.split("-")

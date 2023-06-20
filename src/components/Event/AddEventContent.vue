@@ -1,9 +1,7 @@
 <template>
   <!-- loading dialog -->
-  <q-dialog v-model="waitingAsync" position="bottom">
-    <LoadingDialog message="處理中"/>
-  </q-dialog>
-
+  <LoadingDialog v-model="loading" message="處理中"/>
+  
   <!-- save modal -->
   <q-dialog v-model="saveDialog">
     <q-card>
@@ -75,6 +73,8 @@
           </q-tab-panel>
 
           <q-tab-panel name="DateTime" class="q-ma-none q-pa-sm text-body1">
+            <div>開始時間：{{EventData.HTX_Event_by_pk.d_time_from}}</div>
+            <div>結束時間：{{EventData.HTX_Event_by_pk.d_time_to}}</div>
             <div>名額：{{EventData.HTX_Event_by_pk.i_quota_max}}</div>
             <div>總堂數：{{EventData.HTX_Event_by_pk.i_lessons}}</div>
             <div>逢星期：{{EventData.HTX_Event_by_pk.c_week}}</div>
@@ -184,14 +184,33 @@
     </q-card-section>
 
     <q-card-section class="row bg-brown-1 q-pl-none q-pt-none q-pb-lg">
-      <q-chip class="col-12 bg-brown-3" size="xl">地點</q-chip>
-      <div class="row col-12 q-gutter-lg q-ml-sm">
-        <span class="col-3">舉行地點: <q-select filled use-input input-debounce="300" @filter="saveBuffer" @blur="textBuffer.length > 0? updateBuffer(editObject, 'c_dest'): ''" @new-value="newDest" :options="dest" v-model="editObject.c_dest"/></span>
-        <span class="col-3">集合地點: <q-select filled use-input input-debounce="300" @filter="saveBuffer" @blur="textBuffer.length > 0? updateBuffer(editObject, 'c_start_collect'): ''" @new-value="newDest" :options="dest" v-model="editObject.c_start_collect"/></span>
-        <span class="col-3">解散地點: <q-select filled use-input input-debounce="300" @filter="saveBuffer" @blur="textBuffer.length > 0? updateBuffer(editObject, 'c_end_collect'): ''" @new-value="newDest" :options="dest" v-model="editObject.c_end_collect"/></span>
+      <div class="col-6 row items-start content-start">
+        <q-chip class="col-12 row bg-brown-3" size="lg">地點</q-chip>
+        <div class="row col-12 q-gutter-lg q-ml-sm items-start">
+          <span class="col-11">舉行地點: <q-select filled use-input input-debounce="0" @filter="saveBuffer" @blur="textBuffer.length > 0? updateBuffer(editObject, 'c_dest'): ''" @new-value="newDest" :options="dest" v-model="editObject.c_dest"/></span>
+          <span class="col-11">集合地點: <q-select filled use-input input-debounce="0" @filter="saveBuffer" @blur="textBuffer.length > 0? updateBuffer(editObject, 'c_dest'): ''" @new-value="newDest" :options="dest" v-model="editObject.c_start_collect"/></span>
+          <span class="col-11">解散地點: <q-select filled use-input input-debounce="0" @filter="saveBuffer" @blur="textBuffer.length > 0? updateBuffer(editObject, 'c_dest'): ''" @new-value="newDest" :options="dest" v-model="editObject.c_end_collect"/></span>
+        </div>
       </div>
-      <div class="row col-12 q-gutter-lg q-ml-sm">
-        <span class="col-3">顯示網頁: <q-checkbox v-model="editObject.IsShow"/></span>
+      <div class="col-6 row items-start content-start">
+        <q-chip class="col-12 bg-brown-2" size="lg">網頁</q-chip>
+        <div class="row col-12 q-gutter-lg q-ml-sm">
+          <span class="col-12 row">顯示網頁: <q-checkbox v-model="editObject.IsShow"/></span>
+          <span class="col-12 row">網頁海報: 
+            <div class="col-12 row">
+              <q-uploader
+                class="col-11"
+                :url="upload_API + '/file-saveFileToStorage'"
+                color="primary"
+                flat
+                :auto-upload="true"
+                bordered
+                :headers="[{'Access-Control-Allow-Origin': '*'}]"
+                @uploaded="updateFilenames"
+              />
+            </div>
+          </span>
+        </div>
       </div>
     </q-card-section>
 
@@ -236,10 +255,13 @@ const editObject = ref({})
 const serverObject = ref({})
 const saveDialog = ref(false)
 const loadDialog = ref(false)
-const awaitServerResponse = ref(0)
+const loading = ref(0)
 const loadEventID = ref("")
 const activeTab = ref("EventInfo")
 const textBuffer = ref("")
+const EventData = ref()
+const upload_API = process.env.NODE_ENV === "development" ? "http://localhost:5001": "https://asia-east2-manage-hr.cloudfunctions.net"
+const WEB_IMG_PREFIX = "https://storage.googleapis.com/cciyc-web/"
 
 const acc_type = ref([
   'PF', 'CF', 'RF', 'MF', 'SF'
@@ -302,7 +324,7 @@ const dest = ref([
 ])
 // query
 const { mutate: addEvent, onDone: addEvent_Completed, onError: addEvent_Error } = useMutation(ADD_EVENT)
-const { result: EventData } = useQuery(
+const { onResult: EventDataRaw } = useQuery(
   EVENT_SEARCHINFO_BY_PK,
   () => ({
     c_act_code: loadEventID.value? loadEventID.value: ''
@@ -321,25 +343,38 @@ const usersQuery = query(usersCollection,
   where("enable", "==", true),
 )
 
+EventDataRaw((data) => {
+  if (data.data) {
+    EventData.value = data.data
+  }
+})
+
 getDocs(usersQuery).then((userDoc) => {
   UserList.value = userDoc.docs.map(a => a.data().name)
 })
 
 const username = computed(() => $store.getters["userModule/getUsername"])
 //const UserList = computed(() => userDoc.docs? userDoc.docs.map(a => a.data().name): [])
-const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const userProfileLogout = () => $store.dispatch("userModule/logout")
 
 //function
 function copyEvent() {
   if (Object.keys(EventData.value.HTX_Event_by_pk).length) {
-    //console.log(Object.keys(EventData.value.HTX_Event_by_pk))
     for (const key of Object.keys(EventData.value.HTX_Event_by_pk)) {
+      if (key == "d_time_from" || key == "d_time_to") {
+        editObject.value[key] = dateUtil.rConvert(EventData.value.HTX_Event_by_pk[key].trim())
+        continue
+      }
       if (key != "__typename") {
         editObject.value[key] = EventData.value.HTX_Event_by_pk[key]
       }
     }
   }
+}
+
+// update web url
+function updateFilenames(filename) {
+  editObject.value.poster = WEB_IMG_PREFIX + filename.files[0].name
 }
 
 function saveBuffer(buf, onDone) {
@@ -367,7 +402,7 @@ function save() {
     "action": "新增活動: " + props.modelValue + "。新資料:" + JSON.stringify(serverObject.value, null, 2)
   })
   
-  awaitServerResponse.value++
+  loading.value++
   addEvent({
     logObject: logObject.value,
     object: serverObject.value,
@@ -430,18 +465,15 @@ function newWhojoin(val, done) {
 function notifyClientSuccess(result) {
   editObject.value = {}
   serverObject.value = {}
-  awaitServerResponse.value--  
+  loading.value--  
   $q.notify({
     message: "新增活動" + props.modelValue + "完成。",
   })
 }
 
 function notifyClientError(error) {
-  userProfileLogout()
-    .then(() => {
-      $q.notify({ message: "系統錯誤，請重新登入." });
-    })
-    .catch((error) => console.log("error", error));
+  $q.notify({ message: "系統錯誤，請重新登入." });
+  console.log("error", error);
 }
 
 // callback success

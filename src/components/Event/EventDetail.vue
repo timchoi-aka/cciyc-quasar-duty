@@ -8,6 +8,7 @@
       <q-tab name="PlanEvaluation" icon="summarize" label="計劃檢討" />
       <q-tab name="Attendance" icon="person_add" label="點名紙" />
       <FavourateEvent :c_act_code="props.EventID" :username="username" />
+      <q-chip class="bg-blue-3" size="lg" :label="props.EventID + ' - ' + EventName"/>
       <q-space/>
       <q-btn class="bg-primary text-white" flat icon="close" @click="confirmClose">
         <q-tooltip class="bg-white text-primary">關閉</q-tooltip>
@@ -78,6 +79,7 @@ query Detail_Event_by_pk($c_act_code: String!) {
   HTX_Event_by_pk(c_act_code: $c_act_code) {
     c_act_code
     b_freeofcharge
+    c_act_name
   }
 }`, () => ({
   c_act_code: props.EventID.trim()
@@ -86,6 +88,7 @@ query Detail_Event_by_pk($c_act_code: String!) {
 // computed
 const username = computed(() => $store.getters["userModule/getUsername"])
 const isFree = computed(() => result.value? result.value.HTX_Event_by_pk.b_freeofcharge: false)
+const EventName = computed(() => result.value? result.value.HTX_Event_by_pk.c_act_name: false)
 
 function confirmClose() {
   $q.dialog({

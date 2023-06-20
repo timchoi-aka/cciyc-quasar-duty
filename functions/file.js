@@ -9,9 +9,17 @@ const fs = require("fs");
 
 exports.saveFileToStorage = onRequest(
   {cors: [/cciyc\.com$/, /localhost$/], region: ["asia-east2"]}, 
-  // {cors: false, region: ["asia-east2"]}, 
+  //{cors: false, region: ["asia-east2"]}, 
   async (req, res) => {
-  
+    //set JSON content type and CORS headers for the response
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+
+    //respond to CORS preflight requests
+    if (req.method == 'OPTIONS') {
+        res.status(204).send('');
+    }
+
     const busboy = Busboy({
       headers: req.headers,
       limits: {
@@ -85,7 +93,7 @@ exports.saveFileToStorage = onRequest(
           // console.log("req.body: " + JSON.stringify(req.body));
           // console.log("req.files: " + JSON.stringify(req.files));
           try {
-            const bucketName = "cciyc_bugreport";
+            const bucketName = "cciyc-web";
             // console.log("body:" + req.body)
             // const fileName = "test-file";
             // const fileName = req.headers;

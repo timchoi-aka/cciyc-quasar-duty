@@ -1,9 +1,7 @@
 <template>
   <div>
     <!-- loading dialog -->
-    <q-dialog v-model="waitingAsync" position="bottom">
-      <LoadingDialog message="儲存中"/>
-    </q-dialog>
+    <LoadingDialog v-model="loading" message="儲存中"/>
 
     <q-table
       flat
@@ -460,7 +458,7 @@ import DateComponent from "src/components/Basic/DateComponent.vue";
 
 // variables
 const $q = useQuasar()
-const awaitServerResponse = ref(0)
+const loading = ref(0)
 const proxyDate = ref("")
 const users = ref([])
 const activeTab = ref("employment")
@@ -602,46 +600,43 @@ const tableFields = ref([
   },
 ])
 
-// computed
-const waitingAsync = computed(() => awaitServerResponse.value > 0)
-
 // function
 function changeDateOfExit(uid, date) {
   const changeDateOfExit = httpsCallable(FirebaseFunctions, "user-changeDateOfExit");
-  awaitServerResponse.value++;
+  loading.value++;
   changeDateOfExit({ uid: uid, dateOfExit: new Date(date) }).then((result) => {
     users.value[
       users.value.findIndex((value) => value.uid == result.data.uid)
     ].dateOfExit = result.data.dateOfExit;
-    awaitServerResponse.value--;
+    loading.value--;
   });
 }
 
 function changeDateOfEntry(uid, date) {
   const changeDateOfEntry = httpsCallable(FirebaseFunctions, "user-changeDateOfEntry");
-  awaitServerResponse.value++;
+  loading.value++;
   changeDateOfEntry({ uid: uid, dateOfEntry: new Date(date) }).then((result) => {
     users.value[
       users.value.findIndex((value) => value.uid == result.data.uid)
     ].dateOfEntry = result.data.dateOfEntry;
-    awaitServerResponse.value--;
+    loading.value--;
   });
 }
 
 function changeRank(uid, rank) {
   const changeRank = httpsCallable(FirebaseFunctions, "user-changeRank");
-  awaitServerResponse.value++;
+  loading.value++;
   changeRank({ uid: uid, rank: rankInputMap.value[rank] }).then((result) => {
     users.value[users.value.findIndex((value) => value.uid == result.data.uid)].rank =
       result.data.rank;
-    awaitServerResponse.value--;
+    loading.value--;
   });
 }
 
 function changeOrder(uid, dir) {
   // call https functions to change leaveApprove privilege
   const changeOrder = httpsCallable(FirebaseFunctions, "user-changeOrder");
-  awaitServerResponse.value++;
+  loading.value++;
   changeOrder({ uid: uid, dir: dir }).then((result) => {
     if (result.data.uid1) {
       users.value[users.value.findIndex((value) => value.uid == result.data.uid1)].order =
@@ -652,18 +647,18 @@ function changeOrder(uid, dir) {
       users.value[users.value.findIndex((value) => value.uid == result.data.uid2)].order =
         result.data.order2;
     }
-    awaitServerResponse.value--;
+    loading.value--;
   });
 }
 
 function changeEnable(uid) {
   // call https functions to change leaveApprove privilege
   const toggleEnable = httpsCallable(FirebaseFunctions, "user-toggleEnable");
-  awaitServerResponse.value++;
+  loading.value++;
   toggleEnable(uid).then((result) => {
     users.value[users.value.findIndex((value) => value.uid == uid)].enable =
       result.data;
-    awaitServerResponse.value--;
+    loading.value--;
   });
 }
 
@@ -672,12 +667,12 @@ function changeLeaveApprove(uid) {
   const toggleLeaveApprove = httpsCallable(FirebaseFunctions,
     "user-toggleLeaveApprove"
   );
-  awaitServerResponse.value++;
+  loading.value++;
   toggleLeaveApprove(uid).then((result) => {
     users.value[
       users.value.findIndex((value) => value.uid == uid)
     ].privilege_leaveApprove = result.data;
-    awaitServerResponse.value--;
+    loading.value--;
   });
 }
 
@@ -686,24 +681,24 @@ function changeFinance(uid) {
   const toggleFinance = httpsCallable(FirebaseFunctions,
     "user-toggleFinance"
   );
-  awaitServerResponse.value++;
+  loading.value++;
   toggleFinance(uid).then((result) => {
     users.value[
       users.value.findIndex((value) => value.uid == uid)
     ].privilege_finance = result.data;
-    awaitServerResponse.value--;
+    loading.value--;
   });
 }
 
 function changeLeaveManage(uid) {
   // call https functions to change leaveApprove privilege
   const toggleLeaveManage = httpsCallable(FirebaseFunctions, "user-toggleLeaveManage");
-  awaitServerResponse.value++;
+  loading.value++;
   toggleLeaveManage(uid).then((result) => {
     users.value[
       users.value.findIndex((value) => value.uid == uid)
     ].privilege_leaveManage = result.data;
-    awaitServerResponse.value--;
+    loading.value--;
   });
 }
 
@@ -712,12 +707,12 @@ function changeUserManagement(uid) {
   const toggleUserManagement = httpsCallable(FirebaseFunctions,
     "user-toggleUserManagement"
   );
-  awaitServerResponse.value++;
+  loading.value++;
   toggleUserManagement(uid).then((result) => {
     users.value[
       users.value.findIndex((value) => value.uid == uid)
     ].privilege_userManagement = result.data;
-    awaitServerResponse.value--;
+    loading.value--;
   });
 }
 
@@ -726,12 +721,12 @@ function changeProbation(uid) {
   const toggleProbation = httpsCallable(FirebaseFunctions,
     "user-toggleProbation"
   );
-  awaitServerResponse.value++;
+  loading.value++;
   toggleProbation(uid).then((result) => {
     users.value[
       users.value.findIndex((value) => value.uid == uid)
     ].privilege_probation = result.data;
-    awaitServerResponse.value--;
+    loading.value--;
   });
 }
 
@@ -740,23 +735,23 @@ function changeParttime(uid) {
   const toggleParttime = httpsCallable(FirebaseFunctions,
     "user-toggleParttime"
   );
-  awaitServerResponse.value++;
+  loading.value++;
   toggleParttime(uid).then((result) => {
     users.value[
       users.value.findIndex((value) => value.uid == uid)
     ].parttime = result.data;
-    awaitServerResponse.value--;
+    loading.value--;
   });
 }
 
 function changeSal(uid) {
   // call https functions to change sal privilege
   const toggleSal = httpsCallable(FirebaseFunctions, "user-toggleSal");
-  awaitServerResponse.value++;
+  loading.value++;
   toggleSal(uid).then((result) => {
     users.value[users.value.findIndex((value) => value.uid == uid)].privilege_sal =
       result.data;
-    awaitServerResponse.value--;
+    loading.value--;
   });
 }
 
@@ -765,12 +760,12 @@ function changeScheduleModify(uid) {
   const toggleScheduleModify = httpsCallable(FirebaseFunctions,
     "user-toggleScheduleModify"
   );
-  awaitServerResponse.value++;
+  loading.value++;
   toggleScheduleModify(uid).then((result) => {
     users.value[
       users.value.findIndex((value) => value.uid == uid)
     ].privilege_scheduleModify = result.data;
-    awaitServerResponse.value--;
+    loading.value--;
   });
 }
 
@@ -781,13 +776,13 @@ function saveSchedule(uid) {
   const updateDefaultSchedule = httpsCallable(FirebaseFunctions,
     "user-updateDefaultSchedule"
   );
-  awaitServerResponse.value++;
+  loading.value++;
   updateDefaultSchedule({
     uid: uid,
     schedule: users.value[i].defaultSchedule,
   }).then((result) => {
     users.value[i].defaultSchedule = result.data;
-    awaitServerResponse.value--;
+    loading.value--;
     $q.notify({ message: "成功儲存。" })
   });
 }
@@ -811,7 +806,7 @@ function saveEmploymentRecord(uid) {
 
   // call https functions to update employment record
   const saveEmployment = httpsCallable(FirebaseFunctions, "user-saveEmployment");
-  awaitServerResponse.value++;
+  loading.value++;
   saveEmployment({
     uid: uid,
     employment: object
@@ -828,7 +823,7 @@ function saveEmploymentRecord(uid) {
 
     newEmploymentRecord.value = {}
     editEmployment.value = false
-    awaitServerResponse.value--
+    loading.value--
   });
 }
 

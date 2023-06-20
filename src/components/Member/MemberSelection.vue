@@ -3,7 +3,7 @@
     dense
     filled
     class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none"
-    use-input
+    use-input    
     :clearable="props.clearable"
     :label="props.label? props.label: '會員編號'"
     input-debounce="0"
@@ -125,6 +125,35 @@ function nameFilter(val, update) {
       (v.c_name? v.c_name.toLowerCase().indexOf(val.toLowerCase()) > -1 : false) ||
       (v.c_name_other? v.c_name_other.toLowerCase().indexOf(val.toLowerCase()) > -1 : false)
     )
+    /*
+    if (NameOptions.value.length == 0) {
+      NameOptions.value.push({
+        value: d.c_mem_id,
+        c_name: d.c_name,
+        c_name_other: d.c_name_other,
+        c_sex: d.c_sex,
+        d_birth: d.d_birth,
+        c_udf_1: d.c_udf_1,
+        d_expired_1: d.d_expired_1,
+        d_exit_1: d.d_exit_1
+      })
+    }
+    */
   })
 }
+
+/*
+function createValue(val, done) {
+  // specific logic to eventually call done(...) -- or not
+  props.newValue? done(val): null;
+
+  // done callback has two optional parameters:
+  //  - the value to be added
+  //  - the behavior (same values of new-value-mode prop,
+  //    and when it is specified it overrides that prop –
+  //    if it is used); default behavior (if not using
+  //    new-value-mode) is to add the value even if it would
+  //    be a duplicate
+}
+*/
 </script>

@@ -24,9 +24,7 @@
   </q-dialog>
 
   <!-- loading dialog -->
-  <q-dialog v-model="waitingAsync" position="bottom">
-    <LoadingDialog message="處理中"/>
-  </q-dialog>
+  <LoadingDialog v-model="loading" message="處理中"/>
 
   <!-- print receipt modal -->
   <q-dialog v-if="$q.screen.gt.md"
@@ -359,7 +357,7 @@ const emit = defineEmits(["update:modelValue"])
 
 const $store = useStore()
 const $q = useQuasar()
-const awaitServerResponse = ref(0)
+const loading = ref(0)
 const confirmDeleteModal = ref(false)
 const quitDialog = ref(false)
 const renewDialog = ref(false)
@@ -413,7 +411,6 @@ watch(updateQueue.value, (newQueue, oldQueue)  => {
 })
 
 // computed
-const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const latestReceiptNO = computed(() => {
   if (ReceiptData.value) {
     let token = ReceiptData.value.tbl_account[0].c_receipt_no.split("-")
@@ -495,7 +492,7 @@ function cancelEdit() {
 }
 
 async function quitMember() {
-  awaitServerResponse.value++
+  loading.value++
   const logObject = ref({
     "username": username.value,
     "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
@@ -613,7 +610,7 @@ function saveRecord() {
   */
 
   
-  awaitServerResponse.value++
+  loading.value++
 
   // determine if there's relation to delete and upsert
   let parameters = {
@@ -703,7 +700,7 @@ function renewMemberModal(member, duration) {
 
 function confirmUserRemove() {
   // start loading screen
-  awaitServerResponse.value++;
+  loading.value++;
   // console.log("start removing user:" + props.modelValue)
   
   const logObject = ref({
@@ -759,7 +756,7 @@ function renewMember(renewObject) {
     d_write: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
   })
 
-  awaitServerResponse.value++
+  loading.value++
   RenewMember({
     c_mem_id: renewObject.c_mem_id,
     logObject: logObject.value,
@@ -770,7 +767,7 @@ function renewMember(renewObject) {
 
 // callback functions
 RenewMember_Completed((result) => {
-  awaitServerResponse.value--
+  loading.value--
   if (result.data.insert_tbl_account_one) {
     $q.notify({ 
       progress: true,
@@ -786,7 +783,7 @@ RenewMember_Completed((result) => {
 })
 
 RemoveMember_Completed((result) => {
-  awaitServerResponse.value--;
+  loading.value--;
   const deleteMember = result.data.delete_Member_by_pk;
   const deleteRelateMember = result.data.delete_Relation;
         
@@ -902,7 +899,7 @@ QuitMember_Error((error) => {
 
 QuitMember_Completed((result) => {
   refetch()
-  awaitServerResponse.value--
+  loading.value--
   let validityResult = result.data.update_Member_by_pk.b_mem_type1 ? "有效" : "無效"
   $q.notify({ message: "會員: " + result.data.update_Member_by_pk.c_mem_id + "退會. 會籍狀態：" + validityResult + " 退會日期：" + qdate.formatDate(result.data.update_Member_by_pk.d_exit_1, "YYYY年MM月DD日")});
   if (relationTable.value.length > 0) {
@@ -943,6 +940,6 @@ UpdateMember_Completed((result) => {
     $q.notify({ message: "編號: " + result.data.update_Member_by_pk.c_mem_id + "更新資料成功." });
   }
   editState.value = false
-  awaitServerResponse.value--
+  loading.value--
 })
 </script>

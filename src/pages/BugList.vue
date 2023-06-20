@@ -25,19 +25,6 @@
           <div class="col-6 text-h6 text-bold">{{ bugDetail.username }} @ {{  qdate.formatDate(bugDetail.date, "YYYY年M月D日")}}</div>
           <div class="col-6 text-h6 text-bold">狀態：{{ bugDetail.status }} </div>
           <q-separator inset class="q-py-md"/>
-          <!--<q-carousel
-            class="col-12 rounded-borders"
-            v-model="imageNumber"
-            transition-prev="slide-right"
-            transition-next="slide-left"
-            animated
-            control-color="primary"
-          >
-            <q-carousel-slide v-for="(url, index) in bugDetail.filenames" :name="index" :img-src="url">
-              {{ url  }}
-            </q-carousel-slide>
-          </q-carousel>
-          -->
           <q-img v-for="(url, index) in bugDetail.filenames" :src="url" class="q-py-md" fit="scale-down"/>
         </q-card-section>
       </q-card>

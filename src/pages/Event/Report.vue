@@ -40,36 +40,39 @@
     <q-card style="min-width: 50vw; width: 50vw; max-width: 50vw; height: 50vh; min-height: 50vh; max-height: 50vh;">
       <q-card-section class="bg-primary text-white row">
         <div class="text-body1">開放節數</div>
+        <q-btn flat icon="print" v-print="printObj"/>
         <q-space/>
         <q-btn icon="close" flat v-close-popup/>
       </q-card-section>
       <q-card-section>
-        <q-table
-          dense
-          flat
-          :rows="dutyTable"
-          :columns="dutyTableColumns"
-          :pagination="defaultPagination"
-          color="primary"
-          row-key="date"
-          separator="cell"
-          hide-bottom
-          virtual-scroll
-          binary-state-sort
-        >
-          <template v-slot:body-cell-slot_a="props">
-            <q-td :props="props" :class="[props.value? 'bg-green': 'bg-red']">
-            </q-td>
-          </template>
-          <template v-slot:body-cell-slot_b="props">
-            <q-td :props="props" :class="[props.value? 'bg-green': 'bg-red']">
-            </q-td>
-          </template>
-          <template v-slot:body-cell-slot_c="props">
-            <q-td :props="props" :class="[props.value? 'bg-green': 'bg-red']">
-            </q-td>
-          </template>
-        </q-table>
+        <div id="printMe" class="print-area">
+          <q-table
+            dense
+            flat
+            :rows="dutyTable"
+            :columns="dutyTableColumns"
+            :pagination="defaultPagination"
+            color="primary"
+            row-key="date"
+            separator="cell"
+            hide-bottom
+            virtual-scroll
+            binary-state-sort
+          >
+            <template v-slot:body-cell-slot_a="props">
+              <q-td :props="props" :class="[props.value? 'bg-green': 'bg-red']">
+              </q-td>
+            </template>
+            <template v-slot:body-cell-slot_b="props">
+              <q-td :props="props" :class="[props.value? 'bg-green': 'bg-red']">
+              </q-td>
+            </template>
+            <template v-slot:body-cell-slot_c="props">
+              <q-td :props="props" :class="[props.value? 'bg-green': 'bg-red']">
+              </q-td>
+            </template>
+          </q-table>
+        </div>
       </q-card-section>
     </q-card>
   </q-dialog>
@@ -278,6 +281,7 @@ import EventDetail from "components/Event/EventDetail.vue";
 import LoadingDialog from "components/LoadingDialog.vue"
 import Excel from "src/lib/exportExcel"
 import { getDocs, query, where } from "firebase/firestore";
+import print from "vue3-print-nb";
 
 onMounted(() => {
   refreshSchedule(reportDate.value)
@@ -302,6 +306,11 @@ const destInCenter = [
 ]
 //const closeList = ref(["覆", "AL", "SL", "補", "長", "短"])
 const scheduleSnapshot = ref()
+
+const printObj = ref({
+  id: "printMe",
+  preview: false,
+})
 
 const defaultPagination = ref({
   rowsPerPage: 40,
@@ -764,3 +773,23 @@ function rowDetail(evt, row, index) {
   }
 }
 </script>
+
+<script>
+import print from "vue3-print-nb";
+
+export default {
+  name: "PrintOpeningSessions",
+  directives: {
+    print,
+  },
+}
+</script>
+
+<style scoped>
+@media print {
+  .print-area { 
+    margin: 30px;
+    border: none;
+  }
+}
+</style>

@@ -18,7 +18,7 @@
     "@firebase/app-check": "^0.5.11",
     "@firebase/app-compat": "^0.1.29",
     "@google-cloud/pubsub": "^3.3.0",
-    "@quasar/cli": "^2.1.1",
+    "@quasar/cli": "^2.2.1",
     "@quasar/extras": "^1.16.3",
     "@types/node": "^18.8.0",
     "@vue/apollo-composable": "^4.0.0-beta.1",

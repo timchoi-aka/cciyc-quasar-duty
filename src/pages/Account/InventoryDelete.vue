@@ -4,28 +4,31 @@
     <q-card-section>
       <InventorySelection v-model="searchID" label="物資編號"/>
     </q-card-section>
-    <q-card-section v-if="Object.keys(inventoryData).length > 0">
-      物資名稱：{{ inventoryData.c_name }}
-      購買日期：{{ inventoryData.d_purchase }}
-      型號：{{ inventoryData.c_model }}
-      位置：{{ inventoryData.c_location }}
-      數量：{{ inventoryData.i_qty }}
+    <q-card-section v-if="Object.keys(inventoryData).length > 0" class="row">
+      <div class="col-12"><q-chip size="lg" class="bg-primary text-white" label="基本資料"/></div>
+      <div class="col-3">物資名稱：</div><div class="col-3">{{ inventoryData.c_name }}</div>
+      <div class="col-3">購買日期：</div><div class="col-3">{{ qdate.formatDate(inventoryData.d_purchase, "YYYY年M月D日") }}</div>
+      <div class="col-3">型號：</div><div class="col-3">{{ inventoryData.c_model }}</div>
+      <div class="col-3">位置：</div><div class="col-3">{{ inventoryData.c_location }}</div>
+      <div class="col-3">初始數量：</div><div class="col-3">{{ inventoryData.i_qty }}</div>
+      <div class="col-3">現在數量：</div><div class="col-3">{{ remainingInventoryCount }}</div>
     </q-card-section>
+    <q-separator inset/>
     <q-card-section v-if="Object.keys(inventoryData).length > 0">
-      <q-btn label="新增報銷紀錄" icon="add" class="bg-primary text-white" @click="destroyRecords.push({ d_destroy: '', c_destroy_reason: '', i_qty: 1, b_confirm: false})"/>
+      <q-chip size="lg" class="bg-warning text-white" label="報銷記錄"/>
+      <q-btn v-if="remainingInventoryCount > 0" label="新增報銷紀錄" icon="add" class="bg-primary text-white" @click="destroyRecords.push({ d_destroy: '', c_destroy_reason: '', i_qty: 1, b_confirm: false})"/>
       <q-btn v-if="destroyRecords.length > 0" label="儲存" icon="save" class="bg-positive text-white" @click="save"/>
       <div v-for="(record, index) in inventoryData.Inventory_to_Destroy" class="row">
-        <div class="col-2">報銷日期：{{qdate.formatDate(record.d_destroy, "YYYY年M月D日")}}</div>
-        <div class="col-2">報銷原因：{{record.c_destroy_reason}}</div>
-        <div class="col-2">報銷數量：{{record.i_qty}}</div>
+        <div class="col-3">報銷日期：{{qdate.formatDate(record.d_destroy, "YYYY年M月D日")}}</div>
+        <div class="col-3">報銷原因：{{record.c_destroy_reason}}</div>
+        <div class="col-3">報銷數量：{{record.i_qty}}</div>
       </div>
       <div v-for="(record, index) in destroyRecords" class="row">
-        <div class="col-2"><DateComponent v-model="allDestroyRecords[index].d_destroy" label="報銷日期"/></div>
-        <div class="col-2"><q-input type="text" v-model="allDestroyRecords[index].c_destroy_reason" label="報銷原因"/></div>
-        <div class="col-2"><q-input type="number" v-model="allDestroyRecords[index].i_qty" label="報銷數量"/></div>
-        <q-btn icon="delete" label="刪除" class="bg-negative text-white" @click="destroyRecords.splice(index, 1)"/>
+        <div class="col-3"><DateComponent v-model="allDestroyRecords[index].d_destroy" label="報銷日期"/></div>
+        <div class="col-3"><q-input type="text" v-model="allDestroyRecords[index].c_destroy_reason" label="報銷原因"/></div>
+        <div class="col-3"><q-input type="number" v-model="allDestroyRecords[index].i_qty" label="報銷數量"/></div>
+        <div class="col-1"><q-btn icon="delete" label="刪除" class="bg-negative text-white" @click="destroyRecords.splice(index, 1)"/></div>
       </div>
-      {{ destroyRecords }}
     </q-card-section>
   </q-card>
 
@@ -200,6 +203,8 @@ const username = computed(() => $store.getters["userModule/getUsername"])
 const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"])
 const inventoryData = computed(() => result.value?.Inventory_by_pk??{})
 const allDestroyRecords = computed(() => [...destroyRecords.value, ...inventoryData.value.Inventory_to_Destroy])
+const remainingInventoryCount = computed(() => inventoryData.value.i_qty - inventoryData.value.Inventory_to_Destroy.reduce((a,b) => a+b.i_qty, 0))
+
 // functions
 function checkOccurance(val) {
   return InventoryData.value? InventoryData.value.map(x => x.ID).reduce(function (acc, curr) { return acc[curr] ? ++acc[curr] : acc[curr] = 1, acc}, {})[val]: 0

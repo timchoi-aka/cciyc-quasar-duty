@@ -11,7 +11,7 @@ subscription EVENT_GET_COUNT {
 
 export const EVENT_GET_LATEST_ACT_CODE = gql`
 subscription EVENT_GET_LATEST_ACT_CODE {
-  HTX_Event(order_by: {c_act_code: desc}, offset: 1, limit: 1) {
+  HTX_Event(order_by: {c_act_code: desc}, offset: 0, limit: 1) {
     c_act_code
   }
 }`
@@ -410,6 +410,7 @@ query Event_by_pk($c_act_code: String!) {
     s_Lineage
     u_income
     u_tutor_pay
+    poster
   }
 }`
 
@@ -443,6 +444,8 @@ query EventSearchInfoByPK($c_act_code: String!) {
     i_quota_max
     m_remark
     m_remind_content
+    d_time_from
+    d_time_to
   }
 }`
   /*

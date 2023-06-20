@@ -3,15 +3,18 @@
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
-  "functions": {
-    "source": "functions",
-    "ignore": [
-      "node_modules",
-      ".git",
-      "firebase-debug.log",
-      "firebase-debug.*.log"
-    ]
-  },
+  "functions": [
+    {
+      "source": "functions",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log"
+      ],
+      "codebase": "default"
+    }
+  ],
   "emulators": {
     "auth": {
       "port": 9099
@@ -33,7 +36,8 @@
     },
     "storage": {
       "port": 9199
-    }
+    },
+    "singleProjectMode": true
   },
   "hosting": {
     "public": "dist/spa",
@@ -41,6 +45,12 @@
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
     ]
   },
   "storage": {

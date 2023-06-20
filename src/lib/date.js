@@ -28,6 +28,39 @@ function tConvert(time) {
   return time.join (''); // return adjusted time or original string
 }
 
+/*
+function rConvert (time) {
+  console.log("converting time: ", time);
+  // Split the time into hours and minutes
+  const timeArray = time.split(':');
+  const hours = parseInt(timeArray[0]);
+  let minutes = timeArray[1];
+
+  // Determine AM/PM
+  let suffix = 'AM';
+  if (hours >= 12) {
+    suffix = 'PM';
+    hours -= 12;
+  }
+  if (hours == 0) {
+    hours = 12;
+  }
+
+  // Pad minutes with leading zero if necessary
+  if (minutes < 10) {
+    minutes = '0' + minutes;
+  }
+
+  // Return the date object with the time set in 12-hour format
+  return new Date(`01/01/2000 ${hours}:${minutes} ${suffix}`);
+}
+*/
+
+function rConvert(time) {
+  const timeDate = new Date(`01/01/2021 ${time}`);
+  return timeDate.toLocaleTimeString('en-GB', {hour12: false});
+}
+
 function generateTableColumns(renderDate, withSlot = true) {
   // build column headers
   // find offset to sunday
@@ -90,5 +123,6 @@ export default {
   splitDateSlot,
   tConvert,
   generateTableColumns,
-  getFY
+  getFY,
+  rConvert
 }

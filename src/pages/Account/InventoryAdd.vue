@@ -1,32 +1,68 @@
 <template>
 <q-page style="margin-top: 70px;">
+  <q-dialog v-model="addModal">
+    <q-card class="row">
+      <q-card-section class="row bg-primary text-white col-12">
+        <div class="text-h6">新增物資</div>
+        <q-space/>
+        <q-btn flat icon="close" v-close-popup class="bg-primary text-white"/>
+      </q-card-section>
+      <q-card-section class="row items-center col-12">
+        <q-form @submit="save" @reset="inventoryObject = {}" class="row col-12 q-pa-sm">
+          <div class="col-3 q-my-xs">編號：</div><div class="col-9 q-my-xs"><q-input type="text" v-model="inventoryObject.ID"/></div>
+          <div class="col-3 q-my-xs">類型：</div><div class="col-9 q-my-xs"><q-input type="text" v-model="inventoryObject.c_name"/></div>
+          <div class="col-3 q-my-xs">型號：</div><div class="col-9 q-my-xs"><q-input type="text" v-model="inventoryObject.c_model"/></div>
+          <div class="col-3 q-my-xs">地點：</div><div class="col-9 q-my-xs"><InventoryLocation label="位置" v-model="inventoryObject.c_location" /></div>
+          <div class="col-3 q-my-xs">購買日期：</div><div class="col-9 q-my-xs"><DateComponent label="購買日期" v-model="inventoryObject.d_purchase"/></div>
+          <div class="col-3 q-my-xs">金額：</div><div class="col-9 q-my-xs"><q-input type="text" v-model="inventoryObject.f_cost"/></div>
+          <div class="col-3 q-my-xs">經費來源：</div><div class="col-9 q-my-xs"><q-select label="經費來源" :options="sourceOfFund" v-model="inventoryObject.c_funding" /></div>
+          <div class="col-3 q-my-xs">數量：</div><div class="col-9 q-my-xs"><q-input type="number" v-model="inventoryObject.i_qty"/></div>
+          <q-separator inset/>
+          <div class="row col-12">
+            <q-space/>
+            <q-btn class="bg-negative text-white text-right q-mx-sm" flat label="取消" type="reset" v-close-popup/>
+            <q-btn class="bg-primary text-white text-right q-mx-sm" flat label="新增" type="submit"/>
+          </div>
+        </q-form>
+      </q-card-section>
+    </q-card>
+  </q-dialog>
   <q-table
     :rows="InventoryData"
     :columns="InventoryColumn"
     no-data-label="沒有物資記錄"
     :pagination="pagination"
+    row-key="ID"
+    selection="single"
+    v-model:selected="selectedRow"
     :loading="loading">
       <!-- add data button -->
       <template v-slot:top>
-        <q-btn color="primary" icon="add" :disable="loading" label="新增" @click="addRow" />
-        <q-btn class="q-ml-md" color="positive" icon="save" :disable="(JSON.stringify(InventoryData) == JSON.stringify(serverStat)) || InventoryData.map(x => x.ID).length != (new Set(InventoryData.map(x => x.ID))).size" label="儲存" @click="save" />
+        <q-btn color="primary" icon="add" :disable="loading" label="新增" @click="addModal=true" />
+        <q-btn class="q-ml-md" v-if="selectedRow.length > 0" color="positive" icon="edit" label="修改" @click="editInventory" />
+        <q-btn class="q-ml-md" v-if="selectedRow.length > 0" color="negative" icon="delete" label="刪除" @click="deleteInventory" />
       </template>
 
       <!-- popup edit on body cell -->
-      <template v-slot:body="props">
-        <q-tr :props="props">
-          <q-td key="status" :props="props">
-            <q-icon name="check" color="positive" v-if="!props.row.status && JSON.stringify(InventoryData[props.rowIndex]) == JSON.stringify(serverStat[props.rowIndex])"/>
-            <q-icon name="edit" color="primary" v-if="!props.row.status && JSON.stringify(InventoryData[props.rowIndex]) != JSON.stringify(serverStat[props.rowIndex])"/>
-            <q-btn icon="delete" color="negative" flat dense v-if="props.row.status == 'new'" @click="InventoryData.splice(props.rowIndex, 1)"/>
-          </q-td>
-          <q-td key="ID" :props="props" :class="[ props.row.ID.length > 0 && checkOccurance(props.row.ID) == 1? 'valid': 'invalid' ]">
-            {{ props.row.ID }}
-            <q-popup-edit filled v-model="props.row.ID"  auto-save v-slot="scope">
-              <q-input type="text" label="編號" v-model="scope.value" dense autofocus @keyup.enter="scope.set" />
+      <template v-slot:status="props">
+        {{ props }}
+        <q-icon name="check" color="positive" v-if="!props.row.status && JSON.stringify(InventoryData[props.rowIndex]) == JSON.stringify(serverStat[props.rowIndex])"/>
+        <q-icon name="edit" color="primary" v-if="!props.row.status && JSON.stringify(InventoryData[props.rowIndex]) != JSON.stringify(serverStat[props.rowIndex])"/>
+        <q-icon name="delete" color="negative" v-if="selectedRow.length > 0"/>
+        <q-btn icon="delete" color="negative" flat dense v-if="props.row.status == 'new'" @click="InventoryData.splice(props.rowIndex, 1)"/>
+      </template>
+      <template v-slot:ID="props">
+        <div :class="[ props.row.ID.length > 0 && checkOccurance(props.row.ID) == 1? 'valid': 'invalid' ]">{{ props.row.ID }}</div>
+      </template>
+      <template v-slot:c_name="props">
+        <div :class="[ props.row.c_name.length > 0? 'valid': 'invalid' ]">{{ props.row.c_name }}
+          <q-popup-edit v-model="props.row.c_name" auto-save v-slot="scope"  >
+              <q-input type="text" label="類型" v-model="scope.value" dense autofocus @keyup.enter="scope.set" />
             </q-popup-edit>
-          </q-td>
-          <q-td key="c_name" :props="props" :class="[ props.row.c_name.length > 0? 'valid': 'invalid' ]">
+        </div>
+      </template>
+      <!-- 
+          <q-td key="c_name" :props="props" >
             {{ props.row.c_name }}
             <q-popup-edit v-model="props.row.c_name" auto-save v-slot="scope"  >
               <q-input type="text" label="類型" v-model="scope.value" dense autofocus @keyup.enter="scope.set" />
@@ -68,6 +104,7 @@
               <q-input label="數量" type="number" v-model="scope.value" dense autofocus @keyup.enter="scope.set" />
             </q-popup-edit>
           </q-td>
+          -->
           <!--
           <q-td key="d_destroy" :props="props">
             {{ props.row.d_destroy? qdate.formatDate(props.row.d_destroy, "YYYY/MM/DD"): null }}
@@ -87,8 +124,6 @@
             <q-icon v-else name="cancel" color="red"/>
           </q-td>
           -->
-        </q-tr>
-      </template>
   </q-table>
 </q-page>
 </template>
@@ -110,6 +145,20 @@ const deleteData = ref([])
 const sourceOfFund = ref(['S','BG','D','NS','SWDF'])
 const pagination = ref({
   rowsPerPage: 30,
+})
+const selectedRow = ref([])
+const addModal = ref(false)
+const modifyModal = ref(false)
+const inventoryObject = ref({
+  ID: "",
+  c_name: "",
+  c_model: "",
+  c_location: "",
+  d_purchase: qdate.formatDate(new Date(), "YYYY/MM/DD"),
+  f_cost: 0,
+  c_funding: "",
+  i_qty: 0,
+  status: "",
 })
 
 const InventoryColumn = ref([
@@ -270,34 +319,35 @@ function addRow() {
   })
 }
 
+function deleteInventory() {
+  console.log("delete")
+}
+
+function editInventory() {
+  console.log("edit")
+}
+
 function save() {
   const saveObject = []
   let valid = true
-  if (InventoryData.value.length > 0) {
+  console.log("saving")
+  if (inventoryObject.value.ID) {
     const logObject = ref({
       "username": username,
       "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
       "module": "會計系統",
       "action": "修改物資記錄 - 舊資料：" + JSON.stringify(serverStat.value) + "。新資料：" + JSON.stringify(InventoryData.value)
     })
-
-    InventoryData.value.forEach((data) => {
-      if (data.ID) {
-        saveObject.push({
-          ID: data.ID.trim(),
-          c_name: data.c_name? data.c_name.trim(): "",
-          c_model: data.c_model? data.c_model.trim(): "",
-          c_location: data.c_location? data.c_location.trim(): "",
-          d_purchase: data.d_purchase? qdate.formatDate(data.d_purchase, "YYYY-MM-DDT00:00:00"): null,
-          f_cost: data.f_cost? data.f_cost: 0,
-          c_funding: data.c_funding? data.c_funding.trim(): "",
-          i_qty: data.i_qty? data.i_qty: 0,
-        })
-      } else {
-        $q.notify({ message: "沒有填寫物資編號！", icon: 'error', color: 'negative', textColor: 'white' })
-        valid = false
-      }
-
+    console.log("data:" + JSON.stringify(inventoryObject.value))
+    saveObject.push({
+      ID: inventoryObject.value.ID.trim(),
+      c_name: inventoryObject.value.c_name? inventoryObject.value.c_name.trim(): "",
+      c_model: inventoryObject.value.c_model? inventoryObject.value.c_model.trim(): "",
+      c_location: inventoryObject.value.c_location? inventoryObject.value.c_location.trim(): "",
+      d_purchase: inventoryObject.value.d_purchase? qdate.formatDate(inventoryObject.value.d_purchase, "YYYY-MM-DDT00:00:00"): null,
+      f_cost: inventoryObject.value.f_cost? parseFloat(inventoryObject.value.f_cost): 0,
+      c_funding: inventoryObject.value.c_funding? inventoryObject.value.c_funding.trim(): "",
+      i_qty: inventoryObject.value.i_qty? parseInt(inventoryObject.value.i_qty): 0,
     })
 
     if (valid) {
@@ -306,7 +356,10 @@ function save() {
         logObject: logObject.value,
       })
     }
-  }
+  } else {
+    $q.notify({ message: "沒有填寫物資編號！", icon: 'error', color: 'negative', textColor: 'white' })
+    valid = false
+  }  
 }
 
 function deleteRow(ID) {
@@ -322,6 +375,7 @@ onResult((result) => {
 
 updateInventoryStat_Completed((result) => {
   refetch()
+  inventoryObject.value = {}
   $q.notify({
     message: "儲存成功！"
   })

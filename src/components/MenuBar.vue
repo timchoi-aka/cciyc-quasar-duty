@@ -28,9 +28,9 @@
     <q-route-tab to="/member/add" icon="person_add" label="新增會員" />
     <q-route-tab to="/volunteer" icon="volunteer_activism" label="義工記錄" />
     <q-route-tab to="/member/report" icon="summarize" label="報表" />
-    <q-route-tab to="/member/log" icon="schedule" label="系統記錄" />
-    <q-route-tab to="/member/admin" icon="public" label="系統管理" />
-    <q-route-tab to="/member/status" icon="public" label="開發狀況" />
+    <q-route-tab v-if="isSystemAdmin && !isTmp" to="/member/log" icon="schedule" label="系統記錄" />
+    <q-route-tab v-if="isSystemAdmin && !isTmp" to="/member/admin" icon="public" label="系統管理" />
+    <q-route-tab v-if="isSystemAdmin && !isTmp" to="/member/status" icon="public" label="開發狀況" />
   </q-tabs>
   <q-tabs v-if="username && (module == 'event') && !isTmp" inline-label class="desktop-only" align="left">
     <q-route-tab to="/event/my-event" icon="public" label="我的活動" />
@@ -38,16 +38,16 @@
     <q-route-tab to="/event/search" icon="public" label="搜尋活動" />
     <q-route-tab to="/event/add" icon="public" label="新增活動" />
     <q-route-tab to="/event/report" icon="public" label="報表" />
-    <q-route-tab to="/event/log" icon="public" label="系統記錄" />
-    <q-route-tab to="/event/status" icon="public" label="開發狀況" />
+    <q-route-tab v-if="isSystemAdmin && !isTmp" to="/event/log" icon="public" label="系統記錄" />
+    <q-route-tab v-if="isSystemAdmin && !isTmp" to="/event/status" icon="public" label="開發狀況" />
   </q-tabs>
   <q-tabs v-if="username && (module == 'account') && !isTmp" inline-label class="desktop-only" align="left">
     <q-route-tab to="/account/other" icon="public" label="雜項收入" />
     <q-route-tab to="/account/receipt/" icon="public" label="收據一覽" />
     <q-route-tab to="/account/inventory/" icon="public" label="物資管理" />
-    <q-route-tab to="/account/log" icon="public" label="系統記錄" />
+    <q-route-tab v-if="isSystemAdmin && !isTmp" to="/account/log" icon="public" label="系統記錄" />
   </q-tabs>
-  <q-tabs v-if="username && (module == 'website') && !isTmp" inline-label class="desktop-only" align="left">
+  <q-tabs v-if="username && (module == 'website') && !isTmp && isSystemAdmin" inline-label class="desktop-only" align="left">
     <q-route-tab to="/website/news" icon="public" label="最新消息" />
   </q-tabs>
 </template>

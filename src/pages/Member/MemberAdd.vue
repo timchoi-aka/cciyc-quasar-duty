@@ -1,8 +1,6 @@
 <template class="q-mb-md">
   <!-- loading dialog -->
-  <q-dialog v-model="waitingAsync" position="bottom">
-    <LoadingDialog message="處理中" />
-  </q-dialog>
+  <LoadingDialog v-model="loading" message="處理中" />
 
   <!-- Duplicate Member modal -->
   <q-dialog
@@ -72,7 +70,7 @@
   <!-- personal info qcard -->
   <q-card class="q-ma-md-md q-ma-xs-none q-ma-sm-sm">
     <q-card-section class="q-pa-md-md q-pa-sm-sm q-pa-xs-xs text-h6 bg-blue-1"
-      >新會員個人資料<span v-if="!loading">(編號：{{latestMemberID}})</span>
+      >新會員個人資料<span v-if="!loadingMem">(編號：{{latestMemberID}})</span>
     </q-card-section>
     <q-card-section class="row justify-start items-start q-pa-sm-sm q-pa-xs-xs q-pa-md-md">
       <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-8">
@@ -302,7 +300,7 @@ import { useSubscription, useMutation, useQuery } from "@vue/apollo-composable"
 import ageUtil from "src/lib/calculateAge.js"
 
 // variables
-const awaitServerResponse = ref(0)
+const loading = ref(0)
 const printReceiptModal = ref(false)
 const printReceiptMember = ref("")
 let addNewRecord = false
@@ -316,7 +314,7 @@ const $q = useQuasar()
 
 // queries
 // load graphql subscription on latest member id
-const { result: MemberData, loading } = useSubscription(
+const { result: MemberData, loadingMem } = useSubscription(
   LATEST_MEMBER_ID,
 );
 
@@ -378,7 +376,6 @@ const { mutate: addMemberAndRelationFromID, onDone: addMemberAndRelationFromID_C
 const { mutate: addMemberAndRelationFromIDWithPayment, onDone: addMemberAndRelationFromIDWithPayment_Completed, onError: addMemberAndRelationFromIDWithPayment_Error} = useMutation(ADD_MEMBER_AND_RELATION_FROM_ID_WITH_PAYMENT)
 
 // computed
-const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const username = computed(() => $store.getters["userModule/getUsername"])
 const latestMemberID = computed(() => MemberData.value? (parseInt(MemberData.value.Member[0].c_mem_id)+1).toString(): "")
 const latestReceiptNO = computed(() => {
@@ -555,12 +552,14 @@ addMemberAndRelationFromIDWithPayment_Completed((result) => {
 
 checkDuplicateMember_Completed((result) => {
   if (addNewRecord) {
-    addNewRecord = false
-    if (result.data.Member.length == 0) { // no dup
-      addMember()
-    } else {
-      duplicateMemberObject.value = result.data.Member
-      duplicateMemberModal.value = true
+    if (result.data) {
+      if (result.data.Member.length == 0) { // no dup
+        addMember()
+      } else {
+        duplicateMemberObject.value = result.data.Member
+        duplicateMemberModal.value = true
+      }
+      addNewRecord = false
     }
   }
 })
@@ -689,7 +688,7 @@ function postCallback(data) {
       delete: false,
     },
   ]
-  awaitServerResponse.value--;
+  loading.value--;
 }
 
 function capitalize() {
@@ -955,7 +954,7 @@ function addMember() {
     i_prints: 0,
   })
   
-  awaitServerResponse.value++;
+  loading.value++;
   if (memberRelation.value.length == 0) { // no related member
     if (price.value == 0) { // free member
       addMemberFromID({
