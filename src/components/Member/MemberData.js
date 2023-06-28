@@ -40,7 +40,7 @@ export default function useMember(param, displayOptions) {
       }
     }`)
   
-  const { onResult: MemberInfo_Result, load, loading } = useSubscription(gql`
+  const { onResult: MemberInfo_Result, loading } = useQuery(gql`
     fragment BasicInfo on Member {
       c_mem_id,
       b_mem_type1,
@@ -135,7 +135,7 @@ export default function useMember(param, displayOptions) {
         }
       }
     }
-    subscription MemberData_getMember(
+    query MemberData_getMember(
       $where: Member_bool_exp = {},
       $loadDetailReceipt: Boolean! = false,
       $loadDetail: Boolean! = false,
@@ -152,13 +152,17 @@ export default function useMember(param, displayOptions) {
         ...HousekeepInfo @include(if: $loadHousekeep)
         ...RelationInfo @include(if: $loadRelation)
       }
-    }`, defaultParam)
+    }`, defaultParam, {
+      pollInterval: 1000,
+    })
 
   MemberInfo_Result((result) => {
-    state.value.members = []
-    result.data.Member.forEach((mem) => {
-      state.value.members.push(mem)
-    })
+    if (result.data) {
+      state.value.members = []
+      result.data.Member.forEach((mem) => {
+        state.value.members.push(mem)
+      })
+    }
   })
 
   latestMemberID_Result((result) => {

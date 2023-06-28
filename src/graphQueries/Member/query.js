@@ -153,7 +153,7 @@ export const LATEST_MRECEIPT_NO = gql`
   }`
 
 export const MEMBER_GET_ALL = gql`
-  subscription getMember {
+  query getMember {
     Member {
       c_mem_id
       b_mem_type1

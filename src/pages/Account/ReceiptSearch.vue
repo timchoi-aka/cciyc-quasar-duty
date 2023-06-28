@@ -1,9 +1,7 @@
 <template>
   <q-page class="row" style="margin-top: 60px;">
     <!-- loading dialog -->
-    <q-dialog v-model="waitingAsync" position="bottom">
-      <LoadingDialog message="處理中"/>
-    </q-dialog>
+    <LoadingDialog :model-value="loading? 1: 0" message="處理中"/>
 
     <!-- rowDetail modal -->
     <q-dialog v-if="$q.screen.lt.md"
@@ -98,7 +96,7 @@
 import { computed, ref } from "vue";
 import { useStore } from "vuex";
 import { date as qdate, is, exportFile, useQuasar } from "quasar";
-import { useSubscription } from "@vue/apollo-composable"
+import { useQuery } from "@vue/apollo-composable"
 import LoadingDialog from "components/LoadingDialog.vue"
 import PrintReceipt from "components/Account/PrintReceipt.vue"
 import Receipt from "components/Account/Receipt.vue"
@@ -130,7 +128,6 @@ const receiptTypeOptions =
   ]
 
 // variables
-const awaitServerResponse = ref(0)
 const detailModal = ref(false)
 const printReceiptModal = ref(false)
 const printReceiptMember = ref("")
@@ -249,8 +246,8 @@ const receiptListColumns = ref([
 ])
 
  // query - load graphql subscription on account list
- const { result, loading, } = useSubscription(gql`
- subscription Account_getAllReceipt ($condition: tbl_account_bool_exp = {c_receipt_no: {_eq: ""}}) {
+ const { onResult, loading, } = useQuery(gql`
+ query Account_getAllReceipt ($condition: tbl_account_bool_exp = {c_receipt_no: {_eq: ""}}) {
   tbl_account(order_by: {c_receipt_no: desc}, where: $condition) {
     c_receipt_no
     b_OtherIncome
@@ -266,14 +263,19 @@ const receiptListColumns = ref([
     u_price_after_discount
     b_delete
   }
-}`, searchCondition.value);
+}`, searchCondition.value, {
+  pollInterval: 1000,
+});
       
 // computed  
-const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const uid = computed(() => $store.getters["userModule/getUID"])
-const ReceiptData = computed(() => result.value?.tbl_account??[])
+const ReceiptData = ref([])
 
 // function
+onResult((result)=>{
+  if (result.data) ReceiptData.value = result.data.tbl_account
+})
+
 function rowDetail(evt, row, index) {
   if (evt.target.nodeName === 'TD') {
     detailModal.value = true;

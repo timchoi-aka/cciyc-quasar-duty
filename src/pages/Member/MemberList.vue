@@ -1,8 +1,6 @@
 <template>
   <!-- loading dialog -->
-  <q-dialog v-model="waitingAsync" position="bottom">
-    <LoadingDialog message="處理中"/>
-  </q-dialog>
+  <LoadingDialog :model-value="loading? 1: 0" message="處理中"/>
 
   <!-- print receipt modal -->
   <q-dialog v-if="$q.screen.gt.md"
@@ -209,12 +207,12 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from "vue";
+import { computed, ref } from "vue";
 import { useStore } from "vuex";
 import { date as qdate, useQuasar } from "quasar";
 import MemberDetail from "components/Member/MemberDetail.vue";
 import { MEMBER_GET_ALL } from "/src/graphQueries/Member/query.js";
-import { useSubscription } from "@vue/apollo-composable"
+import { useQuery } from "@vue/apollo-composable"
 import LoadingDialog from "components/LoadingDialog.vue"
 import PrintReceipt from "components/Account/PrintReceipt.vue"
 import useMember from "components/Member/MemberData"
@@ -227,7 +225,6 @@ const $q = useQuasar()
 // $q.localStorage.set("module", "member");
 
 // variables
-const awaitServerResponse = ref(0)
 const detailModal = ref(false)
 const printReceiptModal = ref(false)
 const printReceiptMember = ref("")
@@ -385,7 +382,7 @@ const udf1List = ref([
 ])
 
  // query - load graphql subscription on member list
-const { result, loading } = useSubscription(MEMBER_GET_ALL);
+const { onResult: MemberGetAll, loading } = useQuery(MEMBER_GET_ALL, {}, {pollInterval: 1000});
 // const { members, loadMember, loading } = useMember(searchCriteria, displayOptions);
 
 /*
@@ -405,10 +402,13 @@ const filter = computed(() => ({
   memType10Filter: searchFilter.value.mem_type10,
   udf1Filter: searchFilter.value.udf_1,
 }))
-const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const uid = computed(() => $store.getters["userModule/getUID"])
-const MemberData = computed(() => result.value?.Member??[])
+const MemberData = ref([])
 // const MemberData = computed(() => members.value? members.value : [])
+
+MemberGetAll((result) => {
+  if (result.data) MemberData.value = result.data.Member
+})
 
 // function
 function rowDetail(evt, row, index) {

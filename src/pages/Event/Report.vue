@@ -1,8 +1,7 @@
 <template>
   <!-- loading dialog -->
-  <q-dialog v-model="loading" position="bottom">
-    <LoadingDialog message="處理中"/>
-  </q-dialog>
+  <LoadingDialog :model-value="(loading || os2loading || os5loading)? 1: 0" message="處理中"/>
+  
 
   <!-- rowDetail modal -->
   <q-dialog v-if="$q.screen.lt.md"
@@ -156,7 +155,7 @@
         :pagination="defaultPagination"
         color="primary"
         row-key="c_act_code"
-        :loading="loading"
+        :loading="os2loading"
         binary-state-sort
         no-data-label="沒有資料"
         @row-click="rowDetail"
@@ -275,7 +274,7 @@
 import { sessionCollection } from "boot/firebase";
 import { computed, ref, watch, onMounted } from "vue";
 import { exportFile, date as qdate, is } from "quasar";
-import { useSubscription, useQuery } from "@vue/apollo-composable"
+import { useQuery } from "@vue/apollo-composable"
 import { gql } from "graphql-tag"
 import EventDetail from "components/Event/EventDetail.vue";
 import LoadingDialog from "components/LoadingDialog.vue"
@@ -601,8 +600,8 @@ const os2Columns = ref([
 ])
 
 // query - load graphql subscription on member list
-const { result, loading } = useSubscription(gql`
-  subscription Event_getEvent {
+const { result, loading } = useQuery(gql`
+  query Event_getEvent {
     HTX_Event(order_by: {c_act_code: desc}, offset: 1) {
       c_act_code
       c_act_name
@@ -615,7 +614,9 @@ const { result, loading } = useSubscription(gql`
       c_acc_type
       c_dest
     }
-  }`);
+  }`, {}, {
+    pollInterval: 10000
+  });
 
 const { result: os2result, loading: os2loading } = useQuery(gql`
 query queryO2Result(

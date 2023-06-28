@@ -1,8 +1,7 @@
 <template>
   <!-- loading dialog -->
-  <q-dialog v-model="waitingAsync" position="bottom">
-    <LoadingDialog message="處理中"/>
-  </q-dialog>
+  <LoadingDialog v-model="loading" message="處理中"/>
+  
 <!-- 
   :filter="filter"
     :filter-method="tableFilter"
@@ -28,7 +27,7 @@
     :columns="eventListColumns"
     color="primary"
     row-key="c_act_code"
-    :loading="loading"
+    :loading="loadingEvents"
     binary-state-sort
     @row-click="showDetail"
     />
@@ -38,7 +37,7 @@
 <script setup>
 import { computed, ref } from "vue";
 import { EVENT_GET_ALL_ACTIVE } from "/src/graphQueries/Event/query.js";
-import { useSubscription } from "@vue/apollo-composable";
+import { useQuery } from "@vue/apollo-composable";
 import { useStore } from "vuex";
 import { useQuasar } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
@@ -47,18 +46,21 @@ import EventDetail from "components/Event/EventDetail.vue";
 // variables
 const $store = useStore();
 const $q = useQuasar()
-const awaitServerResponse = ref(0)
+const loading = ref(0)
 const initialData = ref()
 const selectedEventID = ref("")
 const eventDetailDialog = ref(false)
 
 // graphql subscriptions
-const { result: eventList, loading, fetchMore, onError: EventListError } = useSubscription(EVENT_GET_ALL_ACTIVE);
+const { onResult: eventList, loading: loadingEvents, onError: EventListError } = useQuery(EVENT_GET_ALL_ACTIVE, {}, {pollInterval: 1000});
 
 // computed variables
-const EventList = computed(() => eventList.value?.HTX_Event??[])
-const waitingAsync = computed(() => awaitServerResponse > 0 ? true : false)
+const EventList = ref([])
 const userProfileLogout = () => $store.dispatch("userModule/logout")
+
+eventList((result) => {
+  if (result.data) EventList.value = result.data.HTX_Event
+})
 
 // table config
 const pagination = ref({

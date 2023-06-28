@@ -188,24 +188,30 @@
         <q-chip class="col-12 row bg-brown-3" size="lg">地點</q-chip>
         <div class="row col-12 q-gutter-lg q-ml-sm items-start">
           <span class="col-11">舉行地點: <q-select filled use-input input-debounce="0" @filter="saveBuffer" @blur="textBuffer.length > 0? updateBuffer(editObject, 'c_dest'): ''" @new-value="newDest" :options="dest" v-model="editObject.c_dest"/></span>
-          <span class="col-11">集合地點: <q-select filled use-input input-debounce="0" @filter="saveBuffer" @blur="textBuffer.length > 0? updateBuffer(editObject, 'c_dest'): ''" @new-value="newDest" :options="dest" v-model="editObject.c_start_collect"/></span>
-          <span class="col-11">解散地點: <q-select filled use-input input-debounce="0" @filter="saveBuffer" @blur="textBuffer.length > 0? updateBuffer(editObject, 'c_dest'): ''" @new-value="newDest" :options="dest" v-model="editObject.c_end_collect"/></span>
+          <span class="col-11">集合地點: <q-select filled use-input input-debounce="0" @filter="saveBuffer" @blur="textBuffer.length > 0? updateBuffer(editObject, 'c_start_collect'): ''" @new-value="newDest" :options="dest" v-model="editObject.c_start_collect"/></span>
+          <span class="col-11">解散地點: <q-select filled use-input input-debounce="0" @filter="saveBuffer" @blur="textBuffer.length > 0? updateBuffer(editObject, 'c_end_collect'): ''" @new-value="newDest" :options="dest" v-model="editObject.c_end_collect"/></span>
         </div>
       </div>
       <div class="col-6 row items-start content-start">
         <q-chip class="col-12 bg-brown-2" size="lg">網頁</q-chip>
         <div class="row col-12 q-gutter-lg q-ml-sm">
           <span class="col-12 row">顯示網頁: <q-checkbox v-model="editObject.IsShow"/></span>
-          <span class="col-12 row">網頁海報: 
+          <span class="col-12 row">網頁海報: <span>{{ editObject.poster }}</span>
+            <q-btn icon="delete" class="bg-negative text-white" label="刪除現有海報" @click="editObject.poster = ''"/>
             <div class="col-12 row">
               <q-uploader
                 class="col-11"
-                :url="upload_API + '/file-saveFileToStorage'"
+                :url="upload_API + '/file-savefiletostorage'"
                 color="primary"
                 flat
                 :auto-upload="true"
                 bordered
-                :headers="[{'Access-Control-Allow-Origin': '*'}]"
+                :headers="[
+                  {name: 'Access-Control-Allow-Origin', value: '*'}, 
+                  {name: 'Accept-Language', value: '*'}, 
+                  {name: 'Access-Control-Allow-Headers', value: 'Origin, X-Requested-With, Content-Type, Accept'},
+                  {name: 'Authorization', value: `Bearer ${token}`}
+                ]"
                 @uploaded="updateFilenames"
               />
             </div>
@@ -229,12 +235,12 @@
 </template>
   
 <script setup>
-import { computed, ref } from "vue"
+import { computed, ref, onMounted } from "vue"
 import { useStore } from "vuex"
 import { date as qdate, is, useQuasar} from "quasar"
 import DateComponent from "components/Basic/DateComponent.vue"
 import TimeComponent from "components/Basic/TimeComponent.vue"
-import { usersCollection} from "boot/firebase";
+import { usersCollection, FirebaseAuth} from "boot/firebase";
 import { ADD_EVENT } from "/src/graphQueries/Event/mutation.js"
 import { EVENT_SEARCHINFO_BY_PK, EVENT_FEE_BY_ACT_CODE } from "/src/graphQueries/Event/query.js"
 import { useMutation, useQuery } from "@vue/apollo-composable"
@@ -242,6 +248,11 @@ import LoadingDialog from "components/LoadingDialog.vue"
 import dateUtil from "/src/lib/date.js"
 import { getDocs, query, where } from "@firebase/firestore"
 import EventSelection from "components/Event/EventSelection.vue"
+
+const token = ref()
+onMounted(async () => {
+  token.value = await FirebaseAuth.currentUser.getIdToken();
+})
 
 // props
 const props = defineProps({
@@ -260,8 +271,8 @@ const loadEventID = ref("")
 const activeTab = ref("EventInfo")
 const textBuffer = ref("")
 const EventData = ref()
-const upload_API = process.env.NODE_ENV === "development" ? "http://localhost:5001": "https://asia-east2-manage-hr.cloudfunctions.net"
-const WEB_IMG_PREFIX = "https://storage.googleapis.com/cciyc-web/"
+const upload_API = process.env.NODE_ENV === "development"? "http://localhost:5001/manage-hr/asia-east2" : "https://asia-east2-manage-hr.cloudfunctions.net"
+const WEB_IMG_PREFIX = process.env.NODE_ENV === "development"? "http://localhost:9199/cciyc-web/": "https://storage.googleapis.com/cciyc-web/"
 
 const acc_type = ref([
   'PF', 'CF', 'RF', 'MF', 'SF'

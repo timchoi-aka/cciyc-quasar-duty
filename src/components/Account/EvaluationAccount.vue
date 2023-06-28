@@ -31,11 +31,11 @@
   </q-list>
   <div class="col-12 text-right q-mt-sm q-px-sm">總數: HK${{total}}</div>
   
-  <div class="col-12 text-right q-mt-sm" v-if="props.type == '支出' && props.planeval == '計劃' && !props.isSubmitted">
-    <EvaluationAccountPrepaid :c_act_code="props.c_act_code" :eval_uuid="props.eval_uuid" :respon="props.respon"/>
+  <div class="col-12 text-right q-mt-sm" v-if="props.type == '支出' && props.planeval == '計劃'">
+    <EvaluationAccountPrepaid :isSubmitted="props.isSubmitted" :c_act_code="props.c_act_code" :eval_uuid="props.eval_uuid" :respon="props.respon"/>
   </div>
-  <div class="col-12 text-right q-mt-sm" v-if="props.type == '支出' && props.planeval == '檢討' && !props.isSubmitted">
-    <EvaluationAccountRemain :c_act_code="props.c_act_code" :eval_uuid="props.eval_uuid" :respon="props.respon"/>
+  <div class="col-12 text-right q-mt-sm" v-if="props.type == '支出' && props.planeval == '檢討'">
+    <EvaluationAccountRemain :isSubmitted="props.isSubmitted" :c_act_code="props.c_act_code" :eval_uuid="props.eval_uuid" :respon="props.respon"/>
   </div>
 </template>
 

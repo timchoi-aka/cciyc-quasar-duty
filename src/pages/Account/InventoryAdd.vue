@@ -129,7 +129,7 @@
 </template>
 
 <script setup>
-import { useQuery, useMutation, useSubscription } from "@vue/apollo-composable"
+import { useQuery, useMutation } from "@vue/apollo-composable"
 import InventoryLocation from "components/Inventory/LocationSelection.vue"
 import { ref, computed } from "vue"
 import gql from "graphql-tag";

@@ -37,7 +37,7 @@
 
 <script setup>
 import { ref } from "vue"
-import { useSubscription } from "@vue/apollo-composable"
+import { useQuery } from "@vue/apollo-composable"
 import { gql } from "graphql-tag"
 
 
@@ -52,27 +52,32 @@ const EventOptions = ref([])
 const OriginalEventOptions = ref([])
 
 // query
-const { onResult: NameResult } = useSubscription(gql`
-  subscription getAllEvent {
+const { onResult: NameResult } = useQuery(gql`
+  query getAllEvent {
     HTX_Event(order_by: {c_act_code: desc}, offset: 1) {
       c_act_code
       c_act_name
       c_status
     }
   }`
-  )
+  , {},
+  {
+    pollInterval: 1000
+  })
 
 // callback
 NameResult((result) => {
-  result.data.HTX_Event.forEach((d) => {
-    EventOptions.value.push({
-      value: d.c_act_code,
-      c_act_name: d.c_act_name,
-      c_status: d.c_status,
+  if (result.data) {
+    result.data.HTX_Event.forEach((d) => {
+      EventOptions.value.push({
+        value: d.c_act_code,
+        c_act_name: d.c_act_name,
+        c_status: d.c_status,
+      })
     })
-  })
 
-  OriginalEventOptions.value = EventOptions.value
+    OriginalEventOptions.value = EventOptions.value
+  }
 })
 
 // function

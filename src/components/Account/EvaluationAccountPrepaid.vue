@@ -1,10 +1,11 @@
 <template>
   <div>
     <!-- loading dialog -->
-    <q-dialog v-model="waitingAsync" position="bottom">
-      <LoadingDialog message="處理中"/>
+    <LoadingDialog v-model="loading" message="處理中"/>
+    <q-dialog v-model="showPrintVoucher">
+      <Voucher :data="voucherObject" type="預支"/>
     </q-dialog>
-  
+
     <q-card v-if="prepaidResult.length" class="row">
       <q-card-section class="text-body2 bg-grey-2 text-left text-bold col-12 q-ma-none q-pa-sm">預支記錄(共：${{ prepaidResult.filter((x) => x.approved || (!x.approved && !x.approve_date)).reduce((a,v) => a += v.amount,0) }}) - 預支上限：${{ total*0.8 }}</q-card-section>
       <q-card-section class="row fit justify-left q-ma-none q-pa-sm">
@@ -12,23 +13,24 @@
           <span class="col-4 text-left">{{ qdate.formatDate(record.apply_date, "YYYY年M月D日") }}</span>
           <span class="col-2">${{ record.amount }}</span>
           <span class="col-2"><q-chip v-if="record.approved" label="已批" class="bg-positive text-white" dense/><q-chip v-if="!record.approved && record.approve_date" label="拒批" dense class="bg-red text-white"/><q-chip v-if="!record.approved && !record.approve_date" label="未批" class="bg-warning text-white" dense/></span>
+          <span v-if="record.approved" class="col-2"><q-btn size="sm" icon="print" class="bg-primary text-white" @click="printVoucher(prepaidResult[index])"/></span>
           <q-space/>
           <span class="col-1" v-if="record.apply_user.trim() ==  username && (!record.approved && !record.approve_date)"><q-btn class="bg-white text-red" flat dense icon="delete" @click="deletePrepaid(record.uuid)"/></span>
           <span class="col-3" v-if="isCenterIC && (!record.approved && !record.approve_date)"><q-btn class="bg-white text-red" flat dense icon="close" @click="rejectPrepaid(record.uuid)"/><q-btn class="bg-white text-secondary" flat dense icon="check" @click="acceptPrepaid(record.uuid)"/></span>
-          <q-tooltip v-if="record.cheque && record.cheque.trim().length > 0" class="bg-grey-4 text-black text-body1" :offset="[10, 10]">
-            支票抬頭：{{ record.cheque }}
+          <q-tooltip v-if="record.recipient && record.recipient.trim().length > 0" class="bg-grey-4 text-black text-body1" :offset="[10, 10]">
+            支票抬頭：{{ record.recipient }}
           </q-tooltip>
         </div>
       </q-card-section>
     </q-card>
-    <q-btn v-if="Object.keys(prepaid).length == 0 && (props.respon.includes(username) || isUAT)" class="bg-primary text-white q-my-sm" icon="money" label="申請預支" @click="prepaid = { cheque: '', amount: 0}"/>
+    <q-btn v-if="Object.keys(prepaid).length == 0 && (props.respon.includes(username) && !props.isSubmitted)" class="bg-primary text-white q-my-sm" icon="money" label="申請預支" @click="prepaid = { recipient: '', amount: 0}"/>
     <q-form
       @submit="save"
       @reset="prepaid = {}"
       >
       <div class="row" v-if="Object.keys(prepaid).length">
         <div class="col-12 q-pa-sm">
-          <q-input type="text" label="支票抬頭" v-model="prepaid.cheque"/>
+          <q-input type="text" label="支票抬頭" v-model="prepaid.recipient"/>
             <q-input 
               type="number" 
               label="金額" 
@@ -46,28 +48,36 @@
     </q-form>
   </div>
 </template>
+
 <script setup>
 import { gql } from "graphql-tag"
 import { ref, computed } from "vue"
 import { useStore } from "vuex";
-import { useQuery, useMutation, useSubscription } from "@vue/apollo-composable"
+import { useQuery, useMutation } from "@vue/apollo-composable"
 import LoadingDialog from "components/LoadingDialog.vue"
 import { date as qdate, useQuasar, is } from "quasar"
+import Voucher from 'src/components/HealthCare/Voucher.vue'
 
 // props
 const props = defineProps({
   eval_uuid: String,
   c_act_code: String,
   respon: Array,
+  isSubmitted: {
+    type: Boolean,
+    Required: true,
+  }
 })
 
 const prepaid = ref({})
-const awaitServerResponse = ref(0)
+const loading = ref(0)
 const $q = useQuasar()
+const voucherObject = ref()
+const showPrintVoucher = ref(false)
 
 // queries
-const { result: getEvaluationResult } = useSubscription(gql`
-  subscription Prepaid_GetExpenseByEvalUUID(
+const { onResult: getEvaluationResult } = useQuery(gql`
+  query Prepaid_GetExpenseByEvalUUID(
     $eval_uuid: uniqueidentifier = "00000000-0000-0000-0000-000000000000",
     ) {
     Event_Evaluation_Account(where: {
@@ -80,7 +90,9 @@ const { result: getEvaluationResult } = useSubscription(gql`
     }
   }`, () => ({
     eval_uuid: props.eval_uuid,
-  }));
+  }), {
+    pollInterval: 1000,
+  });
 
 const { result: getPrepaidResult, onError: getPrepaidResult_Error, refetch: getPrepaidResult_Refetch } = useQuery(gql`
   query Prepaid_GetPrepaidAmountByEvalUUID(
@@ -96,7 +108,7 @@ const { result: getPrepaidResult, onError: getPrepaidResult_Error, refetch: getP
       approve_user
       approved
       c_act_code
-      cheque
+      recipient
       eval_uuid
       payment_method
       uuid
@@ -118,7 +130,7 @@ const { mutate: addPrepaidRequest, onDone: addPrepaidRequest_Completed, onError:
       approve_user
       approved
       c_act_code
-      cheque
+      recipient
       eval_uuid
       payment_method
       uuid
@@ -175,7 +187,7 @@ mutation delPrepaid($uuid: uniqueidentifier = "") {
 }`) 
 
 // computed
-const total = computed(() => getEvaluationResult.value? getEvaluationResult.value.Event_Evaluation_Account.reduce((a,v) => a + v.amount, 0): 0)
+const total = ref(0)
   
 // const total = ref(0)
 const prepaidResult = computed(() => getPrepaidResult.value?.Event_Prepaid??[])
@@ -183,14 +195,19 @@ const $store = useStore();
 const username = computed(() => $store.getters["userModule/getUsername"])
 const isUAT = computed(() => $store.getters["userModule/getUAT"])
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
-const waitingAsync = computed(() => awaitServerResponse.value > 0)
+
 
 // function
 function deletePrepaid(uuid) {
-  awaitServerResponse.value++
+  loading.value++
   delPrepaid({
     uuid: uuid
   })
+}
+
+function printVoucher(record) {
+  voucherObject.value = record
+  showPrintVoucher.value = true
 }
 
 function save() { 
@@ -199,7 +216,7 @@ function save() {
     apply_date: new Date(),
     apply_user: username.value,
     c_act_code: props.c_act_code,
-    cheque: prepaid.value.cheque,
+    recipient: prepaid.value.recipient,
     eval_uuid: props.eval_uuid,
     type: '預支',
   }
@@ -211,7 +228,7 @@ function save() {
     "action": "新增預支: " + JSON.stringify(prepaidObject)
   }
 
-  awaitServerResponse.value++
+  loading.value++
   addPrepaidRequest({
     logObject: logObject,
     object: prepaidObject
@@ -241,7 +258,7 @@ function acceptPrepaid(uuid) {
       "module": "活動系統",
       "action": "批核預支: " + uuid
     }
-    awaitServerResponse.value++
+    loading.value++
     approvePrepaid({
       logObject: logObject,
       uuid: uuid,
@@ -268,7 +285,7 @@ function rejectPrepaid(uuid) {
       "module": "活動系統",
       "action": "拒絕預支: " + uuid
     }
-    awaitServerResponse.value++
+    loading.value++
     denyPrepaid({
       logObject: logObject,
       uuid: uuid,
@@ -280,10 +297,16 @@ function rejectPrepaid(uuid) {
 }
 
 // callback
+getEvaluationResult((result) => {
+  if (result.data) {
+    total.value = result.data.Event_Evaluation_Account.reduce((a,v) => a + v.amount, 0)
+  }
+})
+
 addPrepaidRequest_Completed((result) => {
   prepaid.value = {}
   getPrepaidResult_Refetch()
-  awaitServerResponse.value--
+  loading.value--
   $q.notify({
     message: "活動" + result.data.insert_Event_Prepaid_one.c_act_code + "，成功新增預支記錄。",
   }) 
@@ -291,7 +314,7 @@ addPrepaidRequest_Completed((result) => {
 
 denyPrepaid_Completed((result) => {
   getPrepaidResult_Refetch()
-  awaitServerResponse.value--
+  loading.value--
   $q.notify({
     message: "拒絕了預支申請。",
   })
@@ -299,7 +322,7 @@ denyPrepaid_Completed((result) => {
 
 delPrepaid_Completed((result) => {
   getPrepaidResult_Refetch()
-  awaitServerResponse.value--
+  loading.value--
   $q.notify({
     message: "刪除了預支申請。",
   })
@@ -307,7 +330,7 @@ delPrepaid_Completed((result) => {
 
 approvePrepaid_Completed((result) => {
   getPrepaidResult_Refetch()
-  awaitServerResponse.value--
+  loading.value--
   $q.notify({
     message: "批核了預支申請。",
   })

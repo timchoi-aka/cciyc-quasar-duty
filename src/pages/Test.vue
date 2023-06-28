@@ -10,12 +10,16 @@ options: {{ displayOptions }}
 <q-toggle v-model="displayOptions.loadHousekeep" label="輔助資料"/>
 <q-toggle v-model="displayOptions.loadRelation" label="關聯會員"/>
 <q-uploader
-    url="http://localhost:5001/manage-hr/asia-east2/file-saveFileToStorage"
+    :url="upload_API + '/file-saveFileToStorage'"
     color="teal"
     flat
     bordered
     multiple
     style="max-width: 300px"
+    :headers="[
+      {name: 'Access-Control-Allow-Origin', value: '*'}, 
+      {name: 'Access-Control-Allow-Headers', value: 'Origin, X-Requested-With, Content-Type, Accept'},
+    ]"
   />
 <q-btn label="搜尋" @click="search"/>
 <q-input type="text" v-model="inputText" label="青年AI"/>
@@ -32,6 +36,7 @@ import gql from "graphql-tag";
 import { httpsCallable } from "firebase/functions";
 import {FirebaseFunctions} from "boot/firebase";
 
+const upload_API = process.env.NODE_ENV === "development"? "http://localhost:5001/manage-hr/asia-east2" : "https://asia-east2-manage-hr.cloudfunctions.net"
 const memberID = ref("")
 const mobile= ref("")
 const displayOptions = ref({})

@@ -199,7 +199,7 @@ exports.approveLeaveByDocid = functions.region("asia-east2").https.onCall(async 
 
   return await batch.commit().then((result) => {
     notiQueue.forEach((queue) => {
-      publishTopic(queue.topic, queue.message, "假期", "https://duty.cciyc.com/#/duty/dutytable");
+      publishTopic(queue.topic, queue.message);
     });
     console.log(logData);
   });
@@ -389,7 +389,7 @@ exports.rejectLeaveByDocid = functions.region("asia-east2").https.onCall(async (
 
   return await batch.commit().then((result) => {
     notiQueue.forEach((queue) => {
-      publishTopic(queue.topic, queue.message, "假期", "https://duty.cciyc.com/#/duty/dutytable");
+      publishTopic(queue.topic, queue.message);
     });
     console.log(logData);
   });
@@ -581,7 +581,7 @@ exports.addLeave = functions.region("asia-east2").https.onCall(async (data, cont
 
   return await batch.commit().then(() => {
     notiQueue.forEach((queue) => {
-      publishTopic(queue.topic, queue.message, "假期", "https://duty.cciyc.com/#/duty/dutytable");
+      publishTopic(queue.topic, queue.message);
     });
     console.log(logData);
   });

@@ -1,5 +1,7 @@
 <template>
   <q-page class="full-width q-pa-sm">
+    <LoadingDialog v-model="loading" message="讀取資料中"/>
+
     <!-- duty calendar dialog -->
     <q-dialog v-model="showDutyCalendar" full-width>
       <q-card class="full-width q-pa-sm" style="height: 70vh; max-height: 70vh">
@@ -483,9 +485,6 @@
         </template>
       </q-table>
     </div>
-    <q-dialog v-model="waitingAsync" position="bottom">
-      <LoadingDialog message="讀取資料中"/>
-    </q-dialog>
   </q-page>
 </template>
 
@@ -532,7 +531,7 @@ const usersSelected = ref([])
 const selectedRow = ref([])
 const userList = ref([])
 const pendingApplicationList = ref([])
-const awaitServerResponse = ref(0)
+const loading = ref(0)
 
 // table config
 const statusList = ref([
@@ -623,7 +622,6 @@ const columns = ref([
 const userProfileLogout = () => $store.dispatch("userModule/logout")
 const isLogin = computed(() => $store.getters["userModule/isLogin"])
 const username = computed(() => $store.getters["userModule/getUsername"])
-const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const filterValues = computed(() => ({
   usersSelected: usersSelected.value,
   statusSelected: statusSelected.value,
@@ -743,9 +741,9 @@ function confirmApprove() {
     "ot-approveLeaveByDocid"
   );
 
-  awaitServerResponse.value++;
+  loading.value++;
   approveLeaveByDocid(selectedRow.value).then(() => {
-    awaitServerResponse.value--;
+    loading.value--;
     refreshHolidayTable();
     selectedRow.value = [];
   });
@@ -777,9 +775,9 @@ function confirmReject() {
 
   const rejectLeaveByDocid = httpsCallable(FirebaseFunctions, "ot-rejectLeaveByDocid");
 
-  awaitServerResponse.value++;
+  loading.value++;
   rejectLeaveByDocid(leaveData).then(() => {
-    awaitServerResponse.value--;
+    loading.value--;
     refreshHolidayTable();
     selectedRow.value = [];
   });
@@ -810,9 +808,9 @@ function confirmModify() {
 
   const modifyLeaveByDocid = httpsCallable(FirebaseFunctions, "ot-modifyLeaveByDocid");
 
-  awaitServerResponse.value++;
+  loading.value++;
   modifyLeaveByDocid(modifyingRow.value).then(() => {
-    awaitServerResponse.value--;
+    loading.value--;
     refreshHolidayTable();
     selectedRow.value = [];
   });

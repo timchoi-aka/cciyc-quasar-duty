@@ -1,8 +1,7 @@
 <template>
   <!-- loading dialog -->
-  <q-dialog v-model="waitingAsync" position="bottom">
-    <LoadingDialog message="處理中"/>
-  </q-dialog>
+  <LoadingDialog :model-value="loading? 1: 0" message="處理中"/>
+  
 <!-- 
   :filter="filter"
     :filter-method="tableFilter"
@@ -30,7 +29,7 @@
 <script setup>
 import { computed, ref, onMounted } from "vue";
 import { EVENT_GET_ALL, EVENT_GET_COUNT } from "/src/graphQueries/Event/query.js";
-import { useQuery, useSubscription } from "@vue/apollo-composable";
+import { useQuery } from "@vue/apollo-composable";
 import { useStore } from "vuex";
 import { useQuasar } from "quasar"
 import LoadingDialog from "components/LoadingDialog.vue"
@@ -41,18 +40,20 @@ const $q = useQuasar()
 // $q.localStorage.set("module", "event");
 
 const userProfileLogout = () => $store.dispatch("userModule/logout")
-const awaitServerResponse = ref(0)
 const initialData = ref()
 
 // load graphql subscription on event list
-const { result: eventCount } = useSubscription(EVENT_GET_COUNT);
-const { result: eventList, loading, fetchMore, onError: EventGetAllError } = useQuery(EVENT_GET_ALL);
+const { onResult: eventCount } = useQuery(EVENT_GET_COUNT, {}, {pollInterval: 1000});
+const { result: eventList, loading, onError: EventGetAllError } = useQuery(EVENT_GET_ALL);
 
 // computed variables
 const EventList = computed(() => eventList.value?.HTX_Event??[])
-const waitingAsync = computed(() => awaitServerResponse > 0 ? true : false)
-const dataCount = computed(() => eventCount.value? JSON.parse(eventCount.value.HTX_Event_aggregate).aggregate.count:0)
+const dataCount = ref(0)
 const dataRows = ref([])
+
+eventCount((result) => {
+  if (result.data) dataCount.value = JSON.parse(result.data.HTX_Event_aggregate).aggregate.count
+})
 
 // table config
 const pagination = ref({

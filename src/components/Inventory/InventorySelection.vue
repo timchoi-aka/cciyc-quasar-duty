@@ -41,7 +41,7 @@
 
 <script setup>
 import { ref } from "vue"
-import { useSubscription } from "@vue/apollo-composable"
+import { useQuery } from "@vue/apollo-composable"
 import { gql } from "graphql-tag"
 
 // props & emits
@@ -57,8 +57,8 @@ const InventoryOptions = ref([])
 const OriginalInventoryOptions = ref([])
 
 // query
-const { onResult: InventoryResult } = useSubscription(gql`
-  subscription allInventory {
+const { onResult: InventoryResult } = useQuery(gql`
+  query allInventory {
     Inventory {
       f_cost
       d_purchase
@@ -73,24 +73,26 @@ const { onResult: InventoryResult } = useSubscription(gql`
   )
 
 // callback
-InventoryResult((data) => {
-  data.data.Inventory.forEach((d) => {
-    if (
-      d.ID != props.InventoryID
-    ) {
-      InventoryOptions.value.push({
-        value: d.ID,
-        c_name: d.c_name,
-        f_cost: d.f_cost,
-        d_purchase: d.d_purchase,
-        c_model: d.c_model,
-        c_location: d.c_location,
-        c_funding: d.c_funding
-      })
-    }
-  })
+InventoryResult((result) => {
+  if (result.data) {
+    result.data.Inventory.forEach((d) => {
+      if (
+        d.ID != props.InventoryID
+      ) {
+        InventoryOptions.value.push({
+          value: d.ID,
+          c_name: d.c_name,
+          f_cost: d.f_cost,
+          d_purchase: d.d_purchase,
+          c_model: d.c_model,
+          c_location: d.c_location,
+          c_funding: d.c_funding
+        })
+      }
+    })
 
-  OriginalInventoryOptions.value = InventoryOptions.value
+    OriginalInventoryOptions.value = InventoryOptions.value
+  }
 })
 
 // function

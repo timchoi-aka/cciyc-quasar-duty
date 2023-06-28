@@ -1,7 +1,7 @@
 import { gql } from "graphql-tag"
 
 export const EVENT_GET_COUNT = gql`
-subscription EVENT_GET_COUNT {
+query EVENT_GET_COUNT {
   HTX_Event_aggregate(offset: 1) {
     aggregate {
       count
@@ -48,7 +48,7 @@ export const EVENT_FEE_BY_ACT_CODE = gql`
   }`
 
 export const EVENT_GET_ALL_ACTIVE = gql`
-  subscription getActiveEvent {
+  query getActiveEvent {
     HTX_Event(order_by: {c_act_code: desc}, where: {c_status: {_eq: "未完成"}}) {
       c_act_code
       c_act_name
@@ -87,7 +87,7 @@ export const MY_EVENT_FAVOURATE = gql`
   }`
 
 export const MY_FAV = gql`
-subscription MyFav($username: String = "") {
+query MyFav($username: String = "") {
   Event_Favourate(where: {username: {_eq: $username}}) {
     username
     c_act_code
@@ -118,7 +118,7 @@ subscription MyFav($username: String = "") {
 
 
 export const MY_EVENT_SEARCH = gql`
-subscription myEvent($condition: HTX_Event_bool_exp = {c_act_code: {_eq: ""}}) {
+query myEvent($condition: HTX_Event_bool_exp = {c_act_code: {_eq: ""}}) {
   HTX_Event(order_by: {c_act_code: desc}, where: $condition) {
     b_finish
     c_act_code
@@ -166,7 +166,7 @@ query EVENT_STAT_BY_PK($c_act_code: String) {
 //
 //
 export const APPLICANTS_BY_ACT_CODE = gql`
-subscription ApplicantsByActCode($c_act_code: String = "") {
+query ApplicantsByActCode($c_act_code: String = "") {
   tbl_act_reg (where: {c_act_code: {_eq: $c_act_code}, b_refund: {_eq: false}}) {
     i_age
     d_reg
@@ -185,7 +185,7 @@ subscription ApplicantsByActCode($c_act_code: String = "") {
 }`
 
 export const EVENT_APPLY_BY_ACT_CODE = gql`
-subscription EVENT_APPLY_BY_ACT_CODE($c_act_code: String = "") {
+query EVENT_APPLY_BY_ACT_CODE($c_act_code: String = "") {
   tbl_act_reg(where: {c_act_code: {_eq: $c_act_code}}) {
     i_age
     d_reg
@@ -205,7 +205,7 @@ subscription EVENT_APPLY_BY_ACT_CODE($c_act_code: String = "") {
 }`
 
 export const EVALUATION_UNAPPROVED = gql`
-  subscription EvaluationUnapproved {
+  query EvaluationUnapproved {
     Event_Evaluation(where: {ic_date: {_is_null: true}, submit_date: {_is_null: false}}) {
       submit_date
       c_act_code

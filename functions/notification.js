@@ -22,6 +22,35 @@ exports.subscribeTopic = functions.region("asia-east2").https.onCall(async (data
   // subscribe to user's topic
   return await messaging.subscribeToTopic(data.token, data.topic);
 });
+/**
+ * data {
+  * topic: string,
+  * data: {
+    * title: string,
+    * body: string,
+  * }
+* }
+ */
+
+exports.notifyUser = functions.region("asia-east2").https.onCall(async (data, context) => {
+  // App Check token. (If the request includes an invalid App Check
+  // token, the request will be rejected with HTTP error 401.)
+  if (context.app == undefined) {
+    throw new functions.https.HttpsError(
+        "failed-precondition",
+        "The function must be called from an App Check verified app.");
+  }
+
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated users can add requests",
+    );
+  }
+
+  // subscribe to user's topic
+  return await publishTopic(data.topic, data.data);
+});
 
 exports.notify = async (uid, data) => {
   const loginUserDoc = FireDB
@@ -33,11 +62,6 @@ exports.notify = async (uid, data) => {
   const token = loginUserData.FCM_Tokens.token;
   console.log("Delivering to tokens: " + token);
   const message = {
-    data: {
-      title: data.title,
-      body: data.body,
-      datetime: formatDateTime(new Date()),
-    },
     token: token,
   };
 
@@ -51,8 +75,10 @@ exports.notify = async (uid, data) => {
   });
 };
 
-// exports.publishTopic = async (topic, data, channelID = "", link = "") => {
-exports.publishTopic = async (topic, data) => {
+exports.publishTopic = async (topic, data, channelID = "", link = "") => {
+//async function publishTopic(topic, data) {
+  // console.log("topic", topic)
+  // console.log("data",  JSON.stringify(data))
   const message = {
     data: {
       title: data.title,
@@ -100,10 +126,12 @@ exports.publishTopic = async (topic, data) => {
 
   // Send a message to the device corresponding to the provided
   // registration token.
-  messaging.send(message).then((response) => {
+  return messaging.send(message).then((response) => {
     // Response is a message ID string.
     console.log("成功發送通知給Topic：" + topic);
+    return Promise.resolve(response);
   }).catch((error) => {
     console.log("發送通知失敗:", error);
+    return Promise.reject(error);
   });
 };

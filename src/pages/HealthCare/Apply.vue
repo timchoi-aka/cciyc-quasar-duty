@@ -37,7 +37,7 @@
         </div>
       </div>
       <div class="col-8 justify-center items-start">
-        <Voucher v-if="printObject.amount > 0" class="fit" :data="printObject"/>
+        <Voucher v-if="printObject.amount > 0" class="fit" :data="printObject" type="醫療"/>
       </div>
     </div>
     
@@ -73,7 +73,7 @@
           </q-table>
         </div>
         <div class="fit justify-center items-start">
-          <Voucher v-if="printObject.amount > 0" class="fit" :data="printObject"/>
+          <Voucher v-if="printObject.amount > 0" class="fit" :data="printObject" type="醫療"/>
         </div>
       </div>
     </div>

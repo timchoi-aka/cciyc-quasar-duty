@@ -25,10 +25,9 @@ import { useQuasar } from "quasar"
 // variables
 const $store = useStore();
 const $q = useQuasar();
-const awaitServerResponse = ref(0)
+
 
 // computed    
 const username = computed(() => $store.getters["userModule/getUsername"])
-const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const login = () => $store.dispatch("userModule/login")
 </script>

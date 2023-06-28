@@ -7,7 +7,7 @@
   "private": true,
   "scripts": {
     "test": "echo \"No test specified\" && exit 0",
-    "emu": "firebase emulators:start --only functions,firestore,pubsub --import ./functions/latest",
+    "emu": "firebase emulators:start --import ./functions/latest",
     "build:dev": "quasar dev",
     "serve": "run-p emu build:dev",
     "build": "quasar build"

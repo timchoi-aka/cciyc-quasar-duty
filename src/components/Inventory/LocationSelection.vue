@@ -44,7 +44,7 @@
 
 <script setup>
 import { ref } from "vue"
-import { useSubscription, useMutation } from "@vue/apollo-composable"
+import { useQuery, useMutation } from "@vue/apollo-composable"
 import { gql } from "graphql-tag"
 import { useQuasar } from "quasar"
 
@@ -63,8 +63,8 @@ const deleteModal = ref(false)
 const OriginalLocationOptions = ref([])
 
 // query
-const { onResult: LocationResult } = useSubscription(gql`
-  subscription getAllLocation {
+const { onResult: LocationResult } = useQuery(gql`
+  query getAllLocation {
     Inventory_Location {
       c_location
     }
@@ -86,8 +86,8 @@ mutation delLocation($c_location: String = "") {
 
 // computed
 LocationResult((result) => {
-  LocationOptions.value = []
   if (result.data.Inventory_Location) {
+    LocationOptions.value = []
     result.data.Inventory_Location.forEach((data) => {
       LocationOptions.value.push((data.c_location.trim()))
     })

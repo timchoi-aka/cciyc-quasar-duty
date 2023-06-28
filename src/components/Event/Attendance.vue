@@ -63,7 +63,7 @@
     <div style="border: 1px solid;" class="col-6 text-center row">
       <div style="border-bottom: 1px solid;" class="col-12 text-center normal">日期</div>
       <div class="row col-12 text-center justify-center">
-        <div class="col-grow normal" style="border: 1px solid;" v-for="n in (Event.i_lessons<=20? Event.i_lessons: 20)">&nbsp;</div>
+        <div class="col-grow normal" style="border: 1px solid;" v-for="n in numberOfSlots">&nbsp;</div>
       </div>
     </div>
     <div style="border: 1px solid;" class="col-2 text-center normal">備註</div>
@@ -75,7 +75,7 @@
     <div style="border: 1px solid;" class="col-2 text-center normal">{{ member.c_name }} ({{ member.c_mem_id }})</div>
     <div style="border: 1px solid;" class="col-1 text-center normal">{{ member.i_age }}</div>
     <div style="border: 1px solid;" class="col-6 text-center row">
-      <div class="col-grow" style="border-right: 1px solid;" v-for="n in (Event.i_lessons<=20? Event.i_lessons: 20)">&nbsp;</div>
+      <div class="col-grow" style="border-right: 1px solid;" v-for="n in numberOfSlots">&nbsp;</div>
     </div>
     <div style="border: 1px solid;" class="col-2 text-center">&nbsp;</div>
   </div>
@@ -84,21 +84,21 @@
   <div class="row col-12 q-mt-none">
     <div style="border: 1px solid;" class="col-4 text-center normal">出席人數：</div>
     <div style="border: 1px solid;" class="col-6 text-center row">
-      <div class="col-grow" style="border-right: 1px solid;" v-for="n in (Event.i_lessons<=20? Event.i_lessons: 20)">&nbsp;</div>
+      <div class="col-grow" style="border-right: 1px solid;" v-for="n in numberOfSlots">&nbsp;</div>
     </div>
     <div style="border: 1px solid;" class="col-2 text-center normal">&nbsp;</div>
   </div>
   <div class="row col-12 q-mt-none">
     <div style="border: 1px solid;" class="col-4 text-center normal">活動節數：</div>
     <div style="border: 1px solid;" class="col-6 text-center row">
-      <div class="col-grow" style="border-right: 1px solid;" v-for="n in (Event.i_lessons<=20? Event.i_lessons: 20)">&nbsp;</div>
+      <div class="col-grow" style="border-right: 1px solid;" v-for="n in numberOfSlots">&nbsp;</div>
     </div>
     <div style="border: 1px solid;" class="col-2 text-center normal">&nbsp;</div>
   </div>
   <div class="row col-12 q-mt-none">
     <div style="border: 1px solid;" class="col-4 text-center normal">15-24歲青年人數：</div>
     <div style="border: 1px solid;" class="col-6 text-center row">
-      <div class="col-grow" style="border-right: 1px solid;" v-for="n in (Event.i_lessons<=20? Event.i_lessons: 20)">&nbsp;</div>
+      <div class="col-grow" style="border-right: 1px solid;" v-for="n in numberOfSlots">&nbsp;</div>
     </div>
     <div style="border: 1px solid;" class="col-2 text-center normal">&nbsp;</div>
   </div>
@@ -109,7 +109,7 @@
 import { computed, ref } from "vue";
 import { useStore } from "vuex";
 import { EVENT_BY_PK, APPLICANTS_BY_ACT_CODE } from "/src/graphQueries/Event/query.js"
-import { useQuery, useSubscription } from "@vue/apollo-composable"
+import { useQuery } from "@vue/apollo-composable"
 import { date as qdate, useQuasar } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
 
@@ -129,24 +129,34 @@ const printObj = ref({
   previewTitle: "列印預覽",
   popTitle: "點名紙",
 })
+const numberOfSlots = ref(20)
 
 // queries
-const { result: EventData } = useQuery(
+const { onResult: EventData } = useQuery(
   EVENT_BY_PK,
   () => ({
     c_act_code: props.EventID
   }));
 
-const { result: ApplicantData } = useSubscription(
+const { onResult: ApplicantData } = useQuery(
   APPLICANTS_BY_ACT_CODE,
   () => ({
     c_act_code: props.EventID
-  }));
+  }), {
+    pollInterval: 1000,
+  });
 
 // computed
-const Event = computed(() => EventData.value?.HTX_Event_by_pk??[])
-const Applicants = computed(() => ApplicantData.value?.tbl_act_reg??[])
+const Event = ref([])
+const Applicants = ref([])
 
+ApplicantData((result) => {
+  if (result.data) Applicants.value = result.data.tbl_act_reg
+})
+
+EventData((result) => {
+  if (result.data) Event.value = result.data.HTX_Event_by_pk
+})
 </script>
 
 <script>

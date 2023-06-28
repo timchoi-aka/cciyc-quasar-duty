@@ -15,11 +15,15 @@
             <div class="col-3">截圖（如有）：</div>
             <q-uploader
               class="col-9"
-              :url="upload_API + '/file-saveFileToStorage'"
+              :url="upload_API + '/file-savefiletostorage'"
               color="primary"
               flat
               bordered
               multiple
+              :headers="[
+                {name: 'Access-Control-Allow-Origin', value: '*'}, 
+                {name: 'Access-Control-Allow-Headers', value: 'Origin, X-Requested-With, Content-Type, Accept'},
+              ]"
               @uploaded="updateFilenames"
             />
           </q-card-section>
@@ -133,10 +137,8 @@ import DateComponent from "./components/Basic/DateComponent.vue";
 import LoadingDialog from "components/LoadingDialog.vue"
 provide('messaging', FirebaseMessaging)
 
-let upload_API;
-if (process.env.NODE_ENV === "development") {
-  upload_API = "http://localhost:5001"
-} else upload_API = "https://asia-east2-manage-hr.cloudfunctions.net"
+const upload_API = process.env.NODE_ENV === "development"? "http://localhost:5001/manage-hr/asia-east2" : "https://asia-east2-manage-hr.cloudfunctions.net"
+
 // variables
 const leftDrawerOpen = ref(false);
 const rightDrawerOpen = ref(false);

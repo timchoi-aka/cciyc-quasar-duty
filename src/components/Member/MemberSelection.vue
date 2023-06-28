@@ -41,7 +41,7 @@
 <script setup>
 import { ref } from "vue"
 import ageUtil from "src/lib/calculateAge.js"
-import { useSubscription } from "@vue/apollo-composable"
+import { useQuery } from "@vue/apollo-composable"
 import { gql } from "graphql-tag"
 import { date as qdate } from "quasar"
 
@@ -66,8 +66,8 @@ const NameOptions = ref([])
 const OriginalNameOptions = ref([])
 
 // query
-const { onResult: NameResult } = useSubscription(gql`
-  subscription allMemberIDAndName {
+const { onResult: NameResult } = useQuery(gql`
+  query allMemberIDAndName {
     Member {
       c_mem_id
       c_name
@@ -78,35 +78,39 @@ const { onResult: NameResult } = useSubscription(gql`
       d_expired_1
       d_exit_1
     }
-  }`
+  }`, {}, {
+    pollInterval: 1000
+  }
   )
 
 // callback
-NameResult((data) => {
-  data.data.Member.forEach((d) => {
-    if (
-      d.c_mem_id != props.MemberID &&
-      d.c_mem_id != "9999" && // 顧客
-      d.d_exit_1 == null &&
-      (
-        d.d_expired_1 == null || 
-        qdate.getDateDiff(Date.now(), d.d_expired_1) < 0
-      )
-    ) {
-      NameOptions.value.push({
-        value: d.c_mem_id,
-        c_name: d.c_name,
-        c_name_other: d.c_name_other,
-        c_sex: d.c_sex,
-        d_birth: d.d_birth,
-        c_udf_1: d.c_udf_1,
-        d_expired_1: d.d_expired_1,
-        d_exit_1: d.d_exit_1
-      })
-    }
-  })
+NameResult((result) => {
+  if (result.data) {
+    result.data.Member.forEach((d) => {
+      if (
+        d.c_mem_id != props.MemberID &&
+        d.c_mem_id != "9999" && // 顧客
+        d.d_exit_1 == null &&
+        (
+          d.d_expired_1 == null || 
+          qdate.getDateDiff(Date.now(), d.d_expired_1) < 0
+        )
+      ) {
+        NameOptions.value.push({
+          value: d.c_mem_id,
+          c_name: d.c_name,
+          c_name_other: d.c_name_other,
+          c_sex: d.c_sex,
+          d_birth: d.d_birth,
+          c_udf_1: d.c_udf_1,
+          d_expired_1: d.d_expired_1,
+          d_exit_1: d.d_exit_1
+        })
+      }
+    })
 
-  OriginalNameOptions.value = NameOptions.value
+    OriginalNameOptions.value = NameOptions.value
+  }
 })
 
 // function

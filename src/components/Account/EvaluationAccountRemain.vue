@@ -1,9 +1,7 @@
 <template>
   <div>
     <!-- loading dialog -->
-    <q-dialog v-model="waitingAsync" position="bottom">
-      <LoadingDialog message="處理中"/>
-    </q-dialog>
+    <LoadingDialog v-model="loading" message="處理中"/>
 
     <q-card v-if="claimResult.length" class="row">
       <q-card-section class="text-body2 bg-grey-2 text-left text-bold col-12 q-ma-none q-pa-sm">申請餘款記錄(共：${{ claimResult.filter((x) => x.approved || (!x.approved && !x.approve_date)).reduce((a,v) => a += v.amount,0) }})</q-card-section>
@@ -21,7 +19,7 @@
 
     <div class="row justify-around items-center">
       <div class="text-left text-body1 text-bold">已預支：${{ prepaidResult.filter((x) => x.approved).reduce((a,v) => a+v.amount, 0) }}</div>
-      <q-btn v-if="MaximumClaim > 0 && (props.respon.includes(username) || isUAT)" class="bg-primary text-white q-my-sm" icon="money" label="申請餘款" @click="prepaid = { cheque: '', amount: 0}"/>
+      <q-btn v-if="MaximumClaim > 0 && (props.respon.includes(username) || isUAT)" class="bg-primary text-white q-my-sm" icon="money" label="申請餘款" @click="prepaid = { recipient: '', amount: 0}"/>
     </div>
     <q-form
       @submit="save"
@@ -42,7 +40,7 @@
 import { gql } from "graphql-tag"
 import { ref, computed } from "vue"
 import { useStore } from "vuex";
-import { useMutation, useSubscription } from "@vue/apollo-composable"
+import { useMutation, useQuery } from "@vue/apollo-composable"
 import LoadingDialog from "components/LoadingDialog.vue"
 import { date as qdate, useQuasar, is } from "quasar"
 
@@ -54,12 +52,12 @@ const props = defineProps({
 })
 
 const prepaid = ref({})
-const awaitServerResponse = ref(0)
+const loading = ref(0)
 const $q = useQuasar()
 
 // queries
-const { result: getEvaluationResult } = useSubscription(gql`
-  subscription Remain_GetExpenseByEvalUUID(
+const { onResult: getEvaluationResult } = useQuery(gql`
+  query Remain_GetExpenseByEvalUUID(
     $eval_uuid: uniqueidentifier = "00000000-0000-0000-0000-000000000000",
     ) {
     Event_Evaluation_Account(where: {
@@ -72,10 +70,12 @@ const { result: getEvaluationResult } = useSubscription(gql`
     }
   }`, () => ({
     eval_uuid: props.eval_uuid,
-  }));
+  }), {
+    pollInterval: 1000,
+  });
 
-const { result: getPrepaidResult } = useSubscription(gql`
-  subscription Remain_GetPrepaidAmountByEvalUUID(
+const { onResult: getPrepaidResult } = useQuery(gql`
+  query Remain_GetPrepaidAmountByEvalUUID(
     $eval_uuid: uniqueidentifier = "00000000-0000-0000-0000-000000000000",
     ) {
     Event_Prepaid(where: {
@@ -88,7 +88,7 @@ const { result: getPrepaidResult } = useSubscription(gql`
       approve_user
       approved
       c_act_code
-      cheque
+      recipient
       type
       eval_uuid
       payment_method
@@ -96,7 +96,9 @@ const { result: getPrepaidResult } = useSubscription(gql`
     }
   }`, () => ({
     eval_uuid: props.eval_uuid,
-  }));
+  }), {
+    pollInterval: 1000,
+  });
 
 const { mutate: addRemainRequest, onDone: addRemainRequest_Completed } = useMutation(gql`
   mutation Remain_addPrepaid(
@@ -111,7 +113,7 @@ const { mutate: addRemainRequest, onDone: addRemainRequest_Completed } = useMuta
       approve_user
       approved
       c_act_code
-      cheque
+      recipient
       eval_uuid
       payment_method
       uuid
@@ -168,22 +170,21 @@ mutation delClaim($uuid: uniqueidentifier = "") {
 }`) 
 
 // computed
-const EvaluatedIncome = computed(() => getEvaluationResult.value? getEvaluationResult.value.Event_Evaluation_Account.filter((x) => x.type.trim() == '收入'):[])
-const EvaluatedExpense = computed(() => getEvaluationResult.value? getEvaluationResult.value.Event_Evaluation_Account.filter((x) => x.type.trim() == "支出"):[])
+const EvaluatedIncome = ref([])
+const EvaluatedExpense = ref([])
 const IncomeTotal = computed(() => EvaluatedIncome.value? EvaluatedIncome.value.reduce((a,v) => a + v.amount, 0): 0)
 const ExpenseTotal = computed(() => EvaluatedExpense.value? EvaluatedExpense.value.reduce((a,v) => a + v.amount, 0): 0)
-const prepaidResult = computed(() => getPrepaidResult.value? getPrepaidResult.value.Event_Prepaid.filter((x) => x.type.trim() == '預支') : [])
-const claimResult = computed(() => getPrepaidResult.value? getPrepaidResult.value.Event_Prepaid.filter((x) => x.type.trim() == '餘款') : [])
+const prepaidResult = ref([])
+const claimResult = ref([])
 const MaximumClaim = computed(() => ExpenseTotal.value - prepaidResult.value.filter((x) => x.approved).reduce((a,v) => a+v.amount, 0) - claimResult.value.filter((x) => x.approved).reduce((a,v) => a+v.amount, 0))
 const $store = useStore();
 const username = computed(() => $store.getters["userModule/getUsername"])
 const isUAT = computed(() => $store.getters["userModule/getUAT"])
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
-const waitingAsync = computed(() => awaitServerResponse.value > 0)
 
 // function
 function deleteClaim(uuid) {
-  awaitServerResponse.value++
+  loading.value++
   delClaim({
     uuid: uuid
   })
@@ -206,7 +207,7 @@ function save() {
     "action": "申請餘款: " + JSON.stringify(remainObject)
   }
 
-  awaitServerResponse.value++
+  loading.value++
   addRemainRequest({
     logObject: logObject,
     object: remainObject
@@ -236,7 +237,7 @@ function acceptClaim(uuid) {
       "module": "活動系統",
       "action": "批核餘款申請 - 系統編號：" + uuid + " 申請人：" + claimResult.value[i].apply_user + " 活動編號：" + claimResult.value[i].c_act_code + " 金額：" + claimResult.value[i].amount.toFixed(1)
     }
-    awaitServerResponse.value++
+    loading.value++
     approveClaim({
       logObject: logObject,
       uuid: uuid,
@@ -263,7 +264,7 @@ function rejectClaim(uuid) {
       "module": "活動系統",
       "action": "拒絕餘款申請: " + uuid
     }
-    awaitServerResponse.value++
+    loading.value++
     denyClaim({
       logObject: logObject,
       uuid: uuid,
@@ -275,30 +276,44 @@ function rejectClaim(uuid) {
 }
 
 // callback
+getPrepaidResult((result) => {
+  if (result.data) {
+    claimResult.value = result.data.Event_Prepaid.filter((x) => x.type.trim() == '餘款')
+    prepaidResult.value = result.data.Event_Prepaid.filter((x) => x.type.trim() == '預支')
+  }
+})
+
+getEvaluationResult((result) => {
+  if (result.data) {
+    EvaluatedIncome.value = result.data.Event_Evaluation_Account.filter((x) => x.type.trim() == '收入')
+    EvaluatedExpense.value = result.data.Event_Evaluation_Account.filter((x) => x.type.trim() == "支出")
+  }
+})
+
 addRemainRequest_Completed((result) => {
   prepaid.value = {}
-  awaitServerResponse.value--
+  loading.value--
   $q.notify({
     message: "活動" + result.data.insert_Event_Prepaid_one.c_act_code + "，成功新增申請餘款記錄。",
   }) 
 })
 
 denyClaim_Completed((result) => {
-  awaitServerResponse.value--
+  loading.value--
   $q.notify({
     message: "拒絕了餘款申請。",
   })
 })
 
 delClaim_Completed((result) => {
-  awaitServerResponse.value--
+  loading.value--
   $q.notify({
     message: "刪除了餘款申請。",
   })
 })
 
 approveClaim_Completed((result) => {
-  awaitServerResponse.value--
+  loading.value--
   $q.notify({
     message: "批核了餘款申請。",
   })

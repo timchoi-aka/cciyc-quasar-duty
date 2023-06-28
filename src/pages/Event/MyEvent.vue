@@ -1,8 +1,6 @@
 <template>
   <!-- loading dialog -->
-  <q-dialog v-model="waitingAsync" position="bottom">
-    <LoadingDialog message="處理中"/>
-  </q-dialog>
+  <LoadingDialog :model-value="(loadingEventList || loadingFav || loadingAwaitApproval || loadingAwaitApprovalPrepaidRecords)? 1: 0" message="處理中"/>
 
   <!-- event detail modal -->
   <q-dialog
@@ -122,7 +120,7 @@
 
 <script setup>
 import { computed, ref } from "vue";
-import { useSubscription } from "@vue/apollo-composable";
+import { useQuery } from "@vue/apollo-composable";
 import { useStore } from "vuex";
 import { MY_EVENT_SEARCH, MY_FAV, EVALUATION_UNAPPROVED } from "/src/graphQueries/Event/query.js";
 import EventDetail from "components/Event/EventDetail.vue";
@@ -133,7 +131,6 @@ import { gql } from "graphql-tag"
 // variables
 const $store = useStore();
 const $q = useQuasar()
-const awaitServerResponse = ref(0)
 const selectedEventID = ref("")
 const filter = ref({
   status: false,
@@ -320,14 +317,16 @@ const unapprovedPrepaidColumns = ref([
 // $q.localStorage.set("module", "event");
 
 // queries
-const { result: eventList, onError } = useSubscription(MY_EVENT_SEARCH, searchCondition.value);
-const { result: fav, onError: fav_onError } = useSubscription(MY_FAV, 
+const { onResult: eventList, onError, loading: loadingEventList } = useQuery(MY_EVENT_SEARCH, searchCondition.value, {pollInterval: 1000});
+const { onResult: fav, onError: fav_onError, loading: loadingFav } = useQuery(MY_FAV, 
 () => ({
   username: username.value
-}));
-const { result: awaitApproval } = useSubscription(EVALUATION_UNAPPROVED)
-const { result: awaitApprovalPrepaidRecords } = useSubscription(gql`
-subscription GetUnapprovedPrepaid {
+}), {
+  pollInterval: 1000
+});
+const { onResult: awaitApproval, loading: loadingAwaitApproval } = useQuery(EVALUATION_UNAPPROVED, {}, {pollInterval: 1000});
+const { onResult: awaitApprovalPrepaidRecords, loading: loadingAwaitApprovalPrepaidRecords } = useQuery(gql`
+query GetUnapprovedPrepaid {
   Event_Prepaid(where: {approved: {_eq: false}, approve_date: {_is_null: true}}) {
     apply_user
     apply_date
@@ -336,25 +335,39 @@ subscription GetUnapprovedPrepaid {
     type
     uuid
   }
-}`)
+}`, {}, {
+  pollInterval: 1000
+})
 
 // computed
 const userProfileLogout = () => $store.dispatch("userModule/logout")
-const EventList = computed(() => eventList.value?.HTX_Event??[])
-const FavList = computed(() => fav.value?.Event_Favourate.map(a => a.Favourate_to_Event)??[])
-const waitingAsync = computed(() => awaitServerResponse > 0 ? true : false)
-const awaitApprovalTableEntries = computed(() => 
-  awaitApproval.value?
-  awaitApproval.value.Event_Evaluation.map(x => ({
-    c_act_code: x.c_act_code,
-    c_act_name: x.Evaluation_to_Event.c_act_name,
-    submit_date: x.submit_date,
-    c_status: x.Evaluation_to_Event.c_status,
-  })) :
-  []
-)
-const awaitApprovalPrepaid = computed(() => awaitApprovalPrepaidRecords.value?.Event_Prepaid??[])
+const EventList = ref([])
+const FavList = ref([])
+const awaitApprovalTableEntries = ref([])
+const awaitApprovalPrepaid = ref([])
 
+eventList((result) => {
+  if (result.data) EventList.value = result.data.HTX_Event
+})
+
+fav((result) => {
+  if (result.data) FavList.value = result.data.Event_Favourate.map(a => a.Favourate_to_Event)
+})
+
+awaitApproval((result) => {
+  if (result.data) {
+    awaitApprovalTableEntries.value = result.data.Event_Evaluation.map(x => ({
+      c_act_code: x.c_act_code,
+      c_act_name: x.Evaluation_to_Event.c_act_name,
+      submit_date: x.submit_date,
+      c_status: x.Evaluation_to_Event.c_status,
+    }))
+  }
+})
+
+awaitApprovalPrepaidRecords((result) => {
+  if (result.data) awaitApprovalPrepaidRecords.value = result.data.Event_Prepaid
+})
 // functions 
 function showDetail(evt, row, index) {
   eventDetailDialog.value = true

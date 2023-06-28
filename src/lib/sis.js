@@ -5,7 +5,8 @@ function sisFilter(reportDate, reportType, x) {
   console.log(x.c_mem_id + ":" + qdate.startOfDate(qdate.subtractFromDate(reportDate.value, {years: 15}), 'month') + ":" + qdate.getDateDiff(
     x.d_birth,
     qdate.startOfDate(qdate.subtractFromDate(reportDate.value, {years: 15}), 'month')
-  ) ) */
+  ) ) 
+    */
   return (
     x.c_udf_1 != "社區義工" &&
     ( // did not exit membership or exit after start of report month

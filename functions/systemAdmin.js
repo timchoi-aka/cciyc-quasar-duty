@@ -1166,3 +1166,38 @@ exports.addBugReport = functions.region("asia-east2").https.onCall(async (data, 
     console.log(data.username + "提交了BugReport id: " + data.docid)
   })
 });
+
+exports.updateBugStatus = functions.region("asia-east2").https.onCall(async (data, context) => {
+  // context.app will be undefined if the request doesn't include an
+  // App Check token. (If the request includes an invalid App Check
+  // token, the request will be rejected with HTTP error 401.)
+  if (context.app == undefined) {
+    throw new functions.https.HttpsError(
+        "failed-precondition",
+        "The function must be called from an App Check verified app.");
+  }
+
+  // only authenticated users can run this
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only authenticated users can add requests",
+    );
+  }
+
+  // only admin can run this
+  const loginUserDoc = await FireDB.collection("users").doc(context.auth.uid).get();
+  const loginUserData = loginUserDoc.data();
+  if (!loginUserData.privilege.systemAdmin) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only system admin can run test notification",
+    );
+  }
+  const bugCollection = FireDB.collection("bugs");
+  return await bugCollection.doc(data.docid).update({
+    status: data.status
+  }).then(() => {
+    console.log(loginUserData.name + "修改了BugReport id: " + data.docid + " 狀態：" + data.status)
+  })
+});

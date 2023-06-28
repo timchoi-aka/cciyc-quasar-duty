@@ -292,6 +292,7 @@ mutation approveEvaluationFromUUID(
     }) {
       uuid
       c_act_code
+      staff_name
   }
   update_HTX_Event_by_pk(
     pk_columns: {c_act_code: $c_act_code},

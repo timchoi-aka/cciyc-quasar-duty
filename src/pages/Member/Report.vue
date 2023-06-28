@@ -285,9 +285,9 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { ref, watch } from "vue";
 import { exportFile, date as qdate } from "quasar";
-import { useSubscription } from "@vue/apollo-composable"
+import { useQuery } from "@vue/apollo-composable"
 import { gql } from "graphql-tag"
 import MemberDetail from "components/Member/MemberDetail.vue";
 import Report from "src/lib/sis"
@@ -300,6 +300,10 @@ const reportDate = ref(qdate.formatDate(qdate.endOfDate(qdate.subtractFromDate(D
 const detailModal = ref(false)
 const showMemberID = ref("")
 const activeTab = ref("All")
+
+watch(() => reportDate.value, (newValue, oldValue)  => { 
+  if (newValue != oldValue) updateReport()
+})
 
 const defaultPagination = ref({
   rowsPerPage: 30,
@@ -427,8 +431,8 @@ const memberListColumns = ref([
 ])
 
 // query - load graphql subscription on member list
-const { result, loading } = useSubscription(gql`
-  subscription Member_getMember {
+const { onResult: MemberResult, loading, refetch } = useQuery(gql`
+  query Member_getMember {
     Member(order_by: {c_mem_id: desc}, offset: 1) {
       c_mem_id
       b_mem_type1
@@ -455,68 +459,75 @@ const { result, loading } = useSubscription(gql`
         uuid
       }
     }
-  }`);
+  }`, {}, { pollInterval: 10000});
 
 // computed
-const MemberData = computed(() => {
-  let res = []
-  if (result.value) {
-    result.value.Member.forEach((x) => {
-      res.push({
-        ...x,
-        ...Report.isYouthFamily(reportDate, result.value.Member, x.c_mem_id)
-      })
-    })
+const MemberData = ref([])
+const QuitData = ref([])
+const YouthData = ref([])
+const Family_15Data = ref([])
+const Family_24Data = ref([])
+const ErrorData = ref([])
+const DuplicateData = ref([])
+const ExpiredData = ref([])
+const tmpResult = ref([])
+
+MemberResult((result) => {
+  if (result.data) {
+    tmpResult.value = result.data.Member
+    updateReport()
   }
-  return res
 })
-const QuitData = computed(() => MemberData.value? MemberData.value.filter((x) => x.d_exit_1 != null): [])
-const YouthData = computed(() => MemberData.value?
-  MemberData.value.filter((x) => Report.sisFilter(reportDate, 'youth', x)
-) : [])
-
-const Family_15Data = computed(() => MemberData.value? MemberData.value.filter((x) =>
-  Report.sisFilter(reportDate, 'child', x)
-) : [])
-
-const Family_24Data = computed(() => MemberData.value? MemberData.value.filter((x) =>
-  Report.sisFilter(reportDate, 'family', x)
-): [])
-
-const ErrorData = computed(() => MemberData.value? MemberData.value.filter((x) =>
-  (
-    x.d_birth == null ||
-    x.d_birth > reportDate.value ||
-    x.d_enter_1 == null
-  ) &&
-  x.c_udf_1 != "社區義工" &&
-  (
-    (x.d_expired_1 == null) ||
-    (x.d_expired_1 && qdate.getDateDiff(x.d_expired_1, reportDate.value) > 0)
-  )
-  ): [])
-
-const DuplicateData = computed(() => {
-  let now = new Date()
-  let res = [];
-  if (MemberData.value) {
-    MemberData.value.forEach((x) => {
-      // console.log("c_name:" + x.c_name + " - d_birth:" + x.d_birth)
-      if (MemberData.value.filter((member) => member.c_name == x.c_name && member.d_birth == x.d_birth && (qdate.extractDate(member.d_expired_1, "YYYY-MM-DDTHH:mm:ss") > now && qdate.extractDate(x.d_expired_1, "YYYY-MM-DDTHH:mm:ss") > now)).length > 1) {
-        res.push(x)
-      }
-    })
-  }
-  return res
-})
-
-const ExpiredData = computed(() => MemberData.value? MemberData.value.filter((x) =>
-  !x.d_exit_1 &&
-  x.d_expired_1 && qdate.getDateDiff(x.d_expired_1, reportDate.value) < 0 &&
-  qdate.isBetweenDates(x.d_expired_1, qdate.startOfDate(reportDate.value, 'month'), qdate.endOfDate(reportDate.value, 'month'))
-): [])
 
 // functions
+function updateReport() {
+  let res = []
+  if (!tmpResult.value || tmpResult.value.length == 0) return
+  
+  tmpResult.value.forEach((x) => {
+    res.push({
+      ...x,
+      ...Report.isYouthFamily(reportDate, tmpResult.value, x.c_mem_id)
+    })
+  })
+  
+  MemberData.value = res
+  Family_15Data.value = res.filter((x) => Report.sisFilter(reportDate, 'child', x))
+  Family_24Data.value = res.filter((x) => Report.sisFilter(reportDate, 'family', x))
+  QuitData.value = res.filter((x) => x.d_exit_1 != null)
+  YouthData.value = res.filter((x) => Report.sisFilter(reportDate, 'youth', x))
+  
+  ErrorData.value = res.filter((x) =>
+    (
+      x.d_birth == null ||
+      x.d_birth > reportDate.value ||
+      x.d_enter_1 == null
+    ) &&
+    x.c_udf_1 != "社區義工" &&
+    (
+      (x.d_expired_1 == null) ||
+      (x.d_expired_1 && qdate.getDateDiff(x.d_expired_1, reportDate.value) > 0)
+    )
+  )
+
+  let now = new Date()
+  let DuplicateDataRes = [];
+  
+  res.forEach((x) => {
+    // console.log("c_name:" + x.c_name + " - d_birth:" + x.d_birth)
+    if (res.filter((member) => member.c_name == x.c_name && member.d_birth == x.d_birth && (qdate.extractDate(member.d_expired_1, "YYYY-MM-DDTHH:mm:ss") > now && qdate.extractDate(x.d_expired_1, "YYYY-MM-DDTHH:mm:ss") > now)).length > 1) {
+      DuplicateDataRes.push(x)
+    }
+  })
+  
+  DuplicateData.value = DuplicateDataRes
+  ExpiredData.value = res.filter((x) =>
+    !x.d_exit_1 &&
+    x.d_expired_1 && qdate.getDateDiff(x.d_expired_1, reportDate.value) < 0 &&
+    qdate.isBetweenDates(x.d_expired_1, qdate.startOfDate(reportDate.value, 'month'), qdate.endOfDate(reportDate.value, 'month'))
+  )
+}
+
 function exportExcel(datasource, columns, filename) {
   let content = Excel.jsonToXLS(datasource, columns)
 

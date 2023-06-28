@@ -153,11 +153,13 @@ const { onResult: EventFee_Completed, onError: EventFeeError } = useQuery(
     c_act_code: props.c_act_code
   }));
 
-const { result, onError: EventApplyError } = useSubscription(
+const { onResult: onApplyResult, onError: EventApplyError } = useQuery(
   EVENT_APPLY_BY_ACT_CODE,
   () => ({
-    c_act_code: props.c_act_code
-  }));
+    c_act_code: props.c_act_code,
+  }), {
+    pollInterval: 1000
+  });
 
 const { result: ReceiptData } = useSubscription(
     LATEST_RECEIPT_NO,
@@ -173,7 +175,7 @@ const { mutate: freeEventUnregistration, onDone: freeEventUnregistration_Complet
 const username = computed(() => $store.getters["userModule/getUsername"])
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
 const isFinance = computed(() => $store.getters["userModule/getFinance"])
-const ApplyHistory = computed(() => result.value?.tbl_act_reg??[])
+const ApplyHistory = ref([])
 const Event = computed(() => EventData.value?.HTX_Event_by_pk??[])
 const Fee = ref([])
 const userProfileLogout = () => $store.dispatch("userModule/logout")
@@ -462,6 +464,11 @@ EventFee_Completed((result) => {
   }
 })
 
+
+onApplyResult((result) => {
+  if (result.data) ApplyHistory.value = result.data.tbl_act_reg
+})
+
 eventRegistration_Completed((result) => {
   $q.notify({ message: "會員: " + result.data.insert_tbl_act_reg_one.c_name + "報名活動" + result.data.insert_tbl_act_reg_one.c_act_code + "成功。收費 HK$" + result.data.insert_tbl_account_one.u_price_after_discount });
   ApplicationQueue.value.splice(0,1)
@@ -513,10 +520,7 @@ freeEventUnregistration_Error((error) => {
 
 // UI function
 function notifyClientError(error) {
-  userProfileLogout()
-    .then(() => {
-      $q.notify({ message: "系統錯誤，請重新登入." });
-    })
-    .catch((error) => console.log("error", error));
+  $q.notify({ message: "系統錯誤，請重新登入." });
+  console.log("error", error)
 }
 </script>

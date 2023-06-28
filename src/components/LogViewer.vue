@@ -1,6 +1,6 @@
 <template>
 <q-table
-  :rows="logdata"
+  :rows="data"
   :columns="columns"
   wrap-cells
   :pagination="pagination"
@@ -9,8 +9,8 @@
 </template>
 
 <script setup>
-import { useSubscription } from "@vue/apollo-composable";
-import { computed, ref } from "vue"
+import { useQuery } from "@vue/apollo-composable";
+import { ref } from "vue"
 import { gql } from "graphql-tag"
 
 // props
@@ -19,8 +19,8 @@ const props = defineProps({
 })
 
 // query
-const { result: data } = useSubscription(gql`
-  subscription Component_getLog($module: String! = "") {
+const { onResult: onData } = useQuery(gql`
+  query Component_getLog($module: String! = "") {
     Log(order_by: {datetime: desc}, where: {module: {_eq: $module}}) {
       log_id
       action
@@ -30,12 +30,14 @@ const { result: data } = useSubscription(gql`
     }
   }`, 
   () => ({
-    module: props.module
-  }))
+    module: props.module,
+  }), {
+    pollInterval: 1000
+  })
 
   
 // computed
-const logdata = computed(() => data.value?.Log??[])
+const data = ref([])
 
 // table config
 const pagination = ref({
@@ -68,4 +70,10 @@ const columns = [
     headerClasses: "bg-grey-2",
   },
 ]
+
+onData((result) => {
+  if (result.data) {
+    data.value = result.data.Log
+  }
+})
 </script>

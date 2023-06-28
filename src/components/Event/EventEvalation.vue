@@ -39,7 +39,7 @@
   <div class="q-px-md text-h6 bg-primary text-white q-py-md row">
     <span class="col-xs-12 col-sm-6 col-md-6">
       {{EventID}} - {{Event.c_act_name}}
-      <q-btn v-if="!edit && !isSubmitted" icon="edit" flat @click="startEdit">
+      <q-btn v-if="!edit && (!isSubmitted || isCenterIC)" icon="edit" flat @click="startEdit">
         <q-tooltip class="bg-white text-primary">修改</q-tooltip>
       </q-btn>
       <q-btn v-if="edit" icon="save" flat @click="saveEdit">
@@ -47,6 +47,9 @@
       </q-btn>
       <q-btn v-if="edit" icon="cancel" flat @click="edit = false">
         <q-tooltip class="bg-white text-primary">取消</q-tooltip>
+      </q-btn>
+      <q-btn v-if="!edit && isSubmitted" flat icon="print" @click="printEvaluation = true">
+        <q-tooltip class="bg-white text-primary">列印</q-tooltip>
       </q-btn>
     </span>
     <q-space/>
@@ -59,8 +62,9 @@
       <q-chip dense v-if="PlanEval.ic_date">審批：{{qdate.formatDate(PlanEval.ic_date, "YYYY年M月D日")}}</q-chip>
     </div>
   </div>
+
   <!-- desktop -->
-  <div v-if="$q.screen.gt.sm">
+  <div v-if="$q.screen.gt.xs">
     <div class="row text-h6">
       <div v-if="PlanEval.ic_comment" class="col-12 q-my-sm" style="border: 1px dotted red;">主管評語: {{PlanEval.ic_comment}}</div>
       <div class="col-2 q-my-sm">工作目的: </div><span class="col-10" v-if="edit"><q-input filled type="text" v-model="editObject.objective"/></span><span class="col-10" v-else>{{PlanEval.objective}}</span>
@@ -226,18 +230,28 @@
               </div>
               <div class="col-10" v-else>{{PlanEval.objective_followup}}</div>
           </div>
-          
         </template>
     </q-splitter>
   </div>
   <div v-else>
     Mobile version developing, refer to desktop for now
   </div>
+
+  <q-dialog 
+    v-model="printEvaluation"
+    maximized
+    full-width
+    full-height
+    transition-show="slide-up"
+    transition-hide="slide-down"
+    >
+    <EventEvaluationPrint :model-value="Event"/>
+  </q-dialog>
 </template>
 
 <script setup>
 import { gql } from "graphql-tag"
-import { computed, ref } from "vue";
+import { computed, ref, defineAsyncComponent } from "vue";
 import { useStore } from "vuex";
 import { EVENT_EVALUATION_BY_ACT_CODE } from "/src/graphQueries/Event/query.js"
 import { ADD_EVALUATION_FROM_ACT_CODE, UPDATE_EVALUATION_FROM_PK, SUBMIT_EVALUATION, APPROVE_EVALUATION } from "/src/graphQueries/Event/mutation.js"
@@ -248,6 +262,10 @@ import DateComponent from "components/Basic/DateComponent.vue"
 import TimeComponent from "components/Basic/TimeComponent.vue"
 import EvaluationAccount from "components/Account/EvaluationAccount.vue"
 import { onBeforeRouteLeave } from "vue-router"
+import { httpsCallable } from "@firebase/functions";
+import { getDocs, where, query } from "firebase/firestore"
+import { FirebaseFunctions, usersCollection } from "boot/firebase";
+
 
 // props
 const props = defineProps({
@@ -264,6 +282,23 @@ const $store = useStore();
 const confirmDialog = ref(false)
 const approvalDialog = ref(false)
 const EvaluationComment = ref("")
+const userMapping = ref({})
+const printEvaluation = ref(false)
+const EventEvaluationPrint = defineAsyncComponent(() =>
+  import('components/Event/EventEvaluationPrint.vue')
+)
+
+// FireDB Query setup user mapping
+const userQuery = query(usersCollection,
+  where("enable", "==", true)
+)
+
+getDocs(userQuery).then((user) => {
+  user.forEach((u) => {
+    userMapping.value[u.data().name] = u.data().uid
+  });
+});
+
 // queries
 const { result: EventEvaluation, onError: EventEvaluationError, refetch } = useQuery(
   EVENT_EVALUATION_BY_ACT_CODE,
@@ -329,7 +364,26 @@ submitEvaluation_Completed((result) => {
 })
 
 approveEvaluation_Completed((result) => {
-  notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
+  /*
+  console.log("username: " + result.data.update_Event_Evaluation_by_pk.staff_name.trim())
+  console.log("userMapping: " + JSON.stringify(userMapping.value))
+  console.log("uid:" + userMapping.value[result.data.update_Event_Evaluation_by_pk.staff_name.trim()])
+  */
+  if (result.data) {
+    const notifyUser = httpsCallable(FirebaseFunctions,
+      "notification-notifyUser"
+    );
+    
+    notifyUser({
+      topic: userMapping.value[result.data.update_Event_Evaluation_by_pk.staff_name.trim()],
+      data: {
+        title: "活動計劃",
+        body: result.data.update_Event_Evaluation_by_pk.c_act_code + "的計劃檢討已被審批",
+      }
+    }).then(() => {
+      notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
+    })
+  }
 })
 
 denyEvaluation_Completed((result) => {
@@ -635,3 +689,4 @@ onBeforeRouteLeave((to, from) => {
   }
 })
 </script>
+

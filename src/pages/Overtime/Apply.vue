@@ -1,5 +1,8 @@
 <template>
   <div class="full-width">
+    <!-- loading dialog -->
+    <LoadingDialog v-model="loading" message="讀取資料中" />
+    
     <!-- sticky button at bottom -->
     <q-page-sticky
       position="bottom-right"
@@ -15,11 +18,6 @@
         @click="confirmDialog = !confirmDialog"
       />
     </q-page-sticky>
-
-    <!-- loading dialog -->
-    <q-dialog v-model="waitingAsync" position="bottom">
-      <LoadingDialog message="讀取資料中" />
-    </q-dialog>
 
     <!-- confirm dialog -->
     <q-dialog v-model="confirmDialog">
@@ -313,7 +311,7 @@ const $q = useQuasar()
 const confirmDialog = ref(false)
 const OTHistory = ref([])
 const applicationList = ref([])
-const awaitServerResponse = ref(0)
+const loading = ref(0)
 const leaveMap = ref({
   OT: "OT",
   CL: "補OT",
@@ -375,7 +373,6 @@ const columns = ref([
 // computed
 const userProfileLogout = () => $store.dispatch("userModule/logout")
 const isLogin = computed(() => $store.getters["userModule/isLogin"])
-const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const uid = computed(() => $store.getters["userModule/getUID"])
 const username = computed(() => $store.getters["userModule/getUsername"])
 const ot_balance = computed(() => $store.getters["userModule/getOTBalance"]? $store.getters["userModule/getOTBalance"]: 0)
@@ -455,10 +452,10 @@ function confirmOTApplication() {
 
   // call https functions to add leaves
   const addOT = httpsCallable(FirebaseFunctions, "ot-addLeaveByDocid");
-  awaitServerResponse.value++;
+  loading.value++;
   addOT(leaveData)
     .then(() => {
-      awaitServerResponse.value--;
+      loading.value--;
       applicationList.value = [];
       fetchAllOTRecords();
     })

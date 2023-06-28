@@ -88,7 +88,7 @@ exports.addLeaveByDocid = functions.region("asia-east2").https.onCall(async (dat
 
   return await batch.commit().then(() => {
     notiQueue.forEach((queue) => {
-      publishTopic(queue.topic, queue.message, "假期", "https://duty.cciyc.com/#/duty/dutytable");
+      publishTopic(queue.topic, queue.message);
     });
     console.log(logData);
   });
@@ -246,7 +246,7 @@ exports.approveLeaveByDocid = functions.region("asia-east2").https.onCall(async 
 
   return await batch.commit().then(() => {
     notiQueue.forEach((queue) => {
-      publishTopic(queue.topic, queue.message, "假期", "https://duty.cciyc.com/#/duty/dutytable");
+      publishTopic(queue.topic, queue.message);
     });
     console.log(logData);
   });
@@ -361,7 +361,7 @@ exports.rejectLeaveByDocid = functions.region("asia-east2").https.onCall(async (
 
   return await batch.commit().then(() => {
     notiQueue.forEach((queue) => {
-      publishTopic(queue.topic, queue.message, "假期", "https://duty.cciyc.com/#/duty/dutytable");
+      publishTopic(queue.topic, queue.message);
     });
     console.log(logData);
   });
@@ -611,5 +611,5 @@ exports.updatePendingCount = functions.region("asia-east2").firestore
         }
       }
       console.log(change.after.data());
-      return Promise.resolve("OT - updatePendingCount: Direct DB modification/deletion or Unhandled Case.");
+      return Promise.reject("OT - updatePendingCount: Direct DB modification/deletion or Unhandled Case.");
     });

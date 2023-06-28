@@ -1,9 +1,7 @@
 <template>
   <q-page class="full-width">
     <!-- loading dialog -->
-    <q-dialog v-model="waitingAsync" position="bottom">
-      <LoadingDialog message="讀取資料中"/>
-    </q-dialog>
+    <LoadingDialog message="讀取資料中"/>
 
     <div class="row full-width">
       <q-table
@@ -139,12 +137,11 @@ onMounted(() => {
 const $store = useStore();
 const selectedRow = ref([])
 const confirmDialog = ref(false)
-const awaitServerResponse = ref(0)
+const loading = ref(0)
 const rows = ref([])
 
 // computed
 const uid = computed(() => $store.getters["userModule/getUID"])
-const waitingAsync = computed(() => awaitServerResponse.value > 0)
 
 // table config
 const defaultPagination = ref({
@@ -209,7 +206,7 @@ const columns = ref([
 function confirmALRemove() {
   // call https functions to add leaves
   const delAL = httpsCallable(FirebaseFunctions, "holiday-delLeaveByDocid");
-  awaitServerResponse.value++;
+  loading.value++;
   delAL(selectedRow.value)
     .then((result) => {
       for (let i = 0; i < result.data.length; i++) {
@@ -218,7 +215,7 @@ function confirmALRemove() {
         );
         rows.value.splice(index, 1);
       }
-      awaitServerResponse.value--;
+      loading.value--;
       selectedRow.value = [];
     })
     .catch((error) => {
@@ -229,7 +226,7 @@ function confirmALRemove() {
 function confirmALRemoveByDocid(docid) {
   // call https functions to add leaves
   const delAL = httpsCallable(FirebaseFunctions, "holiday-delLeaveByDocid");
-  awaitServerResponse.value++;
+  loading.value++;
   delAL([docid])
     .then((result) => {
       for (let i = 0; i < result.data.length; i++) {
@@ -238,7 +235,7 @@ function confirmALRemoveByDocid(docid) {
         );
         rows.value.splice(index, 1);
       }
-      awaitServerResponse.value--;
+      loading.value--;
       selectedRow.value = [];
     })
     .catch((error) => {
@@ -253,7 +250,7 @@ function fetchAllLeaveRecords() {
     where("status", "==", "未批")
   )
 
-  awaitServerResponse.value++
+  loading.value++
   getDocs(leaveQuery).then((applications) => {
     applications.forEach((doc) => {
       rows.value.push({
@@ -264,7 +261,7 @@ function fetchAllLeaveRecords() {
         remarks: doc.data().remarks,
       })
     })
-    awaitServerResponse.value--
+    loading.value--
   })
 }
 </script>

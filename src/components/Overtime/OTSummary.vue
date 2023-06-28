@@ -1,9 +1,7 @@
 <template>
   <div>
     <!-- loading dialog -->
-    <q-dialog v-model="waitingAsync" position="bottom">
-      <LoadingDialog message="讀取資料中"/>
-    </q-dialog>
+    <LoadingDialog v-model="loading" message="讀取資料中"/>
 
     <q-table
       dense
@@ -71,7 +69,7 @@ const props = defineProps({
 
 // variables
 const $store = useStore();
-const awaitServerResponse = ref(0)
+const loading = ref(0)
 const carryOver = ref(0)
       
 // table config
@@ -129,9 +127,6 @@ const defaultPagination = ref({
   rowsPerPage: 40,
   sortBy: "date",
 })
-
-// computed    
-const waitingAsync = computed(() => awaitServerResponse.value > 0)    
   
 // functions
 function OTCarryOver(col) {

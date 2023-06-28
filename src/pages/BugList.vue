@@ -23,7 +23,7 @@
         </q-card-section>
         <q-card-section class="row">
           <div class="col-6 text-h6 text-bold">{{ bugDetail.username }} @ {{  qdate.formatDate(bugDetail.date, "YYYY年M月D日")}}</div>
-          <div class="col-6 text-h6 text-bold">狀態：{{ bugDetail.status }} </div>
+          <div class="col-6 row text-h6 text-bold"><span class="col-4">狀態：</span><q-select class="col-8" :options="bugStatus" v-model="bugDetail.status" @update:model-value="updateStatus"/></div>
           <q-separator inset class="q-py-md"/>
           <q-img v-for="(url, index) in bugDetail.filenames" :src="url" class="q-py-md" fit="scale-down"/>
         </q-card-section>
@@ -61,8 +61,9 @@ const bugs = ref([])
 const loading = ref(0)
 const bugDetail = ref()
 const bugDetailDialog = ref(false)
-const imageNumber = ref(1)
-
+const bugStatus = ref([
+  "未解決", "工作中", "已解決"
+])
 // table config
 const pagination = ref({
   sortBy: "order",
@@ -140,6 +141,15 @@ getDocs(bugsQuery).then((bugDoc) => {
 function showDetail(evt, row, index) {
   bugDetailDialog.value = true
   bugDetail.value = row
+}
+
+function updateStatus(val) {
+  loading.value++
+  const updateBugStatus = httpsCallable(FirebaseFunctions, "systemAdmin-updateBugStatus")
+    return updateBugStatus({ docid: bugDetail.value.docid, status: val }).then((result) => {
+      loading.value--
+      return result
+    });
 }
 </script>
 
