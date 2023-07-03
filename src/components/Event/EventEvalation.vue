@@ -580,7 +580,7 @@ function saveRecord() {
       "username": username.value,
       "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
       "module": "活動系統",
-      "action": "新增活動計劃/檢討: " + props.EventID,
+      "action": "新增活動計劃/檢討: " + props.EventID.trim(),
     })
     
     loading.value++
@@ -595,7 +595,7 @@ function saveRecord() {
 function clonePlanValue() {
   editObject.value = {
     attendance: PlanEval.value?.attendance??null,
-    c_act_code: props.EventID,
+    c_act_code: props.EventID.trim(),
     eval_attend_headcount_children: PlanEval.value?.eval_attend_headcount_children??0,
     eval_attend_headcount_others: PlanEval.value?.eval_attend_headcount_others??0,
     eval_attend_headcount_parent: PlanEval.value?.eval_attend_headcount_parent??0,

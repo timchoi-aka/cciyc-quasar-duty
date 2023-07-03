@@ -256,6 +256,7 @@ query EVENT_EVALUATION_BY_ACT_CODE($c_act_code: String!) {
     d_time_from
     d_time_to
     i_lessons
+    c_whojoin
     Event_to_Evaluation {
       attendance
       c_act_code
@@ -306,6 +307,16 @@ query EVENT_EVALUATION_BY_ACT_CODE($c_act_code: String!) {
       partner_agency
       partner_name
       partner_phone
+      Evaluation_to_Account {
+        account_uuid
+        amount
+        c_act_code
+        description
+        eval_uuid
+        planeval
+        type
+        txn_date
+      }
     }
   }
 }`

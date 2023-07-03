@@ -560,23 +560,34 @@ exports.addLeave = functions.region("asia-east2").https.onCall(async (data, cont
     );
   }
 
+  // checking incoming data
+  if (data.length == 0) {
+    console.debug("HOLIDAY - addLeave: context: " + context + " " + data + JSON.stringify(data));
+    throw new functions.https.HttpsError(
+      "data-loss",
+      "incoming data incomplete"
+    )
+  }
   const batch = FireDB.batch();
   let logData = "";
   let leaveDoc;
   const notiQueue = [];
   data.forEach((d) => {
-    leaveDoc = FireDB.collection("leave").doc();
-    batch.set(leaveDoc, d);
-    logData += "HOLIDAY: " + d.name + " 申請了 " + d.date + ":" + d.slot + "(" + d.type + ")\n";
-    const holidayDate = new Date(d.date);
+    // only add record if all value exists
+    if (d.name && d.date && d.slot && d.type) {
+      leaveDoc = FireDB.collection("leave").doc();
+      batch.set(leaveDoc, d);
+      logData += "HOLIDAY: " + d.name + " 申請了 " + d.date + ":" + d.slot + "(" + d.type + ")\n";
+      const holidayDate = new Date(d.date);
 
-    notiQueue.push({
-      message: {
-        title: "青年-假期系統",
-        body: d.name + "申請了" + holidayDate.getFullYear() + "年" + parseInt(holidayDate.getMonth()+1) + "月" + holidayDate.getDate() + "日" + "(" + slotMap[d.slot] + ")-" + d.type,
-      },
-      topic: "holidayApprove",
-    });
+      notiQueue.push({
+        message: {
+          title: "青年-假期系統",
+          body: d.name + "申請了" + holidayDate.getFullYear() + "年" + parseInt(holidayDate.getMonth()+1) + "月" + holidayDate.getDate() + "日" + "(" + slotMap[d.slot] + ")-" + d.type,
+        },
+        topic: "holidayApprove",
+      });
+    }
   });
 
   return await batch.commit().then(() => {

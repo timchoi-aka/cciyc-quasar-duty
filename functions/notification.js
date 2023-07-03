@@ -49,7 +49,7 @@ exports.notifyUser = functions.region("asia-east2").https.onCall(async (data, co
   }
 
   // subscribe to user's topic
-  return await publishTopic(data.topic, data.data);
+  return await this.publishTopic(data.topic, data.data);
 });
 
 exports.notify = async (uid, data) => {
