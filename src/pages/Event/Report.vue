@@ -59,15 +59,15 @@
             binary-state-sort
           >
             <template v-slot:body-cell-slot_a="props">
-              <q-td :props="props" :class="[props.value? 'bg-green': 'bg-red']">
+              <q-td :props="props" :class="[props.value? 'bg-green': 'red']">
               </q-td>
             </template>
             <template v-slot:body-cell-slot_b="props">
-              <q-td :props="props" :class="[props.value? 'bg-green': 'bg-red']">
+              <q-td :props="props" :class="[props.value? 'bg-green': 'red']">
               </q-td>
             </template>
             <template v-slot:body-cell-slot_c="props">
-              <q-td :props="props" :class="[props.value? 'bg-green': 'bg-red']">
+              <q-td :props="props" :class="[props.value? 'bg-green': 'red']">
               </q-td>
             </template>
           </q-table>
@@ -787,10 +787,20 @@ export default {
 </script>
 
 <style scoped>
+@media screen {
+  .red {
+    background: red;
+  }
+}
 @media print {
   .print-area { 
     margin: 30px;
     border: none;
   }
+
+  .red {
+    background: white;
+  }
+  
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
   <!-- loading dialog -->
-  <LoadingDialog :model-value="(loadingEventList || loadingFav || loadingAwaitApproval || loadingAwaitApprovalPrepaidRecords)? 1: 0" message="處理中"/>
+  <LoadingDialog :model-value="(loadingEventList || loadingCoreEventList || loadingFav || loadingAwaitApproval || loadingAwaitApprovalPrepaidRecords)? 1: 0" message="處理中"/>
 
   <!-- event detail modal -->
   <q-dialog
@@ -84,8 +84,8 @@
         class="q-mt-sm col-12"
         flat
         bordered
-        :filter="filter"
-        :filter-method="MyEventFilter"
+        :filter="coreFilter"
+        :filter-method="coreEventFilter"
         @row-click="showDetail"
         :rows="EventList"
         :pagination="pagination"
@@ -94,7 +94,7 @@
       <!-- top row -->
       <template v-slot:top>
         <span>
-          進行中<q-toggle v-model="filter.status"/>已完成
+          進行中<q-toggle v-model="coreFilter.status"/>已完成
         </span>
         <q-space/>
         <q-input hide-bottom-space type="text" label="活動編號" v-model="filter.c_act_code" debounce="500">
@@ -111,10 +111,96 @@
           </q-td>
         </template>
       </q-table>
-    </div>
-  </div>
-  <div class="q-mt-md col-12">
     
+      <q-chip class="bg-positive text-white q-mr-md" size="lg" label="核心活動"/>
+      <q-table
+        v-if="isCenterIC"
+        class="q-mt-sm col-12"
+        flat
+        bordered
+        :filter="filter"
+        :filter-method="MyEventFilter"
+        @row-click="showDetail"
+        :rows="CoreEventList"
+        :pagination="pagination"
+        :columns="CoreEventColumns"
+      >
+      <!-- top row -->
+      <template v-slot:top>
+        <span>
+          進行中<q-toggle v-model="filter.status"/>已完成
+        </span>
+        <q-space/>
+        <q-input hide-bottom-space type="text" label="活動編號" v-model="filter.c_act_code" debounce="500">
+          <template v-slot:append>
+            <q-icon name="search" />
+          </template>
+        </q-input>
+      </template>
+        <!-- applicationInProcess template -->
+        <template v-slot:body-cell-plan_submit="props">
+          <q-td :props="props">
+            <q-icon class="text-positive" v-if="props.value" name="check" />
+            <q-icon v-else name="cancel" class="text-negative"/>
+          </q-td>
+        </template>
+        <template v-slot:body-cell-eval_submit="props">
+          <q-td :props="props">
+            <q-icon class="text-positive" v-if="props.value" name="check" />
+            <q-icon v-else name="cancel" class="text-negative"/>
+          </q-td>
+        </template>
+        <template v-slot:body-cell-isOutstanding="props">
+          <q-td :props="props">
+            <q-icon class="text-red" v-if="props.value" name="warning" />
+          </q-td>
+        </template>
+      </q-table>
+
+      <q-table
+        v-else
+        class="q-mt-sm col-12"
+        flat
+        bordered
+        :filter="filter"
+        :filter-method="MyEventFilter"
+        @row-click="showDetail"
+        :rows="StaffCoreEventList"
+        :pagination="pagination"
+        :columns="StaffCoreEventColumns"
+      >
+      <!-- top row -->
+      <template v-slot:top>
+        <span>
+          進行中<q-toggle v-model="filter.status"/>已完成
+        </span>
+        <q-space/>
+        <q-input hide-bottom-space type="text" label="活動編號" v-model="filter.c_act_code" debounce="500">
+          <template v-slot:append>
+            <q-icon name="search" />
+          </template>
+        </q-input>
+      </template>
+        <!-- applicationInProcess template -->
+        <template v-slot:body-cell-plan_submit="props">
+          <q-td :props="props">
+            <q-icon class="text-positive" v-if="props.value" name="check" />
+            <q-icon v-else name="cancel" class="text-negative"/>
+          </q-td>
+        </template>
+        <template v-slot:body-cell-eval_submit="props">
+          <q-td :props="props">
+            <q-icon class="text-positive" v-if="props.value" name="check" />
+            <q-icon v-else name="cancel" class="text-negative"/>
+          </q-td>
+        </template>
+        <template v-slot:body-cell-isRejected="props">
+          <q-td :props="props">
+            <q-icon class="text-red" v-if="props.value" name="warning" />
+          </q-td>
+        </template>
+      </q-table>
+    </div>
   </div>
 </template>
 
@@ -122,7 +208,7 @@
 import { computed, ref } from "vue";
 import { useQuery } from "@vue/apollo-composable";
 import { useStore } from "vuex";
-import { MY_EVENT_SEARCH, MY_FAV, EVALUATION_UNAPPROVED } from "/src/graphQueries/Event/query.js";
+import { MY_EVENT_SEARCH, CORE_EVENT_SEARCH, MY_FAV, EVALUATION_UNAPPROVED } from "/src/graphQueries/Event/query.js";
 import EventDetail from "components/Event/EventDetail.vue";
 import LoadingDialog from "components/LoadingDialog.vue"
 import { date as qdate, useQuasar } from "quasar";
@@ -136,8 +222,15 @@ const filter = ref({
   status: false,
   c_act_code: ""
 })
+
+const coreFilter = ref({
+  status: false,
+  c_act_code: ""
+})
 const eventDetailDialog = ref(false)
-const username = computed(() => $store.getters["userModule/getUsername"])
+// const username = computed(() => $store.getters["userModule/getUsername"])
+const username = ref("馬桂儀")
+const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
 const searchCondition = ref({
   condition: {
     _or: [
@@ -145,6 +238,15 @@ const searchCondition = ref({
       { c_respon2: {_eq : username}},
       { c_worker: {_eq : username}},
       { c_worker2: {_eq : username}}
+    ]
+  }
+})
+
+const coreEventCondition = ref({
+  condition: {
+    _and: [
+      { c_nature: {_gte : '核心'}},  
+      
     ]
   }
 })
@@ -206,6 +308,140 @@ const MyColumns = ref([
   },
 ])
 
+const StaffCoreEventColumns = ref([
+  {
+    name: "c_act_code",
+    label: "編號",
+    field: "c_act_code",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "c_act_name",
+    label: "名稱",
+    field: "c_act_name",
+    style: "border-top: 1px solid; text-align: center; width: 5%;",
+    headerStyle: "text-align: center; width: 5%;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "c_respon",
+    label: "負責人",
+    field: "c_respon",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "d_date_from",
+    label: "開始",
+    field: "d_date_from",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "d_date_to",
+    label: "結束",
+    field: "d_date_to",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "plan_submit",
+    label: "計劃",
+    field: "plan_submit",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "eval_submit",
+    label: "檢討",
+    field: "eval_submit",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "isRejected",
+    label: "被拒絕",
+    field: "isRejected",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+])
+
+const CoreEventColumns = ref([
+  {
+    name: "c_act_code",
+    label: "編號",
+    field: "c_act_code",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "c_act_name",
+    label: "名稱",
+    field: "c_act_name",
+    style: "border-top: 1px solid; text-align: center; width: 5%;",
+    headerStyle: "text-align: center; width: 5%;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "c_respon",
+    label: "負責人",
+    field: "c_respon",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "d_date_from",
+    label: "開始",
+    field: "d_date_from",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "d_date_to",
+    label: "結束",
+    field: "d_date_to",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "plan_submit",
+    label: "計劃",
+    field: "plan_submit",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "eval_submit",
+    label: "檢討",
+    field: "eval_submit",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "isOutstanding",
+    label: "欠報告",
+    field: "isOutstanding",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+])
+
 const FavColumns = ref([
   {
     name: "c_act_code",
@@ -251,9 +487,18 @@ const unapprovedColumns = ref([
     headerClasses: "bg-grey-2",
   },
   {
-    name: "submit_date",
-    label: "遞交日期",
-    field: "submit_date",
+    name: "submit_plan_date",
+    label: "遞交計劃日期",
+    field: "submit_plan_date",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+    format: (val) => qdate.formatDate(val, "YYYY年M月D日")
+  },
+  {
+    name: "submit_eval_date",
+    label: "遞交檢討日期",
+    field: "submit_eval_date",
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
@@ -317,7 +562,8 @@ const unapprovedPrepaidColumns = ref([
 // $q.localStorage.set("module", "event");
 
 // queries
-const { onResult: eventList, onError, loading: loadingEventList } = useQuery(MY_EVENT_SEARCH, searchCondition.value, {pollInterval: 1000});
+const { onResult: eventList, onError: eventList_Error, loading: loadingEventList } = useQuery(MY_EVENT_SEARCH, searchCondition.value, {pollInterval: 1000});
+const { onResult: coreEventList, onError: coreEventList_Error, loading: loadingCoreEventList } = useQuery(CORE_EVENT_SEARCH, coreEventCondition.value, {pollInterval: 1000});
 const { onResult: fav, onError: fav_onError, loading: loadingFav } = useQuery(MY_FAV, 
 () => ({
   username: username.value
@@ -342,12 +588,57 @@ query GetUnapprovedPrepaid {
 // computed
 const userProfileLogout = () => $store.dispatch("userModule/logout")
 const EventList = ref([])
+const CoreEventList = ref([])
 const FavList = ref([])
 const awaitApprovalTableEntries = ref([])
 const awaitApprovalPrepaid = ref([])
+const StaffCoreEventList = computed(() => CoreEventList.value.filter(x => x.c_respon == username.value))
 
 eventList((result) => {
   if (result.data) EventList.value = result.data.HTX_Event
+})
+
+coreEventList((result) => {
+  if (result.data) CoreEventList.value = result.data.HTX_Event.map(x => ({
+    b_finish: x.b_finish,
+    c_act_code: x.c_act_code? x.c_act_code.trim(): '',
+    c_act_name: x.c_act_name? x.c_act_name.trim(): '',
+    c_act_nameen: x.c_act_nameen? x.c_act_nameen.trim(): '', 
+    c_acc_type: x.c_acc_type? x.c_acc_type.trim(): '',
+    c_dest: x.c_dest? x.c_dest.trim(): '',
+    c_nature: x.c_nature? x.c_nature.trim(): '',
+    c_respon: x.c_respon? x.c_respon.trim(): '',
+    c_type: x.c_type? x.c_type.trim(): '',
+    c_status: x.c_status? x.c_status.trim(): '',
+    c_group1: x.c_group1? x.c_group1.trim(): '',
+    c_group2: x.c_group2? x.c_group2.trim(): '',
+    c_worker: x.c_worker? x.c_worker.trim(): '',
+    c_worker2: x.c_worker2? x.c_worker2.trim(): '',
+    d_date_from: x.d_date_from? x.d_date_from: '',
+    d_date_to: x.d_date_to? x.d_date_to: '',
+    d_finish_goal: x.d_finish_goal? x.d_finish_goal: '',
+    plan_submit: x.Event_to_Evaluation && x.Event_to_Evaluation[0] && x.Event_to_Evaluation[0].submit_plan_date? true: false,
+    eval_submit: x.Event_to_Evaluation && x.Event_to_Evaluation[0] && x.Event_to_Evaluation[0].submit_eval_date? true: false,
+    isRejected: 
+      (
+        (x.Event_to_Evaluation && x.Event_to_Evaluation[0] && !x.Event_to_Evaluation[0].submit_plan_date) &&
+        (x.Event_to_Evaluation && x.Event_to_Evaluation[0] && x.Event_to_Evaluation[0].ic_plan_date)
+      ) ||
+      (
+        (x.Event_to_Evaluation && x.Event_to_Evaluation[0] && !x.Event_to_Evaluation[0].submit_eval_date) &&
+        (x.Event_to_Evaluation && x.Event_to_Evaluation[0] && x.Event_to_Evaluation[0].ic_eval_date)
+      ) ? true: false,
+    isOutstanding:
+      (
+        x.Event_to_Evaluation.length == 0 ||
+        (x.Event_to_Evaluation && x.Event_to_Evaluation[0] && !x.Event_to_Evaluation[0].submit_plan_date) ||
+        (
+          x.d_date_to && 
+          (qdate.getDateDiff(qdate.extractDate(x.d_date_to.trim(), "D/M/YYYY"), new Date()) < 0) && 
+          (x.Event_to_Evaluation && x.Event_to_Evaluation[0] && !x.Event_to_Evaluation[0].submit_eval_date)
+        )
+      )? true: false
+  }))
 })
 
 fav((result) => {
@@ -359,7 +650,8 @@ awaitApproval((result) => {
     awaitApprovalTableEntries.value = result.data.Event_Evaluation.map(x => ({
       c_act_code: x.c_act_code,
       c_act_name: x.Evaluation_to_Event.c_act_name,
-      submit_date: x.submit_date,
+      submit_plan_date: x.submit_plan_date,
+      submit_eval_date: x.submit_eval_date,
       c_status: x.Evaluation_to_Event.c_status,
     }))
   }
@@ -390,6 +682,18 @@ function MyEventFilter(rows, terms) {
   
 }
 
+function coreEventFilter(rows, terms) {
+  // rows contain the entire data
+  // terms contains whatever you have as filter
+  // let lowerSearch = terms.search ? terms.search.toLowerCase() : ""
+
+  return rows.filter((row) => {
+    if (terms.c_act_code) {
+      return (row.b_finish == terms.status && row.c_act_code.includes(terms.c_act_code))
+    } else return row.b_finish == terms.status
+  });
+}
+
 // UI Functions
 function notifyClientError(error) {
   $q.notify({ message: "系統錯誤，請重新登入." });
@@ -397,7 +701,11 @@ function notifyClientError(error) {
 }
 
 // callbacks
-onError((error) => {
+eventList_Error((error) => {
+  notifyClientError(error)
+})
+
+coreEventList_Error((error) => {
   notifyClientError(error)
 })
 

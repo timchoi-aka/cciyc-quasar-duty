@@ -58,12 +58,14 @@ exports.deleteHealthCare = functions.region("asia-east2").https.onCall(async (da
   FireDB.collection("healthcare").doc(data.id).get().then((doc) => {
     const d = doc.data();
     if (d.uid == context.auth.uid) { // can only delete your own application
-      return FireDB.collection("healthcare").doc(data.id).delete().then(() => {
-        FireDB.collection("dashboard").doc("notification").update({
-          healthcare_waitingForApproval: FieldValue.increment(-1),
-        }).then(() => {
-          console.log("HEALTHCARE: " + context.auth.token.name + " 刪除員工醫療 - 文件ID: " + data.id + " 員工：" + d.username + " 日期：" + d.date.toDate() + " 金額：" + d.amount);
-        });
+      return FireDB.collection("healthcare").doc(data.id).delete().then((result) => {
+        if (result) {
+          FireDB.collection("dashboard").doc("notification").update({
+            healthcare_waitingForApproval: FieldValue.increment(-1),
+          }).then(() => {
+            console.log("HEALTHCARE: " + context.auth.token.name + " 刪除員工醫療 - 文件ID: " + data.id + " 員工：" + d.username + " 日期：" + d.date.toDate() + " 金額：" + d.amount);
+          });
+        }
       });
     }
   });

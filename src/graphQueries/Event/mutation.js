@@ -252,19 +252,41 @@ mutation addEvaluationAccountFromUUID(
   }
 }`
 
-export const SUBMIT_EVALUATION = gql`
-mutation submitEvaluationFromUUID(
+export const SUBMIT_PLAN = gql`
+mutation submitPlanFromUUID(
   $uuid: uniqueidentifier = "", 
   $staff_name: String = "", 
-  $submit_date: smalldatetime = "",
+  $submit_plan_date: smalldatetime = "",
   $logObject: Log_insert_input! = {}
   ) {
   update_Event_Evaluation_by_pk(
     pk_columns: {uuid: $uuid}, 
     _set: {
       staff_name: $staff_name, 
-      submit_date: $submit_date
-      ic_date: null
+      submit_plan_date: $submit_plan_date
+      ic_plan_date: null
+    }) {
+      uuid
+      c_act_code
+  }
+  insert_Log_one(object: $logObject) {
+    log_id
+  }
+}`
+
+export const SUBMIT_EVALUATION = gql`
+mutation submitEvaluationFromUUID(
+  $uuid: uniqueidentifier = "", 
+  $staff_name: String = "", 
+  $submit_eval_date: smalldatetime = "",
+  $logObject: Log_insert_input! = {}
+  ) {
+  update_Event_Evaluation_by_pk(
+    pk_columns: {uuid: $uuid}, 
+    _set: {
+      staff_name: $staff_name, 
+      submit_eval_date: $submit_eval_date
+      ic_eval_date: null
     }) {
       uuid
       c_act_code
@@ -279,7 +301,7 @@ mutation approveEvaluationFromUUID(
   $uuid: uniqueidentifier = "", 
   $c_act_code: String = "",
   $ic: String = "", 
-  $ic_date: smalldatetime = "",
+  $ic_eval_date: smalldatetime = "",
   $ic_comment: String = "",
   $logObject: Log_insert_input! = {}
   ) {
@@ -287,7 +309,40 @@ mutation approveEvaluationFromUUID(
     pk_columns: {uuid: $uuid}, 
     _set: {
       ic: $ic, 
-      ic_date: $ic_date,
+      ic_eval_date: $ic_eval_date,
+      ic_comment: $ic_comment
+    }) {
+      uuid
+      c_act_code
+      staff_name
+  }
+  update_HTX_Event_by_pk(
+    pk_columns: {c_act_code: $c_act_code},
+    _set: {
+      m_evaluation_rem: $ic_comment
+    }) {
+      c_act_code
+      m_evaluation_rem
+  }
+  insert_Log_one(object: $logObject) {
+    log_id
+  }
+}`
+
+export const APPROVE_PLAN = gql`
+mutation approvePlanFromUUID(
+  $uuid: uniqueidentifier = "", 
+  $c_act_code: String = "",
+  $ic: String = "", 
+  $ic_plan_date: smalldatetime = "",
+  $ic_comment: String = "",
+  $logObject: Log_insert_input! = {}
+  ) {
+  update_Event_Evaluation_by_pk(
+    pk_columns: {uuid: $uuid}, 
+    _set: {
+      ic: $ic, 
+      ic_plan_date: $ic_plan_date,
       ic_comment: $ic_comment
     }) {
       uuid

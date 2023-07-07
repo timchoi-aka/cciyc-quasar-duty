@@ -141,7 +141,40 @@ query myEvent($condition: HTX_Event_bool_exp = {c_act_code: {_eq: ""}}) {
     d_sale_end
     d_finish_goal
     Event_to_Evaluation {
-      submit_date
+      submit_plan_date
+      uuid
+    }
+  }
+}`
+
+export const CORE_EVENT_SEARCH = gql`
+query coreEvent($condition: HTX_Event_bool_exp = {c_act_code: {_eq: ""}}) {
+  HTX_Event(order_by: {c_act_code: desc}, where: $condition) {
+    b_finish
+    c_act_code
+    c_act_name
+    c_act_nameen
+    c_acc_type
+    c_dest
+    c_nature
+    c_respon
+    c_respon2
+    c_type
+    c_status
+    c_group1
+    c_group2
+    c_worker
+    c_worker2
+    d_date_from
+    d_date_to
+    d_sale_start
+    d_sale_end
+    d_finish_goal
+    Event_to_Evaluation {
+      submit_plan_date
+      submit_eval_date
+      ic_plan_date
+      ic_eval_date
       uuid
     }
   }
@@ -206,8 +239,26 @@ query EVENT_APPLY_BY_ACT_CODE($c_act_code: String = "") {
 
 export const EVALUATION_UNAPPROVED = gql`
   query EvaluationUnapproved {
-    Event_Evaluation(where: {ic_date: {_is_null: true}, submit_date: {_is_null: false}}) {
-      submit_date
+    Event_Evaluation(where: 
+      {_or: 
+        [
+          {_and: 
+            [
+              {ic_plan_date: {_is_null: true}}, 
+              {submit_plan_date: {_is_null: false}}
+            ]
+          }, 
+          {_and:
+            [
+              {ic_eval_date: {_is_null: true}},
+              {submit_eval_date: {_is_null: false}}
+            ]
+          }
+        ]
+      }
+    ) {
+      submit_plan_date
+      submit_eval_date
       c_act_code
       uuid
       Evaluation_to_Event {
@@ -275,7 +326,8 @@ query EVENT_EVALUATION_BY_ACT_CODE($c_act_code: String!) {
       eval_start_time
       eval_volunteer_count
       ic
-      ic_date
+      ic_plan_date
+      ic_eval_date
       objective
       objective_achieved
       objective_achieved_reason
@@ -296,7 +348,8 @@ query EVENT_EVALUATION_BY_ACT_CODE($c_act_code: String!) {
       plan_start_time
       plan_sessions
       staff_name
-      submit_date
+      submit_plan_date
+      submit_eval_date
       supervisor
       supervisor_date
       uuid

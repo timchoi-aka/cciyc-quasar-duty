@@ -19,7 +19,7 @@
             :columns="columns"
             :pagination="defaultPagination"
             row-key="id"
-            @row-click="(event, row, index) => printObject = row">
+            @row-click="(event, row, index) => event.target.nodeName === 'I'? '' : printObject = row">
             <template v-slot:body-cell-status="props">
               <q-td :props="props">
                 <q-icon v-if="props.row.status == '批准'" class="text-positive" name="check">
@@ -173,7 +173,6 @@ const healthcareDocQuery = query(healthcareCollection,
 healthcareSnapshot.value = onSnapshot(healthcareDocQuery, (snapshot) => {
   snapshot.docChanges().forEach((change) => {
     let d = change.doc.data();
-
     if (change.type == "added") {
       healthcare.value.push({
         id: change.doc.id,
@@ -184,7 +183,7 @@ healthcareSnapshot.value = onSnapshot(healthcareDocQuery, (snapshot) => {
         approveDate: d.approveDate?.toDate()??""
       })
     } else if (change.type === "removed") {
-      healthcare.value.splice({id: change.doc.id, ...d}, 1)
+      healthcare.value.splice(healthcare.value.findIndex(e => e.id === change.doc.id), 1)
     }
   })
 })
