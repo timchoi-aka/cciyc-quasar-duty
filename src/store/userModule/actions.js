@@ -45,6 +45,7 @@ export async function login({ commit }) {
         // get messaging token
         getToken(FirebaseMessaging, {vapidKey: "BFu5VzDUwOVWSQ--MUDmSEPt9AYN9QlTPIzijXKzQVqrIdpKi1goG9l3L8_fDJFr5mojwX5Eo2tDC1XiMmIfSXA"}).then((currentToken) => {
           if (currentToken) {
+            // console.log("currentToken: " + JSON.stringify(currentToken))
             // subscribeTopic(currentToken, topic)
             const subscribeTopic = httpsCallable(FirebaseFunctions, "notification-subscribeTopic");
             subscribeTopic({
@@ -55,6 +56,13 @@ export async function login({ commit }) {
             if (d.privilege.leaveApprove) {
               subscribeTopic({
                 topic: "holidayApprove",
+                token: currentToken,
+                timestamp: Timestamp.fromDate(new Date())
+              })
+            }
+            if (d.privilege.centeric) {
+              subscribeTopic({
+                topic: "eventApprove",
                 token: currentToken,
                 timestamp: Timestamp.fromDate(new Date())
               })

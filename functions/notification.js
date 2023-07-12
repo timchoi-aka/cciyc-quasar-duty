@@ -20,7 +20,10 @@ exports.subscribeTopic = functions.region("asia-east2").https.onCall(async (data
   }
 
   // subscribe to user's topic
-  return await messaging.subscribeToTopic(data.token, data.topic);
+  return await messaging.subscribeToTopic(data.token, data.topic).then((result) => {
+    console.log(JSON.stringify(result));
+    console.log(data.token + "加入了Topic: " + data.topic)
+  });
 });
 /**
  * data {

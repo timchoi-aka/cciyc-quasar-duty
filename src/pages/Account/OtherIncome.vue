@@ -32,10 +32,11 @@
           <div class="col-grow"><MemberSelection v-model="MemberObject.c_mem_id"/></div>
           <q-card square class="col-11">
             <q-card-section class="bg-primary text-white">
-              會員資料
+              付款人資料
             </q-card-section>
             <q-card-section>
-              <MemberInfoByID v-model="MemberObject"/>
+              <q-input v-if="MemberObject.c_mem_id == '9999'" v-model="MemberObject.c_name"/>
+              <MemberInfoByID v-else v-model="MemberObject"/>
             </q-card-section>
           </q-card>
         </div>
@@ -82,9 +83,7 @@ import Receipt from "components/Account/Receipt.vue"
 // variables
 const $q = useQuasar()
 const $store = useStore();
-const MemberObject = ref({
-  c_mem_id: "9999"
-})
+const MemberObject = ref({ c_mem_id: "9999", c_name: "顧客", c_sex: null, c_tel: null, d_expired_1: null })
 const accountType = ref()
 const incomeType = ref()
 const quantity = ref(1)
@@ -125,7 +124,7 @@ const latestReceiptNO = computed(() => {
 
 // functions
 function reset() {
-  MemberObject.value = {c_mem_id: "9999"}
+  MemberObject.value = { c_mem_id: "9999", c_name: "顧客", c_sex: null, c_tel: null, d_expired_1: null }
   incomeType.value = null
   quantity.value = 0
 }

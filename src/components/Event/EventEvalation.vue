@@ -75,7 +75,7 @@
       <q-btn bordered class="bg-positive text-white" v-if="PlanEval.submit_plan_date && !PlanEval.ic_plan_date && isCenterIC" @click="startApprove('plan')" icon="verified" label="批核計劃"/>
       <q-btn bordered class="bg-positive text-white" v-if="PlanEval.submit_eval_date && !PlanEval.ic_eval_date && isCenterIC" @click="startApprove('eval')" icon="verified" label="批核檢討"/>
       <q-btn v-if="Object.keys(PlanEval).length > 0 && !PlanEval.submit_plan_date && !edit" icon="verified" label="提交計劃" class="bg-positive text-white" bordered @click="confirmPlanDialog = true" />
-      <q-btn v-if="Object.keys(PlanEval).length > 0 && !PlanEval.submit_eval_date && PlanEval.submit_plan_date && !edit" icon="verified" label="提交檢討" class="bg-positive text-white" bordered @click="confirmEvalDialog = true" />
+      <q-btn v-if="Object.keys(PlanEval).length > 0 && !PlanEval.submit_eval_date && PlanEval.submit_plan_date && !edit" icon="verified" label="提交檢討" class="bg-purple-6 text-white" bordered @click="confirmEvalDialog = true" />
     </div>
     <div class="col-xs-12 col-sm-4 col-md-4 text-right">
       <div class="col-6">
@@ -358,6 +358,7 @@ mutation denyPlanFromUUID(
     }) {
       uuid
       c_act_code
+      staff_name
   }
   update_HTX_Event_by_pk(
     pk_columns: {c_act_code: $c_act_code},
@@ -392,6 +393,7 @@ mutation denyEvaluationFromUUID(
     }) {
       uuid
       c_act_code
+      staff_name
   }
   update_HTX_Event_by_pk(
     pk_columns: {c_act_code: $c_act_code},
@@ -423,11 +425,39 @@ addEvaluationFromActCode_Completed((result)=>{
 })
 
 submitEvaluation_Completed((result) => {
-  notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
+  if (result.data) {
+    const notifyUser = httpsCallable(FirebaseFunctions,
+      "notification-notifyUser"
+    );
+    
+    notifyUser({
+      topic: "eventApprove",
+      data: {
+        title: "提交活動檢討",
+        body: username.value + "提交了活動計劃" + result.data.update_Event_Evaluation_by_pk.c_act_code,
+      }
+    }).then(() => {
+      notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
+    })
+  }
 })
 
 submitPlan_Completed((result) => {
-  notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
+  if (result.data) {
+    const notifyUser = httpsCallable(FirebaseFunctions,
+      "notification-notifyUser"
+    );
+    
+    notifyUser({
+      topic: "eventApprove",
+      data: {
+        title: "提交活動計劃",
+        body: username.value + "提交了活動計劃" + result.data.update_Event_Evaluation_by_pk.c_act_code,
+      }
+    }).then(() => {
+      notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
+    })
+  }
 })
 
 approvePlan_Completed((result) => {
@@ -477,11 +507,40 @@ approveEvaluation_Completed((result) => {
 })
 
 denyEvaluation_Completed((result) => {
-  notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
+  if (result.data) {
+    // console.log(JSON.stringify(result.data))
+    const notifyUser = httpsCallable(FirebaseFunctions,
+      "notification-notifyUser"
+    );
+    
+    notifyUser({
+      topic: userMapping.value[result.data.update_Event_Evaluation_by_pk.staff_name.trim()],
+      data: {
+        title: "活動檢討",
+        body: result.data.update_Event_Evaluation_by_pk.c_act_code + "的檢討已被發回",
+      }
+    }).then(() => {
+      notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
+    })
+  }
 })
 
 denyPlan_Completed((result) => {
-  notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
+  if (result.data) {
+    const notifyUser = httpsCallable(FirebaseFunctions,
+      "notification-notifyUser"
+    );
+    
+    notifyUser({
+      topic: userMapping.value[result.data.update_Event_Evaluation_by_pk.staff_name.trim()],
+      data: {
+        title: "活動計劃",
+        body: result.data.update_Event_Evaluation_by_pk.c_act_code + "的計劃已被審批",
+      }
+    }).then(() => {
+      notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
+    })
+  }
 })
 
 // error callbacks

@@ -86,6 +86,7 @@
       <div class="row col-12 q-gutter-lg q-ml-sm">
         <span class="col-3">對象: <q-select v-if="edit" filled :options="whojoin" v-model="editObject.c_whojoin"/><span v-else>{{Event.c_whojoin}}</span></span>
         <span class="col-3">負責職員: <q-select v-if="edit" filled :options="UserList" v-model="editObject.c_respon"/><span v-else>{{Event.c_respon}}</span></span>
+        <span class="col-3">協助職員: <StaffSelectionMultiple v-if="edit" hint="先刪除舊清單才能修改" v-model="editObject.c_worker" /><span v-else>{{Event.c_worker}}</span></span>
       </div>
     </q-card-section>
 
@@ -175,6 +176,7 @@ import TimeComponent from "components/Basic/TimeComponent.vue"
 import LoadingDialog from "components/LoadingDialog.vue"
 import { usersCollection, FirebaseAuth} from "boot/firebase";
 import { getDocs, query, where } from "firebase/firestore";
+import StaffSelectionMultiple from "src/components/Basic/StaffSelectionMultiple.vue";
 
 const token = ref()
 onMounted(async () => {
@@ -362,7 +364,7 @@ function purityData() {
   serverObject.value.c_type = serverObject.value.c_type? serverObject.value.c_type.trim() : null
   serverObject.value.c_week = serverObject.value.c_week? serverObject.value.c_week.trim() : null
   serverObject.value.c_whojoin = serverObject.value.c_whojoin? serverObject.value.c_whojoin.trim() : null
-  serverObject.value.c_worker = serverObject.value.c_worker? serverObject.value.c_worker.trim() : null
+  serverObject.value.c_worker = serverObject.value.c_worker? Array.isArray(serverObject.value.c_worker)? serverObject.value.c_worker.map(x => x.label).join(',') : serverObject.value.c_worker.trim() : null
   serverObject.value.c_worker2 = serverObject.value.c_worker2? serverObject.value.c_worker2.trim() : null
   serverObject.value.m_remind_content = serverObject.value.m_remind_content? serverObject.value.m_remind_content.trim() : null
   serverObject.value.m_remark = serverObject.value.m_remark? serverObject.value.m_remark.trim() : null

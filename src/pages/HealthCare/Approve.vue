@@ -383,7 +383,7 @@ import { useStore } from "vuex";
 import LoadingDialog from "components/LoadingDialog.vue"
 import { getDocs, query, where, orderBy, Timestamp } from "@firebase/firestore";
 import { httpsCallable } from "@firebase/functions";
-import StaffSelectionMultiple from "src/components/Basic/StaffSelectionMultiple.vue";
+import StaffSelectionMultiple from "components/Basic/StaffSelectionMultiple.vue";
 
 onMounted(async () => {
   loading.value++

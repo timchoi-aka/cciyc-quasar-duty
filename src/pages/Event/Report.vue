@@ -1,7 +1,6 @@
 <template>
   <!-- loading dialog -->
   <LoadingDialog :model-value="(loading || os2loading || os5loading)? 1: 0" message="處理中"/>
-  
 
   <!-- rowDetail modal -->
   <q-dialog v-if="$q.screen.lt.md"
@@ -98,6 +97,8 @@
     </div>
     
     <div class="row items-center q-mx-md"><q-btn label="下月" @click="reportDate = qdate.formatDate(qdate.endOfDate(qdate.addToDate(reportDate, {month: 1}), 'month'), 'YYYY/MM/DD')" class="bg-primary text-white items-center"/></div>
+
+    <div class="q-mx-md col-2"><StaffSelectionMultiple :multiple="true" v-model="staffSearchFilter"/></div>
   </div>
   
   <!--<q-date v-model="reportDate" default-view="Months"/>-->
@@ -281,6 +282,7 @@ import LoadingDialog from "components/LoadingDialog.vue"
 import Excel from "src/lib/exportExcel"
 import { getDocs, query, where } from "firebase/firestore";
 import print from "vue3-print-nb";
+import StaffSelectionMultiple from "components/Basic/StaffSelectionMultiple.vue";
 
 onMounted(() => {
   refreshSchedule(reportDate.value)
@@ -293,6 +295,7 @@ const openingModal = ref(false)
 const showEventID = ref("")
 const search = ref({})
 const activeTab = ref("All")
+const staffSearchFilter = ref()
 const dutyTable = ref([])
 const os3natures = [
   '核心青年服務A','核心青年服務B','核心青年服務C','核心青年服務D'
@@ -660,8 +663,8 @@ query queryOS5Result(
     d_finish_goal
   }
 }`, () => ({
-  startDate: qdate.formatDate(qdate.startOfDate(reportDate.value, 'month'), "YYYY-MM-DD"),
-  endDate: qdate.formatDate(qdate.endOfDate(reportDate.value, 'month'), "YYYY-MM-DD")
+  startDate: qdate.formatDate(quarterStartDate(qdate.startOfDate(reportDate.value, 'month')), "YYYY-MM-DD"),
+  endDate: qdate.formatDate(quarterEndDate(qdate.endOfDate(reportDate.value, 'month')), "YYYY-MM-DD")
 }))
 
 // watcher
@@ -671,7 +674,21 @@ watch(reportDate, (newDate, oldDate)  => {
 })
 
 // computed
-const EventData = computed(() => result.value?.HTX_Event??[])
+const EventData = computed(() => {
+  let res = []
+  if (result.value) {
+    result.value.HTX_Event.forEach((x) => {
+      if (!staffSearchFilter.value || 
+        (staffSearchFilter.value && x.c_respon && staffSearchFilter.value.map(x => x.label).includes(x.c_respon.trim())) ||
+        (staffSearchFilter.value && x.c_respon && staffSearchFilter.value.map(x => x.label)) == '全部')
+        {
+          res.push(x)
+        }
+    })
+  }
+  return res
+})
+
 const OS2Data = computed(() => {
   let res = []
   if (os2result.value) {
@@ -687,7 +704,11 @@ const OS2Data = computed(() => {
       if (x.Session_to_Event.c_group1 && x.Session_to_Event.c_group1.trim().includes('中心設施')) result = true
       if (x.Session_to_Event.c_type && x.Session_to_Event.c_type.trim().includes('偶到')) result = true
       
-      if (result && x.inCenter) {
+      if (result && x.inCenter && 
+        (!staffSearchFilter.value || 
+        (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label).includes(x.Session_to_Event.c_respon.trim())) ||
+        (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label)) == '全部')
+        ) {
         res.push({
           d_act: x.d_act,
           i_number: x.i_number,
@@ -705,7 +726,11 @@ const OS3Data = computed(() => { //os2result.value? os2result.value.tbl_act_sess
     os2result.value.tbl_act_session.forEach((x) => {
       let result = os3natures.includes(x.Session_to_Event.c_nature.trim())
       
-      if (result) {
+      if (result &&
+        (!staffSearchFilter.value || 
+        (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label).includes(x.Session_to_Event.c_respon.trim())) ||
+        (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label)) == '全部')
+        ) {
         res.push({
           d_act: x.d_act,
           i_number: x.i_number,
@@ -718,7 +743,23 @@ const OS3Data = computed(() => { //os2result.value? os2result.value.tbl_act_sess
   return res
 })
 
-const OS5Data = computed(() => os5result.value?.HTX_Event.filter((x) => os5status.includes(x.c_status.trim()))??[])
+const OS5Data = computed(() => {
+  let res = []
+  // console.log(JSON.stringify(os5result.value))
+  
+  if (os5result.value)
+  
+  os5result.value.HTX_Event.forEach((x) => {
+    if (os5status.includes(x.c_status.trim()) &&
+      (!staffSearchFilter.value || 
+      (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label).includes(x.c_respon.trim())) ||
+      (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label)) == '全部')
+    ) {
+      res.push(x)
+    }
+  })
+  return res
+})
 
 // functions
 function exportExcel(datasource, columns, filename) {
@@ -737,7 +778,16 @@ function exportExcel(datasource, columns, filename) {
       icon: 'warning'
     })
   }
-  
+}
+
+function quarterStartDate(date) {
+  let quarter = Math.floor(date.getMonth() / 3 + 1)
+  return new Date(date.getFullYear(), quarter*3-3, date.getDate())
+}
+
+function quarterEndDate(date) {
+  let quarter = Math.floor(date.getMonth() / 3 + 1)
+  return new Date(date.getFullYear(), quarter*3, 0)
 }
 
 function refreshSchedule(newDate) {

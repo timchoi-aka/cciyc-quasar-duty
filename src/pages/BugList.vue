@@ -32,6 +32,7 @@
 
     <q-table
       flat
+      :wrap-cells="true"
       :grid="$q.screen.lt.sm"
       :rows="bugs"
       :columns="tableFields"

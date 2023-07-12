@@ -1,6 +1,7 @@
 <template>
   <!-- loading dialog -->
   <LoadingDialog :model-value="(loadingEventList || loadingCoreEventList || loadingFav || loadingAwaitApproval || loadingAwaitApprovalPrepaidRecords)? 1: 0" message="處理中"/>
+  <LoadingDialog :model-value="loading" message="儲存資料中"/>
 
   <!-- event detail modal -->
   <q-dialog
@@ -87,7 +88,7 @@
         :filter="coreFilter"
         :filter-method="coreEventFilter"
         @row-click="showDetail"
-        :rows="EventList"
+        :rows="EventList" 
         :pagination="pagination"
         :columns="MyColumns"
       >
@@ -112,53 +113,9 @@
         </template>
       </q-table>
     
-      <q-chip class="bg-positive text-white q-mr-md" size="lg" label="核心活動"/>
+      <q-chip v-if="!isCenterIC" class="bg-positive text-white q-mr-md" size="lg" label="核心活動"/>      
       <q-table
-        v-if="isCenterIC"
-        class="q-mt-sm col-12"
-        flat
-        bordered
-        :filter="filter"
-        :filter-method="MyEventFilter"
-        @row-click="showDetail"
-        :rows="CoreEventList"
-        :pagination="pagination"
-        :columns="CoreEventColumns"
-      >
-      <!-- top row -->
-      <template v-slot:top>
-        <span>
-          進行中<q-toggle v-model="filter.status"/>已完成
-        </span>
-        <q-space/>
-        <q-input hide-bottom-space type="text" label="活動編號" v-model="filter.c_act_code" debounce="500">
-          <template v-slot:append>
-            <q-icon name="search" />
-          </template>
-        </q-input>
-      </template>
-        <!-- applicationInProcess template -->
-        <template v-slot:body-cell-plan_submit="props">
-          <q-td :props="props">
-            <q-icon class="text-positive" v-if="props.value" name="check" />
-            <q-icon v-else name="cancel" class="text-negative"/>
-          </q-td>
-        </template>
-        <template v-slot:body-cell-eval_submit="props">
-          <q-td :props="props">
-            <q-icon class="text-positive" v-if="props.value" name="check" />
-            <q-icon v-else name="cancel" class="text-negative"/>
-          </q-td>
-        </template>
-        <template v-slot:body-cell-isOutstanding="props">
-          <q-td :props="props">
-            <q-icon class="text-red" v-if="props.value" name="warning" />
-          </q-td>
-        </template>
-      </q-table>
-
-      <q-table
-        v-else
+        v-if="!isCenterIC"
         class="q-mt-sm col-12"
         flat
         bordered
@@ -201,12 +158,62 @@
         </template>
       </q-table>
     </div>
+    <div v-if="isCenterIC" class="col-12 row">
+      <q-chip class="bg-positive text-white q-mr-md" size="lg" label="中心核心活動一覽"/>      
+      <q-table
+        class="q-mt-sm col-12"
+        flat
+        bordered
+        :filter="filter"
+        :filter-method="MyEventFilter"
+        @row-click="showDetail"
+        :rows="CoreEventList"
+        selection="multiple"
+        row-key="c_act_code"
+        v-model:selected="selectedRow"
+        :pagination="pagination"
+        :columns="CoreEventColumns"
+      >
+      <!-- top row -->
+      <template v-slot:top>
+        <span>
+          進行中<q-toggle v-model="filter.status"/>已完成
+        </span>
+        <q-space/>
+        <q-btn v-if="selectedRow.length > 0" label="標記為已收取紙本計劃檢討表" class="bg-primary text-white" flat @click="markHardcopy"/>
+        <q-space/>
+        <q-input hide-bottom-space type="text" label="活動編號" v-model="filter.c_act_code" debounce="500">
+          <template v-slot:append>
+            <q-icon name="search" />
+          </template>
+        </q-input>
+      </template>
+        <!-- applicationInProcess template -->
+        <template v-slot:body-cell-plan_submit="props">
+          <q-td :props="props">
+            <q-icon class="text-positive" v-if="props.value" name="check" />
+            <q-icon v-else name="cancel" class="text-negative"/>
+          </q-td>
+        </template>
+        <template v-slot:body-cell-eval_submit="props">
+          <q-td :props="props">
+            <q-icon class="text-positive" v-if="props.value" name="check" />
+            <q-icon v-else name="cancel" class="text-negative"/>
+          </q-td>
+        </template>
+        <template v-slot:body-cell-isOutstanding="props">
+          <q-td :props="props">
+            <q-icon class="text-red" v-if="props.value" name="warning" />
+          </q-td>
+        </template>
+      </q-table>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { computed, ref } from "vue";
-import { useQuery } from "@vue/apollo-composable";
+import { useQuery, useMutation } from "@vue/apollo-composable";
 import { useStore } from "vuex";
 import { MY_EVENT_SEARCH, CORE_EVENT_SEARCH, MY_FAV, EVALUATION_UNAPPROVED } from "/src/graphQueries/Event/query.js";
 import EventDetail from "components/Event/EventDetail.vue";
@@ -217,7 +224,9 @@ import { gql } from "graphql-tag"
 // variables
 const $store = useStore();
 const $q = useQuasar()
+const loading = ref(0)
 const selectedEventID = ref("")
+const selectedRow = ref([])
 const filter = ref({
   status: false,
   c_act_code: ""
@@ -228,8 +237,8 @@ const coreFilter = ref({
   c_act_code: ""
 })
 const eventDetailDialog = ref(false)
-// const username = computed(() => $store.getters["userModule/getUsername"])
-const username = ref("馬桂儀")
+ const username = computed(() => $store.getters["userModule/getUsername"])
+//const username = ref("馬桂儀")
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
 const searchCondition = ref({
   condition: {
@@ -246,7 +255,7 @@ const coreEventCondition = ref({
   condition: {
     _and: [
       { c_nature: {_gte : '核心'}},  
-      
+      { b_hardcopy: {_neq: true}}
     ]
   }
 })
@@ -562,6 +571,18 @@ const unapprovedPrepaidColumns = ref([
 // $q.localStorage.set("module", "event");
 
 // queries
+const { mutate: markHardCopyMutation, onDone: markHardCopyMutation_Completed, onError: markHardCopyMutation_Error } = useMutation(gql`
+  mutation update_HTX_Event_MarkHardcopy(
+    $logObject: Log_insert_input! = {}, 
+    $c_act_code: [String!] = ""
+    ) {
+    update_HTX_Event(where: {c_act_code: {_in: $c_act_code}}, _set: {b_hardcopy: true}) {
+      affected_rows
+    }
+    insert_Log_one(object: $logObject) {
+      log_id
+    }
+  }`)
 const { onResult: eventList, onError: eventList_Error, loading: loadingEventList } = useQuery(MY_EVENT_SEARCH, searchCondition.value, {pollInterval: 1000});
 const { onResult: coreEventList, onError: coreEventList_Error, loading: loadingCoreEventList } = useQuery(CORE_EVENT_SEARCH, coreEventCondition.value, {pollInterval: 1000});
 const { onResult: fav, onError: fav_onError, loading: loadingFav } = useQuery(MY_FAV, 
@@ -682,6 +703,21 @@ function MyEventFilter(rows, terms) {
   
 }
 
+function markHardcopy() {
+  let c_act_code = selectedRow.value.map(x=>x.c_act_code)
+  const logObject = ref({
+    "username": username,
+    "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+    "module": "活動系統",
+    "action": "標示活動: " + c_act_code.join(',') + "為已收到紙本計劃檢討表。"
+  })
+
+  loading.value++
+  markHardCopyMutation({
+    logObject: logObject.value,
+    c_act_code: c_act_code,
+  })
+}
 function coreEventFilter(rows, terms) {
   // rows contain the entire data
   // terms contains whatever you have as filter
@@ -701,6 +737,12 @@ function notifyClientError(error) {
 }
 
 // callbacks
+markHardCopyMutation_Completed((result) => {
+  selectedRow.value = []
+  loading.value--
+  $q.notify({ message: "已修改了" + result.data.update_HTX_Event.affected_rows + "項記錄" });
+})
+
 eventList_Error((error) => {
   notifyClientError(error)
 })
