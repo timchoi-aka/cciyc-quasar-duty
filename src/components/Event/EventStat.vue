@@ -16,71 +16,81 @@
     <template v-slot:body="props">
       <q-tr :props="props">
         <q-td key="action" :props="props">
-          <q-btn icon="delete" class="text-negative" flat @click="deleteRow(props.row.d_act, props.row.inCenter)"/>
+          <q-btn v-if="eventMonthValidation(props.row.d_act)" icon="delete" class="text-negative" flat @click="deleteRow(props.row.d_act, props.row.inCenter)"/>
         </q-td>
         <q-td key="inCenter" :props="props">
           <q-icon v-if="props.row.inCenter" color="positive" name="check">
-            <q-popup-edit filled v-model="props.row.inCenter" title="中心舉行" auto-save v-slot="scope">
+            <q-popup-edit v-if="eventMonthValidation(props.row.d_act)" filled v-model="props.row.inCenter" title="中心舉行" auto-save v-slot="scope">
               <q-toggle v-model="scope.value"/>
             </q-popup-edit>  
           </q-icon>
           <q-icon v-else color="negative" name="cancel">
-            <q-popup-edit filled v-model="props.row.inCenter" title="中心舉行" auto-save v-slot="scope">
+            <q-popup-edit v-if="eventMonthValidation(props.row.d_act)" filled v-model="props.row.inCenter" title="中心舉行" auto-save v-slot="scope">
               <q-toggle v-model="scope.value"/>
             </q-popup-edit>  
           </q-icon>
         </q-td>
+        <!-- error-message="未能新增/修改舊記錄"
+              :error="isPastDeadline" -->
         <q-td key="d_act" :props="props">
           {{ props.row.d_act }}
-          <q-popup-edit v-if="!props.row.d_act" filled v-model="props.row.d_act" title="活動月份" auto-save v-slot="scope">
-            <q-input v-model="scope.value" mask="##/####" hint="MM/YYYY" dense autofocus counter @keyup.enter="scope.set" />
+          <q-popup-edit v-if="!props.row.d_act" filled v-model="props.row.d_act" title="活動月份" 
+            auto-save v-slot="scope"
+            :validate="eventMonthValidation"
+            @hide="eventMonthValidation"
+            >
+            <q-input v-model="scope.value" mask="##/####" hint="MM/YYYY" dense autofocus counter 
+              @keyup.enter="scope.set" 
+              :error="errorDate"
+              :error-message="errorMessageDate"
+              />
           </q-popup-edit>
         </q-td>
         <q-td key="i_number" :props="props">
           {{ props.row.i_number }}
-          <q-popup-edit v-model.number="props.row.i_number" auto-save v-slot="scope">
+          <q-popup-edit v-if="eventMonthValidation(props.row.d_act)" v-model.number="props.row.i_number" auto-save v-slot="scope">
             <q-input type="number" v-model.number="scope.value" dense autofocus @keyup.enter="scope.set" />
           </q-popup-edit>
         </q-td>
         <q-td key="i_people_count" :props="props">
           {{ props.row.i_people_count }}
-          <q-popup-edit v-model.number="props.row.i_people_count" auto-save v-slot="scope">
+          <q-popup-edit v-if="eventMonthValidation(props.row.d_act)" v-model.number="props.row.i_people_count" auto-save v-slot="scope">
             <q-input type="number" v-model.number="scope.value" dense autofocus @keyup.enter="scope.set" />
           </q-popup-edit>
         </q-td>
         <q-td key="i_number_a" :props="props">
           {{ props.row.i_number_a }}
-          <q-popup-edit v-model.number="props.row.i_number_a" auto-save v-slot="scope">
+          <q-popup-edit v-if="eventMonthValidation(props.row.d_act)" v-model.number="props.row.i_number_a" auto-save v-slot="scope">
             <q-input type="number" v-model.number="scope.value" dense autofocus @keyup.enter="scope.set" />
           </q-popup-edit>
         </q-td>
         <q-td key="i_people_count_a" :props="props">
           {{ props.row.i_people_count_a }}
-          <q-popup-edit v-model.number="props.row.i_people_count_a" auto-save v-slot="scope">
+          <q-popup-edit v-if="eventMonthValidation(props.row.d_act)" v-model.number="props.row.i_people_count_a" auto-save v-slot="scope">
             <q-input type="number" v-model.number="scope.value" dense autofocus @keyup.enter="scope.set" />
           </q-popup-edit>
         </q-td>
         <q-td key="i_number_b" :props="props">
           {{ props.row.i_number_b }}
-          <q-popup-edit v-model.number="props.row.i_number_b" auto-save v-slot="scope">
+          <q-popup-edit v-if="eventMonthValidation(props.row.d_act)" v-model.number="props.row.i_number_b" auto-save v-slot="scope">
             <q-input type="number" v-model.number="scope.value" dense autofocus @keyup.enter="scope.set" />
           </q-popup-edit>
         </q-td>
         <q-td key="i_people_count_b" :props="props">
           {{ props.row.i_people_count_b }}
-          <q-popup-edit v-model.number="props.row.i_people_count_b" auto-save v-slot="scope">
+          <q-popup-edit v-if="eventMonthValidation(props.row.d_act)" v-model.number="props.row.i_people_count_b" auto-save v-slot="scope">
             <q-input type="number" v-model.number="scope.value" dense autofocus @keyup.enter="scope.set" />
           </q-popup-edit>
         </q-td>
         <q-td key="i_number_c" :props="props">
           {{ props.row.i_number_c }}
-          <q-popup-edit v-model.number="props.row.i_number_c" auto-save v-slot="scope">
+          <q-popup-edit v-if="eventMonthValidation(props.row.d_act)" v-model.number="props.row.i_number_c" auto-save v-slot="scope">
             <q-input type="number" v-model.number="scope.value" dense autofocus @keyup.enter="scope.set" />
           </q-popup-edit>
         </q-td>
         <q-td key="i_people_count_c" :props="props">
           {{ props.row.i_people_count_c }}
-          <q-popup-edit v-model.number="props.row.i_people_count_c" auto-save v-slot="scope">
+          <q-popup-edit v-if="eventMonthValidation(props.row.d_act)" v-model.number="props.row.i_people_count_c" auto-save v-slot="scope">
             <q-input type="number" v-model.number="scope.value" dense autofocus @keyup.enter="scope.set" />
           </q-popup-edit>
         </q-td>
@@ -107,6 +117,9 @@ const $q = useQuasar()
 const $store = useStore();
 const StatData = ref([])
 const deleteData = ref([])
+const errorDate = ref(false)
+const errorMessageDate = ref("未能新增/修改舊記錄")
+
 const statTableColumn = ref([
   {
     name: "action",
@@ -218,6 +231,12 @@ const { mutate: deleteEventStat, onDone: deleteEventStat_Completed, onError: del
 const serverStat = computed(() => EventStat.value?.tbl_act_session??[])
 const username = computed(() => $store.getters["userModule/getUsername"])
 const userProfileLogout = () => $store.dispatch("userModule/logout")
+const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
+const deadline = computed(() => {
+  let d = qdate.addToDate(new Date(), {hours: 8})
+  if (d.getDate() > 10) return qdate.startOfDate(d, 'month')
+  else return qdate.startOfDate(qdate.subtractFromDate(d, {month: 1}), 'month')
+})
 
 // functions
 function addRow() {
@@ -276,6 +295,16 @@ function save() {
   }
 }
 
+function eventMonthValidation(val) {
+  let d = qdate.extractDate(val, 'MM/YYYY')
+  if (!isCenterIC.value && d < deadline.value) {
+    errorDate.value = true
+    return false
+  }
+  errorDate.value = false 
+  return true
+}
+
 function deleteRow(d_act, inCenter) {
   let i = StatData.value.findIndex((element) => element.d_act == d_act && element.inCenter == inCenter)
   deleteData.value.push(StatData.value[i])
@@ -284,7 +313,7 @@ function deleteRow(d_act, inCenter) {
 
 // UI functions
 function notifyClientError(error) {
-  $q.notify({ message: "系統錯誤，請重新登入." });
+  $q.notify({ message: "系統錯誤，請重新載入." });
   console.error("error", error);
 }
 

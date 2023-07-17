@@ -65,8 +65,8 @@ const columns = [
     name: "action",
     label: "動作",
     field: "action",
-    style: "font-size: 1vw; text-align: left;",
-    headerStyle: "font-size: 1vw; text-align: center; ",
+    style: "font-size: 1vw; text-align: left; max-width: 500px;",
+    headerStyle: "font-size: 1vw; text-align: center; max-width: 500px; ",
     headerClasses: "bg-grey-2",
   },
 ]

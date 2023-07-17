@@ -53,7 +53,6 @@
             color="primary"
             row-key="date"
             separator="cell"
-            hide-bottom
             virtual-scroll
             binary-state-sort
           >
@@ -76,16 +75,36 @@
   </q-dialog>
 
   <div class="row justify-center">
-    <div class="row items-center q-mx-md"><q-btn label="上月" @click="reportDate = qdate.formatDate(qdate.endOfDate(qdate.subtractFromDate(reportDate, {month: 1}), 'month'), 'YYYY/MM/DD')" class="bg-primary text-white items-center"/></div>
+    <!-- <div class="row items-center q-mx-md"><q-btn label="上月" @click="reportDate = qdate.formatDate(qdate.endOfDate(qdate.subtractFromDate(reportDate, {month: 1}), 'month'), 'YYYY/MM/DD')" class="bg-primary text-white items-center"/></div>-->
     <div>
-      <q-input filled v-model="reportDate" mask="date" :rules="['date']">
+      <q-input filled v-model="reportStartDate" mask="date" :rules="['date']">
         <template v-slot:prepend>
-          截數月份：
+          開始日期：
         </template>
         <template v-slot:append>
           <q-icon name="event" class="cursor-pointer">
             <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-              <q-date v-model="reportDate">
+              <q-date v-model="reportStartDate">
+                <div class="row items-center justify-end">
+                  <q-btn v-close-popup label="關閉" color="primary" flat />
+                </div>
+              </q-date>
+            </q-popup-proxy>
+          </q-icon>
+        </template>
+      </q-input>
+    </div>
+
+
+    <div>
+      <q-input filled v-model="reportEndDate" mask="date" :rules="['date']">
+        <template v-slot:prepend>
+          完結日期：
+        </template>
+        <template v-slot:append>
+          <q-icon name="event" class="cursor-pointer">
+            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+              <q-date v-model="reportEndDate">
                 <div class="row items-center justify-end">
                   <q-btn v-close-popup label="關閉" color="primary" flat />
                 </div>
@@ -96,7 +115,7 @@
       </q-input>
     </div>
     
-    <div class="row items-center q-mx-md"><q-btn label="下月" @click="reportDate = qdate.formatDate(qdate.endOfDate(qdate.addToDate(reportDate, {month: 1}), 'month'), 'YYYY/MM/DD')" class="bg-primary text-white items-center"/></div>
+    <!-- <div class="row items-center q-mx-md"><q-btn label="下月" @click="reportDate = qdate.formatDate(qdate.endOfDate(qdate.addToDate(reportDate, {month: 1}), 'month'), 'YYYY/MM/DD')" class="bg-primary text-white items-center"/></div>-->
 
     <div class="q-mx-md col-2"><StaffSelectionMultiple :multiple="true" v-model="staffSearchFilter"/></div>
   </div>
@@ -168,7 +187,7 @@
             icon-right="archive"
             label="匯出Excel"
             no-caps
-            @click="exportExcel(OS2Data, os2Columns, 'OS2_'+qdate.formatDate(reportDate, 'YYYY-MM'))"
+            @click="exportExcel(OS2Data, os2Columns, 'OS2_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
           />
         </template>
         
@@ -231,7 +250,7 @@
             icon-right="archive"
             label="匯出Excel"
             no-caps
-            @click="exportExcel(OS3Data, os2Columns, 'OS34_'+qdate.formatDate(reportDate, 'YYYY-MM'))"
+            @click="exportExcel(OS3Data, os2Columns, 'OS34_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
           />
         </template>
       </q-table>
@@ -262,7 +281,7 @@
             icon-right="archive"
             label="匯出Excel"
             no-caps
-            @click="exportExcel(OS5Data, os5Columns, 'OS5_'+qdate.formatDate(reportDate, 'YYYY-MM'))"
+            @click="exportExcel(OS5Data, os5Columns, 'OS5_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
           />
         </template>
       </q-table>
@@ -285,11 +304,12 @@ import print from "vue3-print-nb";
 import StaffSelectionMultiple from "components/Basic/StaffSelectionMultiple.vue";
 
 onMounted(() => {
-  refreshSchedule(reportDate.value)
+  refreshSchedule(reportStartDate.value, reportEndDate.value)
 })
 
 // variables
-const reportDate = ref(qdate.formatDate(qdate.endOfDate(qdate.subtractFromDate(Date.now(), {month: 1}), 'month'), "YYYY/MM/DD"))
+const reportStartDate = ref(qdate.formatDate(qdate.startOfDate(qdate.subtractFromDate(Date.now(), {month: 1}), 'month'), "YYYY/MM/DD"))
+const reportEndDate = ref(qdate.formatDate(qdate.endOfDate(qdate.subtractFromDate(Date.now(), {month: 1}), 'month'), "YYYY/MM/DD"))
 const detailModal = ref(false)
 const openingModal = ref(false)
 const showEventID = ref("")
@@ -307,6 +327,14 @@ const destInCenter = [
   '本中心', '大堂', '活動室(一)', '活動室(二)', '舞蹈室', 'Band房', '電腦室', '會議室', '中心廣場', '星有利球場', '星有利籃球場'
 ]
 //const closeList = ref(["覆", "AL", "SL", "補", "長", "短"])
+const getDAct = computed(() => {
+  let res = []
+  for (let d = reportStartDate.value; qdate.getDateDiff(d, reportEndDate.value) <= 0; d = qdate.addToDate(d, {month: 1})) {
+    res.push(qdate.formatDate(d, "MM/YYYY"))
+  } 
+  return res
+})
+
 const scheduleSnapshot = ref()
 
 const printObj = ref({
@@ -623,9 +651,9 @@ const { result, loading } = useQuery(gql`
 
 const { result: os2result, loading: os2loading } = useQuery(gql`
 query queryO2Result(
-  $d_act: String = ""
+  $d_act: [String] = []
   ) {
-  tbl_act_session(where: {d_act: {_eq: $d_act}}) {
+  tbl_act_session(where: {d_act: {_in: $d_act}}) {
     c_act_code
     d_act
     i_number
@@ -645,7 +673,7 @@ query queryO2Result(
     }
   }
 }`, () => ({
-  d_act: qdate.formatDate(reportDate.value, "MM/YYYY")
+  d_act: getDAct.value
 }))
 
 const { result: os5result, loading: os5loading } = useQuery(gql`
@@ -663,14 +691,19 @@ query queryOS5Result(
     d_finish_goal
   }
 }`, () => ({
-  startDate: qdate.formatDate(quarterStartDate(qdate.startOfDate(reportDate.value, 'month')), "YYYY-MM-DD"),
-  endDate: qdate.formatDate(quarterEndDate(qdate.endOfDate(reportDate.value, 'month')), "YYYY-MM-DD")
+  startDate: qdate.formatDate(quarterStartDate(qdate.startOfDate(reportStartDate.value, 'day')), "YYYY-MM-DD"),
+  endDate: qdate.formatDate(quarterEndDate(qdate.endOfDate(reportEndDate.value, 'day')), "YYYY-MM-DD")
 }))
 
 // watcher
-watch(reportDate, (newDate, oldDate)  => { 
+watch(reportStartDate, (newDate, oldDate)  => { 
   dutyTable.value = []
-  refreshSchedule(newDate)
+  refreshSchedule(newDate, reportEndDate.value)
+})
+
+watch(reportEndDate, (newDate, oldDate)  => { 
+  dutyTable.value = []
+  refreshSchedule(reportStartDate.value, newDate)
 })
 
 // computed
@@ -790,21 +823,22 @@ function quarterEndDate(date) {
   return new Date(date.getFullYear(), quarter*3, 0)
 }
 
-function refreshSchedule(newDate) {
+function refreshSchedule(startDate, endDate) {
   // build up dates in month
-  for (let day = qdate.addToDate(qdate.startOfDate(newDate, 'month'), {hours: 8}); day < qdate.endOfDate(newDate, 'month'); day = qdate.addToDate(day, { day: 1})) {
+  for (let day = qdate.startOfDate(startDate, 'day'); qdate.getDateDiff(day, endDate) <= 0; day = qdate.addToDate(day, { day: 1})) {
     dutyTable.value.push({
       date: day
     })
   }
-
+  
   const sessionDocQuery = query(sessionCollection, 
-    where("date", ">=", qdate.startOfDate(newDate, 'month')),
-    where("date", "<=", qdate.endOfDate(newDate, 'month'))
+    where("date", ">=", qdate.startOfDate(startDate, 'day')),
+    where("date", "<=", qdate.endOfDate(endDate, 'day'))
   )
 
   getDocs(sessionDocQuery).then((sessionDoc) => {
     sessionDoc.forEach((doc) => {
+      // console.log(doc.data().date.toDate() + ":" + doc.data().slot)
       let i = dutyTable.value.findIndex((element) => qdate.formatDate(element.date, "YYYY-MM-DD") == qdate.formatDate(doc.data().date.toDate(), "YYYY-MM-DD"))
       dutyTable.value[i][doc.data().slot] = true
     });

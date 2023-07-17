@@ -32,6 +32,16 @@ const chatAPI = axios.create({
   },
 })
 
+const AUTHENTICATOR_URL = 'http://192.168.2.44:3001';
+const authenticator = axios.create({
+  baseURL: AUTHENTICATOR_URL,
+  headers: {
+    common: {
+      "content-type": "text/plain",
+    },
+  },
+})
+
 // const API_KEY = process.env.OPENAI_APIKEY;
 const API_KEY = ""
 chatAPI.interceptors.request.use(async (config) => {
@@ -51,7 +61,9 @@ export default boot(({ app }) => {
   // ^ ^ ^ this will allow you to use this.$api (for Vue Options API form)
   //       so you can easily perform requests against your app's API
 
+  app.config.globalProperties.$authenticator = authenticator;
+
   app.config.globalProperties.$chatAPI = chatAPI;
 });
 
-export { api, chatAPI };
+export { /* api, chatAPI, */ authenticator };

@@ -30,7 +30,7 @@ options: {{ displayOptions }}
 <script setup>
 import { computed, ref, reactive } from "vue";
 import useMember from "components/Member/MemberData"
-import { chatAPI } from "boot/axios"
+// import { chatAPI } from "boot/axios"
 import { useQuery } from "@vue/apollo-composable";
 import gql from "graphql-tag";
 import { httpsCallable } from "firebase/functions";
@@ -105,6 +105,7 @@ onResult((result) => {
       NewsContentEN: item.NewsContentEN? item.NewsContentEN.replace(/[\r\n\t]/g, "").replace(/<\/?[^>]+(>|$)/g, ""): "",
     })
   })
+  /* 
   chatAPI.post("https://api.openai.com/v1/completions", {
       "model": "text-davinci-003",
       "prompt": JSON.stringify(newsInfo),
@@ -116,6 +117,7 @@ onResult((result) => {
     }).then((result) => {
       console.log("ai news result:" + JSON.stringify(result))
     })
+  */
   console.log("news:" + JSON.stringify(newsInfo))
   let articleInfo = []
   result.data.HTX_Article.forEach((item) => {

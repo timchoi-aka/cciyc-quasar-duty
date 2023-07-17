@@ -2,6 +2,24 @@
   <!-- loading dialog -->
   <LoadingDialog v-model="loading" message="處理中"/>
 
+  <!-- confirm delete plan dialog SYSTEM-ADMIN only -->
+  <q-dialog v-model="confirmDeleteDialog">
+    <q-card class="q-dialog-plugin">
+      <q-card-section>
+        是否刪除計劃檢討？
+      </q-card-section>
+      <q-card-section>
+        <div>注意：刪除後不能再回復！</div>
+        <div>請在以下輸入活動編號{{props.EventID}}</div>
+        <q-input type="text" v-model="deleteCheck"/>
+      </q-card-section>
+      <q-card-actions align="right">
+        <q-btn color="warning" label="取消" v-close-popup/>
+        <q-btn :disable="deleteCheck != props.EventID.trim()" color="positive" label="確定" @click="onOKDelete" v-close-popup/>
+      </q-card-actions>
+    </q-card>
+  </q-dialog>
+
   <!-- confirm submit plan dialog -->
   <q-dialog v-model="confirmPlanDialog">
     <q-card class="q-dialog-plugin">
@@ -67,6 +85,9 @@
         </q-btn>
         <q-btn v-if="!edit && isSubmitted" flat icon="print" @click="printEvaluation = true">
           <q-tooltip class="bg-white text-primary">列印</q-tooltip>
+        </q-btn>
+        <q-btn v-if="isSystemAdmin && Object.keys(PlanEval).length > 0" icon="delete" class="text-negative" flat @click="confirmDeleteDialog = true">
+          <q-tooltip class="bg-white text-negative">刪除</q-tooltip>
         </q-btn>
       </div>
     </span>
@@ -307,6 +328,8 @@ const editObject = ref({})
 const $store = useStore();
 const confirmPlanDialog = ref(false)
 const confirmEvalDialog = ref(false)
+const confirmDeleteDialog = ref(false)
+const deleteCheck = ref("")
 const approvalDialog = ref(false)
 const EvaluationComment = ref("")
 const userMapping = ref({})
@@ -408,11 +431,29 @@ mutation denyEvaluationFromUUID(
   }
 }
 `)
+
+const { mutate: deletePlanEval, onDone: deletePlanEval_Completed, onError: deletePlanEval_Error } = useMutation(gql`
+mutation deletePlanEvalFromUUID(
+  $uuid: uniqueidentifier = "", 
+  $logObject: Log_insert_input! = {}
+  ) {
+  delete_Event_Evaluation_by_pk(
+    uuid: $uuid 
+  ) {
+    uuid
+    c_act_code
+  }
+  insert_Log_one(object: $logObject) {
+    log_id
+  }
+}
+`)
 // computed
 const Event = computed(() => EventEvaluation.value?.HTX_Event_by_pk??[])
 const PlanEval = computed(() => EventEvaluation.value?.HTX_Event_by_pk.Event_to_Evaluation[0]??[])
 const username = computed(() => $store.getters["userModule/getUsername"])
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
+const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"])
 const isSubmitted = computed(() => PlanEval.value.submit_plan_date && PlanEval.value.submit_eval_date? PlanEval.value.submit_plan_date.length > 0 && PlanEval.value.submit_eval_date.length > 0 : false)
 
 // success callbacks
@@ -422,6 +463,10 @@ updateEvaluationFromActCode_Completed((result)=>{
 
 addEvaluationFromActCode_Completed((result)=>{
   notifyClientSuccess(result.data.insert_Event_Evaluation_one.c_act_code)
+})
+
+deletePlanEval_Completed((result) => {
+  notifyClientSuccess(result.data.delete_Event_Evaluation_by_pk.c_act_code)
 })
 
 submitEvaluation_Completed((result) => {
@@ -726,6 +771,21 @@ function purifyRecord() {
   editObject.value.objective_followup = !editObject.value.objective_followup? null: editObject.value.objective_followup.trim()
 }
 
+// admin only - delete plan/eval
+function onOKDelete() {
+  const logObject = ref({
+    "username": username.value,
+    "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+    "module": "活動系統",
+    "action": "刪除活動計劃: " + props.EventID + " 內容：" + JSON.stringify(PlanEval.value, null, " ")
+  })
+  loading.value++
+  deletePlanEval({
+    uuid: PlanEval.value.uuid,
+    logObject: logObject.value,
+  })
+}
+
 function onOKClickPlan() {
   const logObject = ref({
     "username": username.value,
@@ -774,7 +834,7 @@ function saveRecord() {
       "username": username.value,
       "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
       "module": "活動系統",
-      "action": "修改活動計劃/檢討: " + props.EventID,
+      "action": "修改活動計劃/檢討: " + props.EventID.trim() + " 內容：" + JSON.stringify(editObject.value, null, "")
     })
     
     loading.value++
@@ -788,7 +848,7 @@ function saveRecord() {
       "username": username.value,
       "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
       "module": "活動系統",
-      "action": "新增活動計劃/檢討: " + props.EventID.trim(),
+      "action": "新增活動計劃/檢討: " + props.EventID.trim() + " 內容：" + JSON.stringify(editObject.value, null, " ")
     })
     
     loading.value++

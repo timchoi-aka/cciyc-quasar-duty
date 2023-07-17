@@ -101,9 +101,9 @@
 
       <div class="row col-*">
         <q-btn class="col" name="duty" icon="event" label="編更" @click="setCurrentModule('duty')"/>
-        <q-btn v-if="!isTmp" class="col" name="member" icon="public" label="會員" @click="setCurrentModule('member')"/>
-        <q-btn v-if="!isTmp" class="col" name="event" icon="festival" label="活動" @click="setCurrentModule('event')"/>
-        <q-btn v-if="!isTmp" class="col" name="finance" icon="money" label="財務" @click="setCurrentModule('account')"/>
+        <q-btn v-if="!isTmp && isLocal" class="col" name="member" icon="public" label="會員" @click="setCurrentModule('member')"/>
+        <q-btn v-if="!isTmp && isLocal" class="col" name="event" icon="festival" label="活動" @click="setCurrentModule('event')"/>
+        <q-btn v-if="!isTmp && isLocal" class="col" name="finance" icon="money" label="財務" @click="setCurrentModule('account')"/>
       </div>
       <div class="row text-h6 q-ml-md q-my-sm">{{ qdate.formatDate(new Date(), "YYYY年M月D日") }}</div>
     </q-drawer>
@@ -111,10 +111,10 @@
     <!-- right drawer -->
     <q-drawer :width="100" v-model="rightDrawerOpen" side="right" overlay elevated class="column justify-around" behavior="mobile">
         <q-btn v-close-popup class="col-grow" name="duty" icon="event" label="編更" to="/duty/dutytable"/>
-        <q-btn v-if="!isTmp" v-close-popup class="col-grow" name="member" icon="public" label="會員" to="/member/list"/>
-        <q-btn v-if="!isTmp" v-close-popup class="col-grow" name="event" icon="festival" label="活動" to="/event/my-event"/>
-        <q-btn v-if="!isTmp" v-close-popup class="col-grow" name="finance" icon="money" label="財務" to="/account/receipt/search"/>
-        <q-btn v-if="!isTmp & isSystemAdmin" v-close-popup class="col-grow" name="web" icon="home" label="網站" to="/website/news"/>
+        <q-btn v-if="!isTmp && isLocal" v-close-popup class="col-grow" name="member" icon="public" label="會員" to="/member/list"/>
+        <q-btn v-if="!isTmp && isLocal" v-close-popup class="col-grow" name="event" icon="festival" label="活動" to="/event/my-event"/>
+        <q-btn v-if="!isTmp && isLocal" v-close-popup class="col-grow" name="finance" icon="money" label="財務" to="/account/receipt/search"/>
+        <q-btn v-if="!isTmp & isSystemAdmin && isLocal" v-close-popup class="col-grow" name="web" icon="home" label="網站" to="/website/news"/>
     </q-drawer>
 
     <q-page-container>
@@ -127,7 +127,7 @@
 import EssentialLink from "components/EssentialLink.vue";
 import NotificationBell from "components/Basic/NotificationBell.vue"
 import MenuBar from "components/MenuBar.vue";
-import { ref, computed, provide } from "vue";
+import { ref, computed, provide, onMounted } from "vue";
 import { useStore } from "vuex";
 import { useQuasar, date as qdate } from "quasar"
 import { FirebaseMessaging } from 'boot/firebase'
@@ -135,6 +135,9 @@ import { httpsCallable } from "@firebase/functions";
 import { FirebaseFunctions } from "boot/firebase";
 import DateComponent from "./components/Basic/DateComponent.vue";
 import LoadingDialog from "components/LoadingDialog.vue"
+import { authenticator } from "./boot/axios";
+import { useRouter } from "vue-router"
+
 provide('messaging', FirebaseMessaging)
 
 const upload_API = process.env.NODE_ENV === "development"? "http://localhost:5001/manage-hr/asia-east2" : "https://asia-east2-manage-hr.cloudfunctions.net"
@@ -146,6 +149,7 @@ const $store = useStore();
 const $q = useQuasar();
 const bugReportModal = ref(false)
 const loading = ref(0)
+const router = useRouter()
 
 // computed
 // userModule getters
@@ -224,6 +228,25 @@ const toggleLeftDrawer = () => leftDrawerOpen.value = !leftDrawerOpen.value
 const toggleRightDrawer = () => rightDrawerOpen.value = !rightDrawerOpen.value
 const setCurrentModule = (module) => $store.dispatch("userModule/switchModule", module)
 
+const isLocal = ref(false)
+
+onMounted(async () => {
+  authenticator({
+    timeout: 1000, // Set a timeout of 5 seconds
+    method: "get",
+    url: "http://192.168.2.44:3001",
+    responseType: "text"
+  }).then((result) => {
+    if (result.status == 200) {
+      isLocal.value = true
+    }
+  }).catch((e) => {
+    $store.dispatch("userModule/switchModule", "duty");
+    isLocal.value = false
+    router.push('/duty')
+  })
+})
+
 // functions
 function logout() {
   userProfileLogout().then(() => {
@@ -294,7 +317,7 @@ const memberList = ref([
     caption: "檢視會員系統的記錄",
     icon: "schedule",
     link: "/member/log",
-    enable: UAT.value,
+    enable: isSystemAdmin.value,
   },
   {
     title: "系統管理",
@@ -311,35 +334,35 @@ const eventList = ref([
     caption: "我負責的活動，我的最愛",
     icon: "calendar_month",
     link: "/event/my-event",
-    enable: UAT.value,
+    enable: !isTmp.value,
   },
   {
     title: "活動進行中",
     caption: "全部未完成的活動",
     icon: "festival",
     link: "/event/active",
-    enable: UAT.value,
+    enable: !isTmp.value,
   },
   {
     title: "搜尋活動",
     caption: "找尋個別活動資料",
     icon: "schedule",
     link: "/event/search",
-    enable: UAT.value,
+    enable: !isTmp.value,
   },
   {
     title: "新增活動",
     caption: "加入新活動",
     icon: "schedule",
     link: "/event/add",
-    enable: UAT.value,
+    enable: !isTmp.value,
   },
   {
     title: "系統記錄",
     caption: "檢視活動有關的系統記錄",
     icon: "account_circle",
     link: "/event/log",
-    enable: UAT.value,
+    enable: isSystemAdmin.value,
   },
 ])
 </script>
