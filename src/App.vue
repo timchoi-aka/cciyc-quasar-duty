@@ -230,21 +230,34 @@ const setCurrentModule = (module) => $store.dispatch("userModule/switchModule", 
 
 const isLocal = ref(false)
 
-onMounted(async () => {
-  authenticator({
+async function keepAlive() {
+  setTimeout(function () {
+    authenticator({
     timeout: 1000, // Set a timeout of 5 seconds
     method: "get",
-    url: "http://192.168.2.44:3001",
-    responseType: "text"
+    url: "https://auth.cciyc.com:3001",
+    responseType: "text",
+    headers: {
+      'Access-Control-Allow-Origin' : '*',
+      'Access-Control-Allow-Methods':'GET,PUT,POST,DELETE,PATCH,OPTIONS',
+    },
   }).then((result) => {
     if (result.status == 200) {
       isLocal.value = true
     }
   }).catch((e) => {
-    $store.dispatch("userModule/switchModule", "duty");
-    isLocal.value = false
-    router.push('/duty')
-  })
+    if (isLocal.value) {
+      $store.dispatch("userModule/switchModule", "duty");
+      router.push('/duty')
+      isLocal.value = false
+    } 
+    
+  })  
+  keepAlive();
+  }, 10000);
+}
+onMounted(() => {
+  keepAlive()
 })
 
 // functions
