@@ -25,6 +25,7 @@ exports.savefiletostorage = onRequest(
     }
     
     //console.log("header:" + JSON.stringify(req.headers))
+    /*
     let token = req.headers.authorization.split('Bearer ')[1]
     console.log("token:" + JSON.stringify(token))
     FireAuth.getAuth().verifyIdToken(token).then((decodedtoken) => {
@@ -32,7 +33,7 @@ exports.savefiletostorage = onRequest(
     }).catch((error) => {
       console.log("token error:" + JSON.stringify(error))
     })
-    
+    */
     
     res.setHeader('Access-Control-Allow-Origin', '*')
     const busboy = Busboy({

@@ -113,7 +113,7 @@
   <!-- desktop -->
   <div v-if="$q.screen.gt.xs">
     <div class="row text-h6">
-      <div v-if="PlanEval.ic_comment" class="col-12 q-my-sm" style="border: 1px dotted red;">主管評語: {{PlanEval.ic_comment}}</div>
+      <div v-if="PlanEval.ic_comment" class="col-12 q-my-sm" style="border: 1px dotted red;">主管評語: <span class="col-10" v-if="edit && isCenterIC"><q-input filled type="text" v-model="editObject.ic_comment"/></span><span class="col-10" v-else>{{PlanEval.ic_comment}}</span></div>
       <div class="col-2 q-my-sm">工作目的: </div><span class="col-10" v-if="edit"><q-input filled type="text" v-model="editObject.objective"/></span><span class="col-10" v-else>{{PlanEval.objective}}</span>
       <div class="col-2 q-my-sm">工作內容: </div><span class="col-10" v-if="edit"><q-input filled type="text" v-model="editObject.objective_detail"/></span><span class="col-10" v-else>{{PlanEval.objective_detail}}</span>
       <div class="col-2 q-my-sm">合辦機構: </div><span class="col-10" v-if="edit"><q-input filled type="text" v-model="editObject.partner_agency"/></span><span class="col-10" v-else>{{PlanEval.partner_agency}}</span>
@@ -152,7 +152,7 @@
                 <TimeComponent v-model="editObject.plan_end_time"/>
               </div>
               <div class="col-10" v-else>{{PlanEval.plan_end_time ? PlanEval.plan_end_time.split(":")[0] + ":" + PlanEval.plan_end_time.split(":")[1] : ""}}</div>
-            <div class="col-2 q-my-sm">次數/節數: </div>
+            <div class="col-2 q-my-sm">次數: </div>
               <div class="col-10" v-if="edit">
                 <q-input type="number" filled v-model="editObject.plan_sessions"/>
               </div>
@@ -216,7 +216,7 @@
                 <TimeComponent v-model="editObject.eval_end_time"/>
               </div>
               <div class="col-10" v-else>{{PlanEval.eval_end_time ? PlanEval.eval_end_time.split(":")[0] + ":" + PlanEval.eval_end_time.split(":")[1] : ""}}</div>
-            <div class="col-2 q-my-sm">次數/節數: </div>
+            <div class="col-2 q-my-sm">次數: </div>
               <div class="col-10" v-if="edit">
                 <q-input type="number" filled v-model="editObject.eval_sessions"/>
               </div>
@@ -880,6 +880,7 @@ function clonePlanValue() {
     eval_volunteer_count: PlanEval.value?.eval_volunteer_count??0,
     ic: PlanEval.value?.ic??null,
     ic_plan_date: PlanEval.value?.ic_plan_date??null,
+    ic_comment: PlanEval.value?.ic_comment.trim()??null,
     objective: PlanEval.value?.objective??null,
     objective_achieved: PlanEval.value?.objective_achieved??null,
     objective_achieved_reason: PlanEval.value?.objective_achieved_reason??null,

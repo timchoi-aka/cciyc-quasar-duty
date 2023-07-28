@@ -86,7 +86,7 @@
       <div class="row col-12 q-gutter-lg q-ml-sm">
         <span class="col-3">對象: <q-select v-if="edit" filled :options="whojoin" v-model="editObject.c_whojoin"/><span v-else>{{Event.c_whojoin}}</span></span>
         <span class="col-3">負責職員: <q-select v-if="edit" filled :options="UserList" v-model="editObject.c_respon"/><span v-else>{{Event.c_respon}}</span></span>
-        <span class="col-3">協助職員: <StaffSelectionMultiple v-if="edit" hint="先刪除舊清單才能修改" v-model="editObject.c_worker" /><span v-else>{{Event.c_worker}}</span></span>
+        <span class="col-3">協助職員: <StaffSelectionMultiple :includeTemp="true" v-if="edit" hint="先刪除舊清單才能修改" v-model="editObject.c_worker" /><span v-else>{{Event.c_worker}}</span></span>
       </div>
     </q-card-section>
 

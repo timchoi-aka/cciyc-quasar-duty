@@ -70,7 +70,7 @@
             >
           </q-btn>
         </div>
-        <q-btn class="desktop-only" dense flat round icon="menu" @click="toggleRightDrawer" />
+        <q-btn v-if="isLocal" class="desktop-only" dense flat round icon="menu" @click="toggleRightDrawer" />
       </q-toolbar>
 
       <MenuBar :key="module"/>
@@ -235,7 +235,7 @@ async function keepAlive() {
     authenticator({
     timeout: 1000, // Set a timeout of 5 seconds
     method: "get",
-    url: "https://auth.cciyc.com:3001",
+    url: "https://192.168.2.44:3001",
     responseType: "text",
     headers: {
       'Access-Control-Allow-Origin' : '*',
@@ -246,12 +246,21 @@ async function keepAlive() {
       isLocal.value = true
     }
   }).catch((e) => {
-    if (isLocal.value) {
-      $store.dispatch("userModule/switchModule", "duty");
-      router.push('/duty')
-      isLocal.value = false
-    } 
-    
+    // time out, out of center network    
+    if (e.code == "ECONNABORTED") {
+      if (isSystemAdmin.value) { // enable all function for admin 
+        isLocal.value = true
+      } else {
+        if (isLocal.value) {  // redirect if not in local network
+          $store.dispatch("userModule/switchModule", "duty");
+          router.push('/duty')
+          isLocal.value = false
+        }
+      } 
+    } else if (e.code == "ERR_NETWORK") {
+      // cert invalid, means it's in center network
+      isLocal.value = true
+    }
   })  
   keepAlive();
   }, 10000);

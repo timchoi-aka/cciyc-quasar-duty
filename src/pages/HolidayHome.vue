@@ -72,6 +72,9 @@ const systemStart = new Date("2021/04/01");
 
 // computed
 const uid = computed(() => $store.getters["userModule/getUID"])
+// for debugging
+// const uid = ref("egoz4VCb3kSA2NwwT8CyiVSYkv83")
+
 const isLeaveApprove = computed(() => $store.getters["userModule/getLeaveApprove"])
 const isSAL = computed(() => $store.getters["userModule/getSAL"])
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
@@ -121,7 +124,9 @@ getDoc(leaveConfigRef).then((leaveConfigDoc) => {
   getDoc(doc(FireDB, "users", uid.value)).then((userDoc) => {
     systemStartBalance.value = leaveConfigDoc.data()[uid.value][0].al
     const dateOfExit = userDoc.data().employment[userDoc.data().employment.length-1].dateOfExit? new Date(userDoc.data().employment[userDoc.data().employment.length-1].dateOfExit.toDate() - 28800000): null
-    const dateOfEntry = new Date(userDoc.data().employment[0].dateOfEntry.toDate() - 28800000);
+    // const dateOfEntry = new Date(userDoc.data().employment[0].dateOfEntry.toDate() - 28800000);
+    // dateOfEntry no timezone offset
+    const dateOfEntry = new Date(userDoc.data().employment[0].dateOfEntry.toDate());
 
     // let tiers = doc.data()[rank.value]
     let monthEnd = qdate.endOfDate(new Date(), "month");
@@ -169,6 +174,8 @@ getDoc(leaveConfigRef).then((leaveConfigDoc) => {
       ) {
         perMonthGain = 0;
       }
+      // debug
+      // console.log("dateOfEntry: " + dateOfEntry + "monthLoop:" + monthLoop + ": " + yearServed + ":" + perMonthGain)
       totalGain.value += perMonthGain;
       monthLoop = qdate.addToDate(monthLoop, { month: 1 });
     } while (qdate.getDateDiff(monthLoop, dataBoundary.value, "day") < 0);

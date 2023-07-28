@@ -85,8 +85,8 @@
         class="q-mt-sm col-12"
         flat
         bordered
-        :filter="coreFilter"
-        :filter-method="coreEventFilter"
+        :filter="filter"
+        :filter-method="MyEventFilter"
         @row-click="showDetail"
         :rows="EventList" 
         :pagination="pagination"
@@ -119,8 +119,8 @@
         class="q-mt-sm col-12"
         flat
         bordered
-        :filter="filter"
-        :filter-method="MyEventFilter"
+        :filter="coreFilter"
+        :filter-method="coreEventFilter"
         @row-click="showDetail"
         :rows="StaffCoreEventList"
         :pagination="pagination"
@@ -129,10 +129,10 @@
       <!-- top row -->
       <template v-slot:top>
         <span>
-          進行中<q-toggle v-model="filter.status"/>已完成
+          進行中<q-toggle v-model="coreFilter.status"/>已完成
         </span>
         <q-space/>
-        <q-input hide-bottom-space type="text" label="活動編號" v-model="filter.c_act_code" debounce="500">
+        <q-input hide-bottom-space type="text" label="活動編號" v-model="coreFilter.c_act_code" debounce="500">
           <template v-slot:append>
             <q-icon name="search" />
           </template>
@@ -164,8 +164,8 @@
         class="q-mt-sm col-12"
         flat
         bordered
-        :filter="filter"
-        :filter-method="MyEventFilter"
+        :filter="coreFilter"
+        :filter-method="coreEventFilter"
         @row-click="showDetail"
         :rows="CoreEventList"
         selection="multiple"
@@ -177,12 +177,12 @@
       <!-- top row -->
       <template v-slot:top>
         <span>
-          進行中<q-toggle v-model="filter.status"/>已完成
+          進行中<q-toggle v-model="coreFilter.status"/>已完成
         </span>
         <q-space/>
         <q-btn v-if="selectedRow.length > 0" label="標記為已收取紙本計劃檢討表" class="bg-primary text-white" flat @click="markHardcopy"/>
         <q-space/>
-        <q-input hide-bottom-space type="text" label="活動編號" v-model="filter.c_act_code" debounce="500">
+        <q-input hide-bottom-space type="text" label="活動編號" v-model="coreFilter.c_act_code" debounce="500">
           <template v-slot:append>
             <q-icon name="search" />
           </template>
@@ -690,17 +690,12 @@ function showDetail(evt, row, index) {
 function MyEventFilter(rows, terms) {
   // rows contain the entire data
   // terms contains whatever you have as filter
-
-
   // let lowerSearch = terms.search ? terms.search.toLowerCase() : ""
-
   return rows.filter((row) => {
     if (terms.c_act_code) {
-      return (row.b_finish == terms.status && row.c_act_code.includes(terms.c_act_code))
+      return row.b_finish == terms.status && row.c_act_code.includes(terms.c_act_code)
     } else return row.b_finish == terms.status
   });
-
-  
 }
 
 function markHardcopy() {
@@ -722,7 +717,6 @@ function coreEventFilter(rows, terms) {
   // rows contain the entire data
   // terms contains whatever you have as filter
   // let lowerSearch = terms.search ? terms.search.toLowerCase() : ""
-
   return rows.filter((row) => {
     if (terms.c_act_code) {
       return (row.b_finish == terms.status && row.c_act_code.includes(terms.c_act_code))

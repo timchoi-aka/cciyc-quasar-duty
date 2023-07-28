@@ -1,17 +1,25 @@
 <template>
-  <q-dialog v-model="detailModal">
+  <q-dialog 
+    v-model="detailModal"
+    maximized
+    full-width
+    full-height
+    transition-show="slide-up"
+    transition-hide="slide-down">
     <q-card>
+      <q-card-section class="bg-primary text-white row">
+        <q-space/>
+        <q-btn flat align="right" icon="close" v-close-popup/>
+      </q-card-section>
       <q-card-section>
-        Modal screen {{ showNewsID }}
+        <WebEditor :newsID="showNewsID"/>
       </q-card-section>
     </q-card>
   </q-dialog>
 
   <!-- loading dialog -->
-  <q-dialog v-model="waitingAsync" position="bottom">
-    <LoadingDialog message="處理資料中"/>
-  </q-dialog>
-
+  <LoadingDialog v-model="loading" message="處理資料中"/>
+  <LoadingDialog :model-value="loadingNews? 1: 0" message="處理資料中"/>
 
   <q-table
     dense
@@ -21,8 +29,9 @@
     :pagination="defaultPagination"
     color="primary"
     row-key="NewsID"
-    :loading="loading"
+    :loading="loadingNews"
     binary-state-sort
+    class="q-mt-sm"
     @row-click="rowDetail"
   >
   <template v-slot:body-cell-IsShow="props">
@@ -50,10 +59,11 @@ import { ref, computed } from 'vue';
 import { date as qdate, useQuasar } from "quasar"
 import { useStore } from "vuex";
 import LoadingDialog from 'src/components/LoadingDialog.vue';
+import WebEditor from "src/components/Website/WebEditor.vue"
 
 const $q = useQuasar()
-const awaitServerResponse = ref(0)
-const showNewsID = ref("")
+const loading = ref(0)
+const showNewsID = ref(0)
 const detailModal = ref(false)
 const defaultPagination = ref({
   rowsPerPage: 10,
@@ -82,7 +92,7 @@ mutation toggleNewsVisible (
   }
 }`)
 
-const { result, loading, refetch } = useQuery(gql`
+const { result, loading: loadingNews, refetch } = useQuery(gql`
 query getNews {
   HTX_News(order_by: {NewsSort: asc}) {
     IsShow
@@ -168,12 +178,11 @@ const NewsColumns = ref([
 // computed
 const NewsData = computed(() => result.value?.HTX_News??[])
 const username = computed(() => $store.getters["userModule/getUsername"])
-const waitingAsync = computed(() => awaitServerResponse.value > 0)
 
 function rowDetail(evt, row, index) {
   if (evt.target.nodeName === 'TD') {
     detailModal.value = true;
-    showNewsID.value = row.NewsID;
+    showNewsID.value = parseInt(row.NewsID);
   }
 }
 
@@ -187,7 +196,7 @@ function toggleIsShow(id) {
     "action": `最新消息ID: ${id} 設定為 ${NewsData.value[i].IsShow == 1? '隱藏': '顯示'}`
   }
 
-  awaitServerResponse.value++
+  loading.value++
   toggleVisible({
     logObject: logObject,
     NewsID: id,
@@ -197,7 +206,7 @@ function toggleIsShow(id) {
 }
 
 toggleVisible_Done((result) => {
-  awaitServerResponse.value--
+  loading.value--
   $q.notify({
     message: "操作完成",
   })

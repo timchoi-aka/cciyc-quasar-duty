@@ -27,6 +27,10 @@ const props = defineProps({
   hint: {
     Type: String,
     Default: ""
+  },
+  includeTemp: {
+    Type: Boolean,
+    Default: false
   }
 })
 
@@ -46,5 +50,16 @@ onMounted(async() => {
       label: u.name
     })
   })
+  if (props.includeTemp) {
+    users = await User.loadTempUsers()
+    users.forEach((u) => {
+      if (u.isValidEmployment()) {
+        UserList.value.push({
+          value: u.uid,
+          label: u.name
+        })
+      }
+    })
+  }
 })
 </script>

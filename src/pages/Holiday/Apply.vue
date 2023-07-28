@@ -106,8 +106,8 @@ const showAllBalanceModal = ref(false)
 // computed
 const isLeaveApprove = computed(() => $store.getters["userModule/getLeaveApprove"])
 const sal_balance = computed(() => $store.getters["userModule/getSALBalance"])
-//const uid = computed(() => $store.getters["userModule/getUID"])
-const uid = ref("egoz4VCb3kSA2NwwT8CyiVSYkv83")
+const uid = computed(() => $store.getters["userModule/getUID"])
+//const uid = ref("egoz4VCb3kSA2NwwT8CyiVSYkv83")
 const isSAL = computed(() => $store.getters["userModule/getSAL"])
 const annualBalance = computed(() => balance.value.length? balance.value[balance.value.length -1].systemStartBalance + balance.value[balance.value.length -1].totalGain - balance.value[balance.value.length -1].totalALTaken: 0)
 const monthlyBalance = computed(() => {
