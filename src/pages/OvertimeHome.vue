@@ -27,6 +27,7 @@
     </q-page-sticky>
     <q-separator class="q-mt-xl" />
     <router-view class="q-mt-md q-mb-xl" />
+    ApprovedOT: {{ ApprovedOT }}
   </q-page>
 </template>
 
@@ -34,13 +35,14 @@
 import { useStore } from "vuex";
 import { OTCollection, FireDB } from "boot/firebase";
 import { ref, computed, onUnmounted } from "vue";
-import { onSnapshot, doc, where, query } from "firebase/firestore";
+import { onSnapshot, doc, where, query, getDoc } from "firebase/firestore";
 
 onUnmounted(() => {
   OTListener.value()
   dashboardListener.value()
+  OTBalanceListener.value()
 })
-      
+    
 // variables
 const $store = useStore();
 const pendingOTApprovalCount = ref(0)
@@ -49,14 +51,33 @@ const pendingCount = ref(0)
 // computed
 const uid = computed(() => $store.getters["userModule/getUID"])
 const isLeaveApprove = computed(() => $store.getters["userModule/getLeaveApprove"])
-const otBalance = computed(() => $store.getters["userModule/getOTBalance"])
+//const otBalance = computed(() => $store.getters["userModule/getOTBalance"])
+const otBalance = computed(() => carryOver.value + ApprovedOT.value.reduce((a,v) => a + v.hours, 0))
 const OTListener = ref()
+const OTBalanceListener = ref()
 const dashboardListener = ref()
+const ApprovedOT = ref([])
+const carryOver = ref(0)
+
+getDoc(doc(FireDB, "dashboard", "otConfig")).then((dashboardDoc) => {
+  carryOver.value = dashboardDoc.data()[uid.value] == "undefined" ? 0 : dashboardDoc.data()[uid.value];
+})
+
+const ApprovedOTQuery = query(OTCollection, 
+  where("uid", "==", uid.value),
+  where("status", "==", "批准")
+)
 
 const OTQuery = query(OTCollection, 
   where("uid", "==", uid.value),
   where("status", "==", "未批")
 )
+
+OTBalanceListener.value = onSnapshot(ApprovedOTQuery, (snapshot) => {
+  snapshot.forEach((doc) => {
+    ApprovedOT.value.push(doc.data())
+  })
+})
 
 OTListener.value = onSnapshot(OTQuery, (snapshot) => {
   snapshot.docChanges().forEach((change) => {

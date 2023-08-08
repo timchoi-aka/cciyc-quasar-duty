@@ -105,18 +105,31 @@ dashboardListener.value = onSnapshot(dashboardQuery, (snapshot) => {
 });
 
 leaveApprovedListener.value = onSnapshot(leaveApprovedQuery, (snapshot) => {
-  snapshot.docChanges().forEach((change) => {
-    if (change.type == "added") {
-      let d = change.doc.data();
-      qdate.isBetweenDates(d.date, systemStart, dataBoundary.value)
-        ? (holidayCount.value += 0.5)
-        : (holidayCount.value = holidayCount.value);
-    } else if (change.type == "removed") {
-      let d = change.doc.data();
-      qdate.isBetweenDates(d.date, systemStart, dataBoundary.value)
-        ? (holidayCount.value -= 0.5)
-        : (holidayCount.value = holidayCount.value);
-    }
+  getDoc(doc(FireDB, "users", uid.value)).then((userDoc) => {
+    const dateOfExit = userDoc.data().employment[userDoc.data().employment.length-1].dateOfExit? new Date(userDoc.data().employment[userDoc.data().employment.length-1].dateOfExit.toDate() - 28800000): null
+    let yearEnd 
+    let d = new Date()
+    // debug
+    //let d = new Date(Date.parse("2023-04-02 00:00:00"))
+    if (d.getMonth() <= 2) yearEnd = qdate.endOfDate(qdate.buildDate({year: d.getFullYear(), month: 3, day: 31}), 'month')
+    else yearEnd = qdate.endOfDate(qdate.buildDate({year: d.getFullYear()+1, month: 3, day: 31}), 'month')
+    
+    let boundary = dateOfExit && dateOfExit < yearEnd ? dateOfExit : yearEnd
+    //console.log("boundary: " + boundary)
+    snapshot.docChanges().forEach((change) => {
+      if (change.type == "added") {
+        let d = change.doc.data();
+        qdate.isBetweenDates(d.date, systemStart, boundary)
+          ? (holidayCount.value += 0.5)
+          : (holidayCount.value = holidayCount.value);
+      } else if (change.type == "removed") {
+        let d = change.doc.data();
+        qdate.isBetweenDates(d.date, systemStart, boundary)
+          ? (holidayCount.value -= 0.5)
+          : (holidayCount.value = holidayCount.value);
+      }
+    });
+    
   });
 });
 

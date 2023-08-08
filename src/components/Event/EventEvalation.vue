@@ -880,7 +880,7 @@ function clonePlanValue() {
     eval_volunteer_count: PlanEval.value?.eval_volunteer_count??0,
     ic: PlanEval.value?.ic??null,
     ic_plan_date: PlanEval.value?.ic_plan_date??null,
-    ic_comment: PlanEval.value?.ic_comment.trim()??null,
+    ic_comment: PlanEval.value && PlanEval.value.ic_comment? PlanEval.value.ic_comment.trim():null,
     objective: PlanEval.value?.objective??null,
     objective_achieved: PlanEval.value?.objective_achieved??null,
     objective_achieved_reason: PlanEval.value?.objective_achieved_reason??null,
