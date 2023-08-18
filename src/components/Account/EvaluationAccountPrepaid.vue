@@ -5,9 +5,9 @@
     <q-dialog v-model="showPrintVoucher">
       <Voucher :data="voucherObject" type="預支"/>
     </q-dialog>
-
+    
     <q-card v-if="prepaidResult.length" class="row">
-      <q-card-section class="text-body2 bg-grey-2 text-left text-bold col-12 q-ma-none q-pa-sm">預支記錄(共：${{ prepaidResult.filter((x) => x.approved || (!x.approved && !x.approve_date)).reduce((a,v) => a += v.amount,0) }}) - 預支上限：${{ total*0.8 }}</q-card-section>
+      <q-card-section class="text-body2 bg-grey-2 text-left text-bold col-12 q-ma-none q-pa-sm">預支記錄(共：${{ prepaidResult.filter((x) => x.approved || (!x.approved && !x.approve_date)).reduce((a,v) => a += v.amount,0) }}) - 預支上限：${{ parseFloat(total*0.8).toFixed(1) }}</q-card-section>
       <q-card-section class="row fit justify-left q-ma-none q-pa-sm">
         <div class="col-12 row items-center content-start prepaid-item" v-for="(record, index) in prepaidResult" :key="index">
           <span class="col-4 text-left">{{ qdate.formatDate(record.apply_date, "YYYY年M月D日") }}</span>
@@ -23,7 +23,7 @@
         </div>
       </q-card-section>
     </q-card>
-    <q-btn v-if="Object.keys(prepaid).length == 0 && (props.respon.includes(username) && !props.isSubmitted)" class="bg-primary text-white q-my-sm" icon="money" label="申請預支" @click="prepaid = { recipient: '', amount: 0}"/>
+    <q-btn v-if="Object.keys(prepaid).length == 0 && ((props.respon.includes(username) || isUAT) && !props.isSubmitted)" class="bg-primary text-white q-my-sm" icon="money" label="申請預支" @click="prepaid = { recipient: '', amount: 0}"/>
     <q-form
       @submit="save"
       @reset="prepaid = {}"
@@ -31,12 +31,12 @@
       <div class="row" v-if="Object.keys(prepaid).length">
         <div class="col-12 q-pa-sm">
           <q-input type="text" label="支票抬頭" v-model="prepaid.recipient"/>
-            <q-input 
-              type="number" 
-              label="金額" 
-              :rules="[(val) => val > 0 && val <= total*0.8 - prepaidResult.filter((x) => x.approved || (!x.approved && !x.approve_date)).reduce((a,v) => a+v.amount, 0) || '預支為0或超過上限']"
-              v-model="prepaid.amount" 
-              />
+          <q-input 
+            type="number" 
+            label="金額" 
+            :rules="[(val) => val > 0 && val <= total*0.8 - prepaidResult.filter((x) => x.approved || (!x.approved && !x.approve_date)).reduce((a,v) => a+v.amount, 0) || '預支為0或超過上限']"
+            v-model="prepaid.amount" 
+            />
         </div>
         <div class="col-12 text-right q-mt-sm row">
           <q-chip>總預支：${{prepaid.amount? parseFloat(prepaid.amount) + prepaidResult.filter((x) => x.approved || (!x.approved && !x.approve_date)).reduce((a,v) => a+v.amount, 0): prepaidResult.filter((x) => x.approved || (!x.approved && !x.approve_date)).reduce((a,v) => a+v.amount, 0)}}</q-chip>
@@ -100,6 +100,7 @@ const { result: getPrepaidResult, onError: getPrepaidResult_Error, refetch: getP
     ) {
     Event_Prepaid(where: {
       eval_uuid: {_eq: $eval_uuid}, 
+      type: {_eq: "預支"}
     }) {
       amount
       apply_date
@@ -112,6 +113,7 @@ const { result: getPrepaidResult, onError: getPrepaidResult_Error, refetch: getP
       eval_uuid
       payment_method
       uuid
+      type
     }
   }`, () => ({
     eval_uuid: props.eval_uuid,
@@ -190,7 +192,7 @@ mutation delPrepaid($uuid: uniqueidentifier = "") {
 const total = ref(0)
   
 // const total = ref(0)
-const prepaidResult = computed(() => getPrepaidResult.value?.Event_Prepaid??[])
+const prepaidResult = computed(() => getPrepaidResult.value? getPrepaidResult.value.Event_Prepaid:[])
 const $store = useStore();
 const username = computed(() => $store.getters["userModule/getUsername"])
 const isUAT = computed(() => $store.getters["userModule/getUAT"])
@@ -206,6 +208,7 @@ function deletePrepaid(uuid) {
 }
 
 function printVoucher(record) {
+  console.log(record)
   voucherObject.value = record
   showPrintVoucher.value = true
 }

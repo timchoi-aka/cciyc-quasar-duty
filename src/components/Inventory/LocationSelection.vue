@@ -86,7 +86,7 @@ mutation delLocation($c_location: String = "") {
 
 // computed
 LocationResult((result) => {
-  if (result.data.Inventory_Location) {
+  if (result.data && result.data.Inventory_Location) {
     LocationOptions.value = []
     result.data.Inventory_Location.forEach((data) => {
       LocationOptions.value.push((data.c_location.trim()))

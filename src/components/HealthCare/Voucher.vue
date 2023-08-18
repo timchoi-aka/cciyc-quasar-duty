@@ -13,6 +13,7 @@
         <q-tooltip class="bg-white text-primary">關閉</q-tooltip>  
       </q-btn>
     </div>
+    
     <div id="printVoucher" class="print-area bg-white items-start">
       <div class="row col-12 justify-center">
         <div class="row col-12 justify-center text-bold q-my-none highlight_1">長洲鄉事委員會青年綜合服務中心</div>
@@ -33,6 +34,17 @@
       <div v-if="props.type == '預支'" class="row col-12 justify-left q-ml-lg">
         <div class="col-12 q-my-md highlight_2">商鋪/受款人：{{ props.data.recipient }}</div>
         <div class="col-12 q-my-md highlight_2">祈付：{{ props.data.c_act_code }}活動預支</div>
+        <div class="col-12 q-my-md highlight_2">金額：{{ convertToChinese(props.data.amount) }}</div>
+        <div class="col-6 q-my-md highlight_2">港幣：HK${{ props.data.amount }}</div>
+        <div class="col-6 q-my-md highlight_2">支票號碼：</div>
+        <div class="col-6 q-my-md highlight_2">中心主任：</div>
+        <div class="col-6 q-my-md highlight_2">收款人/經手人：</div>
+        <div class="col-6 q-my-md highlight_2">日期：</div>
+        <div class="col-6 q-my-md highlight_2">日期：</div>
+      </div>
+      <div v-if="props.type == '餘款'" class="row col-12 justify-left q-ml-lg">
+        <div class="col-12 q-my-md highlight_2">商鋪/受款人：{{ props.data.recipient }}</div>
+        <div class="col-12 q-my-md highlight_2">祈付：{{ props.data.c_act_code }}活動餘款</div>
         <div class="col-12 q-my-md highlight_2">金額：{{ convertToChinese(props.data.amount) }}</div>
         <div class="col-6 q-my-md highlight_2">港幣：HK${{ props.data.amount }}</div>
         <div class="col-6 q-my-md highlight_2">支票號碼：</div>

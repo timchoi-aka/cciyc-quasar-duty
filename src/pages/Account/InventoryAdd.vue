@@ -1,45 +1,26 @@
 <template>
 <q-page style="margin-top: 70px;">
   <q-dialog v-model="addModal">
-    <q-card class="row">
-      <q-card-section class="row bg-primary text-white col-12">
-        <div class="text-h6">新增物資</div>
-        <q-space/>
-        <q-btn flat icon="close" v-close-popup class="bg-primary text-white"/>
-      </q-card-section>
-      <q-card-section class="row items-center col-12">
-        <q-form @submit="save" @reset="inventoryObject = {}" class="row col-12 q-pa-sm">
-          <div class="col-3 q-my-xs">編號：</div><div class="col-9 q-my-xs"><q-input type="text" v-model="inventoryObject.ID"/></div>
-          <div class="col-3 q-my-xs">類型：</div><div class="col-9 q-my-xs"><q-input type="text" v-model="inventoryObject.c_name"/></div>
-          <div class="col-3 q-my-xs">型號：</div><div class="col-9 q-my-xs"><q-input type="text" v-model="inventoryObject.c_model"/></div>
-          <div class="col-3 q-my-xs">地點：</div><div class="col-9 q-my-xs"><InventoryLocation label="位置" v-model="inventoryObject.c_location" /></div>
-          <div class="col-3 q-my-xs">購買日期：</div><div class="col-9 q-my-xs"><DateComponent label="購買日期" v-model="inventoryObject.d_purchase"/></div>
-          <div class="col-3 q-my-xs">金額：</div><div class="col-9 q-my-xs"><q-input type="text" v-model="inventoryObject.f_cost"/></div>
-          <div class="col-3 q-my-xs">經費來源：</div><div class="col-9 q-my-xs"><q-select label="經費來源" :options="sourceOfFund" v-model="inventoryObject.c_funding" /></div>
-          <div class="col-3 q-my-xs">數量：</div><div class="col-9 q-my-xs"><q-input type="number" v-model="inventoryObject.i_qty"/></div>
-          <q-separator inset/>
-          <div class="row col-12">
-            <q-space/>
-            <q-btn class="bg-negative text-white text-right q-mx-sm" flat label="取消" type="reset" v-close-popup/>
-            <q-btn class="bg-primary text-white text-right q-mx-sm" flat label="新增" type="submit"/>
-          </div>
-        </q-form>
-      </q-card-section>
-    </q-card>
+    <InventoryAddModal :serverStat="serverStat" @refetch="refetch" @addDialog="(value) => addModal = value"/>
   </q-dialog>
+
+  <q-dialog v-model="editModal">
+    <InventoryEditModal :serverStat="serverStat" :inventoryObject="selectedRow[0]" @refetch="refetch" @editDialog="(value) => editModal = value"/>
+  </q-dialog>
+
   <q-table
     :rows="InventoryData"
     :columns="InventoryColumn"
     no-data-label="沒有物資記錄"
     :pagination="pagination"
     row-key="ID"
-    selection="single"
+    selection="multiple"
     v-model:selected="selectedRow"
     :loading="loading">
       <!-- add data button -->
       <template v-slot:top>
-        <q-btn color="primary" icon="add" :disable="loading" label="新增" @click="addModal=true" />
-        <q-btn class="q-ml-md" v-if="selectedRow.length > 0" color="positive" icon="edit" label="修改" @click="editInventory" />
+        <q-btn color="primary" icon="add" :disable="loading" label="新增" @click="addModal=true"/>
+        <q-btn class="q-ml-md" v-if="selectedRow.length == 1" color="positive" icon="edit" label="修改" @click="editModal=true" />
         <q-btn class="q-ml-md" v-if="selectedRow.length > 0" color="negative" icon="delete" label="刪除" @click="deleteInventory" />
       </template>
 
@@ -130,36 +111,26 @@
 
 <script setup>
 import { useQuery, useMutation } from "@vue/apollo-composable"
-import InventoryLocation from "components/Inventory/LocationSelection.vue"
 import { ref, computed } from "vue"
 import gql from "graphql-tag";
 import { useQuasar, date as qdate } from "quasar";
+import InventoryAddModal from "src/components/Inventory/InventoryAddModal.vue";
+import InventoryEditModal from "src/components/Inventory/InventoryEditModal.vue";
 import { useStore } from "vuex";
-import DateComponent from "src/components/Basic/DateComponent.vue";
 
 // variables
 const $q = useQuasar()
 const $store = useStore();
+const username = computed(() => $store.getters["userModule/getUsername"])
 const InventoryData = ref([])
 const deleteData = ref([])
-const sourceOfFund = ref(['S','BG','D','NS','SWDF'])
 const pagination = ref({
   rowsPerPage: 30,
 })
 const selectedRow = ref([])
 const addModal = ref(false)
-const modifyModal = ref(false)
-const inventoryObject = ref({
-  ID: "",
-  c_name: "",
-  c_model: "",
-  c_location: "",
-  d_purchase: qdate.formatDate(new Date(), "YYYY/MM/DD"),
-  f_cost: 0,
-  c_funding: "",
-  i_qty: 0,
-  status: "",
-})
+const editModal = ref(false)
+
 
 const InventoryColumn = ref([
   {
@@ -279,6 +250,21 @@ query AllInventory {
   }
 }`)
 
+const { mutate: deleteInventoryMutation, onDone: deleteInventoryMutation_Completed } = useMutation(gql`
+mutation deleteInventory(
+  $logObject: Log_insert_input! = {},
+  $ID: [String!] = "") {
+  delete_Inventory(where: {ID: {_in: $ID}}) {
+    affected_rows
+  }
+  delete_Inventory_Destroy(where: {ID: {_in: $ID}}) {
+    affected_rows
+  }
+  insert_Log_one(object: $logObject) {
+    log_id
+  }
+}`)
+
 const { mutate: updateInventoryStat, onDone: updateInventoryStat_Completed } = useMutation(gql`
   mutation Account_updateInventoryStat(
     $logObject: Log_insert_input! = {},
@@ -296,7 +282,6 @@ const { mutate: updateInventoryStat, onDone: updateInventoryStat_Completed } = u
     }
   }`)
 // computed
-const username = computed(() => $store.getters["userModule/getUsername"])
 const serverStat = computed(() => LocationResult.value?.Inventory??[])
 const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"])
 
@@ -305,6 +290,7 @@ function checkOccurance(val) {
   return InventoryData.value? InventoryData.value.map(x => x.ID).reduce(function (acc, curr) { return acc[curr] ? ++acc[curr] : acc[curr] = 1, acc}, {})[val]: 0
 }
 
+/*
 function addRow() {
   InventoryData.value.push({
     status: "new",
@@ -318,48 +304,22 @@ function addRow() {
     i_qty: 1,
   })
 }
+*/
 
 function deleteInventory() {
-  console.log("delete")
-}
-
-function editInventory() {
-  console.log("edit")
-}
-
-function save() {
-  const saveObject = []
-  let valid = true
-  console.log("saving")
-  if (inventoryObject.value.ID) {
+  if (selectedRow.value.length > 0) {
     const logObject = ref({
       "username": username,
       "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
       "module": "會計系統",
-      "action": "修改物資記錄 - 舊資料：" + JSON.stringify(serverStat.value) + "。新資料：" + JSON.stringify(InventoryData.value)
-    })
-    console.log("data:" + JSON.stringify(inventoryObject.value))
-    saveObject.push({
-      ID: inventoryObject.value.ID.trim(),
-      c_name: inventoryObject.value.c_name? inventoryObject.value.c_name.trim(): "",
-      c_model: inventoryObject.value.c_model? inventoryObject.value.c_model.trim(): "",
-      c_location: inventoryObject.value.c_location? inventoryObject.value.c_location.trim(): "",
-      d_purchase: inventoryObject.value.d_purchase? qdate.formatDate(inventoryObject.value.d_purchase, "YYYY-MM-DDT00:00:00"): null,
-      f_cost: inventoryObject.value.f_cost? parseFloat(inventoryObject.value.f_cost): 0,
-      c_funding: inventoryObject.value.c_funding? inventoryObject.value.c_funding.trim(): "",
-      i_qty: inventoryObject.value.i_qty? parseInt(inventoryObject.value.i_qty): 0,
+      "action": "刪除物資記錄：" + JSON.stringify(selectedRow.value)
     })
 
-    if (valid) {
-      updateInventoryStat({
-        objects: saveObject,
-        logObject: logObject.value,
-      })
-    }
-  } else {
-    $q.notify({ message: "沒有填寫物資編號！", icon: 'error', color: 'negative', textColor: 'white' })
-    valid = false
-  }  
+    deleteInventoryMutation({
+      ID: selectedRow.value.map(x => x.ID),
+      logObject: logObject.value,
+    })
+  }
 }
 
 function deleteRow(ID) {
@@ -371,6 +331,14 @@ function deleteRow(ID) {
 // callback
 onResult((result) => {
   InventoryData.value = result.data? JSON.parse(JSON.stringify(result.data.Inventory)): []
+})
+
+deleteInventoryMutation_Completed((result) => {
+  refetch()
+  selectedRow.value = []
+  $q.notify({
+    message: "刪除成功！"
+  })
 })
 
 updateInventoryStat_Completed((result) => {

@@ -16,17 +16,17 @@
     <q-separator inset/>
     <q-card-section v-if="Object.keys(inventoryData).length > 0">
       <q-chip size="lg" class="bg-warning text-white" label="報銷記錄"/>
-      <q-btn v-if="remainingInventoryCount > 0" label="新增報銷紀錄" icon="add" class="bg-primary text-white" @click="destroyRecords.push({ d_destroy: '', c_destroy_reason: '', i_qty: 1, b_confirm: false})"/>
+      <q-btn v-if="remainingInventoryCount > 0" label="新增報銷紀錄" icon="add" class="bg-primary text-white" @click="destroyRecords.push({ d_destroy: '', c_destroy_reason: '', index: '', b_confirm: false})"/>
       <q-btn v-if="destroyRecords.length > 0" label="儲存" icon="save" class="bg-positive text-white" @click="save"/>
       <div v-for="(record, index) in inventoryData.Inventory_to_Destroy" class="row">
         <div class="col-3">報銷日期：{{qdate.formatDate(record.d_destroy, "YYYY年M月D日")}}</div>
         <div class="col-3">報銷原因：{{record.c_destroy_reason}}</div>
-        <div class="col-3">報銷數量：{{record.i_qty}}</div>
+        <div class="col-3">編號：{{ searchID }}-{{ record.index }}</div>
       </div>
       <div v-for="(record, index) in destroyRecords" class="row">
         <div class="col-3"><DateComponent v-model="allDestroyRecords[index].d_destroy" label="報銷日期"/></div>
         <div class="col-3"><q-input type="text" v-model="allDestroyRecords[index].c_destroy_reason" label="報銷原因"/></div>
-        <div class="col-3"><q-input type="number" v-model="allDestroyRecords[index].i_qty" label="報銷數量"/></div>
+        <div class="col-3"><q-input type="number" v-model="allDestroyRecords[index].index" label="小編號" :rules="[val => val && inventoryData.Inventory_to_Destroy.filter(x => x.index == val).length == 0 && val > 0 && val <= inventoryData.i_qty || '已報銷或編號超過物資數量']"/></div>
         <div class="col-1"><q-btn icon="delete" label="刪除" class="bg-negative text-white" @click="destroyRecords.splice(index, 1)"/></div>
       </div>
     </q-card-section>
@@ -123,9 +123,9 @@ const InventoryColumn = ref([
     headerClasses: "bg-grey-2",
   },
   {
-    name: "i_qty",
-    label: "數量",
-    field: "i_qty",
+    name: "index",
+    label: "小編號",
+    field: "index",
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
@@ -177,7 +177,7 @@ query InventoryByID($ID: String = "") {
       d_destroy
       c_destroy_reason
       uuid
-      i_qty
+      index
     }
   }
 }`, () => ({
@@ -203,7 +203,7 @@ const username = computed(() => $store.getters["userModule/getUsername"])
 const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"])
 const inventoryData = computed(() => result.value?.Inventory_by_pk??{})
 const allDestroyRecords = computed(() => [...destroyRecords.value, ...inventoryData.value.Inventory_to_Destroy])
-const remainingInventoryCount = computed(() => inventoryData.value.i_qty - inventoryData.value.Inventory_to_Destroy.reduce((a,b) => a+b.i_qty, 0))
+const remainingInventoryCount = computed(() => inventoryData.value.i_qty - inventoryData.value.Inventory_to_Destroy.length)
 
 // functions
 function checkOccurance(val) {
@@ -233,7 +233,7 @@ function save() {
           ID: inventoryData.value.ID.trim(),
           d_destroy: data.d_destroy? qdate.formatDate(data.d_destroy, "YYYY-MM-DDT00:00:00"): null,
           c_destroy_reason: data.c_destroy_reason? data.c_destroy_reason.trim():"",
-          i_qty: data.i_qty? data.i_qty: 0,
+          index: data.index? parseInt(data.index): 0,
           b_confirm: false,
         })
       } else {
@@ -266,6 +266,7 @@ deleteInventory_Completed((result) => {
   $q.notify({
     message: "報銷成功！"
   })
+  destroyRecords.value = []
 })
 </script>
 

@@ -10,7 +10,7 @@
     >
       <q-route-tab to="/account/inventory/add" icon="add" label="新增物資" />
       <q-route-tab to="/account/inventory/delete" icon="delete" label="報銷物資" />
-      <q-route-tab to="/account/inventory/take_record" icon="leaderboard" label="盤點" />
+      <q-route-tab to="/account/inventory/report" icon="leaderboard" label="報表" />
     </q-tabs>
   </q-page-sticky>
 </template>

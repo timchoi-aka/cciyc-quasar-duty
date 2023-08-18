@@ -224,8 +224,8 @@ const routes = [
             component: () => import('src/pages/Account/InventoryDelete.vue'), meta: {requiresAuth: true }
           },
           {
-            path: 'take_record',
-            component: () => import('src/pages/Account/InventoryTakeRecord.vue'), meta: {requiresAuth: true }
+            path: 'report',
+            component: () => import('src/pages/Account/InventoryReport.vue'), meta: {requiresAuth: true }
           },
         ]
       },

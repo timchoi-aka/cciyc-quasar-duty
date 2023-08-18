@@ -27,7 +27,6 @@
     </q-page-sticky>
     <q-separator class="q-mt-xl" />
     <router-view class="q-mt-md q-mb-xl" />
-    ApprovedOT: {{ ApprovedOT }}
   </q-page>
 </template>
 
