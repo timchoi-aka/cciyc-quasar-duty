@@ -96,7 +96,7 @@
       <q-btn bordered class="bg-positive text-white" v-if="PlanEval.submit_plan_date && !PlanEval.ic_plan_date && isCenterIC" @click="startApprove('plan')" icon="verified" label="批核計劃"/>
       <q-btn bordered class="bg-positive text-white" v-if="PlanEval.submit_eval_date && !PlanEval.ic_eval_date && isCenterIC" @click="startApprove('eval')" icon="verified" label="批核檢討"/>
       <q-btn v-if="Object.keys(PlanEval).length > 0 && !PlanEval.submit_plan_date && !edit" icon="verified" label="提交計劃" class="bg-positive text-white" bordered @click="confirmPlanDialog = true" />
-      <q-btn v-if="Object.keys(PlanEval).length > 0 && !PlanEval.submit_eval_date && PlanEval.submit_plan_date && !edit" icon="verified" label="提交檢討" class="bg-purple-6 text-white" bordered @click="confirmEvalDialog = true" />
+      <q-btn v-if="Object.keys(PlanEval).length > 0 && !PlanEval.submit_eval_date && PlanEval.submit_plan_date && PlanEval.ic_plan_date && !edit" icon="verified" label="提交檢討" class="bg-purple-6 text-white" bordered @click="confirmEvalDialog = true" />
     </div>
     <div class="col-xs-12 col-sm-4 col-md-4 text-right">
       <div class="col-6">
@@ -660,63 +660,67 @@ function loadEventToEval() {
 }
 
 function ApproveOK() {
-  const logObject = ref({
-    "username": username.value,
-    "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-    "module": "活動系統",
-    "action": "批核活動" + mode.value == 'plan'? "計劃: ": "檢討: " + props.EventID.trim() + "。主管評語：" + EvaluationComment.value,
-  })
-  
-  loading.value++
-  if (mode.value == 'plan') {
-    approvePlan({
-      logObject: logObject.value,
-      ic: username.value,
-      ic_plan_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-      ic_comment: EvaluationComment.value,
-      c_act_code: props.EventID.trim(),
-      uuid: PlanEval.value.uuid,
+  if (mode.value) {
+    const logObject = ref({
+      "username": username.value,
+      "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+      "module": "活動系統",
+      "action": "批核活動" + mode.value == 'plan'? "計劃: ": "檢討: " + props.EventID.trim() + "。主管評語：" + EvaluationComment.value,
     })
-  } else {
-    approveEvaluation({
-      logObject: logObject.value,
-      ic: username.value,
-      ic_eval_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-      ic_comment: EvaluationComment.value,
-      c_act_code: props.EventID.trim(),
-      uuid: PlanEval.value.uuid,
-    })
+    
+    loading.value++
+    if (mode.value == 'plan') {
+      approvePlan({
+        logObject: logObject.value,
+        ic: username.value,
+        ic_plan_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+        ic_comment: EvaluationComment.value,
+        c_act_code: props.EventID.trim(),
+        uuid: PlanEval.value.uuid,
+      })
+    } else {
+      approveEvaluation({
+        logObject: logObject.value,
+        ic: username.value,
+        ic_eval_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+        ic_comment: EvaluationComment.value,
+        c_act_code: props.EventID.trim(),
+        uuid: PlanEval.value.uuid,
+      })
+    }
   }
   // update HTX_Event (m_evaluation_rem), Event_Evaluation (ic_comment, ic_plan_date)
 }
 
 function ApproveDeny() {
-  const logObject = ref({
-    "username": username.value,
-    "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-    "module": "活動系統",
-    "action": "發回活動" + mode.value == 'plan'? "計劃: ": "檢討: " + props.EventID.trim() + "。主管評語：" + EvaluationComment.value,
-  })
+  if (mode.value) {
+    const logObject = ref({
+      "username": username.value,
+      "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+      "module": "活動系統",
+      "action": "發回活動" + mode.value == 'plan'? "計劃: ": "檢討: " + props.EventID.trim() + "。主管評語：" + EvaluationComment.value,
+    })
 
-  loading.value++
-  if (mode.value == 'plan') {
-    denyPlan({
-      logObject: logObject.value,
-      ic: username.value,
-      ic_plan_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-      ic_comment: EvaluationComment.value,
-      c_act_code: props.EventID.trim(),
-      uuid: PlanEval.value.uuid,
-    })
-  } else {
-    denyEvaluation({
-      logObject: logObject.value,
-      ic: username.value,
-      ic_eval_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-      ic_comment: EvaluationComment.value,
-      c_act_code: props.EventID.trim(),
-      uuid: PlanEval.value.uuid,
-    })
+    loading.value++
+    if (mode.value == 'plan') {
+      denyPlan({
+        logObject: logObject.value,
+        ic: username.value,
+        ic_plan_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+        ic_comment: EvaluationComment.value,
+        c_act_code: props.EventID.trim(),
+        uuid: PlanEval.value.uuid,
+      })
+    } else {
+      denyEvaluation({
+        logObject: logObject.value,
+        ic: username.value,
+        ic_eval_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+        ic_comment: EvaluationComment.value,
+        c_act_code: props.EventID.trim(),
+        uuid: PlanEval.value.uuid,
+      })
+    }
   }
   // update HTX_Event (m_evaluation_rem), Event_Evaluation (ic_comment, ic_plan_date)
   // delete Event_Evaluatoin(submit_plan_date)

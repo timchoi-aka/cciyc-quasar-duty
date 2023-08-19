@@ -126,6 +126,7 @@
     <q-tab name="OS2" icon="pin_drop" label="OS2" />
     <q-tab name="OS3" icon="pin_drop" label="OS3/4" />
     <q-tab name="OS5" icon="pin_drop" label="OS5" />
+    <q-tab name="C(iii)" icon="pin_drop" label="C(iii)" />
   </q-tabs>
 
   <q-tab-panels
@@ -286,6 +287,70 @@
         </template>
       </q-table>
     </q-tab-panel>
+
+    <q-tab-panel name="C(iii)" class="q-ma-none q-pa-sm text-body1 row items-end"> 
+      <q-card class="col-3">
+        <q-card-section class="bg-yellow-2">Leadership training <br/>(領袖訓練)</q-card-section>
+        <q-card-section class="bg-blue-2">
+          <div>Number of programme: {{C3Data.filter(x => x.c_group2 == "領袖訓練").length }} </div>
+          <div>Number of programme sessions: {{C3Data.filter(x => x.c_group2 == "領袖訓練").reduce((a,v) => a + v.i_number, 0) }}</div>
+          <div>Total number of attendance: {{C3Data.filter(x => x.c_group2 == "領袖訓練").reduce((a,v) => a + v.i_people_count, 0) }}</div>
+        </q-card-section>
+      </q-card>
+      
+      <q-card class="col-3">
+        <q-card-section class="bg-yellow-2">Volunteerism <br/>(青年義務工作)</q-card-section>
+        <q-card-section class="bg-blue-2">
+          <div>Number of programme: {{C3Data.filter(x => x.c_group2 == "青年義務工作").length }} </div>
+          <div>Number of programme sessions: {{C3Data.filter(x => x.c_group2 == "青年義務工作").reduce((a,v) => a + v.i_number, 0) }}</div>
+          <div>Total number of attendance: {{C3Data.filter(x => x.c_group2 == "青年義務工作").reduce((a,v) => a + v.i_people_count, 0) }}</div>
+        </q-card-section>
+      </q-card>
+      
+      <q-card class="col-3">
+        <q-card-section class="bg-yellow-2">Community participation <br/>(參與社區公民事務)</q-card-section>
+        <q-card-section class="bg-blue-2">
+          <div>Number of programme: {{C3Data.filter(x => x.c_group2 == "參與社區公民事務").length }} </div>
+          <div>Number of programme sessions: {{C3Data.filter(x => x.c_group2 == "參與社區公民事務").reduce((a,v) => a + v.i_number, 0) }}</div>
+          <div>Total number of attendance: {{C3Data.filter(x => x.c_group2 == "參與社區公民事務").reduce((a,v) => a + v.i_people_count, 0) }}</div>
+        </q-card-section>
+      </q-card>
+
+      <q-card class="col-3">
+        <q-card-section class="bg-yellow-2">Study/exchange program <br/>(內地交流活動)</q-card-section>
+        <q-card-section class="bg-blue-2">
+          <div>Number of programme: {{C3Data.filter(x => x.c_group2 == "內地交流活動").length }} </div>
+          <div>Number of programme sessions: {{C3Data.filter(x => x.c_group2 == "內地交流活動").reduce((a,v) => a + v.i_number, 0) }}</div>
+          <div>Total number of attendance: {{C3Data.filter(x => x.c_group2 == "內地交流活動").reduce((a,v) => a + v.i_people_count, 0) }}</div>
+        </q-card-section>
+      </q-card>
+
+      <q-table
+        class="col-12"
+        dense
+        flat
+        title="C(iii)"
+        :rows="C3Data"
+        :columns="c3Columns"
+        :pagination="c3Pagination"
+        color="primary"
+        row-key="s_GUID"
+        :loading="os2loading"
+        binary-state-sort
+        no-data-label="沒有資料"
+        @row-click="rowDetail"
+      >
+        <template v-slot:top-right>
+          <q-btn
+            color="primary"
+            icon-right="archive"
+            label="匯出Excel"
+            no-caps
+            @click="exportExcel(OS5Data, os5Columns, 'OS5_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
+          />
+        </template>
+      </q-table>
+    </q-tab-panel>
   </q-tab-panels>
   
 </template>
@@ -345,6 +410,12 @@ const printObj = ref({
 const defaultPagination = ref({
   rowsPerPage: 40,
   sortBy: "c_act_code",
+  descending: true,
+})
+
+const c3Pagination = ref({
+  rowsPerPage: 40,
+  sortBy: "c_group2",
   descending: true,
 })
 
@@ -630,6 +701,67 @@ const os2Columns = ref([
   },
 ])
 
+const c3Columns = ref([
+  {
+    name: "c_act_code",
+    label: "活動編號",
+    field: "c_act_code",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+    sortable: true,
+  },
+  {
+    name: "c_act_name",
+    label: "活動名稱",
+    field: "c_act_name",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "c_nature",
+    label: "分類",
+    field: "c_nature",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "c_group2",
+    label: "細類",
+    field: "c_group2",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+    sortable: true,
+  },
+  {
+    name: "d_act",
+    label: "月份",
+    field: "d_act",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "i_number",
+    label: "節數",
+    field: "i_number",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "i_people_count",
+    label: "人次",
+    field: "i_people_count",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+])
+
 // query - load graphql subscription on member list
 const { result, loading } = useQuery(gql`
   query Event_getEvent {
@@ -780,17 +912,51 @@ const OS5Data = computed(() => {
   let res = []
   // console.log(JSON.stringify(os5result.value))
   
-  if (os5result.value)
-  
-  os5result.value.HTX_Event.forEach((x) => {
-    if (os5status.includes(x.c_status.trim()) &&
-      (!staffSearchFilter.value || 
-      (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label).includes(x.c_respon.trim())) ||
-      (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label)) == '全部')
-    ) {
-      res.push(x)
-    }
-  })
+  if (os5result.value) {
+    os5result.value.HTX_Event.forEach((x) => {
+      if (os5status.includes(x.c_status.trim()) &&
+        (!staffSearchFilter.value || 
+        (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label).includes(x.c_respon.trim())) ||
+        (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label)) == '全部')
+      ) {
+        res.push(x)
+      }
+    })
+  }
+  return res
+})
+
+const C3Data = computed(() => {
+  let res = []
+  if (os2result.value) {
+    os2result.value.tbl_act_session.forEach((x) => {
+      // debug
+      // res.push(x)
+      if (x.Session_to_Event.c_nature.startsWith("核心") && (x.Session_to_Event.c_group2 && x.Session_to_Event.c_group2.trim() != "")) {
+        let i = res.findIndex((ele) => ele.s_GUID == x.s_GUID)
+        if (i == -1) {
+          res.push({
+            s_GUID: x.s_GUID? x.s_GUID.trim(): "",
+            c_act_code: x.c_act_code? x.c_act_code.trim(): "",
+            d_act: x.d_act? x.d_act.trim(): "",
+            i_number: x.i_number,
+            i_people_count: x.i_people_count,          
+            c_act_name: x.Session_to_Event.c_act_name? x.Session_to_Event.c_act_name.trim(): "",
+            c_dest: x.Session_to_Event.c_dest? x.Session_to_Event.c_dest.trim(): "",
+            c_group1: x.Session_to_Event.c_group1? x.Session_to_Event.c_group1.trim(): "",
+            c_group2: x.Session_to_Event.c_group2? x.Session_to_Event.c_group2.trim(): "",
+            c_nature: x.Session_to_Event.c_nature? x.Session_to_Event.c_nature.trim(): "",
+            c_respon: x.Session_to_Event.c_respon? x.Session_to_Event.c_respon.trim(): "",
+            c_type: x.Session_to_Event.c_type? x.Session_to_Event.c_type.trim(): "",
+            c_status: x.Session_to_Event.c_status? x.Session_to_Event.c_status: "",
+          })
+        } else {
+          res[i].i_number += x.i_number
+          res[i].i_people += x.i_people_count
+        }
+      }
+    })
+  }
   return res
 })
 
