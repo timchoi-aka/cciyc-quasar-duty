@@ -5,7 +5,7 @@
     <q-dialog v-model="showPrintVoucher">
       <Voucher :data="voucherObject" type="預支"/>
     </q-dialog>
-    
+
     <q-card v-if="prepaidResult.length" class="row">
       <q-card-section class="text-body2 bg-grey-2 text-left text-bold col-12 q-ma-none q-pa-sm">預支記錄(共：${{ prepaidResult.filter((x) => x.approved || (!x.approved && !x.approve_date)).reduce((a,v) => a += v.amount,0) }}) - 預支上限：${{ parseFloat(total*0.8).toFixed(1) }}</q-card-section>
       <q-card-section class="row fit justify-left q-ma-none q-pa-sm">
@@ -15,6 +15,7 @@
           <span class="col-2"><q-chip v-if="record.approved" label="已批" class="bg-positive text-white" dense/><q-chip v-if="!record.approved && record.approve_date" label="拒批" dense class="bg-red text-white"/><q-chip v-if="!record.approved && !record.approve_date" label="未批" class="bg-warning text-white" dense/></span>
           <span v-if="record.approved" class="col-2"><q-btn size="sm" icon="print" class="bg-primary text-white" @click="printVoucher(prepaidResult[index])"/></span>
           <q-space/>
+          <span class="col-1" v-if="record.apply_user.trim() ==  username && !record.approved && record.approve_date"><q-btn class="bg-white text-primary" flat dense icon="edit" @click="prepaid=JSON.parse(JSON.stringify(record))"/></span>
           <span class="col-1" v-if="record.apply_user.trim() ==  username && (!record.approved && !record.approve_date)"><q-btn class="bg-white text-red" flat dense icon="delete" @click="deletePrepaid(record.uuid)"/></span>
           <span class="col-3" v-if="isCenterIC && (!record.approved && !record.approve_date)"><q-btn class="bg-white text-red" flat dense icon="close" @click="rejectPrepaid(record.uuid)"/><q-btn class="bg-white text-secondary" flat dense icon="check" @click="acceptPrepaid(record.uuid)"/></span>
           <q-tooltip v-if="record.recipient && record.recipient.trim().length > 0" class="bg-grey-4 text-black text-body1" :offset="[10, 10]">
@@ -23,7 +24,7 @@
         </div>
       </q-card-section>
     </q-card>
-    <q-btn v-if="Object.keys(prepaid).length == 0 && ((props.respon.includes(username) || isUAT) && !props.isSubmitted)" class="bg-primary text-white q-my-sm" icon="money" label="申請預支" @click="prepaid = { recipient: '', amount: 0}"/>
+    <q-btn v-if="Object.keys(prepaid).length == 0 && prepaidResult.length == 0 && ((props.respon.includes(username) || isUAT) && !props.isSubmitted)" class="bg-primary text-white q-my-sm" icon="money" label="申請預支" @click="prepaid = { recipient: '', amount: 0}"/>
     <q-form
       @submit="save"
       @reset="prepaid = {}"
@@ -55,7 +56,7 @@ import { ref, computed } from "vue"
 import { useStore } from "vuex";
 import { useQuery, useMutation } from "@vue/apollo-composable"
 import LoadingDialog from "components/LoadingDialog.vue"
-import { date as qdate, useQuasar, is } from "quasar"
+import { date as qdate, useQuasar, is, uid } from "quasar"
 import Voucher from 'src/components/HealthCare/Voucher.vue'
 
 // props
@@ -125,6 +126,30 @@ const { mutate: addPrepaidRequest, onDone: addPrepaidRequest_Completed, onError:
     $object: Event_Prepaid_insert_input = {}
     ) {
     insert_Event_Prepaid_one(object: $object) {
+      amount
+      apply_date
+      apply_user
+      approve_date
+      approve_user
+      approved
+      c_act_code
+      recipient
+      eval_uuid
+      payment_method
+      uuid
+    }
+    insert_Log_one(object: $logObject) {
+      log_id
+    }
+  }`)
+
+const { mutate: editPrepaidRequest, onDone: editPrepaidRequest_Completed, onError: editPrepaidRequest_Error } = useMutation(gql`
+  mutation Prepaid_editPrepaid(
+    $logObject: Log_insert_input! = {}, 
+    $object: Event_Prepaid_set_input = {},
+    $uuid: uniqueidentifier = ""
+    ) {
+    update_Event_Prepaid_by_pk(pk_columns: {uuid: $uuid}, _set: $object) {
       amount
       apply_date
       apply_user
@@ -218,24 +243,45 @@ function save() {
     amount: parseFloat(prepaid.value.amount),
     apply_date: new Date(),
     apply_user: username.value,
+    approve_date: null,
+    approve_user: null,
+    approved: false,
     c_act_code: props.c_act_code,
     recipient: prepaid.value.recipient,
     eval_uuid: props.eval_uuid,
     type: '預支',
+    payment_method: prepaid.value.payment_method? prepaid.value.payment_method.trim(): null,
   }
 
-  let logObject = {
-    "username": username.value,
-    "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-    "module": "活動系統",
-    "action": "新增預支: " + JSON.stringify(prepaidObject)
-  }
+  if (prepaid.value.uuid) { // edit record
+    let logObject = {
+      "username": username.value,
+      "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+      "module": "活動系統",
+      "action": "修改預支: uid - " + prepaid.value.uuid + " " + JSON.stringify(prepaidObject)
+    }
 
-  loading.value++
-  addPrepaidRequest({
-    logObject: logObject,
-    object: prepaidObject
-  })
+    loading.value++
+    editPrepaidRequest({
+      logObject: logObject,
+      object: prepaidObject,
+      uuid: prepaid.value.uuid.trim()
+    })
+  } else { // new record
+    let logObject = {
+      "username": username.value,
+      "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+      "module": "活動系統",
+      "action": "新增預支: " + JSON.stringify(prepaidObject)
+    }
+
+    loading.value++
+    addPrepaidRequest({
+      logObject: logObject,
+      object: prepaidObject
+    })
+  }
+  
 }
 
 function acceptPrepaid(uuid) {
@@ -312,6 +358,15 @@ addPrepaidRequest_Completed((result) => {
   loading.value--
   $q.notify({
     message: "活動" + result.data.insert_Event_Prepaid_one.c_act_code + "，成功新增預支記錄。",
+  }) 
+})
+
+editPrepaidRequest_Completed((result) => {
+  prepaid.value = {}
+  getPrepaidResult_Refetch()
+  loading.value--
+  $q.notify({
+    message: "活動" + result.data.update_Event_Prepaid_by_pk.c_act_code + "，成功修改預支記錄。",
   }) 
 })
 

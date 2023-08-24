@@ -6,6 +6,7 @@
       <q-btn icon="close" flat align="right" v-close-popup/>
     </q-card-section>
     <!-- printout -->
+    
     <q-card-section id="printMe" class="print-area">
       <div class="col-12 row items-center">
         <img src="~assets/cciyc_logo.svg" style="width: 90px; height: 90px;" class="col-1"/>
@@ -14,45 +15,46 @@
           <div class="col-12">Cheung Chau Rural Committee Integrated Youth Centre</div>
         </div>
       </div>
-      <div class="col-12 text-body row justify-around q-py-none q-my-none text-bold highlight_1" style="text-decoration: underline">工作計劃檢討表</div>
+      <div class="col-12 text-body row justify-around q-py-none q-my-none text-bold highlight_1" style="text-decoration: underline">工作檢討表</div>
       <div class="col-12 text-body row justify-around q-py-none q-my-none">
-        <div class="col-1">名稱：</div><div class="col-5">{{props.modelValue.c_act_name}} ({{ props.modelValue.c_act_code }})</div><div class="col-1">類別：</div><div class="col-5">{{props.modelValue.c_type}}</div>
-        <div class="col-1">性質：</div><div class="col-11">{{props.modelValue.c_nature}}</div>
-        <div class="col-1">大類：</div><div class="col-5">{{props.modelValue.c_group1}}</div><div class="col-1">細類：</div><div class="col-5">{{props.modelValue.c_group2}}</div>
+        <div class="col-1">名稱：</div><div class="col-5" style="border-bottom: 1px solid;">{{props.modelValue.c_act_name}} ({{ props.modelValue.c_act_code }})</div><div class="col-1">類別：</div><div class="col-5" style="border-bottom: 1px solid;">{{props.modelValue.c_type}}</div>
+        <div class="col-1">性質：</div><div class="col-11" style="border-bottom: 1px solid;">{{props.modelValue.c_nature}}</div>
+        <div class="col-1">大類：</div><div class="col-5" style="border-bottom: 1px solid;">{{props.modelValue.c_group1}}</div><div class="col-1">細類：</div><div class="col-5" style="border-bottom: 1px solid;">{{props.modelValue.c_group2}}</div>
       </div>
-      <q-separator/>
+      <q-separator class="q-mt-md"/>
       <div class="col-12 text-body row justify-around q-py-none q-my-none">
         <div class="col-12 row q-mt-md">
           <div class="highlight_2">舉辦日期</div>
-          <div class="col-12">計劃：{{ props.modelValue.Event_to_Evaluation[0].plan_start_date }} 至 {{  props.modelValue.Event_to_Evaluation[0].plan_end_date }} {{ props.modelValue.Event_to_Evaluation[0].plan_start_time }} - {{ props.modelValue.Event_to_Evaluation[0].plan_end_time }} (共{{ props.modelValue.Event_to_Evaluation[0].plan_sessions }}節)</div>
-          <div class="col-12">檢討：{{ props.modelValue.Event_to_Evaluation[0].eval_start_date }} 至 {{  props.modelValue.Event_to_Evaluation[0].eval_end_date }} {{ props.modelValue.Event_to_Evaluation[0].eval_start_time }} - {{ props.modelValue.Event_to_Evaluation[0].eval_end_time }} (共{{ props.modelValue.Event_to_Evaluation[0].eval_sessions }}節)</div>
+          <div class="col-12" style="border-bottom: 1px solid;">計劃：{{ props.modelValue.Event_to_Evaluation[0].plan_start_date }} 至 {{  props.modelValue.Event_to_Evaluation[0].plan_end_date }} {{ props.modelValue.Event_to_Evaluation[0].plan_start_time }} - {{ props.modelValue.Event_to_Evaluation[0].plan_end_time }} (共{{ props.modelValue.Event_to_Evaluation[0].plan_sessions }}節)</div>
+          <div class="col-12" style="border-bottom: 1px solid;">檢討：{{ props.modelValue.Event_to_Evaluation[0].eval_start_date }} 至 {{  props.modelValue.Event_to_Evaluation[0].eval_end_date }} {{ props.modelValue.Event_to_Evaluation[0].eval_start_time }} - {{ props.modelValue.Event_to_Evaluation[0].eval_end_time }} (共{{ props.modelValue.Event_to_Evaluation[0].eval_sessions }}節)</div>
         </div>
-        <div class="col-1">地點：</div><div class="col-5">{{props.modelValue.c_dest}}</div><div class="col-1">對象：</div><div class="col-5">{{props.modelValue.c_whojoin}}</div>
+        <div class="col-1">地點：</div><div class="col-5" style="border-bottom: 1px solid;">{{props.modelValue.c_dest}}</div><div class="col-1">對象：</div><div class="col-5" style="border-bottom: 1px solid;">{{props.modelValue.c_whojoin}}</div>
         <div class="col-6 row q-pr-md">
-          <div>工作目的：</div><div class="col">{{props.modelValue.Event_to_Evaluation[0].objective}}</div>
+          <div>工作目的：</div><div class="col" style="border-bottom: 1px solid;">{{props.modelValue.Event_to_Evaluation[0].objective}}</div>
         </div>
         <div class="col-6 row">
-          <div>工作內容：</div><div class="col">{{props.modelValue.Event_to_Evaluation[0].objective_detail}}</div>
+          <div>工作內容：</div><div class="col" style="border-bottom: 1px solid;">{{props.modelValue.Event_to_Evaluation[0].objective_detail}}</div>
         </div>
-        <div class="col-1">合辦：</div><div class="col-5">{{props.modelValue.Event_to_Evaluation[0].partner_agency}}</div><div class="col-2">合辦聯絡人：</div><div class="col-4">{{props.modelValue.Event_to_Evaluation[0].partner_name}} - {{props.modelValue.Event_to_Evaluation[0].partner_phone}}</div>
-        <div class="col-1">導師：</div><div class="col-5">{{props.modelValue.Event_to_Evaluation[0].tutor_name}}</div><div class="col-2">導師電話：</div><div class="col-4">{{props.modelValue.Event_to_Evaluation[0].tutor_phone}}</div>
-        <div class="col-2">協助義工：</div><div class="col-10">{{props.modelValue.Event_to_Evaluation[0].eval_volunteer_count}}</div>
-        <div class="col-2">青年節數：</div><div class="col-4">計劃：{{props.modelValue.Event_to_Evaluation[0].plan_attend_session_youth}} / 檢討：{{props.modelValue.Event_to_Evaluation[0].eval_attend_session_youth}}</div><div class="col-2">青年人次：</div><div class="col-4">計劃：{{props.modelValue.Event_to_Evaluation[0].plan_attend_headcount_youth}} / 檢討：{{props.modelValue.Event_to_Evaluation[0].eval_attend_headcount_youth}}</div>
+        <div class="col-1">合辦：</div><div class="col-5" style="border-bottom: 1px solid;">{{props.modelValue.Event_to_Evaluation[0].partner_agency}}</div><div class="col-2">合辦聯絡人：</div><div class="col-4" style="border-bottom: 1px solid;">{{props.modelValue.Event_to_Evaluation[0].partner_name}} - {{props.modelValue.Event_to_Evaluation[0].partner_phone}}</div>
+        <div class="col-1">導師：</div><div class="col-5" style="border-bottom: 1px solid;">{{props.modelValue.Event_to_Evaluation[0].tutor_name}}</div><div class="col-2">導師電話：</div><div class="col-4" style="border-bottom: 1px solid;">{{props.modelValue.Event_to_Evaluation[0].tutor_phone}}</div>
+        <div class="col-2">協助義工：</div><div class="col-10" style="border-bottom: 1px solid;">{{props.modelValue.Event_to_Evaluation[0].eval_volunteer_count}}</div>
+        <div class="col-2">青年節數：</div><div class="col-4" style="border-bottom: 1px solid;">計劃：{{props.modelValue.Event_to_Evaluation[0].plan_attend_session_youth}} / 檢討：{{props.modelValue.Event_to_Evaluation[0].eval_attend_session_youth}}</div><div class="col-2">青年人次：</div><div class="col-4" style="border-bottom: 1px solid;">計劃：{{props.modelValue.Event_to_Evaluation[0].plan_attend_headcount_youth}} / 檢討：{{props.modelValue.Event_to_Evaluation[0].eval_attend_headcount_youth}}</div>
       </div>
-      <q-separator/>
+      <q-separator class="q-mt-md"/>
       <div class="col-12 text-body row justify-around q-py-none q-my-none">
         <div class="col-12 highlight_2 q-mt-md">成效檢討</div>
-        <div class="col-2">檢討方法：</div><div class="col-10">{{props.modelValue.Event_to_Evaluation[0].objective_review_method}}</div>
-        <div class="col-2">目標達成：</div><div class="col-10">{{props.modelValue.Event_to_Evaluation[0].objective_achieved}}</div>
-        <div class="col-2">原因：</div><div class="col-10">{{props.modelValue.Event_to_Evaluation[0].objective_achieved_reason}}</div>
-        <div class="col-2">跟進/建議：</div><div class="col-10">{{props.modelValue.Event_to_Evaluation[0].objective_followup}}</div>
+        <div class="col-2">檢討方法：</div><div class="col-10" style="border-bottom: 1px solid;">{{props.modelValue.Event_to_Evaluation[0].objective_review_method}}</div>
+        <div class="col-2">目標達成：</div><div class="col-10" style="border-bottom: 1px solid;">{{props.modelValue.Event_to_Evaluation[0].objective_achieved}}</div>
+        <div class="col-2">原因：</div><div class="col-10" style="border-bottom: 1px solid;">{{props.modelValue.Event_to_Evaluation[0].objective_achieved_reason}}</div>
+        <div class="col-2">跟進/建議：</div><div class="col-10" style="border-bottom: 1px solid;">{{props.modelValue.Event_to_Evaluation[0].objective_followup}}</div>
       </div>
-      <q-separator/>
+      <q-separator class="q-mt-md"/>
       <div class="col-12 text-body row justify-around q-py-none q-my-none">
         <div class="col-12 highlight_2 q-mt-md">財務狀況</div>
         <q-table 
           class="col-5"
           title="收入"
+          title-class="text-body"
           dense
           flat
           bordered
@@ -76,6 +78,7 @@
         <q-table 
           class="col-5"
           title="支出"
+          title-class="text-body"
           dense
           flat
           bordered
@@ -103,7 +106,7 @@
           <div class="col-12 row q-my-md">
             <div>負責職員簽署：</div>
             <div class="col-2" style="display: block; border-bottom: 1px solid;"></div>
-            <div>（&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;）</div>
+            <div>（{{props.modelValue.c_respon}}）</div>
             <div class="q-ml-md">日期：</div>
             <div class="col-2" style="display: block; border-bottom: 1px solid;"></div>
             
@@ -111,11 +114,9 @@
           <div class="col-12 row q-my-md">
             <div>中心主任審閱：</div>
             <div class="col-2" style="display: block; border-bottom: 1px solid;"></div>
-            <div>（&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;）</div>
+            <div>（{{props.modelValue.Event_to_Evaluation[0].ic}}）</div>
             <div class="q-ml-md">日期：</div>
             <div class="col-2" style="display: block; border-bottom: 1px solid;"></div>
-            <div class="q-ml-md">意見：</div>
-            <div class="col-2" style="border-bottom: 1px solid;">{{ props.modelValue.Event_to_Evaluation[0].ic_comment}}</div>
           </div>
         </div>
       </div>  
@@ -180,26 +181,29 @@ const columns = [
     name: "description",
     label: "項目",
     field: "description",
-    style: "text-align: center; font-size: 0.4rem;",
-    headerClasses: "headerClass",
+    style: "text-align: center;",
+    headerClasses: "headerClass text-body",
     headerStyle: "text-align: center;",
+    classes: "text-body"
   },
   {
     name: "計劃",
     label: "計劃",
     field: "計劃",
-    style: "text-align: center; font-size: 0.4rem;",
-    headerClasses: "headerClass",
+    style: "text-align: center;",
+    headerClasses: "headerClass text-body",
     headerStyle: "text-align: center;",
+    classes: "text-body",
     format: (val) => val? val: 0
   },
   {
     name: "檢討",
     label: "檢討",
     field: "檢討",
-    style: "text-align: center; font-size: 0.4rem;",
-    headerClasses: "headerClass",
+    style: "text-align: center;",
+    headerClasses: "headerClass text-body",
     headerStyle: "text-align: center;",
+    classes: "text-body",
     format: (val) => val? val: 0
   }, 
 ]
@@ -235,11 +239,14 @@ export default {
 
   .headerClass {
     font-weight: bold; 
-    font-size: 1rem;
   }
 }
 
 @media print {
+  @page {
+    size: landscape;
+  }
+  
   div {
     line-height: 0.6rem;
   }
@@ -261,7 +268,6 @@ export default {
 
   .headerClass {
     font-weight: bold; 
-    font-size: 0.4rem;
   }
 }
 </style>

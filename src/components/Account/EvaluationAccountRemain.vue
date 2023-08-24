@@ -2,18 +2,18 @@
   <div>
     <!-- loading dialog -->
     <LoadingDialog v-model="loading" message="處理中"/>
-    <q-dialog v-model="showPrintVoucher">
-      <Voucher :data="voucherObject" type="餘款"/>
+    <q-dialog full-width full-height v-model="showPrepaidClaimForm">
+      <PrepaidRemainForm :data="prepaidClaimObject" :c_act_code="props.c_act_code" :eval_uuid="props.eval_uuid"/>
     </q-dialog>
 
     <q-card v-if="claimResult.length" class="row">
-      <q-card-section class="text-body2 bg-grey-2 text-left text-bold col-12 q-ma-none q-pa-sm">申請餘款記錄(共：${{ claimResult.filter((x) => x.approved || (!x.approved && !x.approve_date)).reduce((a,v) => a += v.amount,0) }})</q-card-section>
+      <q-card-section class="text-body2 bg-grey-2 text-left text-bold col-12 q-ma-none q-pa-sm">申請餘款記錄(共：${{ claimResult.filter((x) => x.approved || (!x.approved && !x.approve_date)).reduce((a,v) => a += v.amount,0) }}) <span v-if="claimResult.length > 0" class="col-2"><q-btn size="sm" icon="print" class="bg-primary text-white" @click="printPrepaidClaimForm(claimResult)"/></span></q-card-section>
       <q-card-section class="row fit justify-left q-ma-none q-pa-sm">
         <div class="col-12 row items-center content-start prepaid-item" v-for="(record, index) in claimResult" :key="index">
           <span class="col-4 text-left">{{ qdate.formatDate(record.apply_date, "YYYY年M月D日") }}</span>
           <span class="col-2">${{ record.amount }}</span>
           <span class="col-2"><q-chip v-if="record.approved" label="已批" class="bg-positive text-white" dense/><q-chip v-if="!record.approved && record.approve_date" label="拒批" dense class="bg-red text-white"/><q-chip v-if="!record.approved && !record.approve_date" label="未批" class="bg-warning text-white" dense/></span>
-          <span v-if="record.approved" class="col-2"><q-btn size="sm" icon="print" class="bg-primary text-white" @click="printVoucher(claimResult[index])"/></span>
+          <!--<span v-if="record.approved" class="col-2"><q-btn size="sm" icon="print" class="bg-primary text-white" @click="printVoucher(claimResult[index])"/></span>-->
           <q-space/>
           <span class="col-1" v-if="record.apply_user.trim() ==  username && (!record.approved && !record.approve_date)"><q-btn class="bg-white text-red" flat dense icon="delete" @click="deleteClaim(record.uuid)"/></span>
           <span class="col-3" v-if="isCenterIC && (!record.approved && !record.approve_date)"><q-btn class="bg-white text-red" flat dense icon="close" @click="rejectClaim(record.uuid)"/><q-btn class="bg-white text-secondary" flat dense icon="check" @click="acceptClaim(record.uuid)"/></span>
@@ -57,8 +57,9 @@ import { ref, computed } from "vue"
 import { useStore } from "vuex";
 import { useMutation, useQuery } from "@vue/apollo-composable"
 import LoadingDialog from "components/LoadingDialog.vue"
-import { date as qdate, useQuasar, is } from "quasar"
+import { date as qdate, useQuasar } from "quasar"
 import Voucher from 'src/components/HealthCare/Voucher.vue'
+import PrepaidRemainForm from "../Event/PrepaidRemainForm.vue";
 
 // props
 const props = defineProps({
@@ -72,7 +73,9 @@ const claim = ref({})
 const loading = ref(0)
 const $q = useQuasar()
 const voucherObject = ref()
+const prepaidClaimObject = ref([])
 const showPrintVoucher = ref(false)
+const showPrepaidClaimForm = ref(false)
 
 // queries
 const { onResult: getEvaluationResult } = useQuery(gql`
@@ -296,9 +299,14 @@ function rejectClaim(uuid) {
 }
 
 function printVoucher(record) {
-  console.log(record)
+  // console.log(record)
   voucherObject.value = record
   showPrintVoucher.value = true
+}
+
+function printPrepaidClaimForm(record) {
+  prepaidClaimObject.value = record
+  showPrepaidClaimForm.value = true
 }
 
 // callback

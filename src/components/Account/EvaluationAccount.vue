@@ -4,7 +4,7 @@
   
   <div class="col-12 row justify-center">
     <q-chip class="bg-grey-4" size="lg" square :label="props.type"/>
-    <q-btn flat v-if="!edit && !props.isSubmitted" icon="edit" class="bg-white text-primary" @click="startEdit"/>
+    <q-btn flat v-if="!edit && (!props.isSubmitted || isCenterIC)" icon="edit" class="bg-white text-primary" @click="startEdit"/>
     <q-btn flat v-if="edit" icon="add" class="bg-white text-primary" @click="addObject"/>
     <q-btn flat v-if="edit" icon="save" class="col-2 bg-white text-positive" @click="save"/>
     <q-btn flat v-if="edit" icon="restart_alt" class="col-2 bg-white text-negative" @click="edit = false"/>
@@ -84,6 +84,7 @@ const $store = useStore();
 const username = computed(() => $store.getters["userModule/getUsername"])
 const account = computed(() => result.value?.Event_Evaluation_Account??[])
 const total = computed(() => result.value?.Event_Evaluation_Account_aggregate.aggregate.sum.amount??0)
+const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
 
 // functions
 function addObject() {

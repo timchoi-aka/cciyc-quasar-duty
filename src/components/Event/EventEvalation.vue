@@ -83,9 +83,22 @@
         <q-btn v-if="edit" icon="cancel" flat @click="edit = false">
           <q-tooltip class="bg-white text-primary">取消</q-tooltip>
         </q-btn>
-        <q-btn v-if="!edit && isSubmitted" flat icon="print" @click="printEvaluation = true">
-          <q-tooltip class="bg-white text-primary">列印</q-tooltip>
-        </q-btn>
+        
+        <q-btn-dropdown v-if="!edit && planSubmitted " flat icon="print" color="bg-primary text-white">
+          <q-list>
+            <q-item v-if="!edit && planSubmitted" clickable v-close-popup @click="printPlan = true">
+              <q-item-section>
+                <q-item-label>計劃</q-item-label>
+              </q-item-section>
+            </q-item>
+
+            <q-item v-if="!edit && evalSubmitted" clickable v-close-popup @click="printEvaluation = true">
+              <q-item-section>
+                <q-item-label>檢討</q-item-label>
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </q-btn-dropdown>
         <q-btn v-if="isSystemAdmin && Object.keys(PlanEval).length > 0" icon="delete" class="text-negative" flat @click="confirmDeleteDialog = true">
           <q-tooltip class="bg-white text-negative">刪除</q-tooltip>
         </q-btn>
@@ -100,12 +113,12 @@
     </div>
     <div class="col-xs-12 col-sm-4 col-md-4 text-right">
       <div class="col-6">
-        <q-chip dense v-if="PlanEval.submit_plan_date">提交計劃：{{PlanEval.staff_name}} @ {{qdate.formatDate(PlanEval.submit_plan_date, "YYYY年M月D日")}}</q-chip>
-        <q-chip dense v-if="PlanEval.ic_plan_date">審批計劃：{{qdate.formatDate(PlanEval.ic_plan_date, "YYYY年M月D日")}}</q-chip>
+        <q-chip dense v-if="PlanEval.submit_plan_date">已提交計劃：{{PlanEval.staff_name}} @ {{qdate.formatDate(PlanEval.submit_plan_date, "YYYY年M月D日")}}</q-chip>
+        <q-chip dense v-if="PlanEval.ic_plan_date">已審批計劃：{{qdate.formatDate(PlanEval.ic_plan_date, "YYYY年M月D日")}}</q-chip>
       </div>
       <div class="col-6">
-        <q-chip dense v-if="PlanEval.submit_eval_date">提交檢討：{{PlanEval.staff_name}} @ {{qdate.formatDate(PlanEval.submit_eval_date, "YYYY年M月D日")}}</q-chip>
-        <q-chip dense v-if="PlanEval.ic_eval_date">審批檢討：{{qdate.formatDate(PlanEval.ic_eval_date, "YYYY年M月D日")}}</q-chip>
+        <q-chip dense v-if="PlanEval.submit_eval_date">已提交檢討：{{PlanEval.staff_name}} @ {{qdate.formatDate(PlanEval.submit_eval_date, "YYYY年M月D日")}}</q-chip>
+        <q-chip dense v-if="PlanEval.ic_eval_date">已審批檢討：{{qdate.formatDate(PlanEval.ic_eval_date, "YYYY年M月D日")}}</q-chip>
       </div>
     </div>
   </div>
@@ -294,6 +307,17 @@
     >
     <EventEvaluationPrint :model-value="Event"/>
   </q-dialog>
+  
+  <q-dialog 
+    v-model="printPlan"
+    maximized
+    full-width
+    full-height
+    transition-show="slide-up"
+    transition-hide="slide-down"
+    >
+    <EventPlanPrint :model-value="Event"/>
+  </q-dialog>
 </template>
 
 <script setup>
@@ -334,9 +358,13 @@ const approvalDialog = ref(false)
 const EvaluationComment = ref("")
 const userMapping = ref({})
 const mode = ref("")
+const printPlan = ref(false)
 const printEvaluation = ref(false)
 const EventEvaluationPrint = defineAsyncComponent(() =>
   import('components/Event/EventEvaluationPrint.vue')
+)
+const EventPlanPrint = defineAsyncComponent(() =>
+  import('components/Event/EventPlanPrint.vue')
 )
 
 // FireDB Query setup user mapping
@@ -455,7 +483,8 @@ const username = computed(() => $store.getters["userModule/getUsername"])
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
 const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"])
 const isSubmitted = computed(() => PlanEval.value.submit_plan_date && PlanEval.value.submit_eval_date? PlanEval.value.submit_plan_date.length > 0 && PlanEval.value.submit_eval_date.length > 0 : false)
-
+const planSubmitted = computed(() => PlanEval.value.submit_plan_date? PlanEval.value.submit_plan_date.length > 0: false)
+const evalSubmitted = computed(() => PlanEval.value.submit_eval_date? PlanEval.value.submit_eval_date.length > 0 : false)
 // success callbacks
 updateEvaluationFromActCode_Completed((result)=>{
   notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
@@ -674,6 +703,7 @@ function ApproveOK() {
         logObject: logObject.value,
         ic: username.value,
         ic_plan_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+        ic_eval_date: null,
         ic_comment: EvaluationComment.value,
         c_act_code: props.EventID.trim(),
         uuid: PlanEval.value.uuid,
@@ -707,6 +737,7 @@ function ApproveDeny() {
         logObject: logObject.value,
         ic: username.value,
         ic_plan_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+        submit_plan_date: null,
         ic_comment: EvaluationComment.value,
         c_act_code: props.EventID.trim(),
         uuid: PlanEval.value.uuid,
@@ -716,6 +747,7 @@ function ApproveDeny() {
         logObject: logObject.value,
         ic: username.value,
         ic_eval_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+        submit_eval_date: null,
         ic_comment: EvaluationComment.value,
         c_act_code: props.EventID.trim(),
         uuid: PlanEval.value.uuid,

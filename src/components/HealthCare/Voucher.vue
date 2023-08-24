@@ -18,9 +18,11 @@
       <div class="row col-12 justify-center">
         <div class="row col-12 justify-center text-bold q-my-none highlight_1">長洲鄉事委員會青年綜合服務中心</div>
         <div class="row col-12 justify-center text-bold q-my-none highlight_3">CHEUNG CHAU RURAL COMMITTEE INTEGRATED YOUTH CENTRE</div>
-        <div class="row col-12 justify-center text-bold highlight_2">領款書 VOUCHER</div>
       </div>
       <div v-if="props.type == '醫療'" class="row col-12 justify-left q-ml-lg">
+        <div class="row col-12 justify-center">
+          <div class="row col-12 justify-center text-bold highlight_2">領款書 VOUCHER</div>
+        </div>
         <div class="col-12 q-my-md highlight_2">商鋪/受款人：{{ props.data.username }}</div>
         <div class="col-12 q-my-md highlight_2">祈付：員工醫療（{{ qdate.formatDate(props.data.date, "YYYY年M月D日") }}）</div>
         <div class="col-12 q-my-md highlight_2">金額：{{ convertToChinese(props.data.amount) }}</div>
@@ -32,19 +34,11 @@
         <div class="col-6 q-my-md highlight_2">日期：</div>
       </div>
       <div v-if="props.type == '預支'" class="row col-12 justify-left q-ml-lg">
+        <div class="row col-12 justify-center">
+          <div class="row col-12 justify-center text-bold highlight_2">領款書 VOUCHER</div>
+        </div>
         <div class="col-12 q-my-md highlight_2">商鋪/受款人：{{ props.data.recipient }}</div>
         <div class="col-12 q-my-md highlight_2">祈付：{{ props.data.c_act_code }}活動預支</div>
-        <div class="col-12 q-my-md highlight_2">金額：{{ convertToChinese(props.data.amount) }}</div>
-        <div class="col-6 q-my-md highlight_2">港幣：HK${{ props.data.amount }}</div>
-        <div class="col-6 q-my-md highlight_2">支票號碼：</div>
-        <div class="col-6 q-my-md highlight_2">中心主任：</div>
-        <div class="col-6 q-my-md highlight_2">收款人/經手人：</div>
-        <div class="col-6 q-my-md highlight_2">日期：</div>
-        <div class="col-6 q-my-md highlight_2">日期：</div>
-      </div>
-      <div v-if="props.type == '餘款'" class="row col-12 justify-left q-ml-lg">
-        <div class="col-12 q-my-md highlight_2">商鋪/受款人：{{ props.data.recipient }}</div>
-        <div class="col-12 q-my-md highlight_2">祈付：{{ props.data.c_act_code }}活動餘款</div>
         <div class="col-12 q-my-md highlight_2">金額：{{ convertToChinese(props.data.amount) }}</div>
         <div class="col-6 q-my-md highlight_2">港幣：HK${{ props.data.amount }}</div>
         <div class="col-6 q-my-md highlight_2">支票號碼：</div>
@@ -61,6 +55,8 @@
 import { computed, ref } from "vue"
 import { date as qdate, useQuasar } from "quasar"
 import { useStore } from "vuex";
+import { EVENT_EVALUATION_BY_ACT_CODE } from "/src/graphQueries/Event/query.js"
+import { useQuery } from "@vue/apollo-composable"
 
 // props
 const props = defineProps({
@@ -68,8 +64,9 @@ const props = defineProps({
   type: {
     type: String,
     required: true,
-  }
+  }, 
 })
+
 
 const $q = useQuasar()
 const $store = useStore();
@@ -107,7 +104,7 @@ function convertToChinese(number) {
 
   let hundred = Math.floor(unit/100)
   if (hundred > 0) {
-    if (thousand + tenThousand > 0) {
+    if (thousand == 0 && tenThousand > 0) {
       digitsPart.push('零');
     }
     digitsPart.push(digits[hundred] + '佰');
