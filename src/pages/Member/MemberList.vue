@@ -1,7 +1,7 @@
 <template>
   <!-- loading dialog -->
   <LoadingDialog :model-value="loading? 1: 0" message="處理中"/>
-
+  
   <!-- print receipt modal -->
   <q-dialog v-if="$q.screen.gt.md"
     v-model="printReceiptModal"
@@ -11,10 +11,11 @@
     transition-hide="slide-down"
     class="q-pa-none"
     >
+    
     <PrintReceipt :MemberID="printReceiptMember"/>
   </q-dialog>
 
-  <q-dialog v-if="$q.screen.lt.md"
+  <q-dialog v-if="$q.screen.lt.md || $q.screen.md"
     v-model="printReceiptModal"
     maximized
     full-width

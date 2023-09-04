@@ -88,7 +88,7 @@ query Detail_Event_by_pk($c_act_code: String!) {
 // computed
 const username = computed(() => $store.getters["userModule/getUsername"])
 const isFree = computed(() => result.value? result.value.HTX_Event_by_pk.b_freeofcharge: false)
-const EventName = computed(() => result.value? result.value.HTX_Event_by_pk.c_act_name: false)
+const EventName = computed(() => result.value? result.value.HTX_Event_by_pk.c_act_name: '')
 
 function confirmClose() {
   $q.dialog({

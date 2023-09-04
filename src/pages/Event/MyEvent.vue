@@ -24,7 +24,7 @@
     transition-hide="slide-down"
     v-model="eventDetailDialog"
   >
-    <EventDetail :EventID="selectedEventID"/>
+    <EventDetail :EventID="selectedEventID" @hide-component="() => eventDetailDialog = false"/>
   </q-dialog>
 
   <div class="row">
