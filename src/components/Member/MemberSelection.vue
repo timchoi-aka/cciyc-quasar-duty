@@ -10,8 +10,9 @@
     :options="NameOptions"
     :model-value="props.modelValue"
     @filter="nameFilter"
-    @update:model-value="(value) => emit('update:modelValue', value? value.value: null)"
+    @update:model-value="(value) => emit('update:modelValue', value? value.value? value.value: value: null)"
     >
+    <!-- @input-value="(value) => emit('update:modelValue', value? value.value? value.value: value : null)" -->
     <template v-slot:option="scope">
       <q-item v-bind="scope.itemProps">
         <q-item-section>
@@ -129,6 +130,10 @@ function nameFilter(val, update) {
       (v.c_name? v.c_name.toLowerCase().indexOf(val.toLowerCase()) > -1 : false) ||
       (v.c_name_other? v.c_name_other.toLowerCase().indexOf(val.toLowerCase()) > -1 : false)
     )
+
+    if (NameOptions.value.length == 1) {
+      emit('update:modelValue', NameOptions.value[0].value)
+    }
     /*
     if (NameOptions.value.length == 0) {
       NameOptions.value.push({
