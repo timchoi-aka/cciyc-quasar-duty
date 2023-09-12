@@ -31,50 +31,12 @@
   <!-- 開放節數記錄 -->
   <q-dialog
     v-model="openingModal"
+    full-height
     transition-show="slide-up"
     transition-hide="slide-down"
     class="q-pa-none"
   >
-    <q-card style="min-width: 50vw; width: 50vw; max-width: 50vw; height: 50vh; min-height: 50vh; max-height: 50vh;">
-      <q-card-section class="bg-primary text-white row">
-        <div class="text-body1">開放節數</div>
-        <q-btn flat icon="print" v-print="printObj"/>
-        <q-space/>
-        <q-btn icon="close" flat v-close-popup/>
-      </q-card-section>
-      <q-card-section>
-        <div id="printMe" class="print-area">
-          <div class="text-body1">開始日期：{{ reportStartDate }}</div>
-            <div class="text-body1">結束日期：{{ reportEndDate }}</div>
-          <div class="text-body1">開放節數：{{ Object.values(dutyTable).reduce((x,v) => x + (v.slot_a?1:0) + (v.slot_b?1:0) + (v.slot_c?1:0), 0) }} </div>
-          <q-table
-            dense
-            flat
-            :rows="dutyTable"
-            :columns="dutyTableColumns"
-            :pagination="defaultPagination"
-            color="primary"
-            row-key="date"
-            separator="cell"
-            virtual-scroll
-            binary-state-sort
-          >
-            <template v-slot:body-cell-slot_a="props">
-              <q-td :props="props" :class="[props.value? 'bg-green': 'red']">
-              </q-td>
-            </template>
-            <template v-slot:body-cell-slot_b="props">
-              <q-td :props="props" :class="[props.value? 'bg-green': 'red']">
-              </q-td>
-            </template>
-            <template v-slot:body-cell-slot_c="props">
-              <q-td :props="props" :class="[props.value? 'bg-green': 'red']">
-              </q-td>
-            </template>
-          </q-table>
-        </div>
-      </q-card-section>
-    </q-card>
+    <OpeningSessions :data="dutyTable" :reportStartDate="qdate.extractDate(reportStartDate, 'YYYY/MM/DD')" :reportEndDate="qdate.extractDate(reportEndDate, 'YYYY/MM/DD')" :numberOfSessions="Object.values(dutyTable).reduce((x,v) => x + (v.slot_a?1:0) + (v.slot_b?1:0) + (v.slot_c?1:0), 0)" />
   </q-dialog>
 
   <div class="row justify-center">
@@ -130,9 +92,17 @@
     <q-tab name="OS3" icon="pin_drop" label="OS3/4" />
     <q-tab name="OS5" icon="pin_drop" label="OS5" />
     <q-tab name="C(iii)" icon="pin_drop" label="C(iii)" />
+    <q-space/>
+    <q-btn aligh="right" icon="print" class="bg-primary text-white" flat v-print="printObj">
+      <q-tooltip class="bg-white text-primary">
+        列印報表
+      </q-tooltip>
+    </q-btn>
   </q-tabs>
-
+  
   <q-tab-panels
+    id="printMe"
+    class="print-area"
     v-model="activeTab"
     animated
     swipeable
@@ -140,6 +110,10 @@
     transition-next="jump-up"
   >
     <q-tab-panel name="All" class="q-ma-none q-pa-sm text-body1"> 
+      <div class="printOnly text-h5">長洲鄉事委員會青年綜合服務中心 - 活動報表</div>
+      <div class="printOnly text-h5">{{ qdate.formatDate(reportStartDate, 'YYYY年M月D日') }} -  {{ qdate.formatDate(reportEndDate, 'YYYY年M月D日')}}</div>
+      <div class="printOnly text-h5">全部資料</div>
+
       <q-table
         dense
         flat
@@ -156,6 +130,7 @@
       >
         <template v-slot:top-right="props">
           <q-btn
+            class="screenOnly"
             color="primary"
             icon-right="archive"
             label="匯出Excel"
@@ -167,12 +142,17 @@
     </q-tab-panel>
 
     <q-tab-panel name="OS2" class="q-ma-none q-pa-sm text-body1"> 
+      <div class="printOnly text-h5">長洲鄉事委員會青年綜合服務中心 - 活動報表</div>
+      <div class="printOnly text-h5">{{ qdate.formatDate(reportStartDate, 'YYYY年M月D日') }} -  {{ qdate.formatDate(reportEndDate, 'YYYY年M月D日')}}</div>
+      <div class="printOnly text-h5">OS2</div>
+
       <div>i) Total number of attendance: {{ OS2Data.reduce((x,v) => x + v.i_people_count, 0) }}</div>
-      <div>ii) Total number of sessions: {{ Object.values(dutyTable).reduce((x,v) => x + (v.slot_a?1:0) + (v.slot_b?1:0) + (v.slot_c?1:0), 0) }} <q-btn class="bg-primary text-white" flat @click="openingModal = true" label="開放節數"/></div> 
+      <div>ii) Total number of sessions: {{ Object.values(dutyTable).reduce((x,v) => x + (v.slot_a?1:0) + (v.slot_b?1:0) + (v.slot_c?1:0), 0) }} <q-btn class="bg-primary text-white screenOnly" flat @click="openingModal = true" label="開放節數"/></div> 
       <div>iii) Average attendance per session: {{ is.number((OS2Data.reduce((x,v) => x + v.i_people_count, 0) / Object.values(dutyTable).reduce((x,v) => x + (v.slot_a?1:0) + (v.slot_b?1:0) + (v.slot_c?1:0), 0)))? (OS2Data.reduce((x,v) => x + v.i_people_count, 0) / Object.values(dutyTable).reduce((x,v) => x + (v.slot_a?1:0) + (v.slot_b?1:0) + (v.slot_c?1:0), 0)).toFixed(2): 0 }}</div>
       <q-table
         dense
         flat
+        wrap-cells
         title="在中心舉行的活動"
         :rows="OS2Data"
         :columns="os2Columns"
@@ -187,6 +167,7 @@
         <!-- export button -->
         <template v-slot:top-right>
           <q-btn
+            class="screenOnly"
             color="primary"
             icon-right="archive"
             label="匯出Excel"
@@ -211,6 +192,10 @@
     </q-tab-panel>
     
     <q-tab-panel name="OS3" class="q-ma-none q-pa-sm text-body1">
+      <div class="printOnly text-h5">長洲鄉事委員會青年綜合服務中心 - 活動報表</div>
+      <div class="printOnly text-h5">{{ qdate.formatDate(reportStartDate, 'YYYY年M月D日') }} -  {{ qdate.formatDate(reportEndDate, 'YYYY年M月D日')}}</div>
+      <div class="printOnly text-h5">OS3/4</div>
+
       <div class="row">
         <div class="col-6">
           <div class="text-h6">OS3</div>
@@ -234,6 +219,7 @@
       <q-table
         dense
         flat
+        wrap-cells
         :rows="OS3Data"
         :columns="os2Columns"
         :pagination="defaultPagination"
@@ -247,9 +233,10 @@
         @row-click="rowDetail"
       >
         <template v-slot:top class="row">
-          <q-select class="col-2" clearable label="性質" :options="os3natures" v-model="search.c_nature"/>
+          <q-select class="col-grow" clearable label="性質" :options="os3natures" v-model="search.c_nature"/>
           <q-space/>
           <q-btn
+            class="screenOnly"
             color="primary"
             icon-right="archive"
             label="匯出Excel"
@@ -261,6 +248,10 @@
     </q-tab-panel>
     
     <q-tab-panel name="OS5" class="q-ma-none q-pa-sm text-body1"> 
+      <div class="printOnly text-h5">長洲鄉事委員會青年綜合服務中心 - 活動報表</div>
+      <div class="printOnly text-h5">{{ qdate.formatDate(reportStartDate, 'YYYY年M月D日') }} -  {{ qdate.formatDate(reportEndDate, 'YYYY年M月D日')}}</div>
+      <div class="printOnly text-h5">OS5</div>
+
       <div>i) Total number of core programmes completed/case closed in the quarter: {{ Object.keys(OS5Data).length }}</div>
       <div>ii) Total number of core programmes completed/case closed with goals achieved in the quarter: {{ Object.keys(OS5Data.filter((x) => x.c_status.trim() == '完成達標')).length }}</div>
       <div>iii) Rate of achieving core programme plan: {{ is.number((Object.keys(OS5Data.filter((x) => x.c_status.trim() == '完成達標')).length/Object.keys(OS5Data).length))? (Object.keys(OS5Data.filter((x) => x.c_status.trim() == '完成達標')).length*100/Object.keys(OS5Data).length).toFixed(2) + "%":0 }}</div> 
@@ -281,6 +272,7 @@
       >
         <template v-slot:top-right>
           <q-btn
+            class="screenOnly"
             color="primary"
             icon-right="archive"
             label="匯出Excel"
@@ -292,6 +284,10 @@
     </q-tab-panel>
 
     <q-tab-panel name="C(iii)" class="q-ma-none q-pa-sm text-body1 row items-end"> 
+      <div class="printOnly text-h5">長洲鄉事委員會青年綜合服務中心 - 活動報表</div>
+      <div class="printOnly text-h5">{{ qdate.formatDate(reportStartDate, 'YYYY年M月D日') }} -  {{ qdate.formatDate(reportEndDate, 'YYYY年M月D日')}}</div>
+      <div class="printOnly text-h5">c(iii)</div>
+
       <q-card class="col-3">
         <q-card-section class="bg-yellow-2">Leadership training <br/>(領袖訓練)</q-card-section>
         <q-card-section class="bg-blue-2">
@@ -345,6 +341,7 @@
       >
         <template v-slot:top-right>
           <q-btn
+            class="screenOnly"
             color="primary"
             icon-right="archive"
             label="匯出Excel"
@@ -360,7 +357,7 @@
 
 <script setup>
 import { sessionCollection } from "boot/firebase";
-import { computed, ref, watch, onMounted } from "vue";
+import { computed, ref, watch, onMounted, defineAsyncComponent } from "vue";
 import { exportFile, date as qdate, is } from "quasar";
 import { useQuery } from "@vue/apollo-composable"
 import { gql } from "graphql-tag"
@@ -368,15 +365,24 @@ import EventDetail from "components/Event/EventDetail.vue";
 import LoadingDialog from "components/LoadingDialog.vue"
 import Excel from "src/lib/exportExcel"
 import { getDocs, query, where } from "firebase/firestore";
-import print from "vue3-print-nb";
 import StaffSelectionMultiple from "components/Basic/StaffSelectionMultiple.vue";
 import { useRouter } from "vue-router"
+import print from "vue3-print-nb";
 
 onMounted(() => {
   refreshSchedule(reportStartDate.value, reportEndDate.value)
 })
 
+const printObj = ref({
+  id: "printMe",
+  preview: false,
+})
+
 // variables
+const OpeningSessions = defineAsyncComponent(() =>
+  import('components/Event/OpeningSessions.vue')
+)
+
 const router = useRouter()
 const reportStartDate = ref(qdate.formatDate(qdate.startOfDate(qdate.subtractFromDate(Date.now(), {month: 1}), 'month'), "YYYY/MM/DD"))
 const reportEndDate = ref(qdate.formatDate(qdate.endOfDate(qdate.subtractFromDate(Date.now(), {month: 1}), 'month'), "YYYY/MM/DD"))
@@ -407,10 +413,7 @@ const getDAct = computed(() => {
 
 const scheduleSnapshot = ref()
 
-const printObj = ref({
-  id: "printMe",
-  preview: false,
-})
+
 
 const defaultPagination = ref({
   rowsPerPage: 40,
@@ -424,43 +427,7 @@ const c3Pagination = ref({
   descending: true,
 })
 
-const dutyTableColumns = ref([
-  {
-    name: "date",
-    label: "日期",
-    field: "date",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-    format: (val) => qdate.formatDate(val, "YYYY年M月D日(ddd)", {
-                  daysShort: ['日', '一', '二', '三', '四', '五', '六'],
-                })
-  },
-  {
-    name: "slot_a",
-    label: "早",
-    field: "slot_a",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "slot_b",
-    label: "午",
-    field: "slot_b",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "slot_c",
-    label: "晚",
-    field: "slot_c",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  }
-])
+
 
 const os5Columns = ref([
   {
@@ -620,7 +587,7 @@ const os2Columns = ref([
     name: "c_act_name",
     label: "活動名稱",
     field: "c_act_name",
-    style: "border-top: 1px solid; text-align: center",
+    style: "border-top: 1px solid; text-align: center; width: 15%; max-width: 15%;",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
   },
@@ -628,7 +595,7 @@ const os2Columns = ref([
     name: "c_dest",
     label: "地點",
     field: "c_dest",
-    style: "border-top: 1px solid; text-align: center",
+    style: "border-top: 1px solid; text-align: center; width: 15%; max-width: 15%",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
   },
@@ -664,6 +631,7 @@ const os2Columns = ref([
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
   },
+  /*
   {
     name: "c_group1",
     label: "大分類",
@@ -680,6 +648,7 @@ const os2Columns = ref([
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
   },
+  */
   {
     name: "d_act",
     label: "月份",
@@ -1037,7 +1006,7 @@ function rowDetail(evt, row, index) {
 import print from "vue3-print-nb";
 
 export default {
-  name: "PrintOpeningSessions",
+  name: "PrintReport",
   directives: {
     print,
   },
@@ -1046,21 +1015,44 @@ export default {
 
 <style scoped>
 @media screen {
-  .red {
-    background: red;
+  .printOnly {
+    display: none;
   }
 }
+
 @media print {
-  .print-area { 
-    margin: 30px;
-    border: none;
+  .print-area {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
-  .red {
-    background: white;
+  q-table {
+    page-break-inside: avoid; 
   }
   
+  @page {
+    size: landscape !important;
+    width: 29.7cm;
+    height: 21cm;  
+  }
+  .screenOnly {
+    display: none;
+  }
+  .text-body1 {
+    font-size: 0.4rem;
+    line-height: 100%;
+  }
+
+  .text-h5 {
+    font-size: 0.7rem;
+    line-height: 120%;
+    text-align: center;
+  }
+  .text-h6 {
+    font-size: 0.5rem;
+    line-height: 100%;
+  }
+
+
 }
 </style>
