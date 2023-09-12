@@ -113,6 +113,15 @@
                   @click="changeFinance(props.key)"
                 />
               </div>
+              <div class="col-xs-3 justify-center" style="text-align: center">
+                <div class="text-caption">活動管理</div>
+                <q-btn
+                  round
+                  :color="props.row.privilege_eventManagement ? 'positive' : 'negative'"
+                  :label="props.row.privilege_eventManagement ? '有' : '沒有'"
+                  @click="changeEventManagement(props.key)"
+                />
+              </div>
             </q-card-section>
             <q-separator inet class="q-mt-sm" />
             <q-card-section
@@ -256,6 +265,16 @@
             />
           </q-td>
 
+          <!-- event management?? -->
+          <q-td style="font-size: 1.2vw; text-align: center; width: 3vw;">
+            <q-btn
+              round
+              :color="props.row.privilege_eventManagement ? 'positive' : 'negative'"
+              :label="props.row.privilege_eventManagement ? '有' : '沒有'"
+              @click="changeEventManagement(props.key)"
+            />
+          </q-td>
+
           <!-- order? -->
           <q-td style="font-size: 1.2vw; text-align: center; width: 3vw;">
             <div class="q-mx-sm">
@@ -349,14 +368,6 @@
           </q-td>
         </q-tr>
       </template>
-
-
-
-
-
-
-
-
 
       <!-- template of column "rank" -->
       <template v-slot:body-cell-rank="props">
@@ -580,6 +591,14 @@ const tableFields = ref([
     style: "font-size: 1.2vw; text-align: center; width: 3vw; max-width: 3vw;",
   },
   {
+    name: "privilege_eventManagement",
+    label: "活動管理",
+    field: "privilege_eventManagement",
+    headerStyle:
+      "font-size: 1.5vw; text-align: center; width: 3vw; max-width: 3vw;",
+    style: "font-size: 1.2vw; text-align: center; width: 3vw; max-width: 3vw;",
+  },
+  {
     name: "order",
     label: "排序",
     field: "order",
@@ -755,6 +774,17 @@ function changeSal(uid) {
   });
 }
 
+function changeEventManagement(uid) {
+  // call https functions to change sal privilege
+  const toggleEventManagement = httpsCallable(FirebaseFunctions, "user-toggleEventManagement");
+  loading.value++;
+  toggleEventManagement(uid).then((result) => {
+    users.value[users.value.findIndex((value) => value.uid == uid)].privilege_eventManagement =
+      result.data;
+    loading.value--;
+  });
+}
+
 function changeScheduleModify(uid) {
   // call https functions to change scheduleModify privilege
   const toggleScheduleModify = httpsCallable(FirebaseFunctions,
@@ -870,6 +900,7 @@ getDocs(userQuery).then((userDoc) => {
       privilege_scheduleModify: d.privilege.scheduleModify,
       privilege_userManagement: d.privilege.userManagement,
       privilege_probation: d.privilege.probation? d.privilege.probation: false,
+      privilege_eventManagement: d.privilege.eventManagement? d.privilege.eventManagement: false,
       parttime: d.parttime? d.parttime: false,
       privilege_finance: d.privilege.finance? d.privilege.finance: false,
       order: d.order,

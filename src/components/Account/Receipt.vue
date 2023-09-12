@@ -284,7 +284,9 @@ export default {
 
 @media print {
   @page {
-    size: 68mm 120mm portrait;
+    size: portrait !important;
+    width: 68mm;
+    /*height: 120mm;*/
     margin: 0;
     overflow: hidden;
     scale: 50%;

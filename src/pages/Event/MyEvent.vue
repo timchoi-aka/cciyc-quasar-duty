@@ -220,8 +220,10 @@ import EventDetail from "components/Event/EventDetail.vue";
 import LoadingDialog from "components/LoadingDialog.vue"
 import { date as qdate, useQuasar } from "quasar";
 import { gql } from "graphql-tag"
+import { useRouter } from "vue-router"
 
 // variables
+const router = useRouter()
 const $store = useStore();
 const $q = useQuasar()
 const loading = ref(0)
@@ -683,8 +685,12 @@ awaitApprovalPrepaidRecords((result) => {
 })
 // functions 
 function showDetail(evt, row, index) {
-  eventDetailDialog.value = true
+  /* eventDetailDialog.value = true
   selectedEventID.value = row.c_act_code
+  */
+ router.push({
+  path: "/event/detail/" + row.c_act_code.trim(),
+ })
 }
 
 function MyEventFilter(rows, terms) {

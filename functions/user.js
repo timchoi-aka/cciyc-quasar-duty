@@ -125,6 +125,10 @@ exports.newUserSignUp = functions.region("asia-east2").auth.user().onCreate((use
               order: userCount,
               enable: true,
               privilege: {
+                centeric: false,
+                uat: false,
+                finance: false,
+                probation: true,
                 scheduleModify: false,
                 leaveManage: false,
                 leaveApprove: false,
@@ -139,8 +143,11 @@ exports.newUserSignUp = functions.region("asia-east2").auth.user().onCreate((use
                 sal: 0,
                 ot: 0,
               },
-              rank: "tmp",
-              dateOfEntry: now,
+              employment: [{
+                dateOfEntry: now,
+                dateOfExit: null,
+                rank: "tmp",
+              }],
               defaultSchedule: [
                 "",
                 "",
@@ -296,6 +303,32 @@ exports.toggleFinance = functions.region("asia-east2").https.onCall(async (data,
   }).then(() => {
     console.log("USER: " +
     changeUserData.name + "[privilege.finance]:" + newPrivilege);
+    return newPrivilege;
+  });
+});
+
+exports.toggleEventManagement = functions.region("asia-east2").https.onCall(async (data, context) => {
+  const loginUserDoc = FireDB
+      .collection("users")
+      .doc(context.auth.uid);
+  const loginUser = await loginUserDoc.get();
+  const loginUserData = loginUser.data();
+  if (loginUserData.privilege.userManagement != true) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only user management admin can change user privilege",
+    );
+  }
+
+  const changeUserDoc = FireDB.collection("users").doc(data);
+  const changeUser = await changeUserDoc.get();
+  const changeUserData = changeUser.data();
+  const newPrivilege = changeUserData.privilege.eventManagement? false: true;
+  return await changeUserDoc.update({
+    "privilege.eventManagement": newPrivilege,
+  }).then(() => {
+    console.log("USER: " +
+    changeUserData.name + "[privilege.eventManagement]:" + newPrivilege);
     return newPrivilege;
   });
 });

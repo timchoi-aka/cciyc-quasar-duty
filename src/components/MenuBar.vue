@@ -36,6 +36,7 @@
     <q-route-tab to="/event/my-event" icon="public" label="我的活動" />
     <q-route-tab to="/event/active" icon="public" label="活動進行中" />
     <q-route-tab to="/event/search" icon="public" label="搜尋活動" />
+    <q-route-tab v-if="isSystemAdmin" to="/event/batch-apply" icon="add" label="活動報名" />
     <q-route-tab to="/event/add" icon="public" label="新增活動" />
     <q-route-tab to="/event/report" icon="public" label="報表" />
     <q-route-tab v-if="isSystemAdmin && !isTmp" to="/event/log" icon="public" label="系統記錄" />

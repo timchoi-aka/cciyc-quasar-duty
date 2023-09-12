@@ -56,7 +56,8 @@ import { usersCollection } from "boot/firebase";
 import EventDetail from "components/Event/EventDetail.vue";
 import { useQuasar } from "quasar";
 import { getDocs, query, where } from "@firebase/firestore";
-
+import { useRouter } from "vue-router"
+const router = useRouter()
 const UserList = ref([])
 const userQuery = query(usersCollection,
   where("privilege.systemAdmin", "==", false),
@@ -211,8 +212,13 @@ function submitSearch() {
 }
 
 function showDetail(evt, row, index) {
+  /*
   eventDetailDialog.value = true
   selectedEventID.value = row.c_act_code
+  */
+ router.push({
+  path: "/event/detail/" + row.c_act_code.trim(),
+ })
 }
 
 function clearSearch() {

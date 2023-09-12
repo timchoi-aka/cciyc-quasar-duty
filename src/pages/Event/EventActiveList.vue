@@ -42,7 +42,8 @@ import { useStore } from "vuex";
 import { useQuasar } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
 import EventDetail from "components/Event/EventDetail.vue";
-
+import { useRouter } from "vue-router"
+const router = useRouter()
 // variables
 const $store = useStore();
 const $q = useQuasar()
@@ -161,8 +162,12 @@ function getRowsNumberCount(filter) {
 }
 
 function showDetail(evt, row, index) {
-  eventDetailDialog.value = true
+  /* eventDetailDialog.value = true
   selectedEventID.value = row.c_act_code
+  */
+ router.push({
+  path: "/event/detail/" + row.c_act_code.trim(),
+ })
 }
 
 // UI Functions

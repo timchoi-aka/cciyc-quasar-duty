@@ -38,9 +38,10 @@
   <div class="row justify-center" style="border-bottom: 2px solid">
     <div class="row col-12 justify-center highlight_3 text-weight-bold">長洲鄉事委員會青年綜合服務中心 - 活動點名表</div>
     <div class="row col-12 q-my-sm">
-      <div class="col-4 normal">活動編號：<span style="border-bottom: 1px solid">{{ Event.c_act_code }}</span></div>
+      <div class="col-2 normal">活動編號：<span style="border-bottom: 1px solid">{{ Event.c_act_code }}</span></div>
       <div class="col-4 normal">活動名稱：<span style="border-bottom: 1px solid">{{ Event.c_act_name }}</span></div>
-      <div class="col-4 normal">負責同事：<span style="border-bottom: 1px solid">{{ Event.c_respon }}</span></div>
+      <div class="col-3 normal">性質：<span style="border-bottom: 1px solid">{{ Event.c_nature }}</span></div>
+      <div class="col-3 normal">負責同事：<span style="border-bottom: 1px solid">{{ Event.c_respon }}</span></div>
     </div>
     <div class="row col-12 q-my-sm">
       <div class="col-3 normal">開始日期：<span style="border-bottom: 1px solid">{{ Event.d_date_from }}</span></div>
@@ -173,8 +174,9 @@ export default {
 <style scoped>
 @media screen {
   .print-area {
-    width: 297mm; 
-    height: 210mm;
+    size: landscape;
+    width: 29.7cm;
+    height: 21cm;
     margin: 3mm; 
     overflow: hidden; 
     border: 1px solid;
@@ -190,7 +192,9 @@ export default {
 
 @media print {
   @page {
-    size: 297mm 210mm landscape;
+    size: landscape;
+    width: 29.7cm;
+    height: 21cm;
     margin: 3mm;
     overflow: hidden;
     scale: 100%;

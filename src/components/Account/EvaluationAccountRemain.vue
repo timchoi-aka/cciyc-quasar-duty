@@ -39,9 +39,8 @@
         <div class="col-12 text-right q-mt-sm row">
           <q-input class="col-12" type="text" label="支票抬頭" v-model="claim.recipient"/>
           <q-input class="col-12"
-            type="number" 
             label="金額" 
-            :rules="[(val) => val > 0 && val <= MaximumClaim || '預支為0或超過上限']"
+            :rules="[(val) => parseFloat(val) > 0 && parseFloat(val) <= MaximumClaim || '預支為0或超過上限']"
             v-model="claim.amount" 
             />
           <q-btn class="bg-warning text-white text-right q-mx-sm" flat label="取消" type="reset"/>

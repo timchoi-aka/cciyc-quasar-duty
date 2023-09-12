@@ -94,6 +94,10 @@ const routes = [
     component: () => import('src/pages/EventHome.vue'), meta: {requiresAuth: true},
     children: [
       {
+        path: 'detail/:id',
+        component: () => import('src/components/Event/EventDetail.vue'), meta: {requiresAuth: true},
+      },
+      {
         path: 'my-event',
         component: () => import('src/pages/Event/MyEvent.vue'), meta: {requiresAuth: true},
       },
@@ -104,6 +108,10 @@ const routes = [
       {
         path: 'search',
         component: () => import('src/pages/Event/EventSearch.vue'), meta: {requiresAuth: true},
+      },
+      {
+        path: 'batch-apply',
+        component: () => import('src/pages/Event/EventBatchApply.vue'), meta: {requiresAuth: true},
       },
       {
         path: 'add',

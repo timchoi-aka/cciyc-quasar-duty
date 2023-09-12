@@ -1,7 +1,7 @@
 <template>
   <!-- loading dialog -->
   <LoadingDialog :model-value="loading? 1: 0" message="處理中"/>
-
+    
   <!-- rowDetail modal -->
   <q-dialog v-if="$q.screen.lt.md"
     v-model="detailModal"
@@ -690,6 +690,24 @@
           </q-tr>
         </template>
       </q-table>
+
+      <div class="row col-12 q-mt-md items-start">
+        <div class="col-5 row">
+          <div class="col-2">總計：</div>
+          <div class="col-9" style="display: block; border-bottom: 1px solid;">${{ PFData.reduce((a,v) => a + v.total, 0) + MFData.reduce((a,v) => a + v.total, 0) + SFData.reduce((a,v) => a + v.total, 0) + RFData.reduce((a,v) => a + v.total, 0) + CFData.reduce((a,v) => a + v.total, 0) + NewMemberData.reduce((a,v) => a + v.total, 0) + RenewMemberData.reduce((a,v) => a + v.total, 0) }}</div>
+        </div>
+        <q-space/>
+        <div class="col-5 row">
+          <div class="col-12 row">
+            <div class="col-2">制表：</div>
+            <div class="col-9" style="display: block; border-bottom: 1px solid;">{{ username }}</div>
+          </div>
+          <div class="col-12 row q-mt-lg">
+            <div class="col-2">審核：</div>
+            <div class="col-9" style="display: block; border-bottom: 1px solid;">&nbsp;</div>
+          </div>
+        </div>
+      </div>
     </q-tab-panel>
   </q-tab-panels>
 </template>
@@ -699,6 +717,7 @@ import { computed, ref } from "vue";
 import { exportFile, date as qdate } from "quasar";
 import { useQuery } from "@vue/apollo-composable"
 import { gql } from "graphql-tag"
+import { useStore } from "vuex";
 import Receipt from "components/Account/Receipt.vue";
 import LoadingDialog from "components/LoadingDialog.vue"
 import Excel from "src/lib/exportExcel"
@@ -719,6 +738,7 @@ const showEventID = ref("")
 const showReceiptNo = ref("")
 const activeTab = ref("All")
 // const typeToggle = ref("PF")
+const $store = useStore();
 const staffNameMapping = {
   "胡麗嫦": "lswu",
   "何有永": "ywho",
@@ -966,12 +986,17 @@ const { result, loading, refetch} = useQuery(gql`
         {d_create: {"_gte" : qdate.formatDate(qdate.startOfDate(qdate.extractDate(reportStartDate.value, "YYYY/MM/DD"), "day"), "YYYY-MM-DDTHH:mm:ss")}},
         {d_create: {"_lte" : qdate.formatDate(qdate.endOfDate(qdate.extractDate(reportEndDate.value, "YYYY/MM/DD"), "day"), "YYYY-MM-DDTHH:mm:ss")}},
         reportEvent.value? {c_act_code: {"_eq": reportEvent.value}}:{},
-        reportStaff.value? {c_user_id: {"_eq": reportStaff.value.label in staffNameMapping? staffNameMapping[reportStaff.value.label]: reportStaff.value.label}}: {},
+        reportStaff.value? {c_user_id: {"_in": [
+          reportStaff.value.label in staffNameMapping? staffNameMapping[reportStaff.value.label]: reportStaff.value.label, 
+          reportStaff.value.label
+        ]
+        }}: {},
       ]
     }
   }));
 
 // computed
+const username = computed(() => $store.getters["userModule/getUsername"])
 const AllData = computed(() => result.value?.tbl_account??[])
 const ReceiptData = computed(() => AllData.value? AllData.value.filter((x) => !x.b_delete): [])
 const DeletedData = computed(() => AllData.value? AllData.value.filter((x) => x.b_delete): [])

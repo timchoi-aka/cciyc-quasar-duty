@@ -92,6 +92,7 @@
         </div>
         <q-separator class="q-my-md"/>
         <div class="col-12 text-body row justify-around q-py-none q-my-none">
+          <div class="col-12 highlight_2 q-mt-md row"><span class="col-2">備註：</span><span class="col-9" style="display: block; border-bottom: 1px solid;">{{ props.modelValue.remarks }}</span></div>
           <div class="col-12 highlight_2 q-mt-md">簽署</div>
           <div class="col-12 row">
             <div class="col-12 row q-my-md">

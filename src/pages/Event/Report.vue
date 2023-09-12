@@ -44,6 +44,9 @@
       </q-card-section>
       <q-card-section>
         <div id="printMe" class="print-area">
+          <div class="text-body1">開始日期：{{ reportStartDate }}</div>
+            <div class="text-body1">結束日期：{{ reportEndDate }}</div>
+          <div class="text-body1">開放節數：{{ Object.values(dutyTable).reduce((x,v) => x + (v.slot_a?1:0) + (v.slot_b?1:0) + (v.slot_c?1:0), 0) }} </div>
           <q-table
             dense
             flat
@@ -367,12 +370,14 @@ import Excel from "src/lib/exportExcel"
 import { getDocs, query, where } from "firebase/firestore";
 import print from "vue3-print-nb";
 import StaffSelectionMultiple from "components/Basic/StaffSelectionMultiple.vue";
+import { useRouter } from "vue-router"
 
 onMounted(() => {
   refreshSchedule(reportStartDate.value, reportEndDate.value)
 })
 
 // variables
+const router = useRouter()
 const reportStartDate = ref(qdate.formatDate(qdate.startOfDate(qdate.subtractFromDate(Date.now(), {month: 1}), 'month'), "YYYY/MM/DD"))
 const reportEndDate = ref(qdate.formatDate(qdate.endOfDate(qdate.subtractFromDate(Date.now(), {month: 1}), 'month'), "YYYY/MM/DD"))
 const detailModal = ref(false)
@@ -1019,8 +1024,11 @@ function tableFilter(rows, terms) {
 
 function rowDetail(evt, row, index) {
   if (evt.target.nodeName === 'TD') {
-    detailModal.value = true;
-    showEventID.value = row.c_act_code;
+    /* detailModal.value = true;
+    showEventID.value = row.c_act_code; */
+    router.push({
+      path: "/event/detail/" + row.c_act_code.trim()
+    })
   }
 }
 </script>
@@ -1046,6 +1054,8 @@ export default {
   .print-area { 
     margin: 30px;
     border: none;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .red {

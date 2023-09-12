@@ -108,6 +108,14 @@ export function getCenterIC(state) {
   }
 }
 
+export function getEventManagement(state) {
+  if (Object.keys(state.userProfile).length) {
+    return state.userProfile.privilege.eventManagement;
+  } else {
+    return null;
+  }
+}
+
 export function getDefaultSchedule(state) {
   if (Object.keys(state.userProfile).length) {
     return state.userProfile.defaultSchedule

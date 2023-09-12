@@ -59,6 +59,7 @@ export const EVENT_GET_ALL_ACTIVE = gql`
       c_group1
       c_group2
       c_acc_type
+      b_freeofcharge
     }
   }`
 
@@ -310,6 +311,7 @@ query EVENT_EVALUATION_BY_ACT_CODE($c_act_code: String!) {
     c_whojoin
     Event_to_Evaluation {
       attendance
+      remarks
       c_act_code
       eval_attend_headcount_children
       eval_attend_headcount_others

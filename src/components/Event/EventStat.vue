@@ -232,6 +232,7 @@ const serverStat = computed(() => EventStat.value?.tbl_act_session??[])
 const username = computed(() => $store.getters["userModule/getUsername"])
 const userProfileLogout = () => $store.dispatch("userModule/logout")
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
+const isEventManagement = computed(() => $store.getters["userModule/getEventManagement"])
 const deadline = computed(() => {
   let d = qdate.addToDate(new Date(), {hours: 8})
   if (d.getDate() > 10) return qdate.startOfDate(d, 'month')
@@ -297,7 +298,7 @@ function save() {
 
 function eventMonthValidation(val) {
   let d = qdate.extractDate(val, 'MM/YYYY')
-  if (!isCenterIC.value && d < deadline.value) {
+  if (!(isCenterIC.value || isEventManagement.value) && d < deadline.value) {
     errorDate.value = true
     return false
   }

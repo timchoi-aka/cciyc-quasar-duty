@@ -46,7 +46,7 @@
         <div class="col-6 q-my-md highlight_2">港幣：HK${{ props.data.amount }}</div>
         -->
         
-        <div class="col-7 q-my-lg highlight_4 row"><span class="col-3">負責職員簽署：</span><span class="col-6" style="display: block; border-bottom: 1px solid;">&nbsp;</span><span class="col-3">({{ Event.c_respon }})</span></div>
+        <div class="col-7 q-my-lg highlight_4 row no-wrap"><span class="col-3">負責職員簽署：</span><span class="col-6" style="display: block; border-bottom: 1px solid;">&nbsp;</span><span class="col-2">(&nbsp;</span>)</div>
         <div class="col-5 q-my-lg highlight_4 row"><span class="col-3">日期：</span><span class="col-8" style="display: block; border-bottom: 1px solid;">&nbsp;</span></div>
         <div class="col-7 q-my-lg highlight_4 row"><span class="col-3">中心主任簽署：</span><span class="col-8" style="display: block; border-bottom: 1px solid;">&nbsp;</span></div>
         <div class="col-5 q-my-lg highlight_4 row"><span class="col-3">日期：</span><span class="col-8" style="display: block; border-bottom: 1px solid;">&nbsp;</span></div>

@@ -1,8 +1,8 @@
 <template>
-  <q-btn v-if="!isFavourate" icon="favorite_outline" flat class="bg-primary text-white" @click="add">
+  <q-btn v-if="!isFavourate" icon="favorite_outline" flat class="bg-blue-10 text-white" @click="add">
     <q-tooltip class="bg-white text-primary">收藏</q-tooltip>
   </q-btn>
-  <q-btn v-else icon="favorite" flat class="bg-primary text-white" @click="remove">
+  <q-btn v-else icon="favorite" flat class="bg-blue-10 text-white" @click="remove">
     <q-tooltip class="bg-white text-primary">取消收藏</q-tooltip>
   </q-btn>
 </template>

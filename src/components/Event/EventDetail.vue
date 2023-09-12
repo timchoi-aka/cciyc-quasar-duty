@@ -1,16 +1,16 @@
 <template>
-  <q-card>
-    <q-tabs v-model="activeTab" inline-label align="left" class="bg-primary text-white">
+  <q-card square>
+    <q-tabs v-model="activeTab" inline-label align="left" class="bg-blue-10 text-white">
       <q-tab name="BasicInfo" icon="source" label="基本資料" />
       <q-tab v-if="!isFree" name="FeeSetting" icon="paid" label="費用設定" />
       <q-tab name="Apply" icon="approval" label="報名" />
       <q-tab name="Stat" icon="leaderboard" label="統計節數" />
       <q-tab name="PlanEvaluation" icon="summarize" label="計劃檢討" />
       <q-tab name="Attendance" icon="person_add" label="點名紙" />
-      <FavourateEvent :c_act_code="props.EventID" :username="username" />
-      <q-chip class="bg-blue-3" size="lg" :label="props.EventID + ' - ' + EventName"/>
+      <FavourateEvent :c_act_code="EventID" :username="username" />
+      <q-chip class="bg-blue-3" size="lg" :label="EventID + ' - ' + EventName"/>
       <q-space/>
-      <q-btn class="bg-primary text-white" flat icon="close" @click="confirmClose">
+      <q-btn class="bg-blue-10 text-white" flat icon="close" @click="confirmClose">
         <q-tooltip class="bg-white text-primary">關閉</q-tooltip>
       </q-btn>
     </q-tabs>
@@ -24,19 +24,19 @@
       transition-next="jump-up"
     >
       <q-tab-panel name="BasicInfo" class="q-ma-none q-pa-none"> 
-        <EventContent :c_act_code="props.EventID"/>
+        <EventContent :c_act_code="EventID"/>
       </q-tab-panel>
 
       <q-tab-panel name="FeeSetting" class="text-h6">
-        <EventFee :c_act_code="props.EventID"/>
+        <EventFee :c_act_code="EventID"/>
       </q-tab-panel>
 
       <q-tab-panel name="Apply" class="text-h6">
-        <EventApply :c_act_code="props.EventID"/>
+        <EventApply :c_act_code="EventID"/>
       </q-tab-panel>
 
       <q-tab-panel name="Stat">
-        <EventStat :c_act_code="props.EventID"/>
+        <EventStat :c_act_code="EventID"/>
       </q-tab-panel>
 
       <q-tab-panel name="PlanEvaluation">
@@ -63,10 +63,17 @@ import EventApply from "components/Event/EventApply.vue"
 import FavourateEvent from "components/Event/FavourateEvent.vue"
 import Attendance from "components/Event/Attendance.vue"
 import { useQuasar } from "quasar"
+import { useRouter, useRoute } from 'vue-router'
+const router = useRouter()
+const route = useRoute()
 // props
 const props = defineProps({
   EventID: String, 
 })
+
+const params = route.params.id;
+const EventID = computed(() => params? params.trim(): props.EventID.trim())
+
 const emits = defineEmits(["hideComponent"])
 // variables
 const $q = useQuasar()
@@ -82,13 +89,14 @@ query Detail_Event_by_pk($c_act_code: String!) {
     c_act_name
   }
 }`, () => ({
-  c_act_code: props.EventID.trim()
+  c_act_code: EventID.value
 }));
 
 // computed
 const username = computed(() => $store.getters["userModule/getUsername"])
 const isFree = computed(() => result.value? result.value.HTX_Event_by_pk.b_freeofcharge: false)
 const EventName = computed(() => result.value? result.value.HTX_Event_by_pk.c_act_name: '')
+
 
 function confirmClose() {
   $q.dialog({
@@ -97,6 +105,7 @@ function confirmClose() {
     persistent: true,
     cancel: true
   }).onOk(()=>{
+    router.go(-1)
     return emits("hideComponent")
   }).onCancel(() => {})
 }

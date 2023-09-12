@@ -248,6 +248,7 @@ import LoadingDialog from "components/LoadingDialog.vue"
 import dateUtil from "/src/lib/date.js"
 import { getDocs, query, where } from "@firebase/firestore"
 import EventSelection from "components/Event/EventSelection.vue"
+import { onBeforeRouteLeave, useRouter } from "vue-router"
 
 const token = ref()
 onMounted(async () => {
@@ -260,6 +261,7 @@ const props = defineProps({
 })
 
 // variables
+const router = useRouter()
 const $q = useQuasar()
 const $store = useStore();
 const editObject = ref({})
@@ -495,5 +497,20 @@ addEvent_Completed((result) => {
 // callback error
 addEvent_Error((error) => {
   notifyClientError(error)
+})
+
+onBeforeRouteLeave((to, from, next) => {
+  if(Object.keys(editObject.value).length > 0) {
+    $q.dialog({
+      title: "是否確認關閉？",
+      message: "所有未儲存的資料都會遺失！",
+      persistent: true,
+      cancel: true
+    }).onOk(()=>{
+      next()
+    }).onCancel(() => {})
+  } else {
+    next()
+  }
 })
 </script>

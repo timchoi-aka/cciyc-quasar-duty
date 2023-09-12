@@ -134,6 +134,7 @@
       <div class="col-2 q-my-sm">聯絡人電話: </div><span class="col-4" v-if="edit"><q-input filled type="text" v-model="editObject.partner_phone"/></span><span class="col-4" v-else>{{PlanEval.partner_phone}}</span>
       <div class="col-2 q-my-sm">導師: </div><span class="col-4" v-if="edit"><q-input filled type="text" v-model="editObject.tutor_name"/></span><span class="col-4" v-else>{{PlanEval.tutor_name}}</span>
       <div class="col-2 q-my-sm">導師電話: </div><span class="col-4" v-if="edit"><q-input filled type="text" v-model="editObject.tutor_phone"/></span><span class="col-4" v-else>{{PlanEval.tutor_phone}}</span>
+      <div class="col-2 q-my-sm">備註: </div><span class="col-10" v-if="edit"><q-input filled type="text" v-model="editObject.remarks"/></span><span class="col-10" v-else>{{PlanEval.remarks}}</span>
     </div>
     <q-splitter
       v-model="splitterModel"
@@ -768,6 +769,7 @@ function purifyRecord() {
   editObject.value.partner_phone = editObject.value.partner_phone? editObject.value.partner_phone.trim(): null
   editObject.value.tutor_name = editObject.value.tutor_name? editObject.value.tutor_name.trim(): null
   editObject.value.tutor_phone = editObject.value.tutor_phone? editObject.value.tutor_phone.trim(): null
+  editObject.value.remarks = editObject.value.remarks? editObject.value.remarks.trim(): null
 
   // plan
   editObject.value.plan_start_date = !editObject.value.plan_start_date? null: qdate.formatDate(editObject.value.plan_start_date, "YYYY-MM-DD")
@@ -928,6 +930,7 @@ function clonePlanValue() {
     partner_phone: PlanEval.value?.partner_phone??null,
     tutor_name: PlanEval.value?.tutor_name??null,
     tutor_phone: PlanEval.value?.tutor_phone??null,
+    remarks: PlanEval.value?.remarks??null,
     plan_attend_headcount_children: PlanEval.value?.plan_attend_headcount_children??0,
     plan_attend_headcount_others: PlanEval.value?.plan_attend_headcount_others??0,
     plan_attend_headcount_parent: PlanEval.value?.plan_attend_headcount_parent??0,

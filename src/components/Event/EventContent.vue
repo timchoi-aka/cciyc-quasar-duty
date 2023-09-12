@@ -53,13 +53,13 @@
         </q-btn>
       </q-chip>
       <div class="row q-gutter-lg q-ml-sm col-12 justify-start">
-        <span class="col-2 row">
+        <span class="col-auto row">
           <div class="col-12">活動編號:</div>
           <div class="col-12">{{props.c_act_code}}</div>
         </span>
-        <span class="col-9 row justify-start">
-          <div class="col-12 row"><span class="col-2">活動名稱(中文): </span><q-input v-if="edit" filled type="text" class="col-10 text-h6" v-model="editObject.c_act_name"/><span class="text-h6 col-10" v-else>{{Event.c_act_name}}</span></div>
-          <div class="col-12 row q-mt-sm"><span class="col-2">活動名稱(英文): </span><q-input class="col-10 text-h6" filled v-if="edit" type="text" v-model="editObject.c_act_nameen"/><span class="text-h6 col-10" v-else>{{Event.c_act_nameen}}</span></div>
+        <span class="col-grow row justify-start">
+          <div class="col-12 row"><span class="col-auto">活動名稱(中文): </span><q-input v-if="edit" filled type="text" class="col-grow text-h6" v-model="editObject.c_act_name"/><span class="text-h6 col-auto" v-else>{{Event.c_act_name}}</span></div>
+          <div class="col-12 row q-mt-sm"><span class="col-auto">活動名稱(英文): </span><q-input class="col-grow text-h6" filled v-if="edit" type="text" v-model="editObject.c_act_nameen"/><span class="text-h6 col-auto" v-else>{{Event.c_act_nameen}}</span></div>
         </span>
       </div>
     </q-card-section>
