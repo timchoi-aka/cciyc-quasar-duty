@@ -53,7 +53,7 @@ const selectedEventID = ref("")
 const eventDetailDialog = ref(false)
 
 // graphql subscriptions
-const { onResult: eventList, loading: loadingEvents, onError: EventListError } = useQuery(EVENT_GET_ALL_ACTIVE, {}, {pollInterval: 1000});
+const { onResult: eventList, loading: loadingEvents, onError: EventListError } = useQuery(EVENT_GET_ALL_ACTIVE, {}, {pollInterval: 5000});
 
 // computed variables
 const EventList = ref([])

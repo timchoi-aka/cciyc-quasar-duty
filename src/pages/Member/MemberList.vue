@@ -383,7 +383,7 @@ const udf1List = ref([
 ])
 
  // query - load graphql subscription on member list
-const { onResult: MemberGetAll, loading } = useQuery(MEMBER_GET_ALL, {}, {pollInterval: 1000});
+const { onResult: MemberGetAll, loading } = useQuery(MEMBER_GET_ALL, {}, {pollInterval: 5000});
 // const { members, loadMember, loading } = useMember(searchCriteria, displayOptions);
 
 /*

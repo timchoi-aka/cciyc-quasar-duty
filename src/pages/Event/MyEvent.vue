@@ -585,15 +585,15 @@ const { mutate: markHardCopyMutation, onDone: markHardCopyMutation_Completed, on
       log_id
     }
   }`)
-const { onResult: eventList, onError: eventList_Error, loading: loadingEventList } = useQuery(MY_EVENT_SEARCH, searchCondition.value, {pollInterval: 1000});
-const { onResult: coreEventList, onError: coreEventList_Error, loading: loadingCoreEventList } = useQuery(CORE_EVENT_SEARCH, coreEventCondition.value, {pollInterval: 1000});
+const { onResult: eventList, onError: eventList_Error, loading: loadingEventList } = useQuery(MY_EVENT_SEARCH, searchCondition.value, {pollInterval: 5000});
+const { onResult: coreEventList, onError: coreEventList_Error, loading: loadingCoreEventList } = useQuery(CORE_EVENT_SEARCH, coreEventCondition.value, {pollInterval: 5000});
 const { onResult: fav, onError: fav_onError, loading: loadingFav } = useQuery(MY_FAV, 
 () => ({
   username: username.value
 }), {
-  pollInterval: 1000
+  pollInterval: 5000
 });
-const { onResult: awaitApproval, loading: loadingAwaitApproval } = useQuery(EVALUATION_UNAPPROVED, {}, {pollInterval: 1000});
+const { onResult: awaitApproval, loading: loadingAwaitApproval } = useQuery(EVALUATION_UNAPPROVED, {}, {pollInterval: 5000});
 const { onResult: awaitApprovalPrepaidRecords, loading: loadingAwaitApprovalPrepaidRecords } = useQuery(gql`
 query GetUnapprovedPrepaid {
   Event_Prepaid(where: {approved: {_eq: false}, approve_date: {_is_null: true}}) {
@@ -605,7 +605,7 @@ query GetUnapprovedPrepaid {
     uuid
   }
 }`, {}, {
-  pollInterval: 1000
+  pollInterval: 5000
 })
 
 // computed

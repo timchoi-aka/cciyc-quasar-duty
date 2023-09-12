@@ -783,7 +783,7 @@ const { result, loading } = useQuery(gql`
       c_dest
     }
   }`, {}, {
-    pollInterval: 10000
+    pollInterval: 50000
   });
 
 const { result: os2result, loading: os2loading } = useQuery(gql`

@@ -264,7 +264,7 @@ const receiptListColumns = ref([
     b_delete
   }
 }`, searchCondition.value, {
-  pollInterval: 1000,
+  pollInterval: 5000,
 });
       
 // computed  

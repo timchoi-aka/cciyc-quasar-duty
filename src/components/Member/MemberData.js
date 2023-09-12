@@ -153,7 +153,7 @@ export default function useMember(param, displayOptions) {
         ...RelationInfo @include(if: $loadRelation)
       }
     }`, defaultParam, {
-      pollInterval: 1000,
+      pollInterval: 5000,
     })
 
   MemberInfo_Result((result) => {

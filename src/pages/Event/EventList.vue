@@ -43,7 +43,7 @@ const userProfileLogout = () => $store.dispatch("userModule/logout")
 const initialData = ref()
 
 // load graphql subscription on event list
-const { onResult: eventCount } = useQuery(EVENT_GET_COUNT, {}, {pollInterval: 1000});
+const { onResult: eventCount } = useQuery(EVENT_GET_COUNT, {}, {pollInterval: 5000});
 const { result: eventList, loading, onError: EventGetAllError } = useQuery(EVENT_GET_ALL);
 
 // computed variables

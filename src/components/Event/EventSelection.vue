@@ -62,7 +62,7 @@ const { onResult: NameResult } = useQuery(gql`
   }`
   , {},
   {
-    pollInterval: 1000
+    pollInterval: 5000
   })
 
 // callback

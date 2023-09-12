@@ -92,7 +92,7 @@ const { onResult: getEvaluationResult } = useQuery(gql`
   }`, () => ({
     eval_uuid: props.eval_uuid,
   }), {
-    pollInterval: 1000,
+    pollInterval: 5000,
   });
 
 const { onResult: getPrepaidResult } = useQuery(gql`
@@ -118,7 +118,7 @@ const { onResult: getPrepaidResult } = useQuery(gql`
   }`, () => ({
     eval_uuid: props.eval_uuid,
   }), {
-    pollInterval: 1000,
+    pollInterval: 5000,
   });
 
 const { mutate: addRemainRequest, onDone: addRemainRequest_Completed } = useMutation(gql`

@@ -92,7 +92,7 @@ const { onResult: getEvaluationResult } = useQuery(gql`
   }`, () => ({
     eval_uuid: props.eval_uuid,
   }), {
-    pollInterval: 1000,
+    pollInterval: 5000,
   });
 
 const { result: getPrepaidResult, onError: getPrepaidResult_Error, refetch: getPrepaidResult_Refetch } = useQuery(gql`

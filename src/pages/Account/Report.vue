@@ -91,7 +91,7 @@
       </div>
       <div class="col-12 row hideOnScreen justify-around q-py-none q-my-none">
         <div class="col-auto q-mx-md items-end">範圍：{{ reportStartDate }} - {{  reportEndDate }}</div>
-        <div v-if="reportEvent" class="col-auto q-mx-md items-end">活動編號：{{ qdate.formatDate(reportEvent, "YYYY年M月D日") }}</div>
+        <div v-if="reportEvent" class="col-auto q-mx-md items-end">活動編號：{{ reportEvent }}</div>
         <div v-if="reportStaff" class="col-auto q-mx-md items-end">負責人：{{ reportStaff.label }}</div>
       </div>
       <div class="col-12 row hideOnScreen justify-end items-end q-py-none q-my-none">列印日期：{{ qdate.formatDate(new Date(), "YYYY年M月D日") }}</div>
@@ -168,7 +168,7 @@
       </div>
       <div class="col-12 row hideOnScreen justify-around q-py-none q-my-none">
         <div class="col-auto q-mx-md items-end">範圍：{{ reportStartDate }} - {{  reportEndDate }}</div>
-        <div v-if="reportEvent" class="col-auto q-mx-md items-end">活動編號：{{ qdate.formatDate(reportEvent, "YYYY年M月D日") }}</div>
+        <div v-if="reportEvent" class="col-auto q-mx-md items-end">活動編號：{{ reportEvent }}</div>
         <div v-if="reportStaff" class="col-auto q-mx-md items-end">負責人：{{ reportStaff.label }}</div>
       </div>
       <div class="col-12 row hideOnScreen justify-end items-end q-py-none q-my-none">列印日期：{{ qdate.formatDate(new Date(), "YYYY年M月D日") }}</div>
@@ -237,7 +237,7 @@
       </div>
       <div class="col-12 row hideOnScreen justify-around q-py-none q-my-none">
         <div class="col-auto q-mx-md items-end">範圍：{{ reportStartDate }} - {{  reportEndDate }}</div>
-        <div v-if="reportEvent" class="col-auto q-mx-md items-end">活動編號：{{ qdate.formatDate(reportEvent, "YYYY年M月D日") }}</div>
+        <div v-if="reportEvent" class="col-auto q-mx-md items-end">活動編號：{{ reportEvent }}</div>
         <div v-if="reportStaff" class="col-auto q-mx-md items-end">負責人：{{ reportStaff.label }}</div>
       </div>
       <div class="col-12 row hideOnScreen justify-end items-end q-py-none q-my-none">列印日期：{{ qdate.formatDate(new Date(), "YYYY年M月D日") }}</div>

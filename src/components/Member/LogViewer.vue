@@ -34,7 +34,7 @@ const {onResult: data} = useQuery(gql`
   () => ({
     module: props.module
   }), {
-    pollInterval: 1000
+    pollInterval: 5000
   })
 
 // computed

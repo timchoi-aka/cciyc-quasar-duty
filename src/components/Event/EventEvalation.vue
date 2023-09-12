@@ -268,28 +268,28 @@
             </div>
           </div>
 
-          <div class="row fit q-pa-sm" style="border: 1px solid">
-            <q-chip class="fit" square label="成效檢討"/>
-              <div class="col-2 q-my-sm">檢討方法: </div>
-              <div class="col-10" v-if="edit">
-                <q-input filled type="text" v-model="editObject.objective_review_method"/>
-              </div>
-              <div class="col-10" v-else>{{PlanEval.objective_review_method}}</div>
+          <div class="row fit q-pa-sm items-stretch" style="border: 1px solid">
+            <q-chip class="col-12" square label="成效檢討"/>
+            <div class="col-2 q-my-sm">檢討方法: </div>
+            <div class="col-10 q-my-sm" v-if="edit">
+              <q-input filled type="text" v-model="editObject.objective_review_method"/>
+            </div>
+            <div class="col-10 q-my-sm" v-else>{{PlanEval.objective_review_method}}</div>
             <div class="col-2 q-my-sm">目標達成: </div>
-              <div class="col-10" v-if="edit">
-                <q-input type="text" filled v-model="editObject.objective_achieved"/>
+              <div class="col-10 q-my-sm" v-if="edit">
+                <q-input class="q-my-sm" type="text" filled v-model="editObject.objective_achieved"/>
               </div>
-              <div class="col-10" v-else>{{PlanEval.objective_achieved}}</div>
+              <div class="col-10 q-my-sm" v-else>{{PlanEval.objective_achieved}}</div>
             <div class="col-2 q-my-sm">原因: </div>
-              <div class="col-10" v-if="edit">
-                <q-input type="text" filled v-model="editObject.objective_achieved_reason"/>
+              <div class="col-10 q-my-sm" v-if="edit">
+                <q-input class="q-my-sm" type="textarea" filled v-model="editObject.objective_achieved_reason"/>
               </div>
-              <div class="col-10" v-else>{{PlanEval.objective_achieved_reason}}</div>
+              <div class="col-10 q-my-sm" v-else>{{PlanEval.objective_achieved_reason}}</div>
             <div class="col-2 q-my-sm">跟進/建議: </div>
-              <div class="col-10" v-if="edit">
-                <q-input type="textarea" filled v-model="editObject.objective_followup"/>
+              <div class="col-10 q-my-sm" v-if="edit">
+                <q-input class="q-my-sm" type="textarea" filled v-model="editObject.objective_followup"/>
               </div>
-              <div class="col-10" v-else>{{PlanEval.objective_followup}}</div>
+              <div class="col-10 q-my-sm" v-else>{{PlanEval.objective_followup}}</div>
           </div>
         </template>
     </q-splitter>

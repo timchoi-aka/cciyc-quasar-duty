@@ -105,7 +105,7 @@ const { onResult: onApplyResult, onError: EventApplyError } = useQuery(
   () => ({
     c_act_code: props.c_act_code,
   }), {
-    pollInterval: 1000
+    pollInterval: 5000
   });
 */
 

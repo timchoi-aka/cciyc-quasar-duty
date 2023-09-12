@@ -459,7 +459,7 @@ const { onResult: MemberResult, loading, refetch } = useQuery(gql`
         uuid
       }
     }
-  }`, {}, { pollInterval: 10000});
+  }`, {}, { pollInterval: 50000});
 
 // computed
 const MemberData = ref([])

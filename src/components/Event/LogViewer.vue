@@ -18,7 +18,7 @@ const {result: data} = useQuery(GET_LOG,
     module: "活動系統"
   },
   {
-    pollInterval: 1000
+    pollInterval: 5000
   })
 
 const logdata = computed(() => data.value?.Log??[])

@@ -24,6 +24,30 @@
     </q-card>
   </q-dialog>
   
+
+  <!-- print participant model -->
+  <q-dialog 
+    v-model="printParticipantModel"
+    full-width
+    full-height
+    transition-show="slide-up"
+    transition-hide="slide-down"
+    >
+    <q-card style="min-width: 70vw; width: 70vw; max-width: 70vw;">
+      <q-card-section class="bg-primary text-white row">
+        <q-space/>
+        <q-btn flat icon="close" v-close-popup>
+          <q-tooltip class="bg-white text-primary">
+            <div>關閉</div>
+          </q-tooltip>
+        </q-btn>
+      </q-card-section>
+      <q-card-section>
+        <EventParticipantPrint :EventID="props.c_act_code"/>
+      </q-card-section>
+    </q-card>
+  </q-dialog>
+
   <!-- validation -->
   <q-dialog
     v-model="validateDisplay"
@@ -84,6 +108,11 @@
       <q-btn type="submit" label="儲存" dense icon="save" class="q-ml-md bg-primary text-white" size="lg" v-if="(ApplicationQueue.length > 0)"/>
       <q-btn type="reset" label="取消" dense icon="replay" class="q-ml-md bg-negative text-white" size="lg" v-if="(ApplicationQueue.length > 0)"/>
       <div class="q-ml-md">剩餘名額：{{(parseInt(Event.i_quota_max) - ApplyHistory.filter(v => !v.b_refund).length)}}</div>
+      <q-btn flat icon="print" class="bg-white text-primary" @click="printParticipantModel=true">
+        <q-tooltip>
+          <div class="text-white">列印參加者名單</div>
+        </q-tooltip>
+      </q-btn>
     </div>
     <div v-if="(ApplicationQueue.length > 0)">
       <div class="row bg-blue-2">
@@ -131,7 +160,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, defineAsyncComponent } from "vue";
 import { useStore } from "vuex";
 import { useQuasar, date as qdate} from "quasar";
 import { EVENT_APPLY_BY_ACT_CODE, EVENT_BY_PK, EVENT_FEE_BY_ACT_CODE } from "/src/graphQueries/Event/query.js"
@@ -141,6 +170,10 @@ import { useQuery, useMutation, useSubscription } from "@vue/apollo-composable"
 import Receipt from "components/Account/Receipt.vue"
 import MemberInfoByID from "src/components/Member/MemberInfoByID.vue"
 import MemberSelection from "components/Member/MemberSelection.vue"
+
+const EventParticipantPrint = defineAsyncComponent(() =>
+  import('components/Event/Participants.vue')
+)
 
 // props
 const props = defineProps({
@@ -156,6 +189,7 @@ const ApplicationQueue = ref([])
 const validateDisplay = ref(false)
 const unregisterDisplay = ref(false)
 const unregisterItem = ref({})
+const printParticipantModel = ref(false)
 
 // query
 const { result: EventData, onError: EventDataError } = useQuery(
