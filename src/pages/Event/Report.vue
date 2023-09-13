@@ -92,6 +92,7 @@
     <q-tab name="OS3" icon="pin_drop" label="OS3/4" />
     <q-tab name="OS5" icon="pin_drop" label="OS5" />
     <q-tab name="C(iii)" icon="pin_drop" label="C(iii)" />
+    <q-tab name="MonthlyReport" icon="pin_drop" label="每月工作報告" />
     <q-space/>
     <q-btn aligh="right" icon="print" class="bg-primary text-white" flat v-print="printObj">
       <q-tooltip class="bg-white text-primary">
@@ -113,7 +114,7 @@
       <div class="printOnly text-h5">長洲鄉事委員會青年綜合服務中心 - 活動報表</div>
       <div class="printOnly text-h5">{{ qdate.formatDate(reportStartDate, 'YYYY年M月D日') }} -  {{ qdate.formatDate(reportEndDate, 'YYYY年M月D日')}}</div>
       <div class="printOnly text-h5">全部資料</div>
-
+      
       <q-table
         dense
         flat
@@ -348,6 +349,53 @@
             no-caps
             @click="exportExcel(OS5Data, os5Columns, 'OS5_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
           />
+        </template>
+      </q-table>
+    </q-tab-panel>
+
+    <!-- 每月工作報告 -->
+    <q-tab-panel name="MonthlyReport" class="q-ma-none q-pa-sm text-body1"> 
+      <div class="printOnly text-h5">長洲鄉事委員會青年綜合服務中心 - 活動報表</div>
+      <div class="printOnly text-h5">{{ qdate.formatDate(reportStartDate, 'YYYY年M月D日') }} -  {{ qdate.formatDate(reportEndDate, 'YYYY年M月D日')}}</div>
+      <div class="printOnly text-h5">每月工作報告</div>
+      
+      <q-table
+        dense
+        flat
+        wrap-cells
+        title="每月工作報告"
+        :rows="AllDataWithSession"
+        :columns="os2Columns"
+        :pagination="defaultPagination"
+        color="primary"
+        row-key="c_act_code"
+        :loading="os2loading"
+        no-data-label="沒有資料"
+        @row-click="rowDetail"
+      >
+        <!-- export button -->
+        <template v-slot:top-right>
+          <q-btn
+            class="screenOnly"
+            color="primary"
+            icon-right="archive"
+            label="匯出Excel"
+            no-caps
+            @click="exportExcel(AllDataWithSession, os2Columns, '每月工作報告_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
+          />
+        </template>
+        
+        <!-- bottom total row -->
+        <template v-slot:bottom-row="props">
+          <q-tr>
+            <q-td
+              v-for="index in props.cols.length"
+              class="text-center bg-grey-2"
+              style="font-size: 1vw"
+            >
+              {{ AllDataWithSession.reduce((x,v) => is.number(v[props.cols[index-1].name]) ? x + v[props.cols[index-1].name]: '', 0) }}
+            </q-td>
+          </q-tr>
         </template>
       </q-table>
     </q-tab-panel>
@@ -828,6 +876,34 @@ const EventData = computed(() => {
   return res
 })
 
+const AllDataWithSession = computed(() => {
+  let res = []
+  if (os2result.value) {
+    os2result.value.tbl_act_session.forEach((x) => {
+      if ((!staffSearchFilter.value || 
+        (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label).includes(x.Session_to_Event.c_respon.trim())) ||
+        (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label)) == '全部')
+        ) {
+        res.push({
+          d_act: x.d_act,
+          i_number: x.i_number,
+          i_people_count: x.i_people_count,
+          c_act_code: x.Session_to_Event.c_act_code? x.Session_to_Event.c_act_code.trim(): "",
+          c_act_name: x.Session_to_Event.c_act_name? x.Session_to_Event.c_act_name.trim(): "",
+          c_dest: x.Session_to_Event.c_dest? x.Session_to_Event.c_dest.trim(): "",
+          c_group1: x.Session_to_Event.c_group1? x.Session_to_Event.c_group1.trim(): "",
+          c_group2: x.Session_to_Event.c_group2? x.Session_to_Event.c_group2.trim(): "",
+          c_naure: x.Session_to_Event.c_nature? x.Session_to_Event.c_nature.trim(): "",
+          c_respon: x.Session_to_Event.c_respon? x.Session_to_Event.c_respon.trim(): "",
+          c_type: x.Session_to_Event.c_type? x.Session_to_Event.c_type.trim(): "",
+          c_status: x.Session_to_Event.c_status? x.Session_to_Event.c_status.trim(): "",
+        })
+      }
+    })
+  }
+  return res
+})
+
 const OS2Data = computed(() => {
   let res = []
   if (os2result.value) {
@@ -859,6 +935,7 @@ const OS2Data = computed(() => {
   }
   return res
 })
+
 const OS3Data = computed(() => { //os2result.value? os2result.value.tbl_act_session.filter((x) => os3natures.includes(x.Session_to_Event.c_nature.trim())): [])
   let res = []
   if (os2result.value) {

@@ -291,9 +291,11 @@ export default {
     overflow: hidden;
     scale: 50%;
   }
+  
   .print-area { 
     border: none;
   }
+  
   .highlight_1 {
     font-size: 1.2rem;
   }

@@ -4,8 +4,8 @@
       <LoadingDialog message="處理中"/>
     </q-dialog>
     
-    <q-btn icon="print" flat class="bg-primary text-white col-shrink" v-print="printObj" label="列印"/>
-    <div id="printMe" class="print-area q-mx-md">
+    <q-btn icon="print" flat class="bg-primary text-white col-shrink" v-print="printParticipants" label="列印"/>
+    <div id="printParticipants" class="print-area q-mx-md">
       <div class="row justify-center" style="border-bottom: 2px solid">
         <div class="row col-12 justify-center highlight_3 text-weight-bold">長洲鄉事委員會青年綜合服務中心 - 活動參加者名單</div>
         <div class="row col-12 q-my-sm">
@@ -69,8 +69,8 @@
   const waitingAsync = computed(() => awaitServerResponse.value > 0)
   const $q = useQuasar()
   const $store = useStore();
-  const printObj = ref({
-    id: "printMe",
+  const printParticipants = ref({
+    id: "printParticipants",
     preview: false,
     previewTitle: "列印預覽",
     popTitle: "點名紙",
@@ -137,7 +137,7 @@
   
   @media print {
     @page {
-      size: portrait !important;
+      size: portrait;
       width: 21cm;
       /* height: 21cm; */
       margin: 3mm;
