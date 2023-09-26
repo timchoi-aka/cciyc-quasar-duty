@@ -255,4 +255,3 @@ function confirmOTRemoveByDocid(docid) {
 }
 </script>
 
-<style scoped></style>

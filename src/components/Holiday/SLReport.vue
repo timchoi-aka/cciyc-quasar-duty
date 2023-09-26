@@ -348,7 +348,7 @@ getDoc(leaveConfig).then((leaveDoc) => {
 })
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 @media screen {
   .table {
     border: 1px solid black;

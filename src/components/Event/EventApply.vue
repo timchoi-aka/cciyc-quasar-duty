@@ -15,13 +15,13 @@
     v-model="printReceiptDisplay"
     persistent
     full-height
+    style="min-width: 40vw; width: 40vw; max-width: 40vw;"
     transition-show="slide-up"
     transition-hide="slide-down"
-    class="q-pa-none"
     >
-    <q-card style="min-width: 70vw; width: 70vw; max-width: 70vw;">
+    <!-- <q-card style="min-width: 70vw; width: 70vw; max-width: 70vw;">-->
       <Receipt :c_receipt_no="printReceiptNumber"/>
-    </q-card>
+    <!--</q-card>-->
   </q-dialog>
   
 

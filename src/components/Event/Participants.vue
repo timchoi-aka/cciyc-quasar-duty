@@ -109,20 +109,18 @@
   import print from "vue3-print-nb";
   
   export default {
-    name: "PrintReceipt",
+    name: "PrintParticipants",
     directives: {
       print,
     },
   }
   </script>
   
-  <style scoped>
+  <style lang="scss" scoped>
   @media screen {
     .print-area {
-      size: landscape;
-      width: 29.7cm;
-      height: 21cm;
       margin: 3mm; 
+      padding: 3mm;
       overflow: hidden; 
       border: 1px solid;
     }
@@ -137,19 +135,20 @@
   
   @media print {
     @page {
-      size: portrait;
-      width: 21cm;
-      /* height: 21cm; */
-      margin: 3mm;
+      size: A4 landscape !important;
+      page-orientation: upright;
+      margin: none;
+      /* margin: 3mm;
       overflow: hidden;
-      scale: 100%;
+      scale: 100%; */
     }
     .print-area { 
       border: none;
+      margin: none;
     }
   
     .highlight_3 {
-      font-size: 0.7rem;
+      font-size: 0.6rem;
     }
     .normal {
       font-size: 0.4rem;

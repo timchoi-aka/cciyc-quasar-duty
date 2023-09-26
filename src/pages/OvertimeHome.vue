@@ -89,4 +89,3 @@ dashboardListener.value = onSnapshot(doc(FireDB, "dashboard", "notification"), (
 })
 </script>
 
-<style scoped></style>

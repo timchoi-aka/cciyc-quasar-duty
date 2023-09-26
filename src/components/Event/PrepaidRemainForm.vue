@@ -10,7 +10,7 @@
       </q-btn>
     </div>
     
-    <div id="printVoucher" class="print-area bg-white items-start">
+    <div id="printRemain" class="print-area bg-white items-start">
       <div class="row col-12 justify-center">
         <div class="row col-12 justify-center text-bold q-my-none highlight_1">長洲鄉事委員會青年綜合服務中心</div>
         <div class="row col-12 justify-center text-bold q-my-none highlight_3">CHEUNG CHAU RURAL COMMITTEE INTEGRATED YOUTH CENTRE</div>
@@ -46,7 +46,7 @@
         <div class="col-6 q-my-md highlight_2">港幣：HK${{ props.data.amount }}</div>
         -->
         
-        <div class="col-7 q-my-lg highlight_4 row no-wrap"><span class="col-3">負責職員簽署：</span><span class="col-6" style="display: block; border-bottom: 1px solid;">&nbsp;</span><span class="col-2">(&nbsp;</span>)</div>
+        <div class="col-7 q-my-lg highlight_4 row no-wrap"><span class="col-3">負責職員簽署：</span><span class="col-8" style="display: block; border-bottom: 1px solid;">&nbsp;</span></div>
         <div class="col-5 q-my-lg highlight_4 row"><span class="col-3">日期：</span><span class="col-8" style="display: block; border-bottom: 1px solid;">&nbsp;</span></div>
         <div class="col-7 q-my-lg highlight_4 row"><span class="col-3">中心主任簽署：</span><span class="col-8" style="display: block; border-bottom: 1px solid;">&nbsp;</span></div>
         <div class="col-5 q-my-lg highlight_4 row"><span class="col-3">日期：</span><span class="col-8" style="display: block; border-bottom: 1px solid;">&nbsp;</span></div>
@@ -126,7 +126,7 @@ const Event = computed(() => EventEvaluation.value?.HTX_Event_by_pk??[])
 const ExpenseTotal = computed(() => EvaluationResult.value? EvaluationResult.value.Event_Evaluation_Account.reduce((a,v) => a + v.amount, 0): 0)
 
 const printObj = ref({
-  id: "printVoucher",
+  id: "printRemain",
   preview: false,
   previewTitle: "列印預覽", // The title of the preview window. The default is 打印预览
   popTitle: "領款書",
@@ -202,14 +202,14 @@ function convertToChinese(number) {
 import print from "vue3-print-nb";
 
 export default {
-  name: "PrintVoucher",
+  name: "PrintRemain",
   directives: {
     print,
   },
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 @media screen and (min-width: 600px) {
   .header {
     background-color: lightgrey;
@@ -289,7 +289,7 @@ export default {
   }
 
   @page {
-    size: portrait;
+    size: a4 portrait !important;
     margin: 0;
     overflow: hidden;
     scale: 100%;

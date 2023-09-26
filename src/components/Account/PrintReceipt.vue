@@ -16,8 +16,14 @@
         @row-click="(event, row, index) => ReceiptNo = row.c_receipt_no"
         />
     </div>
-    <div v-if="ReceiptNo" :class="['q-ma-md-none', 'q-pa-md-none', 'bg-grey-3', 'justify-center', $q.screen.lt.md? 'col-12': 'col-5']">
-      <Receipt :c_receipt_no="ReceiptNo"/>
+    <div v-if="ReceiptNo" :class="['q-ma-md-none', 'q-pa-md-none', 'justify-center', $q.screen.lt.md? 'col-12': 'col-5']">
+      <q-card
+        flat
+        class="q-pa-none flex"
+        style="min-height: 100%; height: 100%;" 
+        >
+        <Receipt :c_receipt_no="ReceiptNo"/>
+      </q-card>
     </div>
   </div>
 </template>

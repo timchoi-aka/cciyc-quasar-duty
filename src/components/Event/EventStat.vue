@@ -19,6 +19,7 @@
           <q-btn v-if="eventMonthValidation(props.row.d_act)" icon="delete" class="text-negative" flat @click="deleteRow(props.row.d_act, props.row.inCenter)"/>
         </q-td>
         <q-td key="inCenter" :props="props">
+          <!--
           <q-icon v-if="props.row.inCenter" color="positive" name="check">
             <q-popup-edit v-if="eventMonthValidation(props.row.d_act)" filled v-model="props.row.inCenter" title="中心舉行" auto-save v-slot="scope">
               <q-toggle v-model="scope.value"/>
@@ -29,6 +30,18 @@
               <q-toggle v-model="scope.value"/>
             </q-popup-edit>  
           </q-icon>
+          -->
+          <q-btn-toggle
+            rounded
+            push
+            v-if="eventMonthValidation(props.row.d_act)"
+            v-model="props.row.inCenter"
+            toggle-color="primary"
+            :options="[
+              {label: '是', value: true},
+              {label: '否', value: false},
+            ]"
+          />
         </q-td>
         <!-- error-message="未能新增/修改舊記錄"
               :error="isPastDeadline" -->
@@ -252,7 +265,7 @@ function addRow() {
     i_people_count_b: 0,
     i_number_c: 0,
     i_people_count_c: 0,
-    inCenter: true,
+    inCenter: null,
   })
 }
 
@@ -265,10 +278,29 @@ function save() {
       "action": "修改活動統計數據: " + props.c_act_code + "。新資料:" + JSON.stringify(StatData.value, null, 2)
     })
     
+    let inCenterSuccess = true
+    let dActSuccess = true
     StatData.value.forEach((data) => {
       delete data["__typename"]
+      if (data.inCenter == null) {
+        inCenterSuccess = false
+      }
+
+      if (data.d_act == "") {
+        dActSuccess = false
+      }
     })
     
+    if (inCenterSuccess == false) {
+      $q.notify({message: "必須輸入 - 中心舉行", icon: 'error', color: 'negative', textColor: 'white' })
+      return
+    }
+
+    if (dActSuccess == false) {
+      $q.notify({message: "必須輸入 - 月份", icon: 'error', color: 'negative', textColor: 'white' })
+      return
+    }
+
     updateEventStat({
       objects: StatData.value,
       logObject: logObject.value,

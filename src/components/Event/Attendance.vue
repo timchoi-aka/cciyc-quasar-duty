@@ -5,7 +5,7 @@
   </q-dialog>
   
   <q-btn icon="print" flat class="bg-primary text-white col-shrink" v-print="printObj" label="列印"/>
-  <div id="printMe" class="print-area q-mx-md">
+  <div id="printAttendance" class="print-area q-mx-md">
     <div class="row justify-center" style="border-bottom: 2px solid">
       <div class="row col-12 justify-center highlight_3 text-weight-bold">長洲鄉事委員會青年綜合服務中心 - 活動點名表</div>
       <div class="row col-12 q-my-sm">
@@ -96,7 +96,7 @@ const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const $q = useQuasar()
 const $store = useStore();
 const printObj = ref({
-  id: "printMe",
+  id: "printAttendance",
   preview: false,
   previewTitle: "列印預覽",
   popTitle: "點名紙",
@@ -135,14 +135,14 @@ EventData((result) => {
 import print from "vue3-print-nb";
 
 export default {
-  name: "PrintReceipt",
+  name: "PrintAttendance",
   directives: {
     print,
   },
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 @media screen {
   .print-area {
     size: landscape;

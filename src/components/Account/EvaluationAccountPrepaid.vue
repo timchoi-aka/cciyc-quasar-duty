@@ -395,7 +395,7 @@ approvePrepaid_Completed((result) => {
 })
 </script>
 
-<style>
+<style lang="scss" scoped>
 .prepaid-item:hover {
   border: 1px solid black;
 }

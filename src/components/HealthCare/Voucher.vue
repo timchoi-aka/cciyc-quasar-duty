@@ -156,7 +156,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 @media screen and (min-width: 600px) {
   .print-area {
     width: 80%;

@@ -7,7 +7,7 @@
       </q-card-section>
       <!-- printout -->
       
-      <q-card-section id="printMe" class="print-area">
+      <q-card-section id="printPlan" class="print-area">
         <div class="col-12 row items-center">
           <img src="~assets/cciyc_logo.svg" style="width: 90px; height: 90px;" class="col-1"/>
           <div class="print-title col-7 row q-mx-md items-center">
@@ -121,7 +121,7 @@
   import { ref, computed } from "vue"
   import { is } from "quasar"
   const printObj = ref({
-    id: "printMe",
+    id: "printPlan",
     preview: false,
   })
   
@@ -135,7 +135,7 @@
   const IncomeAccount = computed(() => {
     if (props.modelValue && props.modelValue.Event_to_Evaluation[0].Evaluation_to_Account) {
       let res = []
-      props.modelValue.Event_to_Evaluation[0].Evaluation_to_Account.filter((v) => v.type.trim() == "收入").forEach((e) => {
+      props.modelValue.Event_to_Evaluation[0].Evaluation_to_Account.filter((v) => v.type.trim() == "收入" && v.planeval.trim() == "計劃").forEach((e) => {
         let i = res.findIndex((element) => element.description == e.description.trim())
         if (i < 0) {
           res.push({
@@ -153,7 +153,7 @@
   const ExpenseAccount = computed(() => {
     if (props.modelValue && props.modelValue.Event_to_Evaluation[0].Evaluation_to_Account) {
       let res = []
-      props.modelValue.Event_to_Evaluation[0].Evaluation_to_Account.filter((v) => v.type.trim() == "支出").forEach((e) => {
+      props.modelValue.Event_to_Evaluation[0].Evaluation_to_Account.filter((v) => v.type.trim() == "支出" && v.planeval.trim() == "計劃").forEach((e) => {
         let i = res.findIndex((element) => element.description == e.description.trim())
         if (i < 0) {
           res.push({
@@ -195,7 +195,7 @@
   import print from "vue3-print-nb";
   
   export default {
-    name: "PrintPlanEvaluation",
+    name: "PrintPlan",
     directives: {
       print,
     },
@@ -231,7 +231,7 @@
   
   @media print {
     @page {
-      size: landscape;
+      size: A4 portrait !important;
     }
     
     div {

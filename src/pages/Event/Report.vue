@@ -42,7 +42,7 @@
   <div class="row justify-center">
     <!-- <div class="row items-center q-mx-md"><q-btn label="上月" @click="reportDate = qdate.formatDate(qdate.endOfDate(qdate.subtractFromDate(reportDate, {month: 1}), 'month'), 'YYYY/MM/DD')" class="bg-primary text-white items-center"/></div>-->
     <div>
-      <q-input filled v-model="reportStartDate" mask="date" :rules="['date']">
+      <q-input filled debounce="1000" v-model="reportStartDate" mask="date" :rules="['date']">
         <template v-slot:prepend>
           開始日期：
         </template>
@@ -62,7 +62,7 @@
 
 
     <div>
-      <q-input filled v-model="reportEndDate" mask="date" :rules="['date']">
+      <q-input filled debounce="1000" v-model="reportEndDate" mask="date" :rules="['date']">
         <template v-slot:prepend>
           完結日期：
         </template>
@@ -94,7 +94,7 @@
     <q-tab name="C(iii)" icon="pin_drop" label="C(iii)" />
     <q-tab name="MonthlyReport" icon="pin_drop" label="每月工作報告" />
     <q-space/>
-    <q-btn aligh="right" icon="print" class="bg-primary text-white" flat v-print="printObj">
+    <q-btn align="right" icon="print" class="bg-primary text-white" flat v-print="printObj">
       <q-tooltip class="bg-white text-primary">
         列印報表
       </q-tooltip>
@@ -102,7 +102,7 @@
   </q-tabs>
   
   <q-tab-panels
-    id="printMe"
+    id="printReport"
     class="print-area"
     v-model="activeTab"
     animated
@@ -422,7 +422,7 @@ onMounted(() => {
 })
 
 const printObj = ref({
-  id: "printMe",
+  id: "printReport",
   preview: false,
 })
 
@@ -909,6 +909,7 @@ const OS2Data = computed(() => {
   if (os2result.value) {
     os2result.value.tbl_act_session.forEach((x) => {
       let result = false
+      /* ignore location in event information because it may be changed later 
       let locations = x.Session_to_Event.c_dest? x.Session_to_Event.c_dest.split(/[,、]+/): []
       
       locations.forEach((loc) => {
@@ -918,8 +919,9 @@ const OS2Data = computed(() => {
       
       if (x.Session_to_Event.c_group1 && x.Session_to_Event.c_group1.trim().includes('中心設施')) result = true
       if (x.Session_to_Event.c_type && x.Session_to_Event.c_type.trim().includes('偶到')) result = true
-      
-      if (result && x.inCenter && 
+      */
+      //if (result && x.inCenter && 
+      if (x.inCenter && 
         (!staffSearchFilter.value || 
         (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label).includes(x.Session_to_Event.c_respon.trim())) ||
         (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label)) == '全部')
@@ -1090,7 +1092,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 @media screen {
   .printOnly {
     display: none;

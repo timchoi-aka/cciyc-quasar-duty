@@ -172,7 +172,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 @media screen {
   #printme {
     display: none;

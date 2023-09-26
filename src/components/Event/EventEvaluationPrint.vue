@@ -1,13 +1,13 @@
 <template>
   <q-card>
-    <q-card-section class="bg-primary text-white row">
+    <q-card-section class="bg-primary text-white row hideOnPrint">
       <q-btn icon="print" flat v-print="printObj"/>
       <q-space/>
       <q-btn icon="close" flat align="right" v-close-popup/>
     </q-card-section>
     <!-- printout -->
     
-    <q-card-section id="printMe" class="print-area">
+    <q-card-section id="printEvaluation" class="print-area q-my-none">
       <div class="col-12 row items-center">
         <img src="~assets/cciyc_logo.svg" style="width: 90px; height: 90px;" class="col-1"/>
         <div class="print-title col-7 row q-mx-md items-center">
@@ -49,6 +49,7 @@
         <div class="col-2">跟進/建議：</div><div class="col-10" style="border-bottom: 1px solid;">{{props.modelValue.Event_to_Evaluation[0].objective_followup}}</div>
       </div>
       <q-separator class="q-mt-md"/>
+      
       <div class="col-12 text-body row justify-around q-py-none q-my-none">
         <div class="col-12 highlight_2 q-mt-md">財務狀況</div>
         <q-table 
@@ -130,7 +131,7 @@ import print from "vue3-print-nb";
 import { ref, computed } from "vue"
 import { is } from "quasar"
 const printObj = ref({
-  id: "printMe",
+  id: "printEvaluation",
   preview: false,
 })
 
@@ -144,7 +145,7 @@ const props = defineProps({
 const IncomeAccount = computed(() => {
   if (props.modelValue && props.modelValue.Event_to_Evaluation[0].Evaluation_to_Account) {
     let res = []
-    props.modelValue.Event_to_Evaluation[0].Evaluation_to_Account.filter((v) => v.type.trim() == "收入").forEach((e) => {
+    props.modelValue.Event_to_Evaluation[0].Evaluation_to_Account.filter((v) => v.type.trim() == "收入" && v.planeval.trim() == "檢討").forEach((e) => {
       let i = res.findIndex((element) => element.description == e.description.trim())
       if (i < 0) {
         res.push({
@@ -162,7 +163,7 @@ const IncomeAccount = computed(() => {
 const ExpenseAccount = computed(() => {
   if (props.modelValue && props.modelValue.Event_to_Evaluation[0].Evaluation_to_Account) {
     let res = []
-    props.modelValue.Event_to_Evaluation[0].Evaluation_to_Account.filter((v) => v.type.trim() == "支出").forEach((e) => {
+    props.modelValue.Event_to_Evaluation[0].Evaluation_to_Account.filter((v) => v.type.trim() == "支出" && v.planeval.trim() == "檢討").forEach((e) => {
       let i = res.findIndex((element) => element.description == e.description.trim())
       if (i < 0) {
         res.push({
@@ -214,7 +215,7 @@ const columns = [
 import print from "vue3-print-nb";
 
 export default {
-  name: "PrintPlanEvaluation",
+  name: "PrintEvaluation",
   directives: {
     print,
   },
@@ -245,7 +246,7 @@ export default {
 
 @media print {
   @page {
-    size: landscape;
+    size: A4 portrait !important;
   }
   
   div {

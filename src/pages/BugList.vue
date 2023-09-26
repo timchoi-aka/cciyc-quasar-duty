@@ -154,5 +154,4 @@ function updateStatus(val) {
 }
 </script>
 
-<style scoped></style>
   

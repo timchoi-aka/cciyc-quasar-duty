@@ -69,7 +69,7 @@ function changeRenderMonth(month) {
 }
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .home {
   margin-top: 30px;
 }

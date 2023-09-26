@@ -910,5 +910,3 @@ getDocs(userQuery).then((userDoc) => {
   });
 })
 </script>
-
-<style scoped></style>

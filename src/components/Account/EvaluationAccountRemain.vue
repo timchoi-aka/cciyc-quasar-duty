@@ -245,6 +245,7 @@ function acceptClaim(uuid) {
     options: {
       type: 'radio',
       model: 'payment_method',
+      isValid: val => val === 'cash' || val === 'cheque',
       items: [
         { label: '現金', value: 'cash' },
         { label: '支票', value: 'cheque' }
@@ -253,6 +254,7 @@ function acceptClaim(uuid) {
     cancel: true,
     persistent: true
   }).onOk((data) => {
+    console.log("data: " + JSON.stringify(data));
     let logObject = {
       "username": username.value,
       "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
@@ -353,7 +355,7 @@ approveClaim_Completed((result) => {
 })
 </script>
 
-<style>
+<style lang="scss" scoped>
 .prepaid-item:hover {
   border: 1px solid black;
 }

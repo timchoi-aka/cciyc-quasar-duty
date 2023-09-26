@@ -1,5 +1,6 @@
 {
   "@quasar/apollo": {
     "typescript": false
-  }
+  },
+  "@quasar/qpdfviewer": {}
 }

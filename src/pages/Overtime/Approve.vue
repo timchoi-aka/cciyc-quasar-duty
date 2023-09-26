@@ -841,4 +841,3 @@ function refreshHolidayTable() {
 }
 </script>
 
-<style scoped></style>
