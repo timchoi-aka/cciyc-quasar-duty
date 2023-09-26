@@ -24,8 +24,8 @@
         </q-td>
       </template>
 
-      <!-- top row -->
-      <template v-slot:top-row="props" v-if="tableData.length > 0">
+      <!-- bottom row -->
+      <template v-slot:bottom-row="props" v-if="tableData.length > 0">
         <q-tr>
           <q-td
             v-for="index in props.cols.length"
@@ -37,8 +37,8 @@
         </q-tr>
       </template>
 
-      <!-- bottom row -->
-      <template v-slot:bottom-row="props" v-if="tableData.length > 0">
+      <!-- top row -->
+      <template v-slot:top-row="props" v-if="tableData.length > 0">
         <q-tr>
           <q-td
             v-for="index in props.cols.length"
@@ -126,6 +126,7 @@ const typeMap = ref({
 const defaultPagination = ref({
   rowsPerPage: 40,
   sortBy: "date",
+  descending: true,
 })
   
 // functions
