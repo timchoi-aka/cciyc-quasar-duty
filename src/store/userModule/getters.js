@@ -108,6 +108,14 @@ export function getCenterIC(state) {
   }
 }
 
+export function getHealthApprove(state) {
+  if (Object.keys(state.userProfile).length) {
+    return state.userProfile.privilege.healthapprove;
+  } else {
+    return null;
+  }
+}
+
 export function getEventManagement(state) {
   if (Object.keys(state.userProfile).length) {
     return state.userProfile.privilege.eventManagement;

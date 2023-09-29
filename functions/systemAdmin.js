@@ -7,11 +7,13 @@ exports.testNotify = functions.region("asia-east2").https.onCall(async (data, co
   // context.app will be undefined if the request doesn't include an
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -43,11 +45,13 @@ exports.setCustomClaims = functions.region("asia-east2").https.onCall(async (dat
   // context.app will be undefined if the request doesn't include an
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -91,11 +95,13 @@ exports.setCustomClaims = functions.region("asia-east2").https.onCall(async (dat
 exports.addSALDeadline = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -141,11 +147,13 @@ exports.addSALDeadline = functions.region("asia-east2").https.onCall(async (data
 exports.migrateOTBalance = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -193,11 +201,13 @@ exports.migrateOTBalance = functions.region("asia-east2").https.onCall(async (da
 exports.upgradeUserObject = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -322,11 +332,13 @@ exports.upgradeUserObject = functions.region("asia-east2").https.onCall(async (d
 exports.findDanglingHoliday = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -386,11 +398,13 @@ exports.findDanglingHoliday = functions.region("asia-east2").https.onCall(async 
 exports.addNewRank = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -426,11 +440,13 @@ exports.addNewRank = functions.region("asia-east2").https.onCall(async (data, co
 exports.updateLeaveBalance = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   const DEBUG = false;
   // only authenticated users can run this
@@ -545,11 +561,13 @@ exports.updateLeaveBalance = functions.region("asia-east2").https.onCall(async (
 exports.calculateLeaveBalance = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -650,11 +668,12 @@ exports.calculateLeaveBalance = functions.region("asia-east2").https.onCall(asyn
 exports.upgradePrivilege = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -716,11 +735,11 @@ exports.upgradePrivilege = functions.region("asia-east2").https.onCall(async (da
 exports.attachHoliday = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
-  if (context.app == undefined) {
+  /*if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -766,11 +785,11 @@ exports.attachHoliday = functions.region("asia-east2").https.onCall(async (data,
 exports.deleteNaNSchedule = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
-  if (context.app == undefined) {
+  /*if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -822,11 +841,11 @@ exports.deleteNaNSchedule = functions.region("asia-east2").https.onCall(async (d
 exports.housekeepSchedule = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
-  if (context.app == undefined) {
+  /*if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -905,11 +924,11 @@ exports.housekeepSchedule = functions.region("asia-east2").https.onCall(async (d
 exports.mergeActivity = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
-  if (context.app == undefined) {
+  /*if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -961,11 +980,11 @@ exports.mergeActivity = functions.region("asia-east2").https.onCall(async (data,
 exports.moveLeaveConfig = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
-  if (context.app == undefined) {
+  /*if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
 
   const oldLeaveConfigDoc = FireDB.collection("leave").doc("config");
   const oldLeaveConfig = await oldLeaveConfigDoc.get();
@@ -980,11 +999,11 @@ exports.moveLeaveConfig = functions.region("asia-east2").https.onCall(async (dat
 exports.adminFunc = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
-  if (context.app == undefined) {
+  /*if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
 
   const oldUID = data.oldUID;
   const newUID = data.newUID;
@@ -1066,11 +1085,11 @@ exports.adminFunc = functions.region("asia-east2").https.onCall(async (data, con
 exports.convertNewSystem = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
-  if (context.app == undefined) {
+  /*if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
 
   const oldUID = data.oldUID;
   const newUID = data.newUID;
@@ -1147,11 +1166,11 @@ exports.addBugReport = functions.region("asia-east2").https.onCall(async (data, 
   // context.app will be undefined if the request doesn't include an
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
-  if (context.app == undefined) {
+  /*if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -1171,11 +1190,11 @@ exports.updateBugStatus = functions.region("asia-east2").https.onCall(async (dat
   // context.app will be undefined if the request doesn't include an
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
-  if (context.app == undefined) {
+  /*if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
 
   // only authenticated users can run this
   if (!context.auth) {

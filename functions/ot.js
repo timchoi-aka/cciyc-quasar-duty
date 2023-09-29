@@ -7,11 +7,13 @@ const {publishTopic} = require("./notification");
 exports.addLeave = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
@@ -43,11 +45,13 @@ exports.addLeave = functions.region("asia-east2").https.onCall(async (data, cont
 exports.addLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
@@ -103,7 +107,7 @@ exports.approveLeave = functions.region("asia-east2").https.onCall(async (data, 
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } 
 
   const docid = data.docid;
   const remarks = data.remarks;
@@ -162,11 +166,13 @@ exports.approveLeave = functions.region("asia-east2").https.onCall(async (data, 
 exports.approveLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
@@ -300,11 +306,13 @@ exports.rejectLeave = functions.region("asia-east2").https.onCall(async (data, c
 exports.rejectLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
@@ -402,11 +410,13 @@ exports.delLeave = functions.region("asia-east2").https.onCall(async (data, cont
 exports.delLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
@@ -507,11 +517,13 @@ exports.modifyLeave = functions.region("asia-east2").https.onCall(async (data, c
 exports.modifyLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(

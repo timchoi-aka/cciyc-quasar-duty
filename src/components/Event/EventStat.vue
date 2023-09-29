@@ -8,46 +8,42 @@
     >
     <!-- add data button -->
     <template v-slot:top>
-      <q-btn color="primary" icon="add" :disable="loading" label="新增" @click="addRow" />
-      <q-btn class="q-ml-md" color="positive" icon="save" :disable="(JSON.stringify(StatData) == JSON.stringify(serverStat))" label="儲存" @click="save" />
+      <q-btn v-if="!isEdit" color="primary" icon="add" :disable="loading" label="新增" @click="addRow" />
+      <q-btn class="q-mx-md" v-if="JSON.stringify(StatData) != JSON.stringify(originalData)" color="warning" icon="undo" :disable="loading" label="全部重置" @click="refetch" />
     </template>
 
     <!-- popup edit on body cell -->
     <template v-slot:body="props">
       <q-tr :props="props">
         <q-td key="action" :props="props">
-          <q-btn v-if="eventMonthValidation(props.row.d_act)" icon="delete" class="text-negative" flat @click="deleteRow(props.row.d_act, props.row.inCenter)"/>
+          <q-btn dense v-if="eventMonthValidation(props.row.d_act) && (props.row.isEdit && isEdit)" icon="delete" class="text-negative" flat @click="deleteRow(props.row.s_GUID)"/>
+          <q-btn dense v-if="props.row.s_GUID && (!props.row.isEdit && !isEdit)" icon="edit" class="text-primary" flat @click="modifyRow(props.row.s_GUID)"/>
+          <q-btn dense v-if="props.row.isEdit" icon="save" class="text-primary" flat @click="saveRow(props.row.s_GUID)"/>
+          <q-btn dense v-if="props.row.isEdit" icon="undo" class="text-warning" flat @click="restoreRow(props.row.s_GUID)"/>
         </q-td>
         <q-td key="inCenter" :props="props">
-          <!--
-          <q-icon v-if="props.row.inCenter" color="positive" name="check">
-            <q-popup-edit v-if="eventMonthValidation(props.row.d_act)" filled v-model="props.row.inCenter" title="中心舉行" auto-save v-slot="scope">
-              <q-toggle v-model="scope.value"/>
-            </q-popup-edit>  
-          </q-icon>
-          <q-icon v-else color="negative" name="cancel">
-            <q-popup-edit v-if="eventMonthValidation(props.row.d_act)" filled v-model="props.row.inCenter" title="中心舉行" auto-save v-slot="scope">
-              <q-toggle v-model="scope.value"/>
-            </q-popup-edit>  
-          </q-icon>
-          -->
-          <q-btn-toggle
-            rounded
-            push
-            v-if="eventMonthValidation(props.row.d_act)"
-            v-model="props.row.inCenter"
-            toggle-color="primary"
-            :options="[
-              {label: '是', value: true},
-              {label: '否', value: false},
-            ]"
-          />
+          <div v-if="props.row.isEdit">
+            <q-btn-toggle
+              rounded
+              push
+              v-if="eventMonthValidation(props.row.d_act)"
+              v-model="props.row.inCenter"
+              toggle-color="primary"
+              :options="[
+                {label: '是', value: true},
+                {label: '否', value: false},
+              ]"
+            />
+          </div>
+          <div v-else>
+            <q-icon v-if="props.row.inCenter == null" name="question_mark" color="warning"/>
+            <q-icon v-if="props.row.inCenter == true" name="check" color="positive"/>
+            <q-icon v-if="props.row.inCenter == false" name="close" color="negative"/>
+          </div>
         </q-td>
-        <!-- error-message="未能新增/修改舊記錄"
-              :error="isPastDeadline" -->
         <q-td key="d_act" :props="props">
           {{ props.row.d_act }}
-          <q-popup-edit v-if="!props.row.d_act" filled v-model="props.row.d_act" title="活動月份" 
+          <q-popup-edit v-if="!props.row.d_act && props.row.isEdit" filled v-model="props.row.d_act" title="活動月份" 
             auto-save v-slot="scope"
             :validate="eventMonthValidation"
             @hide="eventMonthValidation"
@@ -61,49 +57,49 @@
         </q-td>
         <q-td key="i_number" :props="props">
           {{ props.row.i_number }}
-          <q-popup-edit v-if="eventMonthValidation(props.row.d_act)" v-model.number="props.row.i_number" auto-save v-slot="scope">
+          <q-popup-edit v-if="eventMonthValidation(props.row.d_act) && props.row.isEdit" v-model.number="props.row.i_number" auto-save v-slot="scope">
             <q-input type="number" v-model.number="scope.value" dense autofocus @keyup.enter="scope.set" />
           </q-popup-edit>
         </q-td>
         <q-td key="i_people_count" :props="props">
           {{ props.row.i_people_count }}
-          <q-popup-edit v-if="eventMonthValidation(props.row.d_act)" v-model.number="props.row.i_people_count" auto-save v-slot="scope">
+          <q-popup-edit v-if="eventMonthValidation(props.row.d_act) && props.row.isEdit" v-model.number="props.row.i_people_count" auto-save v-slot="scope">
             <q-input type="number" v-model.number="scope.value" dense autofocus @keyup.enter="scope.set" />
           </q-popup-edit>
         </q-td>
         <q-td key="i_number_a" :props="props">
           {{ props.row.i_number_a }}
-          <q-popup-edit v-if="eventMonthValidation(props.row.d_act)" v-model.number="props.row.i_number_a" auto-save v-slot="scope">
+          <q-popup-edit v-if="eventMonthValidation(props.row.d_act) && props.row.isEdit" v-model.number="props.row.i_number_a" auto-save v-slot="scope">
             <q-input type="number" v-model.number="scope.value" dense autofocus @keyup.enter="scope.set" />
           </q-popup-edit>
         </q-td>
         <q-td key="i_people_count_a" :props="props">
           {{ props.row.i_people_count_a }}
-          <q-popup-edit v-if="eventMonthValidation(props.row.d_act)" v-model.number="props.row.i_people_count_a" auto-save v-slot="scope">
+          <q-popup-edit v-if="eventMonthValidation(props.row.d_act) && props.row.isEdit" v-model.number="props.row.i_people_count_a" auto-save v-slot="scope">
             <q-input type="number" v-model.number="scope.value" dense autofocus @keyup.enter="scope.set" />
           </q-popup-edit>
         </q-td>
         <q-td key="i_number_b" :props="props">
           {{ props.row.i_number_b }}
-          <q-popup-edit v-if="eventMonthValidation(props.row.d_act)" v-model.number="props.row.i_number_b" auto-save v-slot="scope">
+          <q-popup-edit v-if="eventMonthValidation(props.row.d_act) && props.row.isEdit" v-model.number="props.row.i_number_b" auto-save v-slot="scope">
             <q-input type="number" v-model.number="scope.value" dense autofocus @keyup.enter="scope.set" />
           </q-popup-edit>
         </q-td>
         <q-td key="i_people_count_b" :props="props">
           {{ props.row.i_people_count_b }}
-          <q-popup-edit v-if="eventMonthValidation(props.row.d_act)" v-model.number="props.row.i_people_count_b" auto-save v-slot="scope">
+          <q-popup-edit v-if="eventMonthValidation(props.row.d_act) && props.row.isEdit" v-model.number="props.row.i_people_count_b" auto-save v-slot="scope">
             <q-input type="number" v-model.number="scope.value" dense autofocus @keyup.enter="scope.set" />
           </q-popup-edit>
         </q-td>
         <q-td key="i_number_c" :props="props">
           {{ props.row.i_number_c }}
-          <q-popup-edit v-if="eventMonthValidation(props.row.d_act)" v-model.number="props.row.i_number_c" auto-save v-slot="scope">
+          <q-popup-edit v-if="eventMonthValidation(props.row.d_act) && props.row.isEdit" v-model.number="props.row.i_number_c" auto-save v-slot="scope">
             <q-input type="number" v-model.number="scope.value" dense autofocus @keyup.enter="scope.set" />
           </q-popup-edit>
         </q-td>
         <q-td key="i_people_count_c" :props="props">
           {{ props.row.i_people_count_c }}
-          <q-popup-edit v-if="eventMonthValidation(props.row.d_act)" v-model.number="props.row.i_people_count_c" auto-save v-slot="scope">
+          <q-popup-edit v-if="eventMonthValidation(props.row.d_act) && props.row.isEdit" v-model.number="props.row.i_people_count_c" auto-save v-slot="scope">
             <q-input type="number" v-model.number="scope.value" dense autofocus @keyup.enter="scope.set" />
           </q-popup-edit>
         </q-td>
@@ -115,7 +111,7 @@
 <script setup>
 import { computed, ref } from "vue";
 import { useStore } from "vuex";
-import { date as qdate, useQuasar} from "quasar";
+import { date as qdate, useQuasar, uid} from "quasar";
 import { EVENT_STAT_BY_PK } from "/src/graphQueries/Event/query.js"
 import { UPDATE_EVENT_STAT_BY_PK, DELETE_EVENT_STAT } from "/src/graphQueries/Event/mutation.js"
 import { useQuery, useMutation } from "@vue/apollo-composable"
@@ -129,17 +125,18 @@ const props = defineProps({
 const $q = useQuasar()
 const $store = useStore();
 const StatData = ref([])
-const deleteData = ref([])
 const errorDate = ref(false)
 const errorMessageDate = ref("未能新增/修改舊記錄")
+const originalData = ref([])
+const tempData = ref({})
 
 const statTableColumn = ref([
   {
     name: "action",
     label: "動作",
     field: "action",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
+    style: "border-top: 1px solid; text-align: center; min-width: 10%; width: 10%; max-width: 10%;",
+    headerStyle: "text-align: center; min-width: 10%; width: 10%; max-width: 10%;",
     headerClasses: "bg-grey-2",
   },
   {
@@ -230,7 +227,7 @@ const pagination = ref({
 })
 
 // query
-const { result: EventStat, onError: EventStatError, loading, refetch, onResult } = useQuery(
+const { onResult, onError: EventStatError, loading, refetch } = useQuery(
   EVENT_STAT_BY_PK,
   () => ({
     c_act_code: props.c_act_code
@@ -240,8 +237,21 @@ const { result: EventStat, onError: EventStatError, loading, refetch, onResult }
 const { mutate: updateEventStat, onDone: updateEventStat_Completed, onError: updateEventStat_Error } = useMutation(UPDATE_EVENT_STAT_BY_PK)
 const { mutate: deleteEventStat, onDone: deleteEventStat_Completed, onError: deleteEventStat_Error } = useMutation(DELETE_EVENT_STAT)
 
+onResult((result) => {
+  let res = []
+  if (result.data) {
+    res = JSON.parse(JSON.stringify(result.data.tbl_act_session))
+  }
+  if (res.length > 0) {
+    for (let i = 0; i < res.length; i++) {
+      delete res[i]["__typename"]
+    }  
+    originalData.value = JSON.parse(JSON.stringify(res))
+    StatData.value = JSON.parse(JSON.stringify(res))
+  }
+})
+
 // computed
-const serverStat = computed(() => EventStat.value?.tbl_act_session??[])
 const username = computed(() => $store.getters["userModule/getUsername"])
 const userProfileLogout = () => $store.dispatch("userModule/logout")
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
@@ -250,6 +260,11 @@ const deadline = computed(() => {
   let d = qdate.addToDate(new Date(), {hours: 8})
   if (d.getDate() > 10) return qdate.startOfDate(d, 'month')
   else return qdate.startOfDate(qdate.subtractFromDate(d, {month: 1}), 'month')
+})
+const isEdit = computed(() => {
+  if (StatData.value.length > 0) 
+    return StatData.value.filter((x) => x.isEdit).length > 0
+  return false
 })
 
 // functions
@@ -266,66 +281,53 @@ function addRow() {
     i_number_c: 0,
     i_people_count_c: 0,
     inCenter: null,
+    isEdit: true,
   })
 }
 
-function save() {
-  if (StatData.value.length > 0) {
-    const logObject = ref({
+function saveRow(s_GUID) {
+  let i = StatData.value.findIndex((element) => element.s_GUID == s_GUID)
+
+  // cleanup
+  const data = JSON.parse(JSON.stringify(StatData.value[i]))
+  delete data.isEdit
+  let j = originalData.value.findIndex((element) => element.s_GUID == s_GUID)
+
+  // error validation
+  if (data.inCenter == null) {
+    $q.notify({message: "必須輸入 - 中心舉行", icon: 'error', color: 'negative', textColor: 'white' })
+    return
+  }
+
+  if (data.d_act == "") {
+    $q.notify({message: "必須輸入 - 月份", icon: 'error', color: 'negative', textColor: 'white' })
+    return
+  }
+
+  // edit existing row
+  let logObject = ref(null)
+  if (s_GUID) {
+    logObject = ref({
       "username": username,
       "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
       "module": "活動系統",
-      "action": "修改活動統計數據: " + props.c_act_code + "。新資料:" + JSON.stringify(StatData.value, null, 2)
+      "action": "修改活動統計數據: " + props.c_act_code + "舊資料:" + JSON.stringify(originalData.value[j], null, 2) + "。新資料:" + JSON.stringify(StatData.value[i], null, 2)
     })
-    
-    let inCenterSuccess = true
-    let dActSuccess = true
-    StatData.value.forEach((data) => {
-      delete data["__typename"]
-      if (data.inCenter == null) {
-        inCenterSuccess = false
-      }
-
-      if (data.d_act == "") {
-        dActSuccess = false
-      }
-    })
-    
-    if (inCenterSuccess == false) {
-      $q.notify({message: "必須輸入 - 中心舉行", icon: 'error', color: 'negative', textColor: 'white' })
-      return
-    }
-
-    if (dActSuccess == false) {
-      $q.notify({message: "必須輸入 - 月份", icon: 'error', color: 'negative', textColor: 'white' })
-      return
-    }
-
-    updateEventStat({
-      objects: StatData.value,
-      logObject: logObject.value,
-    })
-  }
-
-  if (deleteData.value.length > 0) {
-    deleteData.value.forEach((data) => {
-      delete data["__typename"]
-    })
-
-    const logObject = ref({
+  } else { // new entry
+    logObject = ref({
       "username": username,
       "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
       "module": "活動系統",
-      "action": "刪除活動統計數據: " + props.c_act_code + "。刪除資料:" + JSON.stringify(deleteData.value, null, 2)
+      "action": "新增活動統計數據: " + props.c_act_code + "。新資料:" + JSON.stringify(StatData.value[i], null, 2)
     })
-
-    deleteEventStat({
-      delete_dAct: deleteData.value.map(a => a.d_act),
-      delete_cActCode: props.c_act_code,
-      delete_inCenter: deleteData.value.map(a => a.inCenter),
-      logObject: logObject.value,
-    })
+    data.s_GUID = uid()
   }
+
+  // perform actual update
+  updateEventStat({
+    objects: data,
+    logObject: logObject.value,
+  })
 }
 
 function eventMonthValidation(val) {
@@ -338,16 +340,62 @@ function eventMonthValidation(val) {
   return true
 }
 
-function deleteRow(d_act, inCenter) {
-  let i = StatData.value.findIndex((element) => element.d_act == d_act && element.inCenter == inCenter)
-  deleteData.value.push(StatData.value[i])
-  StatData.value.splice(i, 1)
+function deleteRow(s_GUID) {
+  let index = StatData.value.findIndex((element) => element.s_GUID == s_GUID);
+  if (s_GUID) {
+    $q.dialog({
+      title: '<div class="bg-negative text-white q-pa-sm q-ma-none text-center">刪除統計記錄？</div>',
+      message: "<div class='text-body1 q-py-xs'>月份：" + StatData.value[index].d_act + "</div>",
+      html: true,
+      cancel: true,
+      persistent: true,
+      ok: {
+        label: "確認",
+        textColor: "white",
+        color: "primary"
+      },
+      cancel: {
+        label: "取消",
+        textColor: "white",
+        color: "warning",
+      }
+    }).onOk(() => {
+      const logObject = ref({
+        "username": username,
+        "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+        "module": "活動系統",
+        "action": "刪除活動統計數據: " + props.c_act_code + "。刪除資料:" + JSON.stringify(StatData.value[index], null, 2)
+      })
+
+      deleteEventStat({
+        delete_dAct: StatData.value[index].d_act,
+        delete_cActCode: props.c_act_code,
+        delete_inCenter: StatData.value[index].inCenter,
+        logObject: logObject.value,
+      })
+    })
+  } else {
+    StatData.value.splice(index, 1)
+  }
+}
+
+function modifyRow(s_GUID) {
+  let i = StatData.value.findIndex((element) => element.s_GUID == s_GUID)
+  tempData.value = JSON.parse(JSON.stringify(StatData.value[i]))
+  StatData.value[i].isEdit = true
+}
+
+function restoreRow(s_GUID) {
+  let i = StatData.value.findIndex((element) => element.s_GUID == s_GUID)
+  if (s_GUID)
+    StatData.value[i] = tempData.value
+  else StatData.value.splice(i, 1)
 }
 
 // UI functions
 function notifyClientError(error) {
-  $q.notify({ message: "系統錯誤，請重新載入." });
-  console.error("error", error);
+  $q.notify({ message: "資料錯誤或重覆，請重新輸入." });
+  refetch()
 }
 
 function notifyClientSuccess(result) {
@@ -371,15 +419,11 @@ deleteEventStat_Error((error) => {
 })
 
 updateEventStat_Completed((result) => {
+  refetch()
   notifyClientSuccess(result.data.insert_tbl_act_session.returning.c_act_code)
 })
 
 deleteEventStat_Completed((result) => {
-  deleteData.value = []
   notifyClientSuccess(props.c_act_code)
-})
-
-onResult((result) => {
-  StatData.value = result.data? JSON.parse(JSON.stringify(result.data.tbl_act_session)): []  
 })
 </script>

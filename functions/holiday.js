@@ -11,11 +11,12 @@ const slotMap = {
 exports.getPublicHoliday = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } 
 
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
@@ -37,11 +38,13 @@ exports.getPublicHoliday = functions.region("asia-east2").https.onCall(async (da
 exports.delLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
@@ -87,11 +90,13 @@ exports.delLeaveByDocid = functions.region("asia-east2").https.onCall(async (dat
 exports.approveLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   const runUser = await FireDB.collection("users").doc(context.auth.uid).get();
   const runUserData = runUser.data();
@@ -209,11 +214,13 @@ exports.approveLeaveByDocid = functions.region("asia-east2").https.onCall(async 
 exports.modifyLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
@@ -329,11 +336,13 @@ exports.modifyLeaveByDocid = functions.region("asia-east2").https.onCall(async (
 exports.rejectLeaveByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   const user = await FireDB.collection("users").doc(context.auth.uid).get();
   const userData = user.data();
@@ -602,11 +611,13 @@ exports.addLeave = functions.region("asia-east2").https.onCall(async (data, cont
 exports.migrateALBalance = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   // only authenticated users can run this
   if (!context.auth) {

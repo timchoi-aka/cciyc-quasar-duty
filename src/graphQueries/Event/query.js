@@ -195,6 +195,7 @@ query EVENT_STAT_BY_PK($c_act_code: String) {
     i_people_count_c
     d_act
     inCenter
+    s_GUID
   }
 }`
 //

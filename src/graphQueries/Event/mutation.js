@@ -106,12 +106,13 @@ export const UPDATE_EVENT_STAT_BY_PK = gql`
     $objects: [tbl_act_session_insert_input!] = {}
     ) {
     insert_tbl_act_session(
-      objects: $objects, if_matched: {match_columns: [c_act_code, d_act, inCenter], update_columns: [i_number, i_number_a, i_number_b, i_number_c, i_people_count, i_people_count_a, i_people_count_b, i_people_count_c]}) {
+      objects: $objects, if_matched: {match_columns: [s_GUID], update_columns: [inCenter, d_act, i_number, i_number_a, i_number_b, i_number_c, i_people_count, i_people_count_a, i_people_count_b, i_people_count_c]}) {
       affected_rows
       returning {
         c_act_code
         d_act
         inCenter
+        s_GUID
       }
     }
     insert_Log_one(object: $logObject) {

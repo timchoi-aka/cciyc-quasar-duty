@@ -48,7 +48,7 @@
           <q-avatar size="70px">
             <img src="~assets/cciyc_logo.svg" />
           </q-avatar>
-          <span class="desktop-only">青年 假期系統</span>
+          <span class="desktop-only">青年</span>
         </q-toolbar-title>
 
         <!-- notifications -->

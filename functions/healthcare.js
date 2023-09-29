@@ -6,11 +6,13 @@ const {formatDate} = require("./utilities");
 exports.applyHealthCare = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -41,11 +43,13 @@ exports.applyHealthCare = functions.region("asia-east2").https.onCall(async (dat
 exports.deleteHealthCare = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -75,11 +79,13 @@ exports.deleteHealthCare = functions.region("asia-east2").https.onCall(async (da
 exports.approveHealthCareByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -91,10 +97,10 @@ exports.approveHealthCareByDocid = functions.region("asia-east2").https.onCall(a
   // only leave admin can run this
   const runUser = await FireDB.collection("users").doc(context.auth.uid).get();
   const runUserData = runUser.data();
-  if (runUserData.privilege.leaveApprove != true) {
+  if (runUserData.privilege.healthapprove != true) {
     throw new functions.https.HttpsError(
         "unauthenticated",
-        "only leave admin can approve healthcare request");
+        "only user with health approve right can approve healthcare request");
   }
 
   let logData = "";
@@ -130,11 +136,13 @@ exports.approveHealthCareByDocid = functions.region("asia-east2").https.onCall(a
 exports.rejectHealthCareByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -185,11 +193,13 @@ exports.rejectHealthCareByDocid = functions.region("asia-east2").https.onCall(as
 exports.modifyHealthCareByDocid = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   // only authenticated users can run this
   if (!context.auth) {

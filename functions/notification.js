@@ -6,11 +6,13 @@ const messaging = admin.messaging();
 exports.subscribeTopic = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   if (!context.auth) {
     throw new functions.https.HttpsError(
@@ -38,11 +40,13 @@ exports.subscribeTopic = functions.region("asia-east2").https.onCall(async (data
 exports.notifyUser = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
+  /*
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  }
+  } */
+  
 
   if (!context.auth) {
     throw new functions.https.HttpsError(

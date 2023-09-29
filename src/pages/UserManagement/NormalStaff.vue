@@ -122,6 +122,15 @@
                   @click="changeEventManagement(props.key)"
                 />
               </div>
+              <div class="col-xs-3 justify-center" style="text-align: center">
+                <div class="text-caption">審批醫療</div>
+                <q-btn
+                  round
+                  :color="props.row.privilege_healthapprove ? 'positive' : 'negative'"
+                  :label="props.row.privilege_healthapprove ? '有' : '沒有'"
+                  @click="changeHealthApprove(props.key)"
+                />
+              </div>
             </q-card-section>
             <q-separator inet class="q-mt-sm" />
             <q-card-section
@@ -272,6 +281,16 @@
               :color="props.row.privilege_eventManagement ? 'positive' : 'negative'"
               :label="props.row.privilege_eventManagement ? '有' : '沒有'"
               @click="changeEventManagement(props.key)"
+            />
+          </q-td>
+
+          <!-- health approve?? -->
+          <q-td style="font-size: 1.2vw; text-align: center; width: 3vw;">
+            <q-btn
+              round
+              :color="props.row.privilege_healthapprove ? 'positive' : 'negative'"
+              :label="props.row.privilege_healthapprove ? '有' : '沒有'"
+              @click="changeHealthApprove(props.key)"
             />
           </q-td>
 
@@ -599,6 +618,14 @@ const tableFields = ref([
     style: "font-size: 1.2vw; text-align: center; width: 3vw; max-width: 3vw;",
   },
   {
+    name: "privilege_healthapprove",
+    label: "審批醫療",
+    field: "privilege_healthapprove",
+    headerStyle:
+      "font-size: 1.5vw; text-align: center; width: 3vw; max-width: 3vw;",
+    style: "font-size: 1.2vw; text-align: center; width: 3vw; max-width: 3vw;",
+  },
+  {
     name: "order",
     label: "排序",
     field: "order",
@@ -774,6 +801,17 @@ function changeSal(uid) {
   });
 }
 
+function changeHealthApprove(uid) {
+  // call https functions to change sal privilege
+  const toggleHealthApprove = httpsCallable(FirebaseFunctions, "user-toggleHealthApprove");
+  loading.value++;
+  toggleHealthApprove(uid).then((result) => {
+    users.value[users.value.findIndex((value) => value.uid == uid)].privilege_healthapprove =
+      result.data;
+    loading.value--;
+  });
+}
+
 function changeEventManagement(uid) {
   // call https functions to change sal privilege
   const toggleEventManagement = httpsCallable(FirebaseFunctions, "user-toggleEventManagement");
@@ -903,6 +941,7 @@ getDocs(userQuery).then((userDoc) => {
       privilege_eventManagement: d.privilege.eventManagement? d.privilege.eventManagement: false,
       parttime: d.parttime? d.parttime: false,
       privilege_finance: d.privilege.finance? d.privilege.finance: false,
+      privilege_healthapprove: d.privilege.healthapprove? d.privilege.healthapprove: false,
       order: d.order,
       employment: employment,
       defaultSchedule: d.defaultSchedule,

@@ -12,7 +12,7 @@
         <q-route-tab to="/healthcare/apply" icon="calendar_month" label="申請" />
         <q-route-tab to="/healthcare/balance" icon="event" label="結餘" />
         <q-route-tab
-          v-if="isCenterIC"
+          v-if="isHealthApprove"
           to="/healthcare/approve"
           icon="approval"
           label="審批醫療"
@@ -51,6 +51,7 @@ onUnmounted(() => {
 })
 
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"]) 
+const isHealthApprove = computed(() => $store.getters["userModule/getHealthApprove"]) 
 </script>
   
   

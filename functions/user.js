@@ -437,6 +437,32 @@ exports.toggleLeaveManage = functions.region("asia-east2").https.onCall(async (d
   });
 });
 
+exports.toggleHealthApprove = functions.region("asia-east2").https.onCall(async (data, context) => {
+  const loginUserDoc = FireDB
+      .collection("users")
+      .doc(context.auth.uid);
+  const loginUser = await loginUserDoc.get();
+  const loginUserData = loginUser.data();
+  if (loginUserData.privilege.userManagement != true) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only user management admin can change user privilege",
+    );
+  }
+
+  const changeUserDoc = FireDB.collection("users").doc(data);
+  const changeUser = await changeUserDoc.get();
+  const changeUserData = changeUser.data();
+  const newPrivilege = !changeUserData.privilege.healthapprove;
+  return await changeUserDoc.update({
+    "privilege.healthapprove": newPrivilege,
+  }).then(() => {
+    console.log("USER: " +
+    changeUserData.name + "[privilege.healthapprove]:" + newPrivilege);
+    return newPrivilege;
+  });
+});
+
 exports.toggleScheduleModify = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
       .collection("users")

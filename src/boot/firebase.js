@@ -4,7 +4,7 @@ import { getAuth, onAuthStateChanged, onIdTokenChanged, getIdToken, connectAuthE
 import { getFirestore, connectFirestoreEmulator, collection, doc } from "firebase/firestore";
 import { getApp } from "firebase/app";
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
-import { initializeAppCheck, ReCaptchaV3Provider } from 'firebase/app-check';
+import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 // const { initializeAppCheck, ReCaptchaV3Provider } = require("firebase/app-check");
 
 const firebaseConfig = {
@@ -39,7 +39,7 @@ if (process.env.NODE_ENV === "development") {
   // key is the counterpart to the secret key you set in the Firebase console.
   // const appCheck = initializeAppCheck(app, {
   initializeAppCheck(app, {
-    provider: new ReCaptchaV3Provider('6Ldn54UiAAAAAHwOOAqgnuVJ78Mgs2f6D-VfiB6H'),
+    provider: new ReCaptchaEnterpriseProvider('6Ldn54UiAAAAAHwOOAqgnuVJ78Mgs2f6D-VfiB6H'),
     isTokenAutoRefreshEnabled: true
   });
 
