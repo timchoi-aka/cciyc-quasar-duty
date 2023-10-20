@@ -333,6 +333,32 @@ exports.toggleEventManagement = functions.region("asia-east2").https.onCall(asyn
   });
 });
 
+exports.toggleEventApprove = functions.region("asia-east2").https.onCall(async (data, context) => {
+  const loginUserDoc = FireDB
+      .collection("users")
+      .doc(context.auth.uid);
+  const loginUser = await loginUserDoc.get();
+  const loginUserData = loginUser.data();
+  if (loginUserData.privilege.userManagement != true) {
+    throw new functions.https.HttpsError(
+        "unauthenticated",
+        "only user management admin can change user privilege",
+    );
+  }
+
+  const changeUserDoc = FireDB.collection("users").doc(data);
+  const changeUser = await changeUserDoc.get();
+  const changeUserData = changeUser.data();
+  const newPrivilege = changeUserData.privilege.eventApprove? false: true;
+  return await changeUserDoc.update({
+    "privilege.eventApprove": newPrivilege,
+  }).then(() => {
+    console.log("USER: " +
+    changeUserData.name + "[privilege.eventApprove]:" + newPrivilege);
+    return newPrivilege;
+  });
+});
+
 exports.toggleProbation = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
       .collection("users")

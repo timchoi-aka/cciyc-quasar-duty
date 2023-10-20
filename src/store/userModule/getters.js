@@ -116,9 +116,19 @@ export function getHealthApprove(state) {
   }
 }
 
+// 過期仍可輸入/修改活動報Stat權限
 export function getEventManagement(state) {
   if (Object.keys(state.userProfile).length) {
     return state.userProfile.privilege.eventManagement;
+  } else {
+    return null;
+  }
+}
+
+// 審批活動計劃檢討
+export function getEventApprove(state) {
+  if (Object.keys(state.userProfile).length) {
+    return state.userProfile.privilege.eventApprove;
   } else {
     return null;
   }

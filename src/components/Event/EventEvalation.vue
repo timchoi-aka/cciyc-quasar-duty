@@ -74,7 +74,7 @@
     <span class="col-xs-12 col-sm-6 col-md-6 row">
       <div class="col-xs-12">{{EventID}} - {{Event.c_act_name}}</div>
       <div class="col-xs-12">
-        <q-btn v-if="!edit && (!isSubmitted || isCenterIC)" icon="edit" flat @click="startEdit">
+        <q-btn v-if="!edit && (!isSubmitted || isEventApprove)" icon="edit" flat @click="startEdit">
           <q-tooltip class="bg-white text-primary">修改</q-tooltip>
         </q-btn>
         <q-btn v-if="edit" icon="save" flat @click="saveEdit">
@@ -106,8 +106,8 @@
     </span>
     <q-space/>
     <div class="col-xs-12 col-sm-2 col-md-2">
-      <q-btn bordered class="bg-positive text-white" v-if="PlanEval.submit_plan_date && !PlanEval.ic_plan_date && isCenterIC" @click="startApprove('plan')" icon="verified" label="批核計劃"/>
-      <q-btn bordered class="bg-positive text-white" v-if="PlanEval.submit_eval_date && !PlanEval.ic_eval_date && isCenterIC" @click="startApprove('eval')" icon="verified" label="批核檢討"/>
+      <q-btn bordered class="bg-positive text-white" v-if="PlanEval.submit_plan_date && !PlanEval.ic_plan_date && isEventApprove" @click="startApprove('plan')" icon="verified" label="批核計劃"/>
+      <q-btn bordered class="bg-positive text-white" v-if="PlanEval.submit_eval_date && !PlanEval.ic_eval_date && isEventApprove" @click="startApprove('eval')" icon="verified" label="批核檢討"/>
       <q-btn v-if="Object.keys(PlanEval).length > 0 && !PlanEval.submit_plan_date && !edit" icon="verified" label="提交計劃" class="bg-positive text-white" bordered @click="confirmPlanDialog = true" />
       <q-btn v-if="Object.keys(PlanEval).length > 0 && !PlanEval.submit_eval_date && PlanEval.submit_plan_date && PlanEval.ic_plan_date && !edit" icon="verified" label="提交檢討" class="bg-purple-6 text-white" bordered @click="confirmEvalDialog = true" />
     </div>
@@ -126,7 +126,7 @@
   <!-- desktop -->
   <div v-if="$q.screen.gt.xs">
     <div class="row text-h6">
-      <div v-if="PlanEval.ic_comment" class="col-12 q-my-sm" style="border: 1px dotted red;">主管評語: <span class="col-10" v-if="edit && isCenterIC"><q-input filled type="text" v-model="editObject.ic_comment"/></span><span class="col-10" v-else>{{PlanEval.ic_comment}}</span></div>
+      <div v-if="PlanEval.ic_comment" class="col-12 q-my-sm" style="border: 1px dotted red;">審批評語: <span class="col-10" v-if="edit && isEventApprove"><q-input filled type="text" v-model="editObject.ic_comment"/></span><span class="col-10" v-else>{{PlanEval.ic_comment}}</span></div>
       <div class="col-2 q-my-sm">工作目的: </div><span class="col-10" v-if="edit"><q-input filled type="text" v-model="editObject.objective"/></span><span class="col-10" v-else>{{PlanEval.objective}}</span>
       <div class="col-2 q-my-sm">工作內容: </div><span class="col-10" v-if="edit"><q-input filled type="text" v-model="editObject.objective_detail"/></span><span class="col-10" v-else>{{PlanEval.objective_detail}}</span>
       <div class="col-2 q-my-sm">合辦機構: </div><span class="col-10" v-if="edit"><q-input filled type="text" v-model="editObject.partner_agency"/></span><span class="col-10" v-else>{{PlanEval.partner_agency}}</span>
@@ -481,7 +481,7 @@ mutation deletePlanEvalFromUUID(
 const Event = computed(() => EventEvaluation.value?.HTX_Event_by_pk??[])
 const PlanEval = computed(() => EventEvaluation.value?.HTX_Event_by_pk.Event_to_Evaluation[0]??[])
 const username = computed(() => $store.getters["userModule/getUsername"])
-const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
+const isEventApprove = computed(() => $store.getters["userModule/getEventApprove"])
 const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"])
 const isSubmitted = computed(() => PlanEval.value.submit_plan_date && PlanEval.value.submit_eval_date? PlanEval.value.submit_plan_date.length > 0 && PlanEval.value.submit_eval_date.length > 0 : false)
 const planSubmitted = computed(() => PlanEval.value.submit_plan_date? PlanEval.value.submit_plan_date.length > 0: false)
