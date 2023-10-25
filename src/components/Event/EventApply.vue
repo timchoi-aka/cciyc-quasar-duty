@@ -87,6 +87,9 @@
         <div>姓名：{{unregisterItem.c_name}}</div>
         <div>活動編號：{{unregisterItem.c_act_code}}</div>
       </q-card-section>
+      <q-card-section v-if="!Event.b_freeofcharge">
+        <div class="text-negative text-center">注意：這會員的所有活動收據將會變成刪除狀態！</div>
+      </q-card-section>
       <q-card-actions>
         <q-space/>
         <q-btn v-close-popup @click="unregister" label="儲存" dense icon="save" class="q-ml-md bg-primary text-white" size="lg"/>
@@ -141,13 +144,35 @@
   >
   <template v-slot:body-cell-c_receipt_no="props">
     <q-td :props="props">
-      <q-btn v-if="(props.row.c_receipt_no && !props.row.b_refund)" icon="print" color="positive" @click="printReceipt(props.row.c_receipt_no)" size="md" padding="none" outline>
-        <q-tooltip class="bg-white text-positive">列印收據</q-tooltip>
-      </q-btn>
-      <q-btn v-if="(props.row.c_receipt_no && props.row.b_refund)" icon="print" color="negative" @click="printReceipt(props.row.c_receipt_no)" size="md" padding="none" outline>
-        <q-tooltip class="bg-white text-negative">列印已取消收據</q-tooltip>
-      </q-btn>
-      {{props.row.c_receipt_no}}
+      <div v-for="data in props.row.c_receipt_no">
+        <q-btn v-if="(data.c_receipt_no && !data.b_refund && !data.reregister)" icon="print" color="positive" @click="printReceipt(data.c_receipt_no)" size="md" padding="none" outline>
+          <q-tooltip class="bg-white text-positive">列印收據</q-tooltip>
+        </q-btn>
+        <q-btn v-if="(data.c_receipt_no && !data.b_refund && data.reregister)" icon="print" color="warning" @click="printReceipt(data.c_receipt_no)" size="md" padding="none" outline>
+          <q-tooltip class="bg-white text-positive">列印重覆收費收據</q-tooltip>
+        </q-btn>
+        <q-btn v-if="(data.c_receipt_no && data.b_refund)" icon="print" color="negative" @click="printReceipt(data.c_receipt_no)" size="md" padding="none" outline>
+          <q-tooltip class="bg-white text-negative">列印已退款收據</q-tooltip>
+        </q-btn>
+        {{data.c_receipt_no}}
+      </div>
+    </q-td>
+  </template>
+  <template v-slot:body-cell-c_name="props">
+    <q-td :props="props">
+      {{ props.row.c_name }}
+      <EventReregistration 
+        :c_act_code="Event.c_act_code? Event.c_act_code.trim(): ''"
+        :c_act_name="Event.c_act_name? Event.c_act_name.trim(): ''"
+        :c_acc_type="Event.c_acc_type? Event.c_acc_type.trim(): ''"
+        :d_date_from="Event.d_date_from? Event.d_date_from.trim(): ''"
+        :d_date_to="Event.d_date_to? Event.d_date_to.trim(): ''"
+        :c_week="Event.c_week? Event.c_week.trim(): ''"
+        :d_time_from="Event.d_time_from? Event.d_time_from.trim(): ''"
+        :d_time_to="Event.d_time_to? Event.d_time_to.trim(): ''"
+        :c_mem_id="props.row.c_mem_id? props.row.c_mem_id.trim(): ''"
+        :c_name="props.row.c_name? props.row.c_name.trim(): ''"
+        />
     </q-td>
   </template>
   <template v-slot:body-cell-b_refund="props">
@@ -163,7 +188,7 @@
 import { computed, ref, defineAsyncComponent } from "vue";
 import { useStore } from "vuex";
 import { useQuasar, date as qdate} from "quasar";
-import { EVENT_APPLY_BY_ACT_CODE, EVENT_BY_PK, EVENT_FEE_BY_ACT_CODE } from "/src/graphQueries/Event/query.js"
+import { EVENT_APPLY_AND_RECEIPT_BY_ACT_CODE, EVENT_BY_PK, EVENT_FEE_BY_ACT_CODE } from "/src/graphQueries/Event/query.js"
 import { LATEST_RECEIPT_NO } from "/src/graphQueries/Member/query.js"
 import { EVENT_REGISTRATION, FREE_EVENT_REGISTRATION, EVENT_UNREGISTRATION, FREE_EVENT_UNREGISTRATION } from "/src/graphQueries/Event/mutation.js"
 import { useQuery, useMutation, useSubscription } from "@vue/apollo-composable"
@@ -173,6 +198,10 @@ import MemberSelection from "components/Member/MemberSelection.vue"
 
 const EventParticipantPrint = defineAsyncComponent(() =>
   import('components/Event/Participants.vue')
+)
+
+const EventReregistration = defineAsyncComponent(() => 
+  import('components/Event/EventReapply.vue')
 )
 
 // props
@@ -205,7 +234,7 @@ const { onResult: EventFee_Completed, onError: EventFeeError } = useQuery(
   }));
 
 const { onResult: onApplyResult, onError: EventApplyError } = useQuery(
-  EVENT_APPLY_BY_ACT_CODE,
+  EVENT_APPLY_AND_RECEIPT_BY_ACT_CODE,
   () => ({
     c_act_code: props.c_act_code,
   }), {
@@ -493,11 +522,13 @@ function unregister() {
         ID: unregisterItem.value.ID
       })
     } else {
-      eventUnregistration({
-        logObject: logObject.value,
-        unregObject: unregObject.value,
-        c_receipt_no: unregisterItem.value.c_receipt_no,
-        ID: unregisterItem.value.ID
+      unregisterItem.value.c_receipt_no.forEach(receipt => {
+        eventUnregistration({
+          logObject: logObject.value,
+          unregObject: unregObject.value,
+          c_receipt_no: receipt.c_receipt_no,
+          ID: unregisterItem.value.ID
+        })
       })
     }
  
@@ -519,10 +550,22 @@ EventFee_Completed((result) => {
   }
 })
 
-
 onApplyResult((result) => {
   // hide refunded record
-  if (result.data) ApplyHistory.value = result.data.tbl_act_reg.filter(x => !x.b_refund)
+  if (result.data) {
+    ApplyHistory.value = []
+    result.data.tbl_act_reg.forEach((d) => {
+      if (!d.b_refund) {
+        ApplyHistory.value.push({
+          ...d,
+          c_receipt_no: d.EventRegistration_to_Account_by_MID.map(({c_receipt_no, i_receipt_type, b_refund}) => ({ c_receipt_no: c_receipt_no, reregister: i_receipt_type == 20, b_refund: b_refund}))
+        })
+      }        
+    })
+  }
+  
+  // console.log(JSON.stringify(ApplyHistory.value))
+  // ApplyHistory.value = result.data.tbl_act_reg.filter(x => !x.b_refund)
   
   // all record including those refund
   // if (result.data) ApplyHistory.value = result.data.tbl_act_reg

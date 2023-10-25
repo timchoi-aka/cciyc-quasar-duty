@@ -20,6 +20,20 @@ export const EVENT_REGISTRATION = gql`
       }
     }`
 
+export const EVENT_REREGISTRATION = gql`
+  mutation EventRegistration(
+    $logObject: Log_insert_input! = {}, 
+    $accountObject: tbl_account_insert_input = {}
+  ) {
+    insert_Log_one(object: $logObject) {
+      log_id
+    }
+    insert_tbl_account_one(object: $accountObject) {
+      c_receipt_no
+      u_price_after_discount
+    }
+  }`
+
 export const EVENT_UNREGISTRATION = gql`
   mutation EventUnregistration(
     $logObject: Log_insert_input! = {}, 

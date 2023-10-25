@@ -235,7 +235,46 @@ query EVENT_APPLY_BY_ACT_CODE($c_act_code: String = "") {
     c_act_code
     c_mem_id
     c_name
-    c_receipt_no
+    
+  }
+}`
+
+export const EVENT_APPLY_AND_RECEIPT_BY_ACT_CODE = gql`
+query EVENT_APPLY_BY_ACT_CODE($c_act_code: String = "") {
+  tbl_act_reg(where: {c_act_code: {_eq: $c_act_code}}) {
+    i_age
+    d_reg
+    d_refund
+    c_user_id
+    c_type
+    c_tel
+    c_sex
+    c_remarks
+    ID
+    b_refund
+    c_act_code
+    c_mem_id
+    c_name
+    EventRegistration_to_Account_by_MID {
+      c_act_code
+      c_desc
+      c_cash_type
+      c_receipt_no
+      c_type
+      c_user_id
+      d_create
+      i_prints
+      i_receipt_type
+      m_remark
+      m_remark2
+      d_clear
+      u_price_after_discount
+      c_name
+      b_clear
+      b_refund
+      b_delete
+      c_mem_id
+    }
   }
 }`
 

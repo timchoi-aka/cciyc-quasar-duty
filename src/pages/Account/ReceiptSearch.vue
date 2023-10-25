@@ -125,7 +125,8 @@ const receiptTypeOptions =
     { value: 54, label: '洗衣退款' },
     { value: 55, label: '罰款退款' },
     { value: 56, label: '捐款退款' },
-    { value: 57, label: '雜項退款' }
+    { value: 57, label: '雜項退款' },
+    { value: 20, label: '活動(重覆)' }
   ]
 
 // variables
