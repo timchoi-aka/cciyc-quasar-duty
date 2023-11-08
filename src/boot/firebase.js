@@ -27,7 +27,7 @@ const functions = getFunctions(getApp(), "asia-east2");
 if (process.env.NODE_ENV === "development") {
 //if(window.location.hostname === 'localhost') {
   // connect to real firebase auth for token test
-  // connectAuthEmulator(auth, "http://127.0.0.1:9099");
+  //connectAuthEmulator(auth, "http://127.0.0.1:9099");
   connectFirestoreEmulator(db, '127.0.0.1', 8081);
   connectFunctionsEmulator(functions, "127.0.0.1", 5001);
 

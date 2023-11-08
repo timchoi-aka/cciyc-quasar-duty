@@ -38,7 +38,6 @@ export const EVENT_UNREGISTRATION = gql`
   mutation EventUnregistration(
     $logObject: Log_insert_input! = {}, 
     $unregObject: tbl_act_reg_set_input = {},
-    $c_receipt_no: String = ""
     $ID: Int = 0, 
     ) {
       update_tbl_act_reg_by_pk(pk_columns: {ID: $ID}, _set: $unregObject) {
@@ -50,10 +49,15 @@ export const EVENT_UNREGISTRATION = gql`
       insert_Log_one(object: $logObject) {
         log_id
       }
-      update_tbl_account_by_pk(pk_columns: {c_receipt_no: $c_receipt_no}, _set: {b_delete: true}) {
-        c_receipt_no
-      }
     }`
+
+/* don't delete receipt upon event unregistration
+  $c_receipt_no: String = ""
+
+  update_tbl_account_by_pk(pk_columns: {c_receipt_no: $c_receipt_no}, _set: {b_delete: true}) {
+    c_receipt_no
+  }
+*/
 
 export const FREE_EVENT_UNREGISTRATION = gql`
   mutation FreeEventUnregistration(
@@ -71,6 +75,7 @@ export const FREE_EVENT_UNREGISTRATION = gql`
         log_id
       }
     }`
+    
 export const FREE_EVENT_REGISTRATION = gql`
   mutation FreeEventRegistration(
     $logObject: Log_insert_input! = {}, 

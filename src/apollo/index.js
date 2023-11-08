@@ -22,7 +22,8 @@ export /* async */ function getClientOptions(/* {app, router, ...} */ options) {
    // http link 
    const apiLink = createHttpLink({ 
     //uri: 'https://cciycgw.eastasia.cloudapp.azure.com/v1/graphql/',
-    uri: 'https://hasura.cciyc.com:4430/v1/graphql/'
+    // uri: 'https://hasura.cciyc.com:4430/v1/graphql/'
+    uri: process.env.NODE_ENV == "development" ? "https://hasuradev.cciyc.com/v1/graphql/" : "https://hasura.cciyc.com:4430/v1/graphql/",
   })
 
   const errorLink = onError((error) => {
@@ -35,7 +36,8 @@ export /* async */ function getClientOptions(/* {app, router, ...} */ options) {
   const wsLink = new GraphQLWsLink(
     createClient({
       //url: "wss://cciycgw.eastasia.cloudapp.azure.com/v1/graphql",
-      url: "wss://hasura.cciyc.com:4430/v1/graphql",
+      // url: "wss://hasura.cciyc.com:4430/v1/graphql",
+      url: process.env.NODE_ENV == "development" ? "wss://hasuradev.cciyc.com/v1/graphql" : "wss://hasura.cciyc.com:4430/v1/graphql",
       connectionParams: async () => {
         //const token = sessionStorage.getItem("access-token")
         const token = FirebaseAuth.currentUser? await FirebaseAuth.currentUser.getIdToken(): '';

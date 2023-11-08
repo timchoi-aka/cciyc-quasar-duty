@@ -9,9 +9,9 @@ import { FirebaseAuth } from "boot/firebase";
 // "export default () => {}" function below (which runs individually
 // for each client)
 const api = axios.create({
-  // baseURL: process.env.NODE_ENV == "development" ? "http://localhost:1337" : "",
+  baseURL: process.env.NODE_ENV == "development" ? "https://hasuradev.cciyc.com/v1/graphql/" : "https://hasura.cciyc.com:4430/v1/graphql/",
   //baseURL: "https://cciycgw.eastasia.cloudapp.azure.com/v1/graphql/",
-  baseURL: "https://hasura.cciyc.com:4430/v1/graphql/",
+  // baseURL: "https://hasura.cciyc.com:4430/v1/graphql/",
 });
 
 api.interceptors.request.use(async (config) => {

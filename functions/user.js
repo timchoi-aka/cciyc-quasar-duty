@@ -108,92 +108,91 @@ exports.delTempStaff = functions.region("asia-east2").https.onCall(async (data, 
 // API 1.0 - auth trigger (new user signup)
 exports.newUserSignUp = functions.region("asia-east2").auth.user().onCreate((user) => {
   // for background triggers you must return a value/promise
-  return FireDB
-      .collection("users")
-      .get()
-      .then((users) => {
-        const userCount = users.docs.length + 1;
-        console.log("Total Number of Users after creation: " + userCount);
-        const now = Timestamp.fromDate(new Date());
-        return FireDB
-            .collection("users")
-            .doc(user.uid)
-            .set({
-              email: user.email,
-              name: user.displayName,
-              uid: user.uid,
-              order: userCount,
-              enable: true,
-              privilege: {
-                centeric: false,
-                uat: false,
-                finance: false,
-                probation: true,
-                scheduleModify: false,
-                leaveManage: false,
-                leaveApprove: false,
-                logViewer: false,
-                systemAdmin: false,
-                sal: false,
-                userManagement: false,
-                tmp: true,
-              },
-              balance: {
-                al: 0,
-                sal: 0,
-                ot: 0,
-              },
-              employment: [{
-                dateOfEntry: now,
-                dateOfExit: null,
-                rank: "tmp",
-              }],
-              defaultSchedule: [
-                "",
-                "",
-                "",
-                "",
-                "1",
-                "2",
-                "",
-                "3",
-                "4",
-                "",
-                "5",
-                "6",
-                "",
-                "7",
-                "8",
-                "",
-                "9",
-                "10",
-                "11",
-                "",
-                "",
-              ],
-            }).then(()=>{
-              return FireDB
-                  .collection("dashboard")
-                  .doc("leaveConfig")
-                  .set({
-                    [user.uid]: [{
-                      "al": 0,
-                      "date": "2021-03-30T16:00:00.000Z",
-                    }],
-                  }, {merge: true}).then(()=>{
-                    return FireDB.collection("dashboard").doc("otConfig").set({
-                      [user.uid]: 0,
-                    }, {merge: true}).then(()=>{
-                      return FireDB
-                          .collection("dashboard")
-                          .doc("otConfig")
-                          .update({
-                            [`balance.${user.uid}`]: 0,
-                          }, {merge: true});
-                    });
-                  });
-            });
+  return FireDB.collection("users").get().then((users) => {
+    const userCount = users.docs.length + 1;
+    console.log("Total Number of Users after creation: " + userCount);
+    const now = Timestamp.fromDate(new Date());
+    return FireDB.collection("users").doc(user.uid).set({
+      email: user.email,
+      name: user.displayName,
+      uid: user.uid,
+      order: userCount,
+      enable: true,
+      privilege: {
+        centeric: false,
+        uat: false,
+        finance: false,
+        probation: true,
+        scheduleModify: false,
+        leaveManage: false,
+        leaveApprove: false,
+        logViewer: false,
+        systemAdmin: false,
+        sal: false,
+        userManagement: false,
+        tmp: true,
+      },
+      balance: {
+        al: 0,
+        sal: 0,
+        ot: 0,
+      },
+      employment: [{
+        dateOfEntry: now,
+        dateOfExit: null,
+        rank: "tmp",
+      }],
+      defaultSchedule: [
+        "",
+        "",
+        "",
+        "",
+        "1",
+        "2",
+        "",
+        "3",
+        "4",
+        "",
+        "5",
+        "6",
+        "",
+        "7",
+        "8",
+        "",
+        "9",
+        "10",
+        "11",
+        "",
+        "",
+      ],
+    }).then(()=>{
+      return FireDB.collection("dashboard").doc("leaveConfig").set({
+        [user.uid]: [{
+          "al": 0,
+          "date": "2021-03-30T16:00:00.000Z",
+        }],
+      }, {merge: true}).then(()=>{
+        return FireDB.collection("dashboard").doc("otConfig").set({
+          [user.uid]: 0,
+        }, {merge: true}).then(()=>{
+          const customClaims = {
+            "https://hasura.io/jwt/claims": {
+              "x-hasura-default-role": "user",
+              "x-hasura-allowed-roles": ["user"],
+              "x-hasura-user-id": user.email,
+            },
+          };
+                
+          return admin.auth().setCustomUserClaims(user.uid, customClaims).then(() => {
+            console.log(context.auth.token.name + " updated customClaims on " + user.displayName);
+          }).catch((error) => {
+            console.log("error in " + user.displayName);
+            console.log(error.code + ":" + error.message);
+          });
+        });
       });
+    });
+  });
 });
 
 // auth trigger (user deleted)

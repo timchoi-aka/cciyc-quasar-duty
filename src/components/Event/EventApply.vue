@@ -522,14 +522,14 @@ function unregister() {
         ID: unregisterItem.value.ID
       })
     } else {
-      unregisterItem.value.c_receipt_no.forEach(receipt => {
+      // unregisterItem.value.c_receipt_no.forEach(receipt => {
         eventUnregistration({
           logObject: logObject.value,
           unregObject: unregObject.value,
-          c_receipt_no: receipt.c_receipt_no,
+          /* c_receipt_no: receipt.c_receipt_no, */
           ID: unregisterItem.value.ID
         })
-      })
+      // })
     }
  
 }
