@@ -9,8 +9,16 @@ import { FirebaseAuth } from "boot/firebase";
 // "export default () => {}" function below (which runs individually
 // for each client)
 const api = axios.create({
-  baseURL: process.env.NODE_ENV == "development" ? "https://hasuradev.cciyc.com/v1/graphql/" : "https://hasura.cciyc.com:4430/v1/graphql/",
-  //baseURL: "https://cciycgw.eastasia.cloudapp.azure.com/v1/graphql/",
+  // offline development endpoint
+  // baseURL: process.env.NODE_ENV == "development" ? "https://hasuradev.cciyc.com/v1/graphql/" : "https://hasura.cciyc.com:4430/v1/graphql/",
+
+  // development endpoint
+  uri: process.env.NODE_ENV == "development" ? "https://hasuradev.aka-technology.com/v1/graphql/" : "https://hasura.cciyc.com:4430/v1/graphql/",
+
+  // azure endpoint
+  // baseURL: "https://cciycgw.eastasia.cloudapp.azure.com/v1/graphql/",
+
+  // production endpoint
   // baseURL: "https://hasura.cciyc.com:4430/v1/graphql/",
 });
 
@@ -50,6 +58,25 @@ chatAPI.interceptors.request.use(async (config) => {
   return config;
 });
 
+const uploader = axios.create({
+  // development endpoint
+  baseURL: process.env.NODE_ENV == "development"? "http://localhost:5001/manage-hr/asia-east2/file-savefiletostorage" : "https://asia-east2-manage-hr.cloudfunctions.net/file-savefiletostorage",
+  headers: {
+    common: {
+      'Content-Type': 'multipart/form-data'
+    }
+  },
+});
+
+
+uploader.interceptors.request.use(async (config) => {
+  var token = await FirebaseAuth.currentUser.getIdToken();
+  config.headers["Authorization"] = `Bearer ${token}`
+  config.params = config.params || {};
+  // config.params["locale"] = api.defaults.locale;
+  return config;
+});
+
 export default boot(({ app }) => {
   // for use inside Vue files (Options API) through this.$axios and this.$api
 
@@ -64,6 +91,7 @@ export default boot(({ app }) => {
   app.config.globalProperties.$authenticator = authenticator;
 
   app.config.globalProperties.$chatAPI = chatAPI;
+  app.config.globalProperties.$uploader = uploader;
 });
 
-export { /* api, chatAPI, */ authenticator };
+export { /* api, chatAPI, */ authenticator, uploader };

@@ -1,7 +1,7 @@
 <template>
   <!-- loading dialog -->
   <LoadingDialog message="儲存中" v-model="awaitServerResponse"/>
-  
+
   <!-- dutycalender table -->
   <q-table
     dense
@@ -699,7 +699,9 @@ onUnmounted(() => {
 
 @media print and (orientation: landscape) {
   @page {
-    size: landscape;
+    size: A4 landscape;
+    margin-left: 1cm;
+    margin-right: 1cm;
   }
 
   .q-table td,
@@ -710,15 +712,15 @@ onUnmounted(() => {
   }
 
   .q-table thead .q-tr th {
-    font-size: 1.3vw;
+    font-size: 2vw;
     background-color: lightgrey;
-    padding: 0 !important;
+    //padding: 0 !important;
   }
 
   .q-table .nameColumn {
     width: 9vw;
-    padding: 0 !important;
-    font-size: 1.3vw;
+    //padding: 0 !important;
+    font-size: 2vw;
 
     min-width: 9vw;
     max-width: 9vw;
@@ -726,8 +728,8 @@ onUnmounted(() => {
 
   .q-table .dataColumn {
     width: 4.2vw;
-    padding: 0 !important;
-    font-size: 1.3vw;
+    //padding: 0 !important;
+    font-size: 2vw;
 
     min-width: 4.2vw;
     max-width: 4.2vw;
@@ -740,7 +742,9 @@ onUnmounted(() => {
 
 @media print and (orientation: portrait) {
   @page {
-    size: portrait;
+    size: A4 portrait;
+    margin-left: 1cm;
+    margin-right: 1cm;
   }
 
   .q-table td,
@@ -751,15 +755,15 @@ onUnmounted(() => {
   }
 
   .q-table thead .q-tr th {
-    font-size: 1.3vw;
+    font-size: 1.5vw;
     background-color: lightgrey;
-    padding: 0 !important;
+    //padding: 0 !important;
   }
 
   .q-table .nameColumn {
     width: 12.8%;
-    padding: 0 !important;
-    font-size: 1vw;
+    //padding: 0 !important;
+    font-size: 1.5vw;
 
     min-width: 12.8%;
     max-width: 12.8%;
@@ -767,8 +771,8 @@ onUnmounted(() => {
 
   .q-table .dataColumn {
     width: 4.2%;
-    padding: 0 !important;
-    font-size: 1vw;
+    //padding: 0 !important;
+    font-size: 1.5vw;
 
     min-width: 4.2%;
     max-width: 4.2%;

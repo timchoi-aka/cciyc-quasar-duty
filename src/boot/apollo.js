@@ -15,8 +15,8 @@ import { setContext } from "@apollo/client/link/context"
 export default boot(
   async ({ app }) => {
     // Default client.
-    //const options = /* await */ getClientOptions(/* {app, router ...} */)    
-  
+    //const options = /* await */ getClientOptions(/* {app, router ...} */)
+
     // authentication middleware (for query / mutation) (local token) obsoleted now
     /*const authMiddleware = new ApolloLink((operation, forward) => {
       // add the authorization to the headers
@@ -31,7 +31,7 @@ export default boot(
     */
 
     // authentication middleware (for query / mutation) async firebase token
-    const asyncAuthMiddleware = setContext(operation => 
+    const asyncAuthMiddleware = setContext(operation =>
       // add the authorization to the headers
       FirebaseAuth.currentUser? FirebaseAuth.currentUser.getIdToken().then((token) => {
         return {
@@ -45,9 +45,17 @@ export default boot(
     // new graphql-ws link (for subscription)
     const wsLink = new GraphQLWsLink(
       createClient({
+        // azure endpoint
         //url: "wss://cciycgw.eastasia.cloudapp.azure.com/v1/graphql",
+
+        // production endpoint
         // url: "wss://hasura.cciyc.com:4430/v1/graphql",
-        url: process.env.NODE_ENV == "development" ? "wss://hasuradev.cciyc.com/v1/graphql" : "wss://hasura.cciyc.com:4430/v1/graphql",
+
+        // offline development endpoint
+        // url: process.env.NODE_ENV == "development" ? "wss://hasuradev.cciyc.com/v1/graphql" : "wss://hasura.cciyc.com:4430/v1/graphql",
+
+        // development endpoint
+        url: process.env.NODE_ENV == "development" ? "wss://hasuradev.aka-technology.com/v1/graphql" : "wss://hasura.cciyc.com:4430/v1/graphql",
         connectionParams: async () => {
           //const token = sessionStorage.getItem("access-token")
           const token = FirebaseAuth.currentUser? await FirebaseAuth.currentUser.getIdToken(): '';
@@ -60,11 +68,19 @@ export default boot(
       }),
     );
 
-    // http link 
-    const apiLink = createHttpLink({ 
+    // http link
+    const apiLink = createHttpLink({
+      // azure endpoint
       //uri: 'https://cciycgw.eastasia.cloudapp.azure.com/v1/graphql/',
+
+      // production endpoint
       // uri: 'https://hasura.cciyc.com:4430/v1/graphql/'
-      uri: process.env.NODE_ENV == "development" ? "https://hasuradev.cciyc.com/v1/graphql/" : "https://hasura.cciyc.com:4430/v1/graphql/",
+
+      // offline development endpoint
+      // uri: process.env.NODE_ENV == "development" ? "https://hasuradev.cciyc.com/v1/graphql/" : "https://hasura.cciyc.com:4430/v1/graphql/",
+
+      // development endpoint
+      uri: process.env.NODE_ENV == "development" ? "https://hasuradev.aka-technology.com/v1/graphql/" : "https://hasura.cciyc.com:4430/v1/graphql/",
     })
 
     // error link
@@ -177,12 +193,12 @@ export default boot(
         fetchPolicy: 'network-only',
       },
     })
-    
+
     // make it default client
     const apolloClients = {
       default: apolloClient,
     }
-    
+
     // other options
     const apolloProvider = createApolloProvider({
       defaultClient: apolloClient,

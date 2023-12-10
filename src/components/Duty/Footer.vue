@@ -26,6 +26,8 @@
           <span class="q-mx-md">(補) 補OT</span>
           <span class="q-mx-md">SL 病假</span>
           <span class="q-mx-md">(覆)覆診</span>
+          <span class="q-mx-md">(長)長週</span>
+          <span class="q-mx-md">(短)短週</span>
           <span v-if="numberOfHoliday > 0">
             <q-icon name="report_problem" :size="$q.screen.gt.sm? 'lg': 'sm'" color="negative" />{{
               numberOfHoliday
@@ -78,7 +80,7 @@ const numberOfWorkingSessions = computed(() => 11 - 2 * numberOfHoliday.value)
 }
 
 table {
-  // border: 0.5px solid black;
+  border: 0.5px solid black;
   border-collapse: collapse;
 }
 
@@ -146,7 +148,7 @@ td {
 
 @media print and (orientation: landscape) {
   @page {
-    size: landscape;
+    size: A4 landscape;
   }
 
   .q-markup-table {
@@ -181,7 +183,36 @@ td {
 
 @media print and (orientation: portrait) {
   @page {
-    size: portrait;
+    size: A4 portrait;
+  }
+  .q-markup-table {
+    border: 0.5px solid black !important;
+  }
+  table .caption {
+    width: 9vw;
+    min-width: 9vw;
+    max-width: 9vw;
+    //padding: 0 !important;
+    vertical-align: top;
+    text-align: center;
+    border-right: 0.5px solid black;
+  }
+
+  table .content {
+    padding: 5px !important;
+    width: 62vw;
+    //border-left: 0.5px solid black;
+    //border-right: 0.5px solid black;
+  }
+
+  table .content span {
+    margin-right: 2vw;
+  }
+
+  table th {
+    background-color: lightgray !important;
+    // border: 0.5px solid black !important;
+    overflow: hidden !important;
   }
 }
 </style>

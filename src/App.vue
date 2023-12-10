@@ -13,18 +13,10 @@
             <div class="col-3">錯誤發生日期：</div><div class="col-9"><DateComponent v-model="bugReportObject.date"/></div>
             <div class="col-3">錯誤描述：</div><div class="col-9"><q-input type="text" v-model="bugReportObject.message"/></div>
             <div class="col-3">截圖（如有）：</div>
-            <q-uploader
+            <FileUpload
               class="col-9"
-              :url="upload_API + '/file-savefiletostorage'"
-              color="primary"
-              flat
-              bordered
-              multiple
-              :headers="[
-                {name: 'Access-Control-Allow-Origin', value: '*'}, 
-                {name: 'Access-Control-Allow-Headers', value: 'Origin, X-Requested-With, Content-Type, Accept'},
-              ]"
-              @uploaded="updateFilenames"
+              bucketName="bug-report"
+              @onDone="updateFilenames"
             />
           </q-card-section>
           <q-card-actions align="right">
@@ -135,12 +127,12 @@ import { httpsCallable } from "@firebase/functions";
 import { FirebaseFunctions } from "boot/firebase";
 import DateComponent from "./components/Basic/DateComponent.vue";
 import LoadingDialog from "components/LoadingDialog.vue"
-import { authenticator } from "./boot/axios";
+import { authenticator, uploader } from "./boot/axios";
 import { useRouter } from "vue-router"
-
+import FileUpload from "./components/Basic/FileUpload.vue";
 provide('messaging', FirebaseMessaging)
 
-const upload_API = process.env.NODE_ENV === "development"? "http://localhost:5001/manage-hr/asia-east2" : "https://asia-east2-manage-hr.cloudfunctions.net"
+
 
 // variables
 const leftDrawerOpen = ref(false);
@@ -170,6 +162,7 @@ const bugReportObject = ref({
   username: username.value,
   message: "",
   status: "未解決",
+  bucketName: "bug-report",
   filenames: [],
   docid: qdate.formatDate(new Date(), "YYYYMMDDHHmmss")
 })
@@ -246,9 +239,9 @@ async function keepAlive() {
       isLocal.value = true
     }
   }).catch((e) => {
-    // time out, out of center network    
+    // time out, out of center network
     if (e.code == "ECONNABORTED") {
-      if (isSystemAdmin.value) { // enable all function for admin 
+      if (isSystemAdmin.value) { // enable all function for admin
         isLocal.value = true
       } else {
         if (isLocal.value) {  // redirect if not in local network
@@ -256,12 +249,12 @@ async function keepAlive() {
           router.push('/duty')
           isLocal.value = false
         }
-      } 
+      }
     } else if (e.code == "ERR_NETWORK") {
       // cert invalid, means it's in center network
       isLocal.value = true
     }
-  })  
+  })
   keepAlive();
   }, 10000);
 }
@@ -291,6 +284,7 @@ async function submitBugReport() {
       username: username.value,
       message: "",
       status: "未解決",
+      bucketName: "bug-report",
       filenames: [],
       docid: qdate.formatDate(new Date(), "YYYYMMDDHHmmss")
     }

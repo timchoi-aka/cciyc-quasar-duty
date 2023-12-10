@@ -18,6 +18,13 @@
         <th class="caption">活動</th>
         <td class="column-head" v-for="index in columns.length" v-bind:key="index">
           <ul>
+            <ul v-if="getHoliday(columns[index-1].name)">
+              <li class="eventItem holidayItem">
+                <div>公眾假期</div>
+                <div>【{{getHoliday(columns[index-1].name)}}】</div>
+                <div>中心休息</div>
+              </li>
+            </ul>
             <template v-for="(object, key) in rows" v-bind:key="key">
               <li
                 v-if="
@@ -186,6 +193,7 @@ import dateUtil from "src/lib/date.js";
 import { httpsCallable } from "firebase/functions";
 import { useStore } from "vuex";
 import { date as qdate } from 'quasar'
+import holiday from "assets/holiday.json";
 import LoadingDialog from "components/LoadingDialog.vue"
 import { onUnmounted, ref, computed } from "vue";
 import { onSnapshot } from "firebase/firestore";
@@ -221,6 +229,7 @@ const awaitServerResponse = ref(0)
 // computed
 const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const columns = computed(() => [...dateUtil.generateTableColumns(props.renderDate, false)])
+const publicHoliday = computed(() => holiday? holiday.vcalendar[0].vevent.map(({dtstart, summary}) => ({date: dtstart[0], summary: summary})): [])
 
 //functions
 async function updateCustomName(object, scope) {
@@ -240,7 +249,7 @@ async function updateCustomName(object, scope) {
       ob.customName = value;
     }
 
-    const editActivityCustomName = httpsCallable(FirebaseFunctions, 
+    const editActivityCustomName = httpsCallable(FirebaseFunctions,
       "activity-editActivityCustomName"
     );
     awaitServerResponse.value++;
@@ -321,13 +330,29 @@ activitySnapshot.value = onSnapshot(activityCollection, (snapshot) => {
           }
         });
       } while (repeat);
-    } 
+    }
   });
 });
+
+function getHoliday(date) {
+  let d = qdate.formatDate(date, "YYYYMMDD");
+  let i = publicHoliday.value.findIndex((element) => element.date == d);
+  if (i == -1) {
+    return "";
+  } else {
+    return publicHoliday.value[i].summary;
+  }
+}
 </script>
 
 <style lang="scss" scoped>
 @media screen {
+  .holidayItem {
+    font-size: 1.5vw;
+    color: red;
+    text-align: center;
+  }
+
   table {
     font-size: 1.3vw;
     border-collapse: collapse;
@@ -386,7 +411,9 @@ activitySnapshot.value = onSnapshot(activityCollection, (snapshot) => {
 }
 @media print and (orientation: landscape) {
   @page {
-    size: landscape;
+    size: A4 landscape;
+    margin-left: 1cm;
+    margin-right: 1cm;
   }
 
   table {
@@ -419,8 +446,7 @@ activitySnapshot.value = onSnapshot(activityCollection, (snapshot) => {
     padding: 0 !important;
     width: 12.6vw;
     min-width: 12.6vw;
-    max-width: 14.9vw;
-    // min-width: 14.9vw;
+    max-width: 12.6vw;
     vertical-align: top;
   }
 
@@ -444,11 +470,19 @@ activitySnapshot.value = onSnapshot(activityCollection, (snapshot) => {
     background-color: lightgray;
     display: block;
   }
+
+  .holidayItem {
+    font-size: 1.5vw;
+    color: red;
+    text-align: center;
+  }
 }
 
 @media print and (orientation: portrait) {
   @page {
-    size: portrait;
+    size: A4 portrait;
+    margin-left: 1cm;
+    margin-right: 1cm;
   }
   table {
     width: 100% !important;
@@ -467,19 +501,19 @@ activitySnapshot.value = onSnapshot(activityCollection, (snapshot) => {
     border-left: 0.5px solid black;
   }
   .caption {
-    width: 9%;
+    width: 9vw;
     vertical-align: top;
     border-left: 0.5px solid black;
-    max-width: 9%;
-    min-width: 9%;
+    max-width: 9vw;
+    min-width: 9vw;
     padding: 0;
   }
 
   .column-head {
     padding: 0 !important;
-    width: 12.6%;
-    min-width: 12.6%;
-    max-width: 12.6%;
+    width: 9vw;
+    min-width: 9vw;
+    max-width: 9vw;
     vertical-align: top;
   }
   table thead th {
@@ -501,6 +535,12 @@ activitySnapshot.value = onSnapshot(activityCollection, (snapshot) => {
   .customName {
     background-color: lightgray;
     display: block;
+  }
+
+  .holidayItem {
+    font-size: 1.5vw;
+    color: red;
+    text-align: center;
   }
 }
 </style>

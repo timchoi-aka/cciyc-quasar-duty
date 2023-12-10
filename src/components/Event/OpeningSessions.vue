@@ -11,7 +11,8 @@
         <div class="text-body1">開始日期：{{ qdate.formatDate(props.reportStartDate, "YYYY年M月D日") }}</div>
         <div class="text-body1">結束日期：{{ qdate.formatDate(props.reportEndDate, "YYYY年M月D日") }}</div>
         <div class="text-body1">開放節數：{{ props.numberOfSessions }} </div>
-        
+        <div class="text-body1">開放日數：{{ props.numberOfOpeningDays }} </div>
+
         <q-table
           dense
           flat
@@ -37,15 +38,15 @@
             </q-td>
           </template>
         </q-table>
-      
+
       </div>
     </q-card-section>
   </q-card>
 </template>
 
 <script setup>
-import { computed, ref, watch, onMounted } from "vue";
-import { exportFile, date as qdate, is } from "quasar";
+import { ref } from "vue";
+import { date as qdate } from "quasar";
 import print from "vue3-print-nb";
 
 const props = defineProps({
@@ -54,12 +55,12 @@ const props = defineProps({
     type: Object,
     default: {},
   },
-  reportStartDate: { 
+  reportStartDate: {
     required: true,
     type: Date,
     default: "1970/01/01 00:00:00",
   },
-  reportEndDate: { 
+  reportEndDate: {
     required: true,
     type: Date,
     default: "1970/01/01 00:00:00",
@@ -68,8 +69,13 @@ const props = defineProps({
     required: true,
     type: Number,
     default: 0,
-  }
-}) 
+  },
+  numberOfOpeningDays: {
+    required: true,
+    type: Number,
+    default: 0,
+  },
+})
 
 const Pagination = ref({
   rowsPerPage: 40,
@@ -145,7 +151,7 @@ export default {
     overflow: hidden;
     scale: 100%;
   }
-  .print-area { 
+  .print-area {
     border: none;
   }
 
@@ -156,6 +162,6 @@ export default {
   .red {
     background: white;
   }
-  
+
 }
 </style>

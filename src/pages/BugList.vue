@@ -3,7 +3,7 @@
     <!-- loading dialog -->
     <LoadingDialog v-model="loading" message="儲存中"/>
 
-    <q-dialog 
+    <q-dialog
       v-model="bugDetailDialog"
       persistent
       maximized
@@ -17,6 +17,12 @@
           <div class="col-grow">
             {{ bugDetail.docid }}<br/>
             {{ bugDetail.message }}
+          </div>
+
+          <div v-if="bugDetail.filenames.length > 0">
+            <div v-for="(url, index) in bugDetail.filenames" :key="index">
+              <q-img :src="url"/>
+            </div>
           </div>
           <q-space/>
           <q-btn icon="close" flat v-close-popup/>
@@ -40,8 +46,16 @@
       :pagination="pagination"
       color="primary"
       row-key="docid"
+      :filter="filter"
+      :filter-method="customFilter"
       @row-click="showDetail"
     >
+    <template v-slot:top-right>
+      <q-btn-group flat bordered>
+        <q-btn bordered label="未解決" @click="showAll = false"/>
+        <q-btn bordered label="全部" @click="showAll = true"/>
+      </q-btn-group>
+    </template>
     </q-table>
   </div>
 </template>
@@ -62,6 +76,10 @@ const bugs = ref([])
 const loading = ref(0)
 const bugDetail = ref()
 const bugDetailDialog = ref(false)
+const filter = computed(() => ({
+  showAll: showAll.value
+}))
+const showAll = ref(false)
 const bugStatus = ref([
   "未解決", "工作中", "已解決"
 ])
@@ -115,13 +133,20 @@ const tableFields = ref([
   },
 ])
 
+function customFilter(rows, terms) {
+  return terms.showAll? rows: rows.filter(
+    (row) => row.status !== '已解決'
+  );
+}
 
 // module logic
 const bugsQuery = query(bugsCollection)
 
 getDocs(bugsQuery).then((bugDoc) => {
   bugDoc.forEach((bug) => {
-    const prefix = "https://storage.googleapis.com/cciyc_bugreport/"
+    const prefixBase = process.env.NODE_ENV == "development"? "http://localhost:4000/storage/": "https://storage.googleapis.com/"
+    const prefixBucket =  bug.data().bucketName? bug.data().bucketName + "/": ''
+    const prefix = prefixBase + prefixBucket
     let d = {
       docid: bug.data().docid,
       uid: bug.data().uid,
@@ -131,7 +156,7 @@ getDocs(bugsQuery).then((bugDoc) => {
       message: bug.data().message,
       filenames: []
     }
-    
+
     bug.data().filenames.forEach((f) => {
       d.filenames.push(prefix + f)
     })
@@ -154,4 +179,3 @@ function updateStatus(val) {
 }
 </script>
 
-  

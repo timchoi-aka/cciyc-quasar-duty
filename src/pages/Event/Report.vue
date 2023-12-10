@@ -27,7 +27,7 @@
       <EventDetail :EventID="showEventID" @hide-component="() => detailModal = false"/>
     </q-card>
   </q-dialog>
-  
+
   <!-- 開放節數記錄 -->
   <q-dialog
     v-model="openingModal"
@@ -36,7 +36,7 @@
     transition-hide="slide-down"
     class="q-pa-none"
   >
-    <OpeningSessions :data="dutyTable" :reportStartDate="qdate.extractDate(reportStartDate, 'YYYY/MM/DD')" :reportEndDate="qdate.extractDate(reportEndDate, 'YYYY/MM/DD')" :numberOfSessions="Object.values(dutyTable).reduce((x,v) => x + (v.slot_a?1:0) + (v.slot_b?1:0) + (v.slot_c?1:0), 0)" />
+    <OpeningSessions :data="dutyTable" :reportStartDate="qdate.extractDate(reportStartDate, 'YYYY/MM/DD')" :reportEndDate="qdate.extractDate(reportEndDate, 'YYYY/MM/DD')" :numberOfSessions="Object.values(dutyTable).reduce((x,v) => x + (v.slot_a?1:0) + (v.slot_b?1:0) + (v.slot_c?1:0), 0)" :numberOfOpeningDays="dutyTable.filter(x => Object.keys(x).length > 1).length" />
   </q-dialog>
 
   <div class="row justify-center">
@@ -79,12 +79,12 @@
         </template>
       </q-input>
     </div>
-    
+
     <!-- <div class="row items-center q-mx-md"><q-btn label="下月" @click="reportDate = qdate.formatDate(qdate.endOfDate(qdate.addToDate(reportDate, {month: 1}), 'month'), 'YYYY/MM/DD')" class="bg-primary text-white items-center"/></div>-->
 
     <div class="q-mx-md col-2"><StaffSelectionMultiple :multiple="true" v-model="staffSearchFilter"/></div>
   </div>
-  
+
   <!--<q-date v-model="reportDate" default-view="Months"/>-->
   <q-tabs v-model="activeTab" inline-label align="left" class="desktop-only bg-primary text-white">
     <q-tab name="All" icon="source" :label="'全部活動'" />
@@ -100,7 +100,7 @@
       </q-tooltip>
     </q-btn>
   </q-tabs>
-  
+
   <q-tab-panels
     id="printReport"
     class="print-area"
@@ -110,11 +110,11 @@
     transition-prev="jump-up"
     transition-next="jump-up"
   >
-    <q-tab-panel name="All" class="q-ma-none q-pa-sm text-body1"> 
+    <q-tab-panel name="All" class="q-ma-none q-pa-sm text-body1">
       <div class="printOnly text-h5">長洲鄉事委員會青年綜合服務中心 - 活動報表</div>
       <div class="printOnly text-h5">{{ qdate.formatDate(reportStartDate, 'YYYY年M月D日') }} -  {{ qdate.formatDate(reportEndDate, 'YYYY年M月D日')}}</div>
       <div class="printOnly text-h5">全部資料</div>
-      
+
       <q-table
         dense
         flat
@@ -142,20 +142,20 @@
       </q-table>
     </q-tab-panel>
 
-    <q-tab-panel name="OS2" class="q-ma-none q-pa-sm text-body1"> 
+    <q-tab-panel name="OS2" class="q-ma-none q-pa-sm text-body1">
       <div class="printOnly text-h5">長洲鄉事委員會青年綜合服務中心 - 活動報表</div>
       <div class="printOnly text-h5">{{ qdate.formatDate(reportStartDate, 'YYYY年M月D日') }} -  {{ qdate.formatDate(reportEndDate, 'YYYY年M月D日')}}</div>
       <div class="printOnly text-h5">OS2</div>
 
       <div>i) Total number of attendance: {{ OS2Data.reduce((x,v) => x + v.i_people_count, 0) }}</div>
-      <div>ii) Total number of sessions: {{ Object.values(dutyTable).reduce((x,v) => x + (v.slot_a?1:0) + (v.slot_b?1:0) + (v.slot_c?1:0), 0) }} <q-btn class="bg-primary text-white screenOnly" flat @click="openingModal = true" label="開放節數"/></div> 
+      <div>ii) Total number of sessions: {{ Object.values(dutyTable).reduce((x,v) => x + (v.slot_a?1:0) + (v.slot_b?1:0) + (v.slot_c?1:0), 0) }} <q-btn class="bg-primary text-white screenOnly" flat @click="openingModal = true" label="開放節數"/></div>
       <div>iii) Average attendance per session: {{ is.number((OS2Data.reduce((x,v) => x + v.i_people_count, 0) / Object.values(dutyTable).reduce((x,v) => x + (v.slot_a?1:0) + (v.slot_b?1:0) + (v.slot_c?1:0), 0)))? (OS2Data.reduce((x,v) => x + v.i_people_count, 0) / Object.values(dutyTable).reduce((x,v) => x + (v.slot_a?1:0) + (v.slot_b?1:0) + (v.slot_c?1:0), 0)).toFixed(2): 0 }}</div>
       <q-table
         dense
         flat
         wrap-cells
-        title="在中心舉行的活動"
-        :rows="OS2Data"
+        title="在中心舉行的活動 - 核心"
+        :rows="OS2Data.filter(x => x.c_nature && x.c_nature.startsWith('核心'))"
         :columns="os2Columns"
         :pagination="defaultPagination"
         color="primary"
@@ -173,10 +173,10 @@
             icon-right="archive"
             label="匯出Excel"
             no-caps
-            @click="exportExcel(OS2Data, os2Columns, 'OS2_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
+            @click="exportExcel(OS2Data.filter(x => x.c_nature && x.c_nature.startsWith('核心')), os2Columns, 'OS2核心_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
           />
         </template>
-        
+
         <!-- bottom total row -->
         <template v-slot:bottom-row="props">
           <q-tr>
@@ -185,13 +185,54 @@
               class="text-center bg-grey-2"
               style="font-size: 1vw"
             >
-              {{ OS2Data.reduce((x,v) => is.number(v[props.cols[index-1].name]) ? x + v[props.cols[index-1].name]: '', 0) }}
+              {{ OS2Data.filter(x => x.c_nature && x.c_nature.startsWith('核心')).reduce((x,v) => is.number(v[props.cols[index-1].name]) ? x + v[props.cols[index-1].name]: '', 0) }}
+            </q-td>
+          </q-tr>
+        </template>
+      </q-table>
+
+      <q-table
+        dense
+        flat
+        wrap-cells
+        title="在中心舉行的活動 - 非核心"
+        :rows="OS2Data.filter(x => x.c_nature && x.c_nature.startsWith('非核心'))"
+        :columns="os2Columns"
+        :pagination="defaultPagination"
+        color="primary"
+        row-key="c_act_code"
+        :loading="os2loading"
+        binary-state-sort
+        no-data-label="沒有資料"
+        @row-click="rowDetail"
+      >
+        <!-- export button -->
+        <template v-slot:top-right>
+          <q-btn
+            class="screenOnly"
+            color="primary"
+            icon-right="archive"
+            label="匯出Excel"
+            no-caps
+            @click="exportExcel(OS2Data.filter(x => x.c_nature && x.c_nature.startsWith('非核心')), os2Columns, 'OS2非核心_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
+          />
+        </template>
+
+        <!-- bottom total row -->
+        <template v-slot:bottom-row="props">
+          <q-tr>
+            <q-td
+              v-for="index in props.cols.length"
+              class="text-center bg-grey-2"
+              style="font-size: 1vw"
+            >
+              {{ OS2Data.filter(x => x.c_nature && x.c_nature.startsWith('非核心')).reduce((x,v) => is.number(v[props.cols[index-1].name]) ? x + v[props.cols[index-1].name]: '', 0) }}
             </q-td>
           </q-tr>
         </template>
       </q-table>
     </q-tab-panel>
-    
+
     <q-tab-panel name="OS3" class="q-ma-none q-pa-sm text-body1">
       <div class="printOnly text-h5">長洲鄉事委員會青年綜合服務中心 - 活動報表</div>
       <div class="printOnly text-h5">{{ qdate.formatDate(reportStartDate, 'YYYY年M月D日') }} -  {{ qdate.formatDate(reportEndDate, 'YYYY年M月D日')}}</div>
@@ -202,66 +243,86 @@
           <div class="text-h6">OS3</div>
           <div>ia) Guidance and counselling (group and activity): {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務A").reduce((x,v) => x + v.i_number, 0) }}</div>
           <div>ib) Guidance and counselling (case interview): 0</div>
-          <div>ii) Supportive service for young people in disadvantaged circumstances: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務B").reduce((x,v) => x + v.i_number, 0) }}</div> 
-          <div>iii) Socialization programmes: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務C").reduce((x,v) => x + v.i_number, 0) }}</div> 
-          <div>iv) Development of social responsibility and competence: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務D").reduce((x,v) => x + v.i_number, 0) }}</div> 
+          <div>ii) Supportive service for young people in disadvantaged circumstances: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務B").reduce((x,v) => x + v.i_number, 0) }}</div>
+          <div>iii) Socialization programmes: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務C").reduce((x,v) => x + v.i_number, 0) }}</div>
+          <div>iv) Development of social responsibility and competence: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務D").reduce((x,v) => x + v.i_number, 0) }}</div>
           <div>v) Total (Output Standard 3): {{ OS3Data.reduce((x,v) => x + v.i_number, 0) }}</div>
-        </div> 
+        </div>
         <div class="col-6">
           <div class="text-h6">OS4</div>
           <div>ia) Guidance and counselling (group and activity): {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務A").reduce((x,v) => x + v.i_people_count, 0) }}</div>
           <div>ib) Guidance and counselling (case interview): 0</div>
-          <div>ii) Supportive service for young people in disadvantaged circumstances: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務B").reduce((x,v) => x + v.i_people_count, 0) }}</div> 
-          <div>iii) Socialization programmes: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務C").reduce((x,v) => x + v.i_people_count, 0) }}</div> 
-          <div>iv) Development of social responsibility and competence: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務D").reduce((x,v) => x + v.i_people_count, 0) }}</div> 
+          <div>ii) Supportive service for young people in disadvantaged circumstances: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務B").reduce((x,v) => x + v.i_people_count, 0) }}</div>
+          <div>iii) Socialization programmes: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務C").reduce((x,v) => x + v.i_people_count, 0) }}</div>
+          <div>iv) Development of social responsibility and competence: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務D").reduce((x,v) => x + v.i_people_count, 0) }}</div>
           <div>v) Total (Output Standard 4): {{ OS3Data.reduce((x,v) => x + v.i_people_count, 0) }}</div>
-        </div> 
+        </div>
       </div>
-      <q-table
-        dense
-        flat
-        wrap-cells
-        :rows="OS3Data"
-        :columns="os2Columns"
-        :pagination="defaultPagination"
-        color="primary"
-        row-key="c_act_code"
-        :loading="loading"
-        :filter="search"
-        :filter-method="tableFilter"
-        binary-state-sort
-        no-data-label="沒有資料"
-        @row-click="rowDetail"
-      >
-        <template v-slot:top class="row">
-          <q-select class="col-grow" clearable label="性質" :options="os3natures" v-model="search.c_nature"/>
-          <q-space/>
-          <q-btn
-            class="screenOnly"
-            color="primary"
-            icon-right="archive"
-            label="匯出Excel"
-            no-caps
-            @click="exportExcel(OS3Data, os2Columns, 'OS34_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
-          />
-        </template>
-      </q-table>
+      <div align="right">
+        <q-btn
+          class="screenOnly"
+          color="primary"
+          icon-right="archive"
+          label="匯出Excel"
+          no-caps
+          @click="exportExcel(OS3Data, os2Columns, 'OS34_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
+        />
+      </div>
+      <div v-for="nature in os3natures">
+        <q-table
+          dense
+          flat
+          wrap-cells
+          class="q-mt-md"
+          :title="nature"
+          :rows="OS3Data.filter((x) => x.c_nature.trim() == nature)"
+          :columns="os2Columns"
+          :pagination="defaultPagination"
+          :hide-pagination="true"
+          color="primary"
+          row-key="c_act_code"
+          :loading="loading"
+          binary-state-sort
+          no-data-label="沒有資料"
+          @row-click="rowDetail"
+        >
+
+          <!-- bottom total row -->
+          <template v-slot:bottom-row="props">
+            <q-tr>
+              <q-td
+                v-for="index in props.cols.length"
+                class="text-center bg-grey-2"
+                style="font-size: 1vw"
+              >
+                {{ OS3Data.filter((x) => x.c_nature.trim() == nature).reduce((x,v) => is.number(v[props.cols[index-1].name]) ? x + v[props.cols[index-1].name]: '', 0) }}
+              </q-td>
+            </q-tr>
+          </template>
+        </q-table>
+      </div>
     </q-tab-panel>
-    
-    <q-tab-panel name="OS5" class="q-ma-none q-pa-sm text-body1"> 
+
+    <q-tab-panel name="OS5" class="q-ma-none q-pa-sm text-body1">
       <div class="printOnly text-h5">長洲鄉事委員會青年綜合服務中心 - 活動報表</div>
       <div class="printOnly text-h5">{{ qdate.formatDate(reportStartDate, 'YYYY年M月D日') }} -  {{ qdate.formatDate(reportEndDate, 'YYYY年M月D日')}}</div>
       <div class="printOnly text-h5">OS5</div>
 
-      <div>i) Total number of core programmes completed/case closed in the quarter: {{ Object.keys(OS5Data).length }}</div>
-      <div>ii) Total number of core programmes completed/case closed with goals achieved in the quarter: {{ Object.keys(OS5Data.filter((x) => x.c_status.trim() == '完成達標')).length }}</div>
-      <div>iii) Rate of achieving core programme plan: {{ is.number((Object.keys(OS5Data.filter((x) => x.c_status.trim() == '完成達標')).length/Object.keys(OS5Data).length))? (Object.keys(OS5Data.filter((x) => x.c_status.trim() == '完成達標')).length*100/Object.keys(OS5Data).length).toFixed(2) + "%":0 }}</div> 
-      
+      <ol type="i">
+        <li>Total number of core programmes completed/case closed in the quarter: {{ Object.keys(OS5Data).length }}
+          <div>(No. of Groups: {{OS5Data.filter(x => x.c_type && x.c_type.trim() == '小組').length}}, No. of Activities: {{ OS5Data.filter(x => x.c_type && x.c_type.trim() == '活動').length }}, No. of Cases: 0)</div>
+        </li>
+        <li>Total number of core programmes completed/case closed with goals achieved in the quarter: {{ Object.keys(OS5Data.filter((x) => x.c_status.trim() == '完成達標')).length }}
+          <div>(No. of Groups: {{OS5Data.filter(x => x.c_type && x.c_type.trim() == '小組' && x.c_status && x.c_status.trim() == '完成達標').length}}, No. of Activities: {{ OS5Data.filter(x => x.c_type && x.c_type.trim() == '活動' && x.c_status && x.c_status.trim() == '完成達標').length }}, No. of Cases: 0)</div>
+        </li>
+        <li>Rate of achieving core programme plan: {{ is.number((Object.keys(OS5Data.filter((x) => x.c_status.trim() == '完成達標')).length/Object.keys(OS5Data).length))? (Object.keys(OS5Data.filter((x) => x.c_status.trim() == '完成達標')).length*100/Object.keys(OS5Data).length).toFixed(2) + "%":0 }}</li>
+      </ol>
+
       <q-table
         dense
         flat
-        title="OS5"
-        :rows="OS5Data"
+        title="OS5 - 活動"
+        :rows="OS5Data.filter(x => x.c_type && x.c_type.trim() == '活動')"
         :columns="os5Columns"
         :pagination="defaultPagination"
         color="primary"
@@ -278,13 +339,65 @@
             icon-right="archive"
             label="匯出Excel"
             no-caps
-            @click="exportExcel(OS5Data, os5Columns, 'OS5_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
+            @click="exportExcel(OS5Data.filter(x => x.c_type && x.c_type.trim() == '活動'), os5Columns, 'OS5活動_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
           />
+        </template>
+
+        <!-- bottom total row -->
+        <template v-slot:bottom-row="props">
+          <q-tr>
+            <q-td
+              v-for="index in props.cols.length"
+              class="text-center bg-grey-2"
+              style="font-size: 1vw"
+            >
+              <div v-if="index == props.cols.length">活動總數：{{ OS5Data.filter(x => x.c_type && x.c_type.trim() == '活動').length }}</div>
+            </q-td>
+          </q-tr>
+        </template>
+      </q-table>
+
+      <q-table
+        dense
+        flat
+        title="OS5 - 小組"
+        :rows="OS5Data.filter(x => x.c_type && x.c_type.trim() == '小組')"
+        :columns="os5Columns"
+        :pagination="defaultPagination"
+        color="primary"
+        row-key="c_act_code"
+        :loading="os5loading"
+        binary-state-sort
+        no-data-label="沒有資料"
+        @row-click="rowDetail"
+      >
+        <template v-slot:top-right>
+          <q-btn
+            class="screenOnly"
+            color="primary"
+            icon-right="archive"
+            label="匯出Excel"
+            no-caps
+            @click="exportExcel(OS5Data.filter(x => x.c_type && x.c_type.trim() == '小組'), os5Columns, 'OS5小組_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
+          />
+        </template>
+
+        <!-- bottom total row -->
+        <template v-slot:bottom-row="props">
+          <q-tr>
+            <q-td
+              v-for="index in props.cols.length"
+              class="text-center bg-grey-2"
+              style="font-size: 1vw"
+            >
+              <div v-if="index == props.cols.length">小組總數：{{ OS5Data.filter(x => x.c_type && x.c_type.trim() == '小組').length }}</div>
+            </q-td>
+          </q-tr>
         </template>
       </q-table>
     </q-tab-panel>
 
-    <q-tab-panel name="C(iii)" class="q-ma-none q-pa-sm text-body1 row items-end"> 
+    <q-tab-panel name="C(iii)" class="q-ma-none q-pa-sm text-body1 row items-end">
       <div class="printOnly text-h5">長洲鄉事委員會青年綜合服務中心 - 活動報表</div>
       <div class="printOnly text-h5">{{ qdate.formatDate(reportStartDate, 'YYYY年M月D日') }} -  {{ qdate.formatDate(reportEndDate, 'YYYY年M月D日')}}</div>
       <div class="printOnly text-h5">c(iii)</div>
@@ -297,7 +410,7 @@
           <div>Total number of attendance: {{C3Data.filter(x => x.c_group2 == "領袖訓練").reduce((a,v) => a + v.i_people_count, 0) }}</div>
         </q-card-section>
       </q-card>
-      
+
       <q-card class="col-3">
         <q-card-section class="bg-yellow-2">Volunteerism <br/>(青年義務工作)</q-card-section>
         <q-card-section class="bg-blue-2">
@@ -306,7 +419,7 @@
           <div>Total number of attendance: {{C3Data.filter(x => x.c_group2 == "青年義務工作").reduce((a,v) => a + v.i_people_count, 0) }}</div>
         </q-card-section>
       </q-card>
-      
+
       <q-card class="col-3">
         <q-card-section class="bg-yellow-2">Community participation <br/>(參與社區公民事務)</q-card-section>
         <q-card-section class="bg-blue-2">
@@ -347,25 +460,25 @@
             icon-right="archive"
             label="匯出Excel"
             no-caps
-            @click="exportExcel(OS5Data, os5Columns, 'OS5_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
+            @click="exportExcel(C3Data, c3Columns, 'Ciii_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
           />
         </template>
       </q-table>
     </q-tab-panel>
 
     <!-- 每月工作報告 -->
-    <q-tab-panel name="MonthlyReport" class="q-ma-none q-pa-sm text-body1"> 
+    <q-tab-panel name="MonthlyReport" class="q-ma-none q-pa-sm text-body1">
       <div class="printOnly text-h5">長洲鄉事委員會青年綜合服務中心 - 活動報表</div>
       <div class="printOnly text-h5">{{ qdate.formatDate(reportStartDate, 'YYYY年M月D日') }} -  {{ qdate.formatDate(reportEndDate, 'YYYY年M月D日')}}</div>
       <div class="printOnly text-h5">每月工作報告</div>
-      
+
       <q-table
         dense
         flat
         wrap-cells
         title="每月工作報告"
         :rows="AllDataWithSession"
-        :columns="os2Columns"
+        :columns="monthlyReportColumns"
         :pagination="defaultPagination"
         color="primary"
         row-key="c_act_code"
@@ -381,10 +494,10 @@
             icon-right="archive"
             label="匯出Excel"
             no-caps
-            @click="exportExcel(AllDataWithSession, os2Columns, '每月工作報告_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
+            @click="exportExcel(AllDataWithSession, monthlyReportColumns, '每月工作報告_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
           />
         </template>
-        
+
         <!-- bottom total row -->
         <template v-slot:bottom-row="props">
           <q-tr>
@@ -393,14 +506,14 @@
               class="text-center bg-grey-2"
               style="font-size: 1vw"
             >
-              {{ AllDataWithSession.reduce((x,v) => is.number(v[props.cols[index-1].name]) ? x + v[props.cols[index-1].name]: '', 0) }}
+              總數：{{ AllDataWithSession.reduce((x,v) => is.number(v[props.cols[index-1].name]) ? x + v[props.cols[index-1].name]: x+1, 0) }}
             </q-td>
           </q-tr>
         </template>
       </q-table>
     </q-tab-panel>
   </q-tab-panels>
-  
+
 </template>
 
 <script setup>
@@ -455,7 +568,7 @@ const getDAct = computed(() => {
   let res = []
   for (let d = reportStartDate.value; qdate.getDateDiff(d, reportEndDate.value) <= 0; d = qdate.addToDate(d, {month: 1})) {
     res.push(qdate.formatDate(d, "MM/YYYY"))
-  } 
+  }
   return res
 })
 
@@ -464,7 +577,7 @@ const scheduleSnapshot = ref()
 
 
 const defaultPagination = ref({
-  rowsPerPage: 40,
+  rowsPerPage: 0,
   sortBy: "c_act_code",
   descending: true,
 })
@@ -723,6 +836,25 @@ const os2Columns = ref([
   },
 ])
 
+const monthlyReportColumns = ref([
+  {
+    name: "c_act_name",
+    label: "活動名稱",
+    field: "c_act_name",
+    style: "border-top: 1px solid; text-align: center; width: 75%; max-width: 75%;",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "i_people_count",
+    label: "青年人次",
+    field: "i_people_count",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+])
+
 const c3Columns = ref([
   {
     name: "c_act_code",
@@ -832,7 +964,7 @@ query queryO2Result(
 
 const { result: os5result, loading: os5loading } = useQuery(gql`
 query queryOS5Result(
-  $startDate: smalldatetime = "", 
+  $startDate: smalldatetime = "",
   $endDate: smalldatetime = ""
   ) {
   HTX_Event(where: {_and: {d_finish_goal: {_gte: $startDate}}, d_finish_goal: {_lte: $endDate}}) {
@@ -850,12 +982,12 @@ query queryOS5Result(
 }))
 
 // watcher
-watch(reportStartDate, (newDate, oldDate)  => { 
+watch(reportStartDate, (newDate, oldDate)  => {
   dutyTable.value = []
   refreshSchedule(newDate, reportEndDate.value)
 })
 
-watch(reportEndDate, (newDate, oldDate)  => { 
+watch(reportEndDate, (newDate, oldDate)  => {
   dutyTable.value = []
   refreshSchedule(reportStartDate.value, newDate)
 })
@@ -865,7 +997,7 @@ const EventData = computed(() => {
   let res = []
   if (result.value) {
     result.value.HTX_Event.forEach((x) => {
-      if (!staffSearchFilter.value || 
+      if (!staffSearchFilter.value ||
         (staffSearchFilter.value && x.c_respon && staffSearchFilter.value.map(x => x.label).includes(x.c_respon.trim())) ||
         (staffSearchFilter.value && x.c_respon && staffSearchFilter.value.map(x => x.label)) == '全部')
         {
@@ -880,7 +1012,7 @@ const AllDataWithSession = computed(() => {
   let res = []
   if (os2result.value) {
     os2result.value.tbl_act_session.forEach((x) => {
-      if ((!staffSearchFilter.value || 
+      if ((!staffSearchFilter.value ||
         (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label).includes(x.Session_to_Event.c_respon.trim())) ||
         (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label)) == '全部')
         ) {
@@ -909,20 +1041,20 @@ const OS2Data = computed(() => {
   if (os2result.value) {
     os2result.value.tbl_act_session.forEach((x) => {
       let result = false
-      /* ignore location in event information because it may be changed later 
+      /* ignore location in event information because it may be changed later
       let locations = x.Session_to_Event.c_dest? x.Session_to_Event.c_dest.split(/[,、]+/): []
-      
+
       locations.forEach((loc) => {
         let res = destInCenter.includes(loc.trim())
         if (res) result = true
       })
-      
+
       if (x.Session_to_Event.c_group1 && x.Session_to_Event.c_group1.trim().includes('中心設施')) result = true
       if (x.Session_to_Event.c_type && x.Session_to_Event.c_type.trim().includes('偶到')) result = true
       */
-      //if (result && x.inCenter && 
-      if (x.inCenter && 
-        (!staffSearchFilter.value || 
+      //if (result && x.inCenter &&
+      if (x.inCenter &&
+        (!staffSearchFilter.value ||
         (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label).includes(x.Session_to_Event.c_respon.trim())) ||
         (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label)) == '全部')
         ) {
@@ -943,9 +1075,9 @@ const OS3Data = computed(() => { //os2result.value? os2result.value.tbl_act_sess
   if (os2result.value) {
     os2result.value.tbl_act_session.forEach((x) => {
       let result = os3natures.includes(x.Session_to_Event.c_nature.trim())
-      
+
       if (result &&
-        (!staffSearchFilter.value || 
+        (!staffSearchFilter.value ||
         (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label).includes(x.Session_to_Event.c_respon.trim())) ||
         (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label)) == '全部')
         ) {
@@ -964,11 +1096,11 @@ const OS3Data = computed(() => { //os2result.value? os2result.value.tbl_act_sess
 const OS5Data = computed(() => {
   let res = []
   // console.log(JSON.stringify(os5result.value))
-  
+
   if (os5result.value) {
     os5result.value.HTX_Event.forEach((x) => {
       if (os5status.includes(x.c_status.trim()) &&
-        (!staffSearchFilter.value || 
+        (!staffSearchFilter.value ||
         (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label).includes(x.c_respon.trim())) ||
         (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label)) == '全部')
       ) {
@@ -993,7 +1125,7 @@ const C3Data = computed(() => {
             c_act_code: x.c_act_code? x.c_act_code.trim(): "",
             d_act: x.d_act? x.d_act.trim(): "",
             i_number: x.i_number,
-            i_people_count: x.i_people_count,          
+            i_people_count: x.i_people_count,
             c_act_name: x.Session_to_Event.c_act_name? x.Session_to_Event.c_act_name.trim(): "",
             c_dest: x.Session_to_Event.c_dest? x.Session_to_Event.c_dest.trim(): "",
             c_group1: x.Session_to_Event.c_group1? x.Session_to_Event.c_group1.trim(): "",
@@ -1016,7 +1148,7 @@ const C3Data = computed(() => {
 // functions
 function exportExcel(datasource, columns, filename) {
   let content = Excel.jsonToXLS(datasource, columns)
-  
+
   const status = exportFile(
     filename + '.xls',
     content,
@@ -1049,8 +1181,8 @@ function refreshSchedule(startDate, endDate) {
       date: day
     })
   }
-  
-  const sessionDocQuery = query(sessionCollection, 
+
+  const sessionDocQuery = query(sessionCollection,
     where("date", ">=", qdate.startOfDate(startDate, 'day')),
     where("date", "<=", qdate.endOfDate(endDate, 'day'))
   )
@@ -1106,13 +1238,13 @@ export default {
   }
 
   q-table {
-    page-break-inside: avoid; 
+    page-break-inside: avoid;
   }
-  
+
   @page {
     size: landscape !important;
     width: 29.7cm;
-    height: 21cm;  
+    height: 21cm;
   }
   .screenOnly {
     display: none;

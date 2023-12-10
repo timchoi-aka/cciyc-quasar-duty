@@ -112,9 +112,9 @@
       <q-btn outline color="primary" size="md" icon="print" v-print="printObj" />
     </div>
     <div id="printMe" class="q-ml-xs row justify-left q-pa-none">
-      <div class="col-12 text-center text-h5">CCIYC - STAFF DUTY SCHEDULE</div>
+      <div class="col-12 text-center text-h6">長洲鄉事委員會青年綜合服務中心 - 更表</div>
 
-      <div class="q-ma-none q-pa-none">
+      <div class="q-ma-none q-pa-none col-12">
         <DutyCalendar
           :renderDate="renderDate"
           :allowModify="false"
@@ -122,8 +122,8 @@
           :key="renderDate"
         />
       </div>
-      
-      <div class="q-ma-none q-pa-none">
+
+      <div class="q-ma-none q-pa-none col-12">
         <ActivityCalendar
           :renderDate="renderDate"
           :printHeader="false"
@@ -131,12 +131,13 @@
         />
       </div>
 
-      <div class="q-mt-none q-py-none q-mb-lg">
+      <div class="q-mt-none q-py-none q-mb-lg col-12">
         <Footer
           :renderDate="renderDate"
           :key="renderDate"
         />
       </div>
+
     </div>
   </q-page>
 </template>
@@ -181,7 +182,9 @@ export default {
 
 @media print {
   @page {
-    size: landscape;
+    size: A4 landscape;
+    margin-left: 1cm;
+    margin-right: 1cm;
   }
 }
 </style>
