@@ -144,8 +144,8 @@ const bugsQuery = query(bugsCollection)
 
 getDocs(bugsQuery).then((bugDoc) => {
   bugDoc.forEach((bug) => {
-    const prefixBase = process.env.NODE_ENV == "development"? "http://localhost:4000/storage/": "https://storage.googleapis.com/"
-    const prefixBucket =  bug.data().bucketName? bug.data().bucketName + "/": ''
+    const prefixBase = process.env.NODE_ENV == "development"? "http://localhost:4000/storage/cciyc-web/": "https://storage.googleapis.com/cciyc-web/"
+    const prefixBucket =  bug.data().path? bug.data().path + "/": ''
     const prefix = prefixBase + prefixBucket
     let d = {
       docid: bug.data().docid,

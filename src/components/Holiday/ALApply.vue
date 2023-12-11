@@ -349,7 +349,7 @@ import { ref, computed, onMounted } from "vue";
 import holiday from "assets/holiday.json";
 import { date as qdate } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
-import { getDocs, query, where } from "@firebase/firestore";
+import { getDocs, query, where } from "firebase/firestore";
 import { httpsCallable } from "@firebase/functions";
 
 
@@ -434,14 +434,14 @@ const pagination = ref({
 })
 
 // computed
-const publicHoliday = computed(() => holiday? holiday.vcalendar[0].vevent.map(({dtstart, summary}) => ({date: dtstart[0], summary: summary})): [])    
+const publicHoliday = computed(() => holiday? holiday.vcalendar[0].vevent.map(({dtstart, summary}) => ({date: dtstart[0], summary: summary})): [])
 const waitingAsync = computed(() => awaitServerResponse.value > 0)
 const uid = computed(() => $store.getters["userModule/getUID"])
 const username = computed(() => $store.getters["userModule/getUsername"])
 const isSAL = computed(() => $store.getters["userModule/getSAL"])
 const dateOfExit = computed(() => $store.getters["userModule/getDateOfExit"])
 
-    
+
 // drag and drop event handling
 // store the id of the draggable element
 function onDragStart(e) {
@@ -703,13 +703,13 @@ function updateTable() {
     0
   );
   let queryYearEndDate = qdate.endOfDate(queryStartDate, "year");
-    
+
   let queryEndDate =
       dateOfExit.value && dateOfExit.value.toDate() < queryYearEndDate
         ? qdate.subtractFromDate(dateOfExit.value.toDate(), { days: 1 })
         : queryYearEndDate;
 
-  // build months in table      
+  // build months in table
   let i = queryStartDate;
   while (qdate.getDateDiff(queryEndDate, i, "day") > 0) {
     renderYear.value.push(i);
@@ -746,7 +746,7 @@ function updateTable() {
     const leaveQuery = query(leaveCollection,
       where("uid", "==", uid.value)
     )
-      
+
     // get original application list
     getDocs(leaveQuery).then((applications) => {
       applications.forEach((doc) => {

@@ -15,7 +15,7 @@
             <div class="col-3">截圖（如有）：</div>
             <FileUpload
               class="col-9"
-              bucketName="bug-report"
+              path="bug-report"
               @onDone="updateFilenames"
             />
           </q-card-section>
@@ -162,7 +162,7 @@ const bugReportObject = ref({
   username: username.value,
   message: "",
   status: "未解決",
-  bucketName: "bug-report",
+  path: "bug-report",
   filenames: [],
   docid: qdate.formatDate(new Date(), "YYYYMMDDHHmmss")
 })
@@ -284,7 +284,7 @@ async function submitBugReport() {
       username: username.value,
       message: "",
       status: "未解決",
-      bucketName: "bug-report",
+      path: "bug-report",
       filenames: [],
       docid: qdate.formatDate(new Date(), "YYYYMMDDHHmmss")
     }

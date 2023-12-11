@@ -1,6 +1,6 @@
 import { FireDB, FirebaseFunctions, usersCollection } from "boot/firebase";
 import { httpsCallable } from "@firebase/functions";
-import { getDoc, doc, getDocs, query, where, Timestamp } from "@firebase/firestore";
+import { getDoc, doc, getDocs, query, where, Timestamp } from "firebase/firestore";
 
 class User {
   constructor(o = {}) {
@@ -29,7 +29,7 @@ class User {
         rank: "tmp"
       }]
     }
-    
+
     this.enable = o.enable? o.enable: true
     this.name = o.name? o.name: ""
     this.order = o.order? o.order: 0
@@ -51,7 +51,7 @@ class User {
     if (!this.enable) return false
     if (!this.employment) return false
     if (!this.employment[this.employment.length-1].dateOfExit) return true
-    
+
     return this.employment[this.employment.length-1].dateOfExit.toDate() > new Date()
   }
 
@@ -108,7 +108,7 @@ class User {
       return result
     });
   }
-  
+
   async load(uid) {
     getDoc(doc(FireDB, "users", uid)).then((user) => {
       let d = user.data();
@@ -123,7 +123,7 @@ class User {
       } else {
         d.employment[0].dateOfExit = "";
       }
-      
+
       this.name = d.name
       this.email = d.email
       this.uid = d.uid

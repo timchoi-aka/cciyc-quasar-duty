@@ -14,23 +14,25 @@ exports.savefiletostorage = functions.region("asia-east2").https.onRequest(async
         message: 'Cannot use ' + req.method + ' method'
       });
     }
-
+    const defaultBucket = "cciyc-web"
     const saveTo = req.headers.path.length > 0? req.headers.path + "/" : '';
     const busboy = Busboy({headers: req.headers});
     let uploadData = null;
 
-    busboy.on('file', (file, filename) => {
-      filename = Buffer.from(filename.filename, 'latin1').toString('utf8');
+    busboy.on('file', (fieldname, file, filename, encoding, mimeType) => {
+      fname = Buffer.from(filename.filename, 'latin1').toString('utf8');
       encoding = 'utf8';
       mimetype = filename.mimeType
-      const filepath = path.join(os.tmpdir(), filename);
+      const filepath = path.join(os.tmpdir(), fname);
       uploadData = {file: filepath, type: mimetype};
       file.pipe(fs.createWriteStream(filepath));
     });
 
     busboy.on('finish', () => {
-      const bucket = storage.bucket(saveTo);
+      const bucket = storage.bucket(defaultBucket);
+
       bucket.upload(uploadData.file, {
+        destination: saveTo + fname,
         uploadType: 'media',
         metadata: {
           metadata: {
@@ -40,7 +42,7 @@ exports.savefiletostorage = functions.region("asia-east2").https.onRequest(async
       })
       .then(() => {
         res.status(200).json({
-          message: 'Successfully uploaded ' + req.headers.path + '/' + req.headers.filename + ' to ' + saveTo + ' in storage'
+          message: 'Successfully uploaded ' + req.headers.path + '/' + req.headers.filename + ' to ' + defaultBucket + ' in storage'
         });
       })
       .catch(err => {

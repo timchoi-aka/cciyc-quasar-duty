@@ -1,9 +1,7 @@
 <template>
   <q-page class="full-width q-pa-sm">
     <!-- loading dialog -->
-    <q-dialog v-model="waitingAsync" position="bottom">
-      <LoadingDialog message="讀取資料中"/>
-    </q-dialog>
+    <LoadingDialog :model-value="awaitServerResponse" message="讀取資料中"/>
 
     <!-- duty calendar dialog -->
     <q-dialog v-model="showDutyCalendar" full-width>
@@ -424,7 +422,7 @@ import { useStore } from "vuex";
 import DutyCalendar from "components/Duty/DutyCalendar.vue";
 import LoadingDialog from "components/LoadingDialog.vue"
 import { httpsCallable } from "@firebase/functions"
-import { getDocs, where, query, orderBy } from "@firebase/firestore";
+import { getDocs, where, query, orderBy } from "firebase/firestore";
 
 const $store = useStore();
 const modifyingRow = ref([])
@@ -435,7 +433,7 @@ const showDutyCalendar = ref(false)
 const showApproveDialog = ref(false)
 const showModificationDialog = ref(false)
 const showRejectDialog = ref(false)
-      
+
 const statusSelected = ref({ value: "未批", label: "未批" })
 const usersSelected = ref([])
 const selectedRow = ref([])
@@ -446,7 +444,7 @@ const statusList = ref([
   { value: "未批", label: "未批" },
   { value: "拒絕", label: "拒絕" },
 ])
-      
+
 const pendingApplicationList = ref([])
 const awaitServerResponse = ref(0)
 
@@ -503,7 +501,7 @@ const typeOptions = ref([
     label: "特別病假",
   },
 ])
-      
+
 const rows = ref([])
 const columns = ref([
   {
@@ -566,7 +564,7 @@ const columns = ref([
     sortable: true,
   },
 ])
-   
+
 // computed
 const invalidInModification = computed(() => modifyingRow.value.findIndex((element) => "invalidEdit" in element) != -1)
 const waitingAsync = computed(() => awaitServerResponse.value > 0)
@@ -580,11 +578,11 @@ const username = computed(() => $store.getters["userModule/getUsername"])
 function buildModifyingRow() {
   proxyDate.value = "";
   modifyingRow.value = JSON.parse(JSON.stringify(selectedRow.value));
-  
+
   for (let i = 0; i < modifyingRow.value.length; i++) {
     modifyingRow.value[i].invalidEdit = true;
   }
-  
+
   showModificationDialog.value = !showModificationDialog.value;
 }
 
@@ -592,7 +590,7 @@ function buildModifyingItem(row) {
   proxyDate.value = "";
   modifyingRow.value = [];
   modifyingRow.value.push(JSON.parse(JSON.stringify(row)))
-  modifyingRow.value[0].invalidEdit = true;  
+  modifyingRow.value[0].invalidEdit = true;
   showModificationDialog.value = !showModificationDialog.value;
 }
 
@@ -625,12 +623,12 @@ function checkValidEdit(modifyingRowIndex) {
     modifyingRow.value[modifyingRowIndex].invalidEdit = true;
   } else delete modifyingRow.value[modifyingRowIndex].invalidEdit;
 }
- 
+
 function singleApprove(row) {
   selectedRow.value = [row];
   showApproveDialog.value = true;
 }
- 
+
 function changeRenderDate(days) {
   if (days > 0) {
     renderDate.value = qdate.addToDate(renderDate.value, { day: days });
@@ -638,13 +636,13 @@ function changeRenderDate(days) {
     renderDate.value = qdate.subtractFromDate(renderDate.value, { day: -days });
   }
 }
- 
+
 const checkForApproval = computed(() => selectedRow.value.length > 0? selectedRow.value.findIndex(
     (element) => element.status == "批准" || element.status == "拒絕"
   ) == -1: false)
-    
+
 const checkForModification = computed(() => selectedRow.value.length > 0? !(selectedRow.value.findIndex((element) => element.status != "批准") != -1): false)
-    
+
 function customFilter(rows, terms) {
   if (terms.usersSelected.length > 0 || terms.statusSelected.value != "") {
     let rowsReturn = rows;
@@ -701,7 +699,7 @@ function confirmApprove() {
 
   applicationRemarks.value = "";
 }
-    
+
 function confirmReject() {
   let leaveData = [];
   let now = new Date();
@@ -737,7 +735,7 @@ function confirmReject() {
 
   applicationRemarks.value = "";
 }
-    
+
 function confirmModify() {
   let leaveData = [];
   let now = new Date();
@@ -774,11 +772,14 @@ function confirmModify() {
   applicationRemarks.value = "";
   modifyingRow.value = [];
 }
-    
+
 function refreshHolidayTable() {
   awaitServerResponse.value++;
   rows.value = []
-  const leaveQuery = query(leaveCollection)
+  const leaveQuery = query(leaveCollection,
+    orderBy("date")
+  )
+
   getDocs(leaveQuery).then((applications) => {
     applications.forEach((doc) => {
       rows.value.push({
@@ -797,13 +798,13 @@ function refreshHolidayTable() {
 }
 
 onMounted(() => {
-  const usersQuery = query(usersCollection, 
+  const usersQuery = query(usersCollection,
     where("privilege.systemAdmin", "==", false),
     where("privilege.tmp", "==", false),
     where("enable", "==", true),
     orderBy("order")
   )
-  
+
   getDocs(usersQuery).then((userDoc) => {
     userDoc.forEach((doc) => {
       userList.value.push({
@@ -814,6 +815,6 @@ onMounted(() => {
   })
 
   refreshHolidayTable()
-}) 
+})
 </script>
 

@@ -59,7 +59,7 @@ import { ref, computed } from "vue";
 import { useStore } from "vuex";
 import { date as qdate } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
-import { getDoc, getDocs, query, where, doc } from "@firebase/firestore";
+import { getDoc, getDocs, query, where, doc } from "firebase/firestore";
 
 // props
 const props = defineProps({
@@ -71,7 +71,7 @@ const props = defineProps({
 const $store = useStore();
 const loading = ref(0)
 const carryOver = ref(0)
-      
+
 // table config
 const tableFields = ref([
   {
@@ -117,7 +117,7 @@ const tableFields = ref([
     headerClasses: "bg-grey-2",
   },
 ])
-      
+
 const tableData = ref([])
 const typeMap = ref({
   OT: "超時",
@@ -128,7 +128,7 @@ const defaultPagination = ref({
   sortBy: "date",
   descending: true,
 })
-  
+
 // functions
 function OTCarryOver(col) {
   //console.log(JSON.stringify(col));
@@ -153,7 +153,7 @@ function OTBalance(col) {
     } else return carryOver.value;
   }
 }
- 
+
 
 // load OT history
 const OTQuery = query(OTCollection,
@@ -172,7 +172,7 @@ getDocs(OTQuery).then((OTDoc) => {
     });
   });
 })
-  
+
 
 getDoc(doc(FireDB, "dashboard", "otConfig")).then((dashboardDoc) => {
   carryOver.value = dashboardDoc.data()[props.renderUID] == "undefined" ? 0 : dashboardDoc.data()[props.renderUID];

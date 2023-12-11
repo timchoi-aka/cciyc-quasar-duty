@@ -54,7 +54,7 @@ import { scheduleCollection, usersCollection } from "boot/firebase"
 import { date as qdate } from "quasar"
 import holiday from "assets/holiday.json"
 import { ref, computed } from "vue"
-import { where, orderBy, query, getDocs } from "@firebase/firestore"
+import { where, orderBy, query, getDocs, Timestamp } from "firebase/firestore"
 
 const props = defineProps({
   renderDate: Date
@@ -112,6 +112,7 @@ let startOfMonth = qdate.startOfDate(props.renderDate, 'month')
 let endOfMonth = qdate.endOfDate(props.renderDate, 'month')
 
 // query definitions
+
 const userDocQuery = query(usersCollection,
   where("privilege.systemAdmin", "==", false),
   where("privilege.sal", "==", true),
@@ -128,6 +129,7 @@ const scheduleDocQuery = query(scheduleCollection,
 getDocs(userDocQuery).then((userDoc) => {
   // build users list and uidMapping
   let uidMap = []
+
   userDoc.forEach((doc) => {
     // build tableFields
     if (doc.data().salDeadline && startOfMonth < doc.data().salDeadline.toDate()) {
@@ -158,6 +160,7 @@ getDocs(userDocQuery).then((userDoc) => {
     });
 
     // load days of the month and user name into table, initialize to 0 ALs
+
     for (let curDate = startOfMonth; curDate <= endOfMonth; curDate = qdate.addToDate(curDate, {"day":1})) {
       let rowData = {};
       rowData.Date = curDate;
@@ -176,6 +179,7 @@ getDocs(userDocQuery).then((userDoc) => {
       });
       tableData.value.push(rowData);
     }
+
   })
 })
 </script>

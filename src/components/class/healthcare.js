@@ -1,6 +1,6 @@
 import { FireDB, FirebaseFunctions, healthcareCollection } from "boot/firebase";
 import { httpsCallable } from "@firebase/functions";
-import { getDoc, doc, getDocs, query, where, Timestamp } from "@firebase/firestore";
+import { getDoc, doc, getDocs, query, where, Timestamp } from "firebase/firestore";
 
 class Healthcare {
   constructor(o = {}) {
@@ -25,14 +25,14 @@ class Healthcare {
     let start = Timestamp.fromDate(periodStart)
     let end = Timestamp.fromDate(periodEnd)
     if (uid) {
-      HCQuery = query(healthcareCollection, 
+      HCQuery = query(healthcareCollection,
         where("uid", "==", uid.value),
         where("date", ">=", start),
         where("date", "<=", end),
         where("status", "==", "批准"),
       )
     } else {
-      HCQuery = query(healthcareCollection, 
+      HCQuery = query(healthcareCollection,
         where("date", ">=", start),
         where("date", "<=", end),
         where("status", "==", "批准"),

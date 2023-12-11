@@ -1,7 +1,7 @@
 <template>
   <!-- loading dialog -->
   <LoadingDialog v-model="loading" message="處理中"/>
-  
+
   <!-- save modal -->
   <q-dialog v-model="saveDialog">
     <q-card>
@@ -55,7 +55,7 @@
           transition-prev="jump-up"
           transition-next="jump-up"
         >
-          <q-tab-panel name="EventInfo" class="q-ma-none q-pa-sm text-body1"> 
+          <q-tab-panel name="EventInfo" class="q-ma-none q-pa-sm text-body1">
             <div>活動名稱(中文)：{{EventData.HTX_Event_by_pk.c_act_name}}</div>
             <div>活動名稱(英文)：{{EventData.HTX_Event_by_pk.c_act_nameen}}</div>
             <div>會計類別：{{EventData.HTX_Event_by_pk.c_acc_type}}</div>
@@ -140,7 +140,7 @@
 
     <q-card-section class="row bg-yellow-2 q-px-none q-pt-none q-pb-lg">
       <div class="col-12 bg-yellow-4 q-pa-md q-mb-sm">類別</div>
-      <div class="row col-12 q-gutter-lg q-ml-sm">  
+      <div class="row col-12 q-gutter-lg q-ml-sm">
         <span class="col-3">會計類別： <q-select :options="acc_type" v-model="editObject.c_acc_type"/></span>
         <span class="col-3">狀況: <q-select :options="status" v-model="editObject.c_status"/></span>
         <span class="col-2 column">
@@ -149,7 +149,7 @@
         </span>
         <span class="col-3">達標日期: <DateComponent v-model="editObject.d_finish_goal"/></span>
       </div>
-      
+
       <div class="row col-12 q-gutter-lg q-ml-sm">
         <span class="col-3">類別： <q-select filled :options="type" v-model="editObject.c_type"/></span>
         <span class="col-7">性質： <q-select filled :options="nature" v-model="editObject.c_nature"/></span>
@@ -207,8 +207,8 @@
                 :auto-upload="true"
                 bordered
                 :headers="[
-                  {name: 'Access-Control-Allow-Origin', value: '*'}, 
-                  {name: 'Accept-Language', value: '*'}, 
+                  {name: 'Access-Control-Allow-Origin', value: '*'},
+                  {name: 'Accept-Language', value: '*'},
                   {name: 'Access-Control-Allow-Headers', value: 'Origin, X-Requested-With, Content-Type, Accept'},
                   {name: 'Authorization', value: `Bearer ${token}`}
                 ]"
@@ -233,7 +233,7 @@
     </q-card-section>
   </q-card>
 </template>
-  
+
 <script setup>
 import { computed, ref, onMounted } from "vue"
 import { useStore } from "vuex"
@@ -246,7 +246,7 @@ import { EVENT_SEARCHINFO_BY_PK, EVENT_FEE_BY_ACT_CODE } from "/src/graphQueries
 import { useMutation, useQuery } from "@vue/apollo-composable"
 import LoadingDialog from "components/LoadingDialog.vue"
 import dateUtil from "/src/lib/date.js"
-import { getDocs, query, where } from "@firebase/firestore"
+import { getDocs, query, where } from "firebase/firestore"
 import EventSelection from "components/Event/EventSelection.vue"
 import { onBeforeRouteLeave, useRouter } from "vue-router"
 
@@ -257,7 +257,7 @@ onMounted(async () => {
 
 // props
 const props = defineProps({
-  modelValue: String, 
+  modelValue: String,
 })
 
 // variables
@@ -407,14 +407,14 @@ function save() {
   // clone the object to a new object before purification
   // avoid v-model limit during purification
   Object.assign(serverObject.value, editObject.value)
-  purityData()  
+  purityData()
   const logObject = ref({
     "username": username,
     "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     "module": "活動系統",
     "action": "新增活動: " + props.modelValue + "。新資料:" + JSON.stringify(serverObject.value, null, 2)
   })
-  
+
   loading.value++
   addEvent({
     logObject: logObject.value,
@@ -436,7 +436,7 @@ function purityData() {
   serverObject.value.d_finish_goal = serverObject.value.d_finish_goal? qdate.formatDate(serverObject.value.d_finish_goal, "D/M/YYYY"): null
   serverObject.value.d_sale_start = serverObject.value.d_sale_start? qdate.formatDate(serverObject.value.d_sale_start, "D/M/YYYY"): null
   serverObject.value.d_sale_end = serverObject.value.d_sale_end? qdate.formatDate(serverObject.value.d_sale_end, "D/M/YYYY"): null
-  
+
   // append seconds
   serverObject.value.d_time_from = serverObject.value.d_time_from? serverObject.value.d_time_from + ":00": null
   serverObject.value.d_time_to = serverObject.value.d_time_to? serverObject.value.d_time_to + ":00": null
@@ -478,7 +478,7 @@ function newWhojoin(val, done) {
 function notifyClientSuccess(result) {
   editObject.value = {}
   serverObject.value = {}
-  loading.value--  
+  loading.value--
   $q.notify({
     message: "新增活動" + props.modelValue + "完成。",
   })

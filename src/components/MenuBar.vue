@@ -50,6 +50,7 @@
   </q-tabs>
   <q-tabs v-if="username && (module == 'website') && !isTmp && isSystemAdmin" inline-label class="desktop-only" align="left">
     <q-route-tab to="/website/news" icon="public" label="最新消息" />
+    <q-route-tab to="/website/gallery" icon="photo" label="活動花絮" />
   </q-tabs>
 </template>
 

@@ -127,7 +127,7 @@ import LoadingDialog from "components/LoadingDialog.vue"
 import { computed, ref, onMounted } from "vue";
 import { useStore } from "vuex";
 import { httpsCallable } from "@firebase/functions"
-import { getDocs, query, where } from "@firebase/firestore";
+import { getDocs, query, where } from "firebase/firestore";
 
 onMounted(() => {
   fetchAllLeaveRecords()
@@ -160,7 +160,7 @@ const typeMap = ref({
   SL: "病假",
   SSL: "特別病假",
 })
-      
+
 const columns = ref([
   {
     name: "date",

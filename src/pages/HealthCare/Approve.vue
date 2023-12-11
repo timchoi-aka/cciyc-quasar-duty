@@ -143,7 +143,7 @@
                   <div class="col-xs-6">員工：{{ application.username }}</div>
                 </div>
                 <div class="col-xs-7 items-center">
-                  日期： 
+                  日期：
                   <span v-html="qdate.formatDate(new Timestamp(application.date.seconds, application.date.nanoseconds).toDate(), 'YYYY年M月D日')" />
                 </div>
                 <div class="col-xs-5 row items-center">
@@ -381,7 +381,7 @@ import { ref, computed, onMounted } from "vue";
 import { date as qdate, useQuasar } from "quasar";
 import { useStore } from "vuex";
 import LoadingDialog from "components/LoadingDialog.vue"
-import { getDocs, query, where, orderBy, Timestamp } from "@firebase/firestore";
+import { getDocs, query, where, orderBy, Timestamp } from "firebase/firestore";
 import { httpsCallable } from "@firebase/functions";
 import StaffSelectionMultiple from "components/Basic/StaffSelectionMultiple.vue";
 
@@ -451,7 +451,7 @@ const columns = ref([
       qdate.formatDate(val.toDate(), "YYYY年M月D日(ddd)", {
         daysShort: ["日", "一", "二", "三", "四", "五", "六"],
       }),
-  }, 
+  },
   {
     name: "amount",
     label: "金額",
@@ -496,12 +496,12 @@ if (!isLogin.value) {
   .catch((error) => console.log("error", error));
 }
 
-// functions    
+// functions
 function singleApprove(row) {
   selectedRow.value = [row];
   showApproveDialog.value = true;
 }
-    
+
 function changeRenderDate(days) {
   if (days > 0) {
     renderDate.value = qdate.addToDate(renderDate.value, { day: days });
@@ -517,7 +517,7 @@ function checkForApproval() {
   );
   return i == -1;
 }
- 
+
 function checkForModification() {
   if (selectedRow.value.length == 0) return false;
   let i = selectedRow.value.findIndex((element) => element.status != "批准");
@@ -549,7 +549,7 @@ function confirmApprove() {
   let now = new Date();
 
   const remarks = "批准：" + qdate.formatDate(now, "YYYY年MM月DD日HH時mm分ss秒");
-  
+
   for (let doc of selectedRow.value) {
     doc.remarks = [...doc.remarks, remarks];
     doc.status = "批准";
@@ -558,7 +558,7 @@ function confirmApprove() {
   const approveHealthCareByDocid = httpsCallable(FirebaseFunctions,
     "healthcare-approveHealthCareByDocid"
   );
-  
+
   loading.value++;
   approveHealthCareByDocid(selectedRow.value).then(() => {
     refreshHolidayTable().then((result) => {
@@ -568,12 +568,12 @@ function confirmApprove() {
     });
   });
 }
-    
+
 function confirmReject() {
   let now = new Date();
 
   const remarks = "拒絕：" + qdate.formatDate(now, "YYYY年MM月DD日HH時mm分ss秒");
-  
+
   for (let doc of selectedRow.value) {
     doc.remarks = [...doc.remarks, remarks];
     doc.status = "拒絕";
@@ -582,9 +582,9 @@ function confirmReject() {
   const rejectHealthCareByDocid = httpsCallable(FirebaseFunctions,
     "healthcare-rejectHealthCareByDocid"
   );
-  
+
   loading.value++;
-  rejectHealthCareByDocid(selectedRow.value).then(() => {    
+  rejectHealthCareByDocid(selectedRow.value).then(() => {
     refreshHolidayTable().then((result) => {
       rows.value = result
       loading.value--
@@ -592,7 +592,7 @@ function confirmReject() {
     });
   });
 }
-    
+
 function confirmModify() {
   let now = new Date();
 
@@ -615,7 +615,7 @@ function confirmModify() {
 
   modifyingRow.value = [];
 }
-    
+
 async function refreshHolidayTable() {
   return new Promise((resolve, reject) => {
     const HCQuery = query(healthcareCollection)
@@ -633,7 +633,7 @@ async function refreshHolidayTable() {
             status: d.status,
             remarks: d.remarks? [...d.remarks]: [],
           });
-        }  
+        }
       });
       resolve(result)
     })

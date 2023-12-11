@@ -1,8 +1,7 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApp } from 'firebase/app';
 import { getMessaging } from "firebase/messaging";
 import { getAuth, onAuthStateChanged, onIdTokenChanged, getIdToken, connectAuthEmulator } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator, collection, doc } from "firebase/firestore";
-import { getApp } from "firebase/app";
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 //import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";

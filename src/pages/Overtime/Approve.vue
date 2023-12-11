@@ -495,7 +495,7 @@ import { date as qdate, useQuasar } from "quasar";
 import { useStore } from "vuex";
 import DutyCalendar from "components/Duty/DutyCalendar.vue";
 import LoadingDialog from "components/LoadingDialog.vue"
-import { getDocs, query, where, orderBy } from "@firebase/firestore";
+import { getDocs, query, where, orderBy } from "firebase/firestore";
 import { httpsCallable } from "@firebase/functions";
 
 onMounted(() => {
@@ -635,11 +635,11 @@ if (!isLogin.value) {
   .catch((error) => console.log("error", error));
 }
 
-// functions    
+// functions
 function invalidInModification() {
   return modifyingRow.value.findIndex((element) => "invalidEdit" in element) != -1;
 }
-    
+
 function checkValidEdit_Date(modifyingRowIndex) {
   modifyingRow.value[modifyingRowIndex].date = new Date(proxyDate.value);
 
@@ -671,7 +671,7 @@ function singleApprove(row) {
   selectedRow.value = [row];
   showApproveDialog.value = true;
 }
-    
+
 function changeRenderDate(days) {
   if (days > 0) {
     renderDate.value = qdate.addToDate(renderDate.value, { day: days });
@@ -687,7 +687,7 @@ function checkForApproval() {
   );
   return i == -1;
 }
- 
+
 function checkForModification() {
   if (selectedRow.value.length == 0) return false;
   let i = selectedRow.value.findIndex((element) => element.status != "批准");
@@ -750,7 +750,7 @@ function confirmApprove() {
 
   applicationRemarks.value = "";
 }
-    
+
 function confirmReject() {
   let leaveData = JSON.parse(JSON.stringify(selectedRow.value));
   let now = new Date();
@@ -784,7 +784,7 @@ function confirmReject() {
 
   applicationRemarks.value = "";
 }
-    
+
 function confirmModify() {
   let now = new Date();
 
@@ -818,7 +818,7 @@ function confirmModify() {
   applicationRemarks.value = "";
   modifyingRow.value = [];
 }
-    
+
 function refreshHolidayTable() {
   rows.value = [];
 

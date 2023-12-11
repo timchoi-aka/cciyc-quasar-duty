@@ -18,7 +18,18 @@ const routes = [
     children: [
       {
         path: 'news',
-        component: () => import('src/pages/Website/NewsPage.vue'), meta: { requiresAuth: true},
+        component: () => import('src/pages/Website/NewsHome.vue'), meta: { requiresAuth: true},
+        children: [
+          {
+            path: 'list',
+            component: () => import('src/pages/Website/NewsList.vue'), meta: { requiresAuth: true},
+          },
+        ]
+      },
+
+      {
+        path: 'gallery',
+        component: () => import('src/pages/Website/GalleryPage.vue'), meta: { requiresAuth: true},
       }
     ]
   },
@@ -40,7 +51,7 @@ const routes = [
       }
     ]
   },
-  
+
   {
     path: '/member',
     component: () => import('src/pages/MemberHome.vue'), meta: {requiresAuth: true},

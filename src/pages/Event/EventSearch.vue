@@ -29,12 +29,12 @@
       </div>
       </q-form>
     </div>
-      
+
     <q-table
       class="col-10"
       dense
       flat
-      :rows="EventList"   
+      :rows="EventList"
       :pagination="pagination"
       :columns="eventListColumns"
       color="primary"
@@ -55,7 +55,7 @@ import { EVENT_SEARCH } from "/src/graphQueries/Event/query.js";
 import { usersCollection } from "boot/firebase";
 import EventDetail from "components/Event/EventDetail.vue";
 import { useQuasar } from "quasar";
-import { getDocs, query, where } from "@firebase/firestore";
+import { getDocs, query, where } from "firebase/firestore";
 import { useRouter } from "vue-router"
 const router = useRouter()
 const UserList = ref([])
@@ -63,7 +63,7 @@ const userQuery = query(usersCollection,
   where("privilege.systemAdmin", "==", false),
   where("privilege.tmp", "!=", true)
 )
- 
+
 getDocs(userQuery).then((userDoc) => {
   userDoc.forEach((doc) => {
     if (doc.data().enable) UserList.value.push(doc.data().name)
@@ -200,13 +200,13 @@ const eventListColumns = ref([
 //function
 function submitSearch() {
   searchCondition.value.condition = {}
-  if (search.value.c_act_name) searchCondition.value.condition.c_act_name = {"_like" : "%"+search.value.c_act_name+"%"} 
-  if (search.value.c_act_code) searchCondition.value.condition.c_act_code = {"_eq" : search.value.c_act_code} 
-  if (search.value.c_respon) searchCondition.value.condition.c_respon = {"_eq" : search.value.c_respon} 
-  if (search.value.c_status) searchCondition.value.condition.c_status = {"_eq" : search.value.c_status} 
-  if (search.value.c_acc_type) searchCondition.value.condition.c_acc_type = {"_eq" : search.value.c_acc_type} 
-  if (search.value.c_group1) searchCondition.value.condition.c_group1 = {"_eq" : search.value.c_group1} 
-  if (search.value.c_nature) searchCondition.value.condition.c_nature = {"_eq" : search.value.c_nature} 
+  if (search.value.c_act_name) searchCondition.value.condition.c_act_name = {"_like" : "%"+search.value.c_act_name+"%"}
+  if (search.value.c_act_code) searchCondition.value.condition.c_act_code = {"_eq" : search.value.c_act_code}
+  if (search.value.c_respon) searchCondition.value.condition.c_respon = {"_eq" : search.value.c_respon}
+  if (search.value.c_status) searchCondition.value.condition.c_status = {"_eq" : search.value.c_status}
+  if (search.value.c_acc_type) searchCondition.value.condition.c_acc_type = {"_eq" : search.value.c_acc_type}
+  if (search.value.c_group1) searchCondition.value.condition.c_group1 = {"_eq" : search.value.c_group1}
+  if (search.value.c_nature) searchCondition.value.condition.c_nature = {"_eq" : search.value.c_nature}
   //console.log(searchCondition.value)
   refetch()
 }

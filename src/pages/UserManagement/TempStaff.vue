@@ -317,7 +317,7 @@
 import { date as qdate } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
 import { ref, onMounted } from "vue"
-import { Timestamp } from "@firebase/firestore";
+import { Timestamp } from "firebase/firestore";
 import User from "components/class/user";
 
 const selectedRow = ref([])

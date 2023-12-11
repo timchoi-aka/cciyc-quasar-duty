@@ -2,7 +2,7 @@
   <div class="full-width">
     <!-- loading dialog -->
     <LoadingDialog v-model="loading" message="讀取資料中" />
-    
+
     <!-- sticky button at bottom -->
     <q-page-sticky
       position="bottom-right"
@@ -88,7 +88,7 @@
           />
         </div>
       </div>
-      
+
       <!-- header row -->
       <q-table
         dense
@@ -299,7 +299,7 @@ import { useStore } from "vuex";
 import { ref, computed, onMounted } from "vue";
 import { date as qdate, useQuasar } from "quasar";
 import { httpsCallable } from "@firebase/functions";
-import { getDocs, query, where } from "@firebase/firestore";
+import { getDocs, query, where } from "firebase/firestore";
 
 onMounted(() => {
   fetchAllOTRecords()
@@ -429,7 +429,7 @@ function isAllValidDate() {
     result = false;
   return result;
 }
-    
+
 function confirmOTApplication() {
   // feed applicationList to a formal leaveData structure
   let leaveData = [];
@@ -463,7 +463,7 @@ function confirmOTApplication() {
       console.log(error.message);
     });
 }
-    
+
 function fetchAllOTRecords() {
   OTHistory.value = [];
   const OTQuery = query(OTCollection,

@@ -28,7 +28,7 @@ import {
 } from "boot/firebase";
 import { date as qdate } from "quasar";
 import { httpsCallable } from "firebase/functions";
-import { getDocs, query, where, orderBy } from "@firebase/firestore";
+import { getDocs, query, where, orderBy } from "firebase/firestore";
 
 // variables
 const $store = useStore();

@@ -125,7 +125,7 @@ import { useStore } from "vuex";
 import { ref, computed, onMounted } from "vue";
 import { date as qdate } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
-import { getDocs, query, where } from "@firebase/firestore";
+import { getDocs, query, where } from "firebase/firestore";
 import { httpsCallable } from "@firebase/functions";
 
 onMounted(() => {
@@ -140,22 +140,22 @@ const uid = computed(() => $store.getters["userModule/getUID"])
 
 const confirmDialog = ref(false)
 const selectedRow = ref([])
-      
+
 const awaitServerResponse = ref(0)
 const applicationList = ref([])
-      
+
 // table config
 const defaultPagination = ref({
   rowsPerPage: 20,
   descending: true,
   sortBy: "date",
 })
-      
+
 const leaveMap = ref({
   OT: "OT",
   CL: "補OT",
 })
-      
+
 const columns = ref([
   {
     name: "date",
@@ -192,8 +192,8 @@ const columns = ref([
       "font-size: 1.5vw; text-align: center; width: 40vw; min-width: 40vw;",
     headerClasses: "bg-grey-2",
   },
-]) 
-      
+])
+
 // functions
 function fetchAllOTRecords() {
   awaitServerResponse.value++
@@ -213,7 +213,7 @@ function fetchAllOTRecords() {
     awaitServerResponse.value--
   })
 }
-    
+
 function confirmOTRemove() {
   // call https functions to add leaves
   const delOT = httpsCallable(FirebaseFunctions, "ot-delLeaveByDocid");
@@ -233,7 +233,7 @@ function confirmOTRemove() {
       console.log(error.message);
     });
 }
-    
+
 function confirmOTRemoveByDocid(docid) {
   // call https functions to add leaves
   const delOT = httpsCallable(FirebaseFunctions, "ot-delLeaveByDocid");
