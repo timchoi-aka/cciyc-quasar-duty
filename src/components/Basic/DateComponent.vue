@@ -1,6 +1,6 @@
 <template>
   <!-- hint="YYYY/MM/DD" -->
-  <q-input 
+  <q-input
     mask="date"
     :label="props.label? props.label: ''"
     filled
@@ -32,6 +32,7 @@
 <script setup>
 const emit = defineEmits(["update:modelValue"])
 const props = defineProps({
+  // format YYYY-MM-DD
   modelValue: String,
   label: String,
 })

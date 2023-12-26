@@ -74,7 +74,7 @@ module.exports = configure(function (ctx) {
       },
       */
       // add after apollo client
-      
+
       chainWebpack (chain, { isServer, isClient }) {
         chain.module.rule('vue')
           .use('vue-loader')
@@ -88,7 +88,7 @@ module.exports = configure(function (ctx) {
             return options
           })
       }
-      
+
      // default
      // chainWebpack() {},
     },
@@ -102,7 +102,7 @@ module.exports = configure(function (ctx) {
 
     // https://v2.quasar.dev/quasar-cli/quasar-conf-js#Property%3A-framework
     framework: {
-      config: {},
+      config: { },
       i18n: 'zh-hant',
       cssAddon: true,
       // iconSet: 'material-icons', // Quasar icon set

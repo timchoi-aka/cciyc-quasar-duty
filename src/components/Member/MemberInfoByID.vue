@@ -1,5 +1,5 @@
 <template>
-  <div class="col-grow">{{Member.c_name? Member.c_name : "無此人"}}</div><div class="col-grow">{{ageUtil.calculateAge(Member.d_birth)}}</div><div class="col-grow">{{Member.c_udf_1}}</div><div class="col-grow">{{Member.d_expired_1?qdate.formatDate(Member.d_expired_1, "YYYY年M月D日"):""}}</div>
+  <div class="col-grow">{{Member.c_name? Member.c_name : Member.c_name_other? Member.c_name_other: "無此人"}}</div><div class="col-grow">{{ageUtil.calculateAge(Member.d_birth)}}</div><div class="col-grow">{{Member.c_udf_1}}</div><div class="col-grow">{{Member.d_expired_1?qdate.formatDate(Member.d_expired_1, "YYYY年M月D日"):""}}</div>
 </template>
 
 <script setup>
@@ -40,7 +40,7 @@ onResult((result) => {
     emit('update:modelValue', {
       c_mem_id: props.modelValue.c_mem_id,
       u_fee: props.modelValue.u_fee,
-      c_name: result.data.Member_by_pk.c_name,
+      c_name: result.data.Member_by_pk.c_name? result.data.Member_by_pk.c_name.trim(): result.data.Member_by_pk.c_name_other.trim(),
       c_sex: result.data.Member_by_pk.c_sex,
       c_tel: result.data.Member_by_pk.c_tel,
       i_age: ageUtil.calculateAge(result.data.Member_by_pk.d_birth),

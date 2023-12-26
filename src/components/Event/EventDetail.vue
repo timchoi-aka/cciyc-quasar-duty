@@ -1,12 +1,13 @@
 <template>
   <q-card square>
     <q-tabs v-model="activeTab" inline-label align="left" class="bg-blue-10 text-white">
-      <q-tab name="BasicInfo" icon="source" label="基本資料" />
-      <q-tab v-if="!isFree" name="FeeSetting" icon="paid" label="費用設定" />
-      <q-tab name="Apply" icon="approval" label="報名" />
-      <q-tab name="Stat" icon="leaderboard" label="統計節數" />
-      <q-tab name="PlanEvaluation" icon="summarize" label="計劃檢討" />
-      <q-tab name="Attendance" icon="person_add" label="點名紙" />
+      <q-route-tab name="BasicInfo" icon="source" label="基本資料" :to="{ name: 'EventContent', params: { id: route.params.id}}"/>
+      <q-route-tab v-if="!isFree" name="FeeSetting" icon="paid" label="費用設定" />
+      <q-route-tab name="Apply" icon="approval" label="報名" />
+      <q-route-tab name="Stat" icon="leaderboard" label="統計節數" />
+      <q-route-tab name="PlanEvaluation" icon="summarize" label="計劃檢討" />
+      <q-route-tab v-if="isUAT" name="AttendanceList" icon="person_add" label="點名" :to="{ name: 'TakeAttendance', params: { id: route.params.id}}"/>
+      <q-route-tab name="AttendancePrint" icon="person_add" label="點名紙" :to="{ name: 'AttendancePrint', params: { id: route.params.id}}"/>
       <FavourateEvent :c_act_code="EventID" :username="username" />
       <q-chip class="bg-blue-3" size="lg" :label="EventID + ' - ' + EventName"/>
       <q-space/>
@@ -15,6 +16,12 @@
       </q-btn>
     </q-tabs>
 
+    <router-view v-slot="{ Component }">
+      <!-- <keep-alive>-->
+        <component :is="Component"/>
+      <!--</keep-alive>-->
+    </router-view>
+    <!--
     <q-tab-panels
       v-model="activeTab"
       animated
@@ -23,7 +30,7 @@
       transition-prev="jump-up"
       transition-next="jump-up"
     >
-      <q-tab-panel name="BasicInfo" class="q-ma-none q-pa-none"> 
+      <q-tab-panel name="BasicInfo" class="q-ma-none q-pa-none">
         <EventContent :c_act_code="EventID"/>
       </q-tab-panel>
 
@@ -43,10 +50,15 @@
         <EventEvaluation :EventID="EventID"/>
       </q-tab-panel>
 
+      <q-tab-panel name="AttendanceList">
+        <AttendanceList :EventID="route.params.id"/>
+      </q-tab-panel>
+
       <q-tab-panel name="Attendance">
         <Attendance :EventID="EventID"/>
       </q-tab-panel>
     </q-tab-panels>
+    -->
   </q-card>
 </template>
 
@@ -55,20 +67,14 @@ import { gql } from "graphql-tag"
 import { ref, computed } from "vue";
 import { useStore } from "vuex";
 import { useQuery } from "@vue/apollo-composable"
-import EventEvaluation from "components/Event/EventEvalation.vue"
-import EventContent from "components/Event/EventContent.vue"
-import EventFee from "components/Event/EventFee.vue"
-import EventStat from "components/Event/EventStat.vue"
-import EventApply from "components/Event/EventApply.vue"
 import FavourateEvent from "components/Event/FavourateEvent.vue"
-import Attendance from "components/Event/Attendance.vue"
 import { useQuasar } from "quasar"
 import { useRouter, useRoute } from 'vue-router'
 const router = useRouter()
 const route = useRoute()
 // props
 const props = defineProps({
-  EventID: String, 
+  EventID: String,
 })
 
 const params = route.params.id;
@@ -96,7 +102,7 @@ query Detail_Event_by_pk($c_act_code: String!) {
 const username = computed(() => $store.getters["userModule/getUsername"])
 const isFree = computed(() => result.value? result.value.HTX_Event_by_pk.b_freeofcharge: false)
 const EventName = computed(() => result.value? result.value.HTX_Event_by_pk.c_act_name: '')
-
+const isUAT = computed(() => $store.getters["userModule/getUAT"])
 
 function confirmClose() {
   $q.dialog({

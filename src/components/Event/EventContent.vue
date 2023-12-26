@@ -10,11 +10,11 @@
       </q-card-section>
       <q-card-section class="text-h6">
         <div>確定刪除活動？刪除後將不能回復！</div>
-        <div>請在以下輸入活動編號{{props.c_act_code}}</div>
+        <div>請在以下輸入活動編號{{c_act_code}}</div>
         <q-input type="text" v-model="deleteCheck"/>
       </q-card-section>
       <q-card-actions align="right">
-        <q-btn :disable="deleteCheck != props.c_act_code.trim()" icon="check" label="確定" class="bg-positive text-white" v-close-popup="-1" @click="deleteAct"/>
+        <q-btn :disable="deleteCheck != c_act_code.trim()" icon="check" label="確定" class="bg-positive text-white" v-close-popup="-1" @click="deleteAct"/>
         <q-btn icon="cancel" label="取消" class="bg-negative text-white" v-close-popup/>
       </q-card-actions>
     </q-card>
@@ -55,7 +55,7 @@
       <div class="row q-gutter-lg q-ml-sm col-12 justify-start">
         <span class="col-auto row">
           <div class="col-12">活動編號:</div>
-          <div class="col-12">{{props.c_act_code}}</div>
+          <div class="col-12">{{c_act_code}}</div>
         </span>
         <span class="col-grow row justify-start">
           <div class="col-12 row"><span class="col-auto">活動名稱(中文): </span><q-input v-if="edit" filled type="text" class="col-grow text-h6" v-model="editObject.c_act_name"/><span class="text-h6 col-auto" v-else>{{Event.c_act_name}}</span></div>
@@ -66,7 +66,7 @@
 
     <q-card-section class="row bg-yellow-2 q-pl-none q-pt-none q-pb-lg">
       <q-chip class="col-12 bg-yellow-4" size="xl">類別</q-chip>
-      <div class="row col-12 q-gutter-lg q-ml-sm">  
+      <div class="row col-12 q-gutter-lg q-ml-sm">
         <span class="col-3">會計類別： <q-select v-if="edit" :options="acc_type" v-model="editObject.c_acc_type"/><span v-else>{{Event.c_acc_type}}</span></span>
         <span class="col-3">狀況: <q-select v-if="edit" :options="status" v-model="editObject.c_status"/><span v-else>{{Event.c_status}}</span></span>
         <span class="col-2 column">
@@ -133,8 +133,8 @@
                 :auto-upload="true"
                 bordered
                 :headers="[
-                  {name: 'Access-Control-Allow-Origin', value: '*'}, 
-                  {name: 'Accept-Language', value: '*'}, 
+                  {name: 'Access-Control-Allow-Origin', value: '*'},
+                  {name: 'Accept-Language', value: '*'},
                   {name: 'Access-Control-Allow-Headers', value: 'Origin, X-Requested-With, Content-Type, Accept'},
                   {name: 'Authorization', value: `Bearer ${token}`}
                 ]"
@@ -177,16 +177,18 @@ import LoadingDialog from "components/LoadingDialog.vue"
 import { usersCollection, FirebaseAuth} from "boot/firebase";
 import { getDocs, query, where } from "firebase/firestore";
 import StaffSelectionMultiple from "src/components/Basic/StaffSelectionMultiple.vue";
+import { useRoute, onBeforeRouteLeave } from "vue-router";
 
+const route = useRoute()
 const token = ref()
 onMounted(async () => {
   token.value = await FirebaseAuth.currentUser.getIdToken();
 })
 
-
+const c_act_code = route.params.id
 // props
 const props = defineProps({
-  c_act_code: String, 
+  c_act_code: String,
 })
 
 // variables
@@ -255,7 +257,7 @@ const dest = ref([
 const { result: EventData, onError: EventDataError, refetch } = useQuery(
   EVENT_BY_PK,
   () => ({
-    c_act_code: props.c_act_code
+    c_act_code: c_act_code
   }));
 const { mutate: delEvent, onDone: delEvent_Completed, onError: delEvent_Error } = useMutation(DELETE_EVENT_BY_PK)
 const { mutate: updateEvent, onDone: updateEvent_Completed, onError: updateEvent_Error } = useMutation(UPDATE_EVENT_BY_PK)
@@ -317,19 +319,19 @@ function saveEdit() {
   // avoid v-model limit during purification
   Object.assign(serverObject.value, editObject.value)
   purityData()
-  
+
   const logObject = ref({
     "username": username,
     "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     "module": "活動系統",
-    "action": "修改活動: " + props.c_act_code + "。新資料:" + JSON.stringify(serverObject.value, null, 2)
+    "action": "修改活動: " + c_act_code + "。新資料:" + JSON.stringify(serverObject.value, null, 2)
   })
-  
+
   loading.value++
   updateEvent({
     logObject: logObject.value,
     object: serverObject.value,
-    c_act_code: props.c_act_code,
+    c_act_code: c_act_code,
   })
 }
 
@@ -338,17 +340,17 @@ function deleteAct() {
     "username": username,
     "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     "module": "活動系統",
-    "action": "刪除活動: " + props.c_act_code + "。最後資料:" + JSON.stringify(Event.value, null, 2)
+    "action": "刪除活動: " + c_act_code + "。最後資料:" + JSON.stringify(Event.value, null, 2)
   })
 
   delEvent({
-    c_act_code: props.c_act_code,
+    c_act_code: c_act_code,
     logObject: logObject.value,
   })
 }
 
 function purityData() {
-  serverObject.value.c_act_code = props.c_act_code.trim()
+  serverObject.value.c_act_code = c_act_code.trim()
   serverObject.value.c_act_name = serverObject.value.c_act_name? serverObject.value.c_act_name.trim() : null
   serverObject.value.c_act_nameen = serverObject.value.c_act_nameen? serverObject.value.c_act_nameen.trim() : null
   serverObject.value.c_acc_type = serverObject.value.c_acc_type? serverObject.value.c_acc_type.trim() : null
@@ -380,7 +382,7 @@ function purityData() {
   serverObject.value.d_finish_goal = serverObject.value.d_finish_goal
   serverObject.value.d_sale_start = serverObject.value.d_sale_start? qdate.formatDate(serverObject.value.d_sale_start, "D/M/YYYY"): null
   serverObject.value.d_sale_end = serverObject.value.d_sale_end? qdate.formatDate(serverObject.value.d_sale_end, "D/M/YYYY"): null
-  
+
   // append seconds
   serverObject.value.d_time_from = serverObject.value.d_time_from? serverObject.value.d_time_from + ":00": null
   serverObject.value.d_time_to = serverObject.value.d_time_to? serverObject.value.d_time_to + ":00": null
@@ -421,7 +423,7 @@ function notifyClientError(error) {
 
 // callback success
 delEvent_Completed((result) => {
-  loading.value--  
+  loading.value--
   $q.notify({
     message: "刪除活動" + result.data.delete_HTX_Event_by_pk.c_act_code + "完成。",
   })
@@ -433,7 +435,7 @@ updateEvent_Completed((result) => {
   saveDialog.value = false
   edit.value = false
   refetch()
-  loading.value--  
+  loading.value--
   $q.notify({
     message: "更新活動" + result.data.update_HTX_Event_by_pk.c_act_code + "完成。",
   })
@@ -450,5 +452,21 @@ EventDataError((error) => {
 
 updateEvent_Error((error) => {
   notifyClientError(error)
+})
+
+// route guard
+onBeforeRouteLeave((to, from, next) => {
+  if(edit.value) {
+    $q.dialog({
+      title: "是否確認離開本頁？",
+      message: "所有未儲存的資料都會遺失！",
+      persistent: true,
+      cancel: true
+    }).onOk(()=>{
+      next()
+    }).onCancel(() => {})
+  } else {
+    next()
+  }
 })
 </script>

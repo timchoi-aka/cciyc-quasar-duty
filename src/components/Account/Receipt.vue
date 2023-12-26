@@ -38,7 +38,7 @@
   <div class="row q-ma-md-none q-pa-md-none justify-center">
     <div class="bg-primary row col-12 items-center" style="min-height: 50px; max-height: 50px;">
       <q-btn label="Copy+1" flat class="bg-primary text-white col-shrink" v-print="printObj">
-        <q-tooltip class="bg-white text-primary">列印</q-tooltip>  
+        <q-tooltip class="bg-white text-primary">列印</q-tooltip>
       </q-btn>
       <!--<q-btn icon="picture_as_pdf" flat class="bg-primary text-white col-shrink" @click="download"/>-->
       <q-space/>
@@ -63,7 +63,7 @@
         ref="printbox"
         :src="src"
         style="height: 100%; min-height: 100%;"
-        
+
       />
     </div>
     <!--
@@ -139,7 +139,7 @@ const src = ref(null)
 const printbox = ref(null)
 
 onMounted(() => {
-  
+
   //window.addEventListener('afterprint', setPlaceholders)
 })
 
@@ -183,14 +183,14 @@ const printObj = ref({
   previewTitle: "列印預覽", // The title of the preview window. The default is 打印预览
   popTitle: "收據",
   openCallback (vue) {
-    
+
     const logObject = ref({
       "username": username,
       "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
       "module": "會計系統",
       "action": "重新列印收據 " + Receipt.value.c_receipt_no,
     })
-    
+
     addReceiptPrintCount({
       logObject: logObject.value,
       c_receipt_no: Receipt.value.c_receipt_no,
@@ -202,7 +202,7 @@ const printObj = ref({
 })
 
 // query
-const {onResult, loading, refetch} = useQuery(RECEIPTS_BY_NO, 
+const {onResult, loading, refetch} = useQuery(RECEIPTS_BY_NO,
   () => ({
     c_receipt_no: props.c_receipt_no
   }));
@@ -233,7 +233,7 @@ function displayPDF() {
   doc.addFileToVFS("NotoSansTC-Regular.ttf", font)
   doc.addFont("NotoSansTC-Regular.ttf", 'NotoSans', 'normal')
   doc.setFont("NotoSans")
-  
+
   doc.setFontSize(10)
   doc.text("長洲鄉事委員會青年綜合服務中心", 34, 5, "center")
   doc.setFontSize(6)
@@ -251,35 +251,35 @@ function displayPDF() {
   doc.text("yc@cciyc.com", 30, 15)
   doc.text("www.cciyc.com", 45, 15)
   doc.setFontSize(10)
-  if (Receipt.value.b_refund) 
+  if (Receipt.value.b_refund)
     doc.text("退款記錄 OFFICIAL REFUND", 34, 20, "center")
   else
     doc.text("正式收據 OFFICIAL RECEIPT", 34, 20, "center")
   doc.setFontSize(8)
   doc.text("收據編號 Receipt No: " + Receipt.value.c_receipt_no, 34, 25, "center")
   doc.setFontSize(8)
-  if (Receipt.value.b_refund) 
+  if (Receipt.value.b_refund)
     doc.text("列印日期 Date: " + qdate.formatDate(Date.now(), "DD/MM/YYYY"), 12, 29)
-  else 
+  else
     doc.text("日期 Date: " + qdate.formatDate(Receipt.value.d_create, "DD/MM/YYYY"), 12, 29)
   doc.setFontSize(6)
   doc.text("Copy: " + Receipt.value.i_prints, 50, 29)
-  
+
   // 茲收到/茲繳付
   doc.setFontSize(8)
-  if (Receipt.value.b_refund) 
+  if (Receipt.value.b_refund)
     doc.text("茲繳付", 5, 34)
   else
     doc.text("茲收到", 5, 34)
   doc.setFontSize(6)
-  if (Receipt.value.b_refund) 
+  if (Receipt.value.b_refund)
     doc.text("Pay to", 5, 37)
   else
     doc.text("Received from:", 5, 37)
   doc.setFontSize(10)
   doc.text(Receipt.value.c_name, 32, 35)
 
-  // 港幣 
+  // 港幣
   doc.setFontSize(8)
   doc.text("港幣", 5, 42)
   doc.setFontSize(6)
@@ -289,12 +289,12 @@ function displayPDF() {
 
   // 退款/支付
   doc.setFontSize(8)
-  if (Receipt.value.b_refund) 
+  if (Receipt.value.b_refund)
     doc.text("退款", 5, 50)
   else
     doc.text("支付", 5, 50)
   doc.setFontSize(6)
-  if (Receipt.value.b_refund) 
+  if (Receipt.value.b_refund)
     doc.text("being refund for", 5, 53)
   else
     doc.text("being payment for", 5, 53)
@@ -308,22 +308,22 @@ function displayPDF() {
   doc.text("issued by", 5, 62)
   doc.setFontSize(10)
   doc.text(staffNameMapping[Receipt.value.c_user_id]? staffNameMapping[Receipt.value.c_user_id]: Receipt.value.c_user_id, 32, 60)
-  
+
 
   doc.setFontSize(8)
   doc.text("收據字體會退色，若需要保留，請自行影印。", 6, 66, {maxWidth: 60})
   doc.setFontSize(7)
   doc.text("The receipt will eventually fade out.  Please make a photocopy for a more lasting document.", 4, 70, {maxWidth: 60})
-  
+
   doc.setFontSize(10)
-  if (!Receipt.value.b_refund) 
+  if (!Receipt.value.b_refund)
     doc.text(Receipt.value.m_remark, 3, 77, {maxWidth: 65})
-  doc.setProperties({ 
+  doc.setProperties({
     title: Receipt.value.c_receipt_no + '.pdf',
     filename: Receipt.value.c_receipt_no + '.pdf',
   })
   src.value = doc.output("datauristring", {filename: Receipt.value.c_receipt_no + '.pdf'})
-  
+
   // doc.save(Receipt.value.c_receipt_no + '.pdf');
 }
 
@@ -354,7 +354,7 @@ function refundConfirm() {
   refund({
     logObject: logObject.value,
     remarks: remarks,
-    c_receipt_no: Receipt.value.c_receipt_no 
+    c_receipt_no: Receipt.value.c_receipt_no
   })
 }
 
@@ -371,7 +371,7 @@ function deleteConfirm() {
   deleteReceipt({
     logObject: logObject.value,
     remarks: remarks,
-    c_receipt_no: Receipt.value.c_receipt_no 
+    c_receipt_no: Receipt.value.c_receipt_no
   })
 }
 // callback
@@ -417,7 +417,7 @@ export default {
 <style lang="scss" scoped>
 @media screen {
   .print-area {
-    width: 68mm; 
+    width: 68mm;
     height: auto;
     margin: none;
     border: 1px solid;
@@ -446,14 +446,14 @@ export default {
 @media print {
   @page {
     size: landscape !important;
-    width: 68mm; 
+    width: 68mm;
     margin: none;
   }
-  
-  .print-area { 
+
+  .print-area {
     border: none;
   }
-  
+
   .highlight_1 {
     font-size: 1.2rem;
   }

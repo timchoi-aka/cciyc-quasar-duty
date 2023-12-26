@@ -3,7 +3,7 @@
   <q-dialog :model-value="waitingAsync" position="bottom">
     <LoadingDialog message="處理中"/>
   </q-dialog>
-  
+
   <!-- JSPDF module -->
   <div class="print-area q-pa-none q-ma-none" v-if="!waitingAsync">
     <q-pdfviewer
@@ -22,23 +22,22 @@ import { date as qdate } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
 import jspdf from 'jspdf'
 import { font } from "/src/assets/NotoSansTC-Regular-normal.js"
+import { useRoute } from 'vue-router'
 
-// props
-const props = defineProps({
-  EventID: String, 
-})
+const route = useRoute()
+const c_act_code = route.params.id
 
 // queries
 const { onResult: EventData, loading: eventLoading} = useQuery(
   EVENT_BY_PK,
   () => ({
-    c_act_code: props.EventID
+    c_act_code: c_act_code
   }));
 
 const { onResult: ApplicantData, loading: applicantsLoading } = useQuery(
   APPLICANTS_BY_ACT_CODE,
   () => ({
-    c_act_code: props.EventID
+    c_act_code: c_act_code
   }), {
     pollInterval: 5000,
   });
@@ -128,7 +127,7 @@ function drawHeader(doc, applicants, event, dateSlots) {
   for (let i = 1; i <= dateSlots; i++) {
     doc.line(100+(236-100)/dateSlots*i, 55, 100+(236-100)/dateSlots*i, 204)
   }
-  
+
   // header text
   doc.text("編號", 15, 55, "left")
   doc.text("姓名", 50, 55, "left")
@@ -158,14 +157,14 @@ function generatePDF(applicants, event, appSlots, dateSlots) {
   doc.addFileToVFS("NotoSansTC-Regular.ttf", font)
   doc.addFont("NotoSansTC-Regular.ttf", 'NotoSans', 'normal')
   doc.setFont("NotoSans")
- 
+
   // determine number of pages
   for (let page = 0; page <= applicants.length/appSlots; page++) {
     if (page > 0) {
       doc.addPage()
     }
     drawHeader(doc, applicants, event, dateSlots)
-    
+
     // draw applicant entry lines
     for (let i = 1; i <= appSlots; i++) {
       let endOfLine = 62+(180-62)/appSlots*i
@@ -183,12 +182,12 @@ function generatePDF(applicants, event, appSlots, dateSlots) {
 
     drawFooter(doc)
   }
-  
-  doc.setProperties({ 
+
+  doc.setProperties({
     title: event.c_act_code + '點名表.pdf',
     filename: event.c_act_code + '點名表.pdf',
   })
-  
+
   src.value = doc.output("datauristring", {filename: event.c_act_code + '點名表.pdf'})
 }
 </script>
@@ -198,8 +197,8 @@ function generatePDF(applicants, event, appSlots, dateSlots) {
     size: landscape;
     width: 29.7cm;
     height: 21cm;
-    margin: 3mm; 
-    overflow: hidden; 
+    margin: 3mm;
+    overflow: hidden;
     border: 1px solid;
 }
 </style>

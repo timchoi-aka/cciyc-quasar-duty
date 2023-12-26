@@ -1,11 +1,12 @@
 import { date as qdate } from "quasar";
+import calculateAge from "./calculateAge.js";
 
 function sisFilter(reportDate, reportType, x) {
   /*
   console.log(x.c_mem_id + ":" + qdate.startOfDate(qdate.subtractFromDate(reportDate.value, {years: 15}), 'month') + ":" + qdate.getDateDiff(
     x.d_birth,
     qdate.startOfDate(qdate.subtractFromDate(reportDate.value, {years: 15}), 'month')
-  ) ) 
+  ) )
     */
   return (
     x.c_udf_1 != "社區義工" &&
@@ -14,12 +15,19 @@ function sisFilter(reportDate, reportType, x) {
       x.d_exit_1 && qdate.getDateDiff(x.d_exit_1, qdate.startOfDate(reportDate.value, 'month')) > 0
     ) &&
     ( // did not expire membership or expire after start of report month
-      (x.d_expired_1 == null) || 
+      (x.d_expired_1 == null) ||
       (x.d_expired_1 && qdate.getDateDiff(x.d_expired_1, qdate.startOfDate(reportDate.value, 'month')) > 0)
     ) &&
-    ( 
+    (
+      // enter before end of report month
+      qdate.getDateDiff(x.d_enter_1, qdate.endOfDate(reportDate.value, 'month')) < 0 &&
+      // expiry after begin of report month
+      qdate.getDateDiff(x.d_expired_1, qdate.startOfDate(reportDate.value, 'month')) > 0
+    ) &&
+    (
       // youth: is age 15-24 in the report month
       ( reportType == 'youth' &&
+        // age 15 - 24 at the end of report month
         qdate.isBetweenDates(
           x.d_birth,
           qdate.startOfDate(qdate.subtractFromDate(reportDate.value, {years: 25}), 'month'),
@@ -49,34 +57,55 @@ function sisFilter(reportDate, reportType, x) {
     ) && (
       (
         // for report months Jan-Mar, May-Dec
-        qdate.formatDate(reportDate.value, "M") != 4 && 
-        ( // enter within report month
-          qdate.isBetweenDates(
-            x.d_enter_1, 
-            qdate.startOfDate(reportDate.value, 'month'),
-            qdate.endOfDate(reportDate.value, 'month'), 
-            {
-              inclusiveFrom: true, inclusiveTo: true
-            }
-          )
-        ) || 
-        ( // renew within report month
-          qdate.isBetweenDates(
-            x.d_renew_1, 
-            qdate.startOfDate(reportDate.value, 'month'),
-            qdate.endOfDate(reportDate.value, 'month'), 
-            {
-              inclusiveFrom: true, inclusiveTo: true
-            }
+        qdate.formatDate(reportDate.value, "M") != 4 &&
+        (
+          ( // enter within report month
+            qdate.isBetweenDates(
+              x.d_enter_1,
+              qdate.startOfDate(reportDate.value, 'month'),
+              qdate.endOfDate(reportDate.value, 'month'),
+              {
+                inclusiveFrom: true, inclusiveTo: true
+              }
+            )
+          ) ||
+          ( // renew within report month
+            qdate.isBetweenDates(
+              x.d_renew_1,
+              qdate.startOfDate(reportDate.value, 'month'),
+              qdate.endOfDate(reportDate.value, 'month'),
+              {
+                inclusiveFrom: true, inclusiveTo: true
+              }
+            )
+          ) ||
+          ( // age 15 birthday within report month (youth only)
+            reportType == 'youth' &&
+            qdate.isBetweenDates(
+              x.d_birth,
+              qdate.startOfDate(qdate.subtractFromDate(reportDate.value, {years: 15}), 'month'),
+              qdate.endOfDate(qdate.subtractFromDate(reportDate.value, {years: 15}), 'month'), {
+                inclusiveFrom: true, inclusiveTo: true, onlyDate: true
+            })
+          ) ||
+          ( // passed age 25 birthday 1 month before report month (family only)
+            reportType == 'family' && x.isYouthFamily &&
+            qdate.isBetweenDates(
+              x.d_birth,
+              qdate.startOfDate(qdate.subtractFromDate(reportDate.value, {years: 25, months: 1}), 'month'),
+              qdate.endOfDate(qdate.subtractFromDate(reportDate.value, {years: 25, months: 1}), 'month'), {
+                inclusiveFrom: true, inclusiveTo: true, onlyDate: true
+            })
           )
         )
       ) ||
       (
         // for report months Apr
-        qdate.formatDate(reportDate.value, "M") == 4 && 
+        qdate.formatDate(reportDate.value, "M") == 4 &&
+        //console.log(x.c_mem_id + " " + x.c_name + " " + qdate.formatDate(x.d_enter_1, "YYYYMMDD") + " " + qdate.getDateDiff(x.d_enter_1, qdate.endOfDate(reportDate.value, 'month'))) &&
         ( // enter before end of report month
           qdate.getDateDiff(x.d_enter_1, qdate.endOfDate(reportDate.value, 'month')) < 0
-        ) && 
+        ) &&
         ( // expiry after begin of report month
           qdate.getDateDiff(x.d_expired_1, qdate.startOfDate(reportDate.value, 'month')) > 0
         )
@@ -103,9 +132,9 @@ function isYouthFamily(reportDate, database, c_mem_id) {
     if (relation.c_mem_id_1 == c_mem_id) relatedMembers.push(relation.c_mem_id_2)
     else relatedMembers.push(relation.c_mem_id_1)
   })
-  
+
   //console.log(relatedMembers)
-  
+
   relatedMembers.forEach((mem_id) => {
     // console.log(mem_id)
     let j = database.findIndex((element) => element.c_mem_id == mem_id)
@@ -123,9 +152,9 @@ function isYouthFamily(reportDate, database, c_mem_id) {
                       }
                     ) && (
                       // 2
-                      (database[j].d_expired_1 == null) || 
+                      (database[j].d_expired_1 == null) ||
                       (database[j].d_expired_1 && qdate.getDateDiff(database[j].d_expired_1, qdate.startOfDate(reportDate.value, 'month')) > 0)
-                    ) && 
+                    ) &&
                     (
                       // 3
                       database[j].d_exit_1 == null ||
@@ -137,7 +166,7 @@ function isYouthFamily(reportDate, database, c_mem_id) {
       }
     }
   })
-  
+
   return result
 }
 export default { sisFilter, isYouthFamily }

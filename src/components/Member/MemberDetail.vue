@@ -6,7 +6,7 @@
         {{renewObject.c_mem_id}} - 續會 <span v-if="renewObject.duration == 1">(1年)</span><span v-else>(永久)</span>
       </q-card-section>
       <q-card-section class="bg-blue-1 text-h6">
-        <div>姓名: {{renewObject.c_name}}</div>
+        <div>姓名: {{renewObject.c_name}}<span v-if="renewObject.c_name_other.length > 0">({{ renewObject.c_name_other }})</span></div>
         <div>年齡: {{ageUtil.calculateAge(renewObject.d_birth)}}</div>
         <div>現時會藉: {{renewObject.old_c_udf_1}}</div>
         <div>現時屆滿日期: {{qdate.formatDate(renewObject.d_expired_1, "YYYY年MM月DD日")}}</div>
@@ -79,7 +79,7 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
-    
+
   <!-- quit member dialog -->
   <q-dialog v-model="quitDialog">
     <q-card>
@@ -103,7 +103,7 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
-    
+
   <q-card>
     <q-card-section class="bg-primary text-white text-h6">
       <!-- mobile UI -->
@@ -112,7 +112,7 @@
           <span v-if="member.c_mem_id != null"><MemberSelection class="text-white" :model-value="props.modelValue" @update:model-value="(value) => $emit('update:modelValue', value? value: props.modelValue)"/></span>
         </div>
         <q-btn v-if="!editState" class="text-white q-mr-none col-shrink" rounded flat icon="edit" @click="startEdit">
-          <q-tooltip class="text-white">修改</q-tooltip>  
+          <q-tooltip class="text-white">修改</q-tooltip>
         </q-btn>
         <q-space/>
         <q-btn class="col-shrink" dense flat icon="close" v-close-popup>
@@ -128,7 +128,7 @@
           <span v-if="member.c_sex != null" class="col-1">[{{member.c_sex}}]</span>
         </div>
         <q-btn v-if="!editState" class="text-white q-mr-none col-shrink" rounded flat icon="edit" @click="startEdit">
-          <q-tooltip class="text-white">修改</q-tooltip>  
+          <q-tooltip class="text-white">修改</q-tooltip>
         </q-btn>
         <q-space/>
         <MemberSelection class="text-white" :model-value="props.modelValue" @update:model-value="(value) => $emit('update:modelValue', value? value: props.modelValue)"/>
@@ -136,22 +136,22 @@
           <q-tooltip class="bg-white text-primary">關閉</q-tooltip>
         </q-btn>
       </div>
-      
+
       <div class="row">
         <div class="row col-xs-12">
           <q-btn v-if="editState" class="text-white q-mr-none" rounded flat icon="save" @click="saveRecord">
-            <q-tooltip class="text-white">儲存</q-tooltip>  
+            <q-tooltip class="text-white">儲存</q-tooltip>
           </q-btn>
           <q-btn v-if="editState" class="text-white q-mr-none" rounded flat icon="replay" @click="resetEdit">
-            <q-tooltip class="text-white">重置</q-tooltip>  
+            <q-tooltip class="text-white">重置</q-tooltip>
           </q-btn>
           <q-btn v-if="editState" class="text-white q-mr-none" rounded flat icon="cancel" @click="cancelEdit">
-            <q-tooltip class="text-white">取消</q-tooltip>  
+            <q-tooltip class="text-white">取消</q-tooltip>
           </q-btn>
         </div>
         <div class="row col-xs-12">
           <q-btn v-if="isSystemAdmin || isCenterIC" class="bg-white bg-red" dense flat icon="delete" label="刪除" @click="confirmDeleteModal = true"/>
-          
+
           <q-btn-dropdown unelevated class="q-mx-sm" v-if="member.c_udf_1 != '永久會員' && !member.d_exit_1" color="positive" icon="mail" label="續會" >
             <q-list>
               <q-item clickable v-close-popup @click="renewMemberModal(member, 1)">
@@ -168,12 +168,12 @@
             </q-list>
           </q-btn-dropdown>
           <q-btn v-if="!member.d_exit_1" unelevated class="q-mx-sm" square color="negative" @click="quitDialog = true" icon="alarm" label="退會" />
-        
+
           <q-space/>
         </div>
       </div>
     </q-card-section>
-    
+
     <q-card-section class="bg-blue-1 row q-pa-none" style="border: 1px solid lightgrey;">
       <div class="q-pa-sm col-12 col-xs-12 bg-blue-2 text-black text-h5">個人資料</div>
       <div :class="[ $q.screen.lt.md? 'q-pa-xs text-body1' : 'q-pa-sm text-h6', 'col-12', 'col-xs-12']">
@@ -247,7 +247,7 @@
               mask="date"
               hint="YYYY/MM/DD"
               :rules="['date']"
-              
+
             >
               <template v-slot:append>
                 <q-icon name="event" class="cursor-pointer">
@@ -258,7 +258,7 @@
                   >
                     <q-date
                       v-model="edit_member.d_enter_1"
-                      
+
                     >
                       <div class="row items-center justify-end">
                         <q-btn v-close-popup label="Close" color="primary" flat />
@@ -282,7 +282,7 @@
         </div>
       </div>
     </q-card-section>
-    <q-card-section class="bg-teal-1 row q-pa-none" style="border: 1px solid lightgrey;">      
+    <q-card-section class="bg-teal-1 row q-pa-none" style="border: 1px solid lightgrey;">
       <div class="q-pa-sm col-12 bg-teal-2 text-black text-h5">
         關聯會員
         <q-btn
@@ -291,7 +291,7 @@
           class="col-1 col-xs-1 text-white bg-primary"
           icon="add"
           @click="
-            edit_relationTable.push({ 
+            edit_relationTable.push({
               c_mem_id_1: currentMemberID,
               c_mem_id_2: '',
               relation: '',
@@ -350,7 +350,7 @@ import PrintReceipt from "components/Account/PrintReceipt.vue"
 
 // props
 const props = defineProps({
-  modelValue: String, 
+  modelValue: String,
 })
 // emits
 const emit = defineEmits(["update:modelValue"])
@@ -387,14 +387,14 @@ const udf1List = [
 
 // query
 const { result: ReceiptData } = useSubscription(LATEST_RECEIPT_NO);
-const { result: GetMemDetailAndRelationByPK, refetch } = useQuery(GET_MEM_DETAIL_AND_RELATION_BY_PK, 
+const { result: GetMemDetailAndRelationByPK, refetch } = useQuery(GET_MEM_DETAIL_AND_RELATION_BY_PK,
   () => ({
     c_mem_id: props.modelValue
   }))
 const { mutate: QuitMember, onDone: QuitMember_Completed, onError: QuitMember_Error } = useMutation(QUIT_MEMBER_BY_ID, { errorPolicy: 'all' })
 const { mutate: UpdateMember, onDone: UpdateMember_Completed, onError: UpdateMember_Error } = useMutation(UPDATE_MEMBER_BY_ID)
 const { mutate: UpdateYouthMemberStatus, onDone: UpdateYouthMemberStatus_Completed, onError: UpdateYouthMemberStatus_Error } = useMutation(UPDATE_YOUTH_MEMBER_STATUS)
-const { onResult: GetRelationByPK_Completed, variables: updateYouthMemberStatusByMemberID, loading: updatingYouthMemberStatus } = useQuery(GET_RELATION_BY_PK, 
+const { onResult: GetRelationByPK_Completed, variables: updateYouthMemberStatusByMemberID, loading: updatingYouthMemberStatus } = useQuery(GET_RELATION_BY_PK,
   {
     c_mem_id: ""
   }, {
@@ -404,10 +404,10 @@ const { mutate: RemoveMember, onDone: RemoveMember_Completed, onError: RemoveMem
 const { mutate: RenewMember, onDone: RenewMember_Completed, onError: RenewMember_Error } = useMutation(RENEW_MEMBER_FROM_ID_WITH_PAYMENT)
 
 // watcher
-watch(updateQueue.value, (newQueue, oldQueue)  => { 
+watch(updateQueue.value, (newQueue, oldQueue)  => {
   if (newQueue.length > 0) {
     updateYouthMemberStatusByMemberID.value = { c_mem_id: newQueue[0] }
-  } 
+  }
 })
 
 // computed
@@ -425,8 +425,8 @@ const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"]
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
 const member = computed(() => GetMemDetailAndRelationByPK.value?.Member_by_pk??{})
 const currentMemberID = computed(() => props.modelValue? props.modelValue.trim(): "")
-//const NameFromID = computed(() => GetNameFromID.value? GetNameFromID.value.Member[0].c_name? GetNameFromID.value.Member[0].c_name : GetNameFromID.value.Member[0].c_name_other : "無此人")    
-//const MemType1FromID = computed(() => GetNameFromID.value? GetNameFromID.value.Member[0].c_mem_type1 : "")   
+//const NameFromID = computed(() => GetNameFromID.value? GetNameFromID.value.Member[0].c_name? GetNameFromID.value.Member[0].c_name : GetNameFromID.value.Member[0].c_name_other : "無此人")
+//const MemType1FromID = computed(() => GetNameFromID.value? GetNameFromID.value.Member[0].c_mem_type1 : "")
 
 const relationTable = computed(() => {
   let result = []
@@ -472,7 +472,7 @@ function changeMember(mem_id) {
 }
 function getNameFromMemberID(value, index) {
   queryNameFromID.value = value
-} 
+}
 
 function startEdit() {
   edit_member.value = JSON.parse(JSON.stringify(member.value))
@@ -500,7 +500,7 @@ async function quitMember() {
     "action": props.modelValue + " 退會。"
   })
   const quitDate = qdate.formatDate(new Date(), "YYYY-MM-DDTHH:mm:ss")
-  
+
   QuitMember({
     c_mem_id: props.modelValue,
     exitDate: quitDate,
@@ -511,7 +511,7 @@ async function quitMember() {
 function saveRecord() {
   // error check before save
   let valid = true
-  
+
   if (edit_member.value.c_name && /[a-zA-Z0-9]+/.test(edit_member.value.c_name)) {
     $q.notify({
       message: "中文名字含有英文字符！",
@@ -521,7 +521,7 @@ function saveRecord() {
     })
     valid = false
   }
-  
+
   if (edit_member.value.c_name_other && /[\u3400-\u9FBF]+/.test(edit_member.value.c_name_other)) {
     $q.notify({
       message: "英文名字含有中文字符！",
@@ -531,7 +531,7 @@ function saveRecord() {
     })
     valid = false
   }
-  
+
   if (!valid) return
 
   const updateObject = ref({
@@ -553,12 +553,12 @@ function saveRecord() {
     c_emer_name: edit_member.value.c_emer_name,
     c_emer_rel: edit_member.value.c_emer_rel,
     c_emer_tel1_1: edit_member.value.c_emer_tel1_1
-  })      
-  
+  })
+
   let deleteRelation = []
   let changeRelation = []
   let newRelation = []
-  
+
   if (edit_relationTable.value.length > 0) {
     for (const key in edit_relationTable.value) {
       if (edit_relationTable.value[key].uuid) { // existing record
@@ -593,7 +593,7 @@ function saveRecord() {
       }
     }
   }
-  
+
   const logObject = ref({
     "username": username.value,
     "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
@@ -609,7 +609,7 @@ function saveRecord() {
   console.log("upsert: " + JSON.stringify([...newRelation, ...changeRelation]))
   */
 
-  
+
   loading.value++
 
   // determine if there's relation to delete and upsert
@@ -620,8 +620,8 @@ function saveRecord() {
   }
   if (deleteRelation.length > 0) parameters.deleteObjects = deleteRelation
   if ([...newRelation, ...changeRelation].length > 0) parameters.upsertObjects = [...newRelation, ...changeRelation]
-  
-  UpdateMember(parameters) 
+
+  UpdateMember(parameters)
 }
 
 function logErrorMessage(error) {
@@ -702,7 +702,7 @@ function confirmUserRemove() {
   // start loading screen
   loading.value++;
   // console.log("start removing user:" + props.modelValue)
-  
+
   const logObject = ref({
     "username": username.value,
     "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
@@ -739,7 +739,7 @@ function renewMember(renewObject) {
     m_remark: remark,
     c_mem_id: renewObject.c_mem_id,
     c_user_id: username.value,
-    c_name: renewObject.c_name,
+    c_name: renewObject.c_name? renewObject.c_name.trim(): renewObject.c_name_other.trim(),
     b_cssa: false,
     b_refund: false,
     b_OtherIncome: false,
@@ -769,7 +769,7 @@ function renewMember(renewObject) {
 RenewMember_Completed((result) => {
   loading.value--
   if (result.data.insert_tbl_account_one) {
-    $q.notify({ 
+    $q.notify({
       progress: true,
       message: "會員: " + result.data.update_Member_by_pk.c_mem_id + "續會成功. 續會日期：" + qdate.formatDate(Date.now(), "YYYY年MM月DD日"),
       actions: [
@@ -786,10 +786,10 @@ RemoveMember_Completed((result) => {
   loading.value--;
   const deleteMember = result.data.delete_Member_by_pk;
   const deleteRelateMember = result.data.delete_Relation;
-        
+
   // console.log("deleteMember: " + JSON.stringify(deleteMember))
   // console.log("deleteRelateMember: " + JSON.stringify(deleteRelateMember))
-        
+
   if (deleteRelateMember.returning.length > 0) {
     $q.notify({ message: "刪除會員編號: " + deleteMember.c_mem_id + " 成功，" + deleteRelateMember.returning.length + "個關聯關係已刪除。"});
     let deletedData = deleteRelateMember.returning
@@ -815,7 +815,7 @@ GetRelationByPK_Completed((result) => {
     // console.log("youthMembership:" + youthMembership)
     let isYouth = false
     let currentExpiryDate = Date.now()
-  
+
     // loop through all related members
     let rel = [...result.data.Member_by_pk.MemberRelation1, ...result.data.Member_by_pk.MemberRelation2]
     if (rel.length > 0) {
@@ -825,7 +825,7 @@ GetRelationByPK_Completed((result) => {
           // check relation member 2 youth status
           // criterion: b_mem_type1 valid && d_exit_1 invalid && relatedMember membership is not yet expired && relatedMember age is 15-24
           isYouth = rm.RelationMember2.b_mem_type1 && !rm.RelationMember2.d_exit_1 && qdate.getDateDiff(Date.now(), rm.RelationMember2.d_expired_1) < 0 && ageUtil.calculateAge(rm.RelationMember2.d_birth) >= 15 && ageUtil.calculateAge(rm.RelationMember2.d_birth) <= 24
-          
+
           // if target is youth && this member is a youth membership, determine expiry date
           if (isYouth && youthMembership) {
             // determine this member expiry base on relatedMember membership and age
@@ -846,7 +846,7 @@ GetRelationByPK_Completed((result) => {
           // check relation member 2 youth status
           // criterion: b_mem_type1 valid && d_exit_1 invalid && relatedMember membership is not yet expired && relatedMember age is 15-24
           isYouth = rm.RelationMember1.b_mem_type1 && !rm.RelationMember1.d_exit_1 && qdate.getDateDiff(Date.now(), rm.RelationMember1.d_expired_1) < 0 && ageUtil.calculateAge(rm.RelationMember1.d_birth) >= 15 && ageUtil.calculateAge(rm.RelationMember1.d_birth) <= 24
-          
+
           // if target is youth && this member is a youth membership, determine expiry date
           if (isYouth && youthMembership) {
             // determine this member expiry base on relatedMember membership and age
@@ -865,7 +865,7 @@ GetRelationByPK_Completed((result) => {
         }
       })
     }
-    
+
     const logObject = ref({
       "username": username.value,
       "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
@@ -873,7 +873,7 @@ GetRelationByPK_Completed((result) => {
       "action": "系統自動更新:" + result.data.Member_by_pk.c_mem_id + " 青年家人狀態-" + isYouth + " 會藉屆滿日期-" + qdate.formatDate(currentExpiryDate, "YYYY-MM-DD"),
     })
     // console.log("setting " + result.data.Member_by_pk.c_mem_id + " b_mem_type10 to " + isYouth + " expiryDate: " + currentExpiryDate)
-    
+
     if (youthMembership) {
       UpdateYouthMemberStatus({
         c_mem_id: result.data.Member_by_pk.c_mem_id,
@@ -912,7 +912,7 @@ QuitMember_Completed((result) => {
 
 UpdateMember_Completed((result) => {
   // console.log("updatemember_completed: " + JSON.stringify(result.data))
-  
+
   let newRelation = result.data.insert_Relation
   if (newRelation.returning.length > 0) {
     newRelation.returning.forEach((rel) => {

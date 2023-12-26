@@ -106,7 +106,7 @@
         <q-btn v-if="!isTmp && isLocal" v-close-popup class="col-grow" name="member" icon="public" label="會員" to="/member/list"/>
         <q-btn v-if="!isTmp && isLocal" v-close-popup class="col-grow" name="event" icon="festival" label="活動" to="/event/my-event"/>
         <q-btn v-if="!isTmp && isLocal" v-close-popup class="col-grow" name="finance" icon="money" label="財務" to="/account/receipt/search"/>
-        <q-btn v-if="!isTmp & isSystemAdmin && isLocal" v-close-popup class="col-grow" name="web" icon="home" label="網站" to="/website/news"/>
+        <q-btn v-if="!isTmp && isLocal" v-close-popup class="col-grow" name="web" icon="home" label="網站" to="/website/gallery/list?type=event"/>
     </q-drawer>
 
     <q-page-container>

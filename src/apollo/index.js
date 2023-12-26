@@ -147,7 +147,13 @@ export /* async */ function getClientOptions(/* {app, router, ...} */ options) {
             },
             tbl_sel_acc_type: {
               keyFields: ["c_type"]
-            }
+            },
+            HTX_Gallery: {
+              keyFields: ["GalleryID"],
+            },
+            HTX_Gallery_Photo: {
+              keyFields: ["PhotoID"],
+            },
           }
         }
       ),

@@ -8,7 +8,7 @@ import { createApolloProvider } from '@vue/apollo-option'
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { createClient } from "graphql-ws";
 import { FirebaseAuth } from "boot/firebase"
-import { ApolloClients } from '@vue/apollo-composable'
+import { DefaultApolloClient, ApolloClients } from '@vue/apollo-composable'
 import { setContext } from "@apollo/client/link/context"
 
 
@@ -216,6 +216,7 @@ export default boot(
 
     // hook to the app
     app.provide(ApolloClients, apolloClients)
+    app.provide(DefaultApolloClient, apolloClient)
     app.use(apolloProvider)
   }
 )

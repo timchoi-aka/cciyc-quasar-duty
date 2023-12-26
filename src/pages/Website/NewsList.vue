@@ -1,5 +1,5 @@
 <template>
-  <q-dialog 
+  <!-- <q-dialog
     v-model="detailModal"
     maximized
     full-width
@@ -16,6 +16,7 @@
       </q-card-section>
     </q-card>
   </q-dialog>
+  -->
 
   <!-- loading dialog -->
   <LoadingDialog v-model="loading" message="處理資料中"/>
@@ -60,7 +61,9 @@ import { date as qdate, useQuasar } from "quasar"
 import { useStore } from "vuex";
 import LoadingDialog from 'src/components/LoadingDialog.vue';
 import WebEditor from "src/components/Website/WebEditor.vue"
+import { useRouter } from "vue-router"
 
+const router = useRouter()
 const $q = useQuasar()
 const loading = ref(0)
 const showNewsID = ref(0)
@@ -181,8 +184,9 @@ const username = computed(() => $store.getters["userModule/getUsername"])
 
 function rowDetail(evt, row, index) {
   if (evt.target.nodeName === 'TD') {
-    detailModal.value = true;
+    //detailModal.value = true;
     showNewsID.value = parseInt(row.NewsID);
+    router.push({ path: "/website/news/edit/" + row.NewsID })
   }
 }
 

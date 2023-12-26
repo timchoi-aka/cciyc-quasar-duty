@@ -7,7 +7,7 @@
       <q-btn icon="close" flat v-close-popup/>
     </q-card-section>
     <q-card-section>
-      <div id="printOpeningSessions" class="print-area">
+      <div id="printOpeningSessions" class="print-area q-pa-md">
         <div class="text-body1">開始日期：{{ qdate.formatDate(props.reportStartDate, "YYYY年M月D日") }}</div>
         <div class="text-body1">結束日期：{{ qdate.formatDate(props.reportEndDate, "YYYY年M月D日") }}</div>
         <div class="text-body1">開放節數：{{ props.numberOfSessions }} </div>

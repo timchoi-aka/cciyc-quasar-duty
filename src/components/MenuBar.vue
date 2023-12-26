@@ -48,9 +48,10 @@
     <q-route-tab to="/account/inventory/" icon="public" label="物資管理" />
     <q-route-tab v-if="isSystemAdmin && !isTmp" to="/account/log" icon="public" label="系統記錄" />
   </q-tabs>
-  <q-tabs v-if="username && (module == 'website') && !isTmp && isSystemAdmin" inline-label class="desktop-only" align="left">
-    <q-route-tab to="/website/news" icon="public" label="最新消息" />
-    <q-route-tab to="/website/gallery" icon="photo" label="活動花絮" />
+  <q-tabs v-if="username && (module == 'website') && !isTmp" inline-label class="desktop-only" align="left">
+    <q-route-tab v-if="isUAT" to="/website/news" icon="public" label="最新消息" />
+    <q-route-tab to="/website/gallery/list?type=event" icon="photo" label="活動花絮" />
+    <q-route-tab to="/website/gallery/list?type=class" icon="photo" label="班組花絮" />
   </q-tabs>
 </template>
 
@@ -64,6 +65,7 @@ const username = computed(() => $store.getters["userModule/getUsername"])
 const isTmp = computed(() => $store.getters["userModule/getTmp"])
 const isUserManagement = computed(() => $store.getters["userModule/getUserManagement"])
 const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"])
+const isUAT = computed(() => $store.getters["userModule/getUAT"])
 const module = computed(() => $store.getters["userModule/getModule"])
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
 </script>

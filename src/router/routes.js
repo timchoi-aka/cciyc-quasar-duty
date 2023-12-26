@@ -24,12 +24,33 @@ const routes = [
             path: 'list',
             component: () => import('src/pages/Website/NewsList.vue'), meta: { requiresAuth: true},
           },
+          {
+            path: 'edit/:id',
+            component: () => import('src/pages/Website/NewsEdit.vue'), meta: { requiresAuth: true},
+          },
+          {
+            path: 'test-ckeditor',
+            component: () => import('src/pages/Website/TestCKEditor.vue'), meta: { requiresAuth: true},
+          },
         ]
       },
 
       {
+        name: 'GalleryList',
         path: 'gallery',
-        component: () => import('src/pages/Website/GalleryPage.vue'), meta: { requiresAuth: true},
+        component: () => import('src/pages/GalleryHome.vue'), meta: { requiresAuth: true},
+        children: [
+          {
+            name: 'GalleryList',
+            path: "list",
+            component: () => import("src/pages/Website/GalleryList.vue"), meta: { requiresAuth: true },
+          },
+          {
+            name: 'GalleryEdit',
+            path: "edit/:id",
+            component: () => import("src/pages/Website/GalleryEdit.vue"), meta: { requiresAuth: true },
+          },
+        ]
       }
     ]
   },
@@ -107,6 +128,23 @@ const routes = [
       {
         path: 'detail/:id',
         component: () => import('src/components/Event/EventDetail.vue'), meta: {requiresAuth: true},
+        children: [
+          {
+            name: "EventContent",
+            path: 'content',
+            component: () => import('src/components/Event/EventContent.vue'), meta: {requiresAuth: true},
+          },
+          {
+            name: "TakeAttendance",
+            path: 'take-attendance',
+            component: () => import('src/components/Event/AttendanceTake.vue'), meta: {requiresAuth: true},
+          },
+          {
+            name: "AttendancePrint",
+            path: 'attendance-print',
+            component: () => import('src/components/Event/AttendancePrint.vue'), meta: {requiresAuth: true},
+          },
+        ]
       },
       {
         path: 'my-event',

@@ -40,7 +40,7 @@
             </q-card-section>
           </q-card>
         </div>
-        
+
         <div class="col-6 row content-start">
           <div class="col-12"><IncomeTypeSelection v-model="incomeType" @update:model-value="updateAmount"/></div>
           <div class="col-12 q-mt-sm">
@@ -51,7 +51,7 @@
               @update:model-value="updateAmount"
               />
           </div>
-         
+
         </div>
       </q-card-section>
       <q-separator inset/>
@@ -98,9 +98,9 @@ const { result: ReceiptData } = useSubscription(
   );
 const { mutate: addOtherIncome, onDone: addOtherIncome_Completed, onError: addOtherIncome_Error} = useMutation(gql`
 mutation addOtherIncome (
-  $logObject: Log_insert_input! = {}, 
+  $logObject: Log_insert_input! = {},
   $accountObject: tbl_account_insert_input = {}
-) 
+)
 {
   insert_Log_one(object: $logObject) {
     log_id
@@ -148,7 +148,7 @@ function save() {
     "username": username,
     "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     "module": "會計系統",
-    "action": "雜項收費。會員(" + MemberObject.value.c_mem_id + ")" + MemberObject.value.c_name + "，收費項目：" + incomeType.value.value + "（$" + incomeType.value.u_fee + ") 數目：" + quantity.value + " 總數：" + quantity.value * incomeType.value.u_fee + " 收據號碼：" + latestReceiptNO.value,
+    "action": "雜項收費。會員(" + MemberObject.value.c_mem_id + ")" + MemberObject.value.c_name? MemberObject.value.c_name: MemberObject.value.c_name_other + "，收費項目：" + incomeType.value.value + "（$" + incomeType.value.u_fee + ") 數目：" + quantity.value + " 總數：" + quantity.value * incomeType.value.u_fee + " 收據號碼：" + latestReceiptNO.value,
   })
 
   const remark = incomeType.value.value + "： \r" + quantity.value + " X HK$" + incomeType.value.u_fee.toFixed(2) + "\r"
@@ -166,7 +166,7 @@ function save() {
     m_remark: remark,
     c_mem_id: MemberObject.value.c_mem_id? MemberObject.value.c_mem_id.trim(): "",
     c_user_id: username,
-    c_name: MemberObject.value.c_name? MemberObject.value.c_name.trim(): "",
+    c_name: MemberObject.value.c_name? MemberObject.value.c_name.trim(): MemberObject.value.c_name_other.trim(),
     b_cssa: false,
     b_refund: false,
     b_OtherIncome: true,

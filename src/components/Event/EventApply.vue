@@ -23,10 +23,10 @@
       <Receipt :c_receipt_no="printReceiptNumber"/>
     <!--</q-card>-->
   </q-dialog>
-  
+
 
   <!-- print participant model -->
-  <q-dialog 
+  <q-dialog
     v-model="printParticipantModel"
     full-width
     full-height
@@ -56,7 +56,7 @@
     <q-card>
       <q-card-section class="bg-primary text-white text-h6">
         確定報名？
-      </q-card-section>  
+      </q-card-section>
       <q-card-section class="text-h6">
         <div v-if="ApplyHistory.filter(v => !v.b_refund).map(v => v.c_mem_id).includes(ApplicationQueue[0].c_mem_id)">
           {{ApplicationQueue[0].c_mem_id}}已經報名！
@@ -81,7 +81,7 @@
     <q-card>
       <q-card-section class="bg-primary text-white text-h6">
         確定取消報名？
-      </q-card-section>  
+      </q-card-section>
       <q-card-section>
         <div>會員編號：{{unregisterItem.c_mem_id}}</div>
         <div>姓名：{{unregisterItem.c_name}}</div>
@@ -103,7 +103,7 @@
           autocapitalize="off"
           autocomplete="off"
           spellcheck="false"
-          @submit="startValidation" 
+          @submit="startValidation"
           @reset="ApplicationQueue.splice(0,1)">
     <div class="row fit">
       <q-chip size="lg" class="bg-yellow">報名期限：{{Event.d_sale_start}} - {{Event.d_sale_end}}</q-chip>
@@ -137,7 +137,7 @@
       </div>
     </div>
   </q-form>
-  <q-table 
+  <q-table
     :rows="ApplyHistory"
     :columns="columns"
     :pagination="pagination"
@@ -161,7 +161,7 @@
   <template v-slot:body-cell-c_name="props">
     <q-td :props="props">
       {{ props.row.c_name }}
-      <EventReregistration 
+      <EventReregistration
         :c_act_code="Event.c_act_code? Event.c_act_code.trim(): ''"
         :c_act_name="Event.c_act_name? Event.c_act_name.trim(): ''"
         :c_acc_type="Event.c_acc_type? Event.c_acc_type.trim(): ''"
@@ -200,13 +200,13 @@ const EventParticipantPrint = defineAsyncComponent(() =>
   import('components/Event/Participants.vue')
 )
 
-const EventReregistration = defineAsyncComponent(() => 
+const EventReregistration = defineAsyncComponent(() =>
   import('components/Event/EventReapply.vue')
 )
 
 // props
 const props = defineProps({
-  c_act_code: String, 
+  c_act_code: String,
 })
 
 // variables
@@ -379,7 +379,7 @@ const pagination = ref({
 日期 Date：24/08/2022
 時間 Time：18:15 - 19:15
 */
-function submitApplication() {  
+function submitApplication() {
   let remark = ""
   ApplicationQueue.value.forEach((item) => {
     remark = "服務資料 Service Detail\r\n"
@@ -387,7 +387,7 @@ function submitApplication() {
     if (Event.value.c_week) remark += " 逢星期" + Event.value.c_week
     remark += "\r\n"
     if (Event.value.d_time_from && Event.value.d_time_to) remark += "時間 Time：" + Event.value.d_time_from.trim() + " - " + Event.value.d_time_to.trim()
-    
+
     const logObject = ref({
       "username": username,
       "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
@@ -433,7 +433,7 @@ function submitApplication() {
       c_user_id: username,
       b_refund: false,
       d_refund: null,
-      c_name: item.c_name,
+      c_name: item.c_name? item.c_name.trim(): "",
       c_sex: item.c_sex,
       i_age: item.i_age,
       c_tel: item.c_tel,
@@ -475,7 +475,7 @@ function newFee(val, done) {
     } else {
       done(Fee.value[i], 'toggle')
     }
-    
+
   }
 }
 function startValidation() {
@@ -483,7 +483,7 @@ function startValidation() {
     $q.notify({ message: "請輸入會員號碼！", icon: 'error', color: 'negative', textColor: 'white' })
     return
   }
-  
+
   if (ApplicationQueue.value[0].c_name == "無此人") {
     $q.notify({ message: "請輸入正確會員號碼！", icon: 'error', color: 'negative', textColor: 'white' })
     return
@@ -509,7 +509,7 @@ function unregister() {
     "module": "活動系統",
     "action": "會員" + unregisterItem.value.c_mem_id + "(" + unregisterItem.value.c_name + ") 取消報名活動 " + unregisterItem.value.c_act_code
   })
-  
+
   const unregObject = ref({
     b_refund: true,
     d_refund: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss")
@@ -531,7 +531,7 @@ function unregister() {
         })
       // })
     }
- 
+
 }
 
 function printReceipt(c_receipt_no) {
@@ -560,13 +560,13 @@ onApplyResult((result) => {
           ...d,
           c_receipt_no: d.EventRegistration_to_Account_by_MID.map(({c_receipt_no, i_receipt_type, b_refund}) => ({ c_receipt_no: c_receipt_no, reregister: i_receipt_type == 20, b_refund: b_refund}))
         })
-      }        
+      }
     })
   }
-  
+
   // console.log(JSON.stringify(ApplyHistory.value))
   // ApplyHistory.value = result.data.tbl_act_reg.filter(x => !x.b_refund)
-  
+
   // all record including those refund
   // if (result.data) ApplyHistory.value = result.data.tbl_act_reg
 })

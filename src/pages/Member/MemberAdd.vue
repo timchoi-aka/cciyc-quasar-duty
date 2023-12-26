@@ -117,7 +117,7 @@
           debounce="500"
           mask="date"
           hint="YYYY/MM/DD"
-          :rules="['date']" 
+          :rules="['date']"
         >
           <template v-slot:append>
             <q-icon name="event" class="cursor-pointer">
@@ -204,7 +204,7 @@
         <span class="col-1 col-xs-1 q-mr-md-md q-mr-sm-sm q-mr-xs-none">會藉</span>
         <q-space/>
       </div>
-      
+
       <div v-for="(relation, index) in relationTable" :key="index" class="row fit">
         <MemberRelated :key="latestMemberID" v-model="relationTable[index]" :MemberID="latestMemberID" class="row fit"/>
       </div>
@@ -261,9 +261,9 @@
     </q-card-section>
   </q-card>
 
-  <div class="q-pa-xs-none q-pa-sm-sm q-pa-md-md col-xs-6 row justify-end">   
+  <div class="q-pa-xs-none q-pa-sm-sm q-pa-md-md col-xs-6 row justify-end">
     <div v-if="memberInfo.c_udf_1 != ''" class="text-h6 self-end q-ma-md">
-      <span>應收會費: {{memberInfo.c_udf_1.label? membershipFee[memberInfo.c_udf_1.label] : ''}}</span> 
+      <span>應收會費: {{memberInfo.c_udf_1.label? membershipFee[memberInfo.c_udf_1.label] : ''}}</span>
     </div>
     <div>
       <q-btn
@@ -338,7 +338,7 @@ const { onResult: checkDuplicateMember_Completed, refetch, variables: checkDupli
                 c_name: {_eq: $c_name},
                 d_birth: {_eq: $d_birth},
                 b_mem_type1: {_eq: true}
-              }, 
+              },
             },
             {
               _and: {
@@ -398,7 +398,7 @@ const membershipFee = ref({
 })
 
 let relationTable = ref([
-  { 
+  {
     c_mem_id_1: latestMemberID,
     c_mem_id_2: "",
     relation: "",
@@ -496,7 +496,7 @@ const expiryDate = computed(() => {
             )
           }
         }
-        
+
         break;
       case "青年家人義工":
         if (ageUtil.calculateAge(personalInfo.value.d_birth) <= 25) {
@@ -511,7 +511,7 @@ const expiryDate = computed(() => {
                                       qdate.addToDate(data.d_birth, { years: 25 }),
                                       "YYYY/MM/DD"
                                     );
-                  
+
                 if (expiryDate == 0 || expiryDate < tempExpiryDate) {
                   expiryDate = tempExpiryDate
                 }
@@ -523,7 +523,7 @@ const expiryDate = computed(() => {
         break;
     }
   } else return "";
-}) 
+})
 
 // callback functions
 addMemberFromID_Completed((result) => {
@@ -676,7 +676,7 @@ function postCallback(data) {
   }
 
   relationTable.value = [
-    { 
+    {
       c_mem_id_1: latestMemberID,
       c_mem_id_2: "",
       relation: "",
@@ -730,7 +730,7 @@ function updateType1Expire() {
             )
           }
         }
-        
+
         break;
       case "青年家人義工":
         if (ageUtil.calculateAge(personalInfo.value.d_birth) <= 25) {
@@ -745,7 +745,7 @@ function updateType1Expire() {
                                       qdate.addToDate(data.d_birth, { years: 25 }),
                                       "YYYY/MM/DD"
                                     );
-                  
+
                 if (expiryDate == 0 || expiryDate < tempExpiryDate) {
                   expiryDate = tempExpiryDate
                 }
@@ -772,7 +772,7 @@ function checkForm() {
     })
     valid = false
   }
-  
+
   if (/[\u3400-\u9FBF]/.test(personalInfo.value.c_name_other)) {
     $q.notify({
       message: "英文名字含有中文字符！",
@@ -802,7 +802,7 @@ function checkForm() {
         valid = false
       }
     }
-  }); 
+  });
 
   if(!personalInfo.value.d_birth) {
     $q.notify({
@@ -838,7 +838,7 @@ function checkForm() {
 
 function checkDuplicate() {
   if (checkForm()) {
-    addNewRecord = true 
+    addNewRecord = true
     let c_name = personalInfo.value.c_name.length > 0 ? personalInfo.value.c_name: "預設"
     let c_name_other = personalInfo.value.c_name_other.length > 0? personalInfo.value.c_name_other: "預設"
     let d_birth = personalInfo.value.d_birth
@@ -864,14 +864,14 @@ function checkDuplicate() {
           d_birth: d_birth,
         }
       }
-  } 
+  }
 }
 
 function addMember() {
   // assign computed value to object
   memberInfo.value.d_expired_1 = expiryDate.value
   personalInfo.value.age = age.value
-  
+
   let memberRelation = ref([]);
   let receiptDescription = ref("")
   let price = ref(0)
@@ -886,8 +886,8 @@ function addMember() {
         relation: rel.relation,
       })
       related_ids.value.push(rel.c_mem_id_2)
-    } 
-  }); 
+    }
+  });
 
   switch(memberInfo.value.c_udf_1.value) {
     case "永久會員":
@@ -945,7 +945,7 @@ function addMember() {
     m_remark: remark.value,
     c_mem_id: latestMemberID,
     c_user_id: username.value,
-    c_name: personalInfo.value.c_name,
+    c_name: personalInfo.value.c_name? personalInfo.value.c_name.trim(): personalInfo.value.c_name_other.trim(),
     b_cssa: false,
     b_refund: false,
     b_OtherIncome: false,
@@ -953,7 +953,7 @@ function addMember() {
     d_clear: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     i_prints: 0,
   })
-  
+
   loading.value++;
   if (memberRelation.value.length == 0) { // no related member
     if (price.value == 0) { // free member
@@ -975,7 +975,7 @@ function addMember() {
       updateObject.value.b_mem_type10 = true;
     }
 
-    if (personalInfo.value.age >= 15 && personalInfo.value.age <= 24) { 
+    if (personalInfo.value.age >= 15 && personalInfo.value.age <= 24) {
       // if this member is youth, update related member b_mem_type10
       if (price.value == 0) {
         // free member
