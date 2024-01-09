@@ -193,16 +193,19 @@ export function useClassGalleryPhotoProvider(options = {}) {
         variables: params.value.queryVariables,
       });
 
-      const fullpath = existingPhotos.HTX_Gallery_Photo.find((element) => element.PhotoID == PhotoID).PhotoUrl;
+      const fullpath = existingPhotos.HTX_ClassGallery_Photo.find((element) => element.PhotoID == PhotoID).PhotoUrl;
       const path = fullpath.split('/').slice(4).join('/');
 
-      const response = await axios.delete(baseURL, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          path: path,
-      }})
+      // check if path begins with https
+      if (path.startsWith("https")) {
+        const response = await axios.delete(baseURL, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+            path: path,
+        }})
+      }
 
       await deleteGalleryPhoto({
         PhotoID: PhotoID

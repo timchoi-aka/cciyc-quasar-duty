@@ -3,30 +3,6 @@
   <LoadingDialog :model-value="(loadingEventList || loadingCoreEventList || loadingFav || loadingAwaitApproval || loadingAwaitApprovalPrepaidRecords)? 1: 0" message="處理中"/>
   <LoadingDialog :model-value="loading" message="儲存資料中"/>
 
-  <!-- event detail modal -->
-  <q-dialog
-    v-if="$q.screen.gt.md"
-    full-height
-    full-width
-    persistent
-    v-model="eventDetailDialog"
-    transition-show="slide-up"
-    transition-hide="slide-down"
-    z-index="1"
-  >
-    <EventDetail :EventID="selectedEventID" @hide-component="() => eventDetailDialog = false"/>
-  </q-dialog>
-
-  <q-dialog
-    v-else
-    maximized
-    transition-show="slide-up"
-    transition-hide="slide-down"
-    v-model="eventDetailDialog"
-  >
-    <EventDetail :EventID="selectedEventID" @hide-component="() => eventDetailDialog = false"/>
-  </q-dialog>
-
   <div class="row">
     <!-- favourate -->
     <div :class="[$q.screen.lt.md? 'col-12':'col-5']">
@@ -88,7 +64,7 @@
         :filter="filter"
         :filter-method="MyEventFilter"
         @row-click="showDetail"
-        :rows="EventList" 
+        :rows="EventList"
         :pagination="pagination"
         :columns="MyColumns"
       >
@@ -112,8 +88,8 @@
           </q-td>
         </template>
       </q-table>
-    
-      <q-chip v-if="!isCenterIC" class="bg-positive text-white q-mr-md" size="lg" label="核心活動"/>      
+
+      <q-chip v-if="!isCenterIC" class="bg-positive text-white q-mr-md" size="lg" label="核心活動"/>
       <q-table
         v-if="!isCenterIC"
         class="q-mt-sm col-12"
@@ -159,7 +135,7 @@
       </q-table>
     </div>
     <div v-if="isCenterIC" class="col-12 row">
-      <q-chip class="bg-positive text-white q-mr-md" size="lg" label="中心核心活動一覽"/>      
+      <q-chip class="bg-positive text-white q-mr-md" size="lg" label="中心核心活動一覽"/>
       <q-table
         class="q-mt-sm col-12"
         flat
@@ -216,7 +192,6 @@ import { computed, ref } from "vue";
 import { useQuery, useMutation } from "@vue/apollo-composable";
 import { useStore } from "vuex";
 import { MY_EVENT_SEARCH, CORE_EVENT_SEARCH, MY_FAV, EVALUATION_UNAPPROVED } from "/src/graphQueries/Event/query.js";
-import EventDetail from "components/Event/EventDetail.vue";
 import LoadingDialog from "components/LoadingDialog.vue"
 import { date as qdate, useQuasar } from "quasar";
 import { gql } from "graphql-tag"
@@ -227,7 +202,6 @@ const router = useRouter()
 const $store = useStore();
 const $q = useQuasar()
 const loading = ref(0)
-const selectedEventID = ref("")
 const selectedRow = ref([])
 const filter = ref({
   status: false,
@@ -245,7 +219,7 @@ const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
 const searchCondition = ref({
   condition: {
     _or: [
-      { c_respon: {_eq : username}},  
+      { c_respon: {_eq : username}},
       { c_respon2: {_eq : username}},
       { c_worker: {_eq : username}},
       { c_worker2: {_eq : username}}
@@ -256,7 +230,7 @@ const searchCondition = ref({
 const coreEventCondition = ref({
   condition: {
     _and: [
-      { c_nature: {_gte : '核心'}},  
+      { c_nature: {_gte : '核心'}},
       { b_hardcopy: {_neq: true}}
     ]
   }
@@ -575,7 +549,7 @@ const unapprovedPrepaidColumns = ref([
 // queries
 const { mutate: markHardCopyMutation, onDone: markHardCopyMutation_Completed, onError: markHardCopyMutation_Error } = useMutation(gql`
   mutation update_HTX_Event_MarkHardcopy(
-    $logObject: Log_insert_input! = {}, 
+    $logObject: Log_insert_input! = {},
     $c_act_code: [String!] = ""
     ) {
     update_HTX_Event(where: {c_act_code: {_in: $c_act_code}}, _set: {b_hardcopy: true}) {
@@ -587,7 +561,7 @@ const { mutate: markHardCopyMutation, onDone: markHardCopyMutation_Completed, on
   }`)
 const { onResult: eventList, onError: eventList_Error, loading: loadingEventList } = useQuery(MY_EVENT_SEARCH, searchCondition.value, {pollInterval: 5000});
 const { onResult: coreEventList, onError: coreEventList_Error, loading: loadingCoreEventList } = useQuery(CORE_EVENT_SEARCH, coreEventCondition.value, {pollInterval: 5000});
-const { onResult: fav, onError: fav_onError, loading: loadingFav } = useQuery(MY_FAV, 
+const { onResult: fav, onError: fav_onError, loading: loadingFav } = useQuery(MY_FAV,
 () => ({
   username: username.value
 }), {
@@ -626,7 +600,7 @@ coreEventList((result) => {
     b_finish: x.b_finish,
     c_act_code: x.c_act_code? x.c_act_code.trim(): '',
     c_act_name: x.c_act_name? x.c_act_name.trim(): '',
-    c_act_nameen: x.c_act_nameen? x.c_act_nameen.trim(): '', 
+    c_act_nameen: x.c_act_nameen? x.c_act_nameen.trim(): '',
     c_acc_type: x.c_acc_type? x.c_acc_type.trim(): '',
     c_dest: x.c_dest? x.c_dest.trim(): '',
     c_nature: x.c_nature? x.c_nature.trim(): '',
@@ -642,7 +616,7 @@ coreEventList((result) => {
     d_finish_goal: x.d_finish_goal? x.d_finish_goal: '',
     plan_submit: x.Event_to_Evaluation && x.Event_to_Evaluation[0] && x.Event_to_Evaluation[0].submit_plan_date? true: false,
     eval_submit: x.Event_to_Evaluation && x.Event_to_Evaluation[0] && x.Event_to_Evaluation[0].submit_eval_date? true: false,
-    isRejected: 
+    isRejected:
       (
         (x.Event_to_Evaluation && x.Event_to_Evaluation[0] && !x.Event_to_Evaluation[0].submit_plan_date) &&
         (x.Event_to_Evaluation && x.Event_to_Evaluation[0] && x.Event_to_Evaluation[0].ic_plan_date)
@@ -656,8 +630,8 @@ coreEventList((result) => {
         x.Event_to_Evaluation.length == 0 ||
         (x.Event_to_Evaluation && x.Event_to_Evaluation[0] && !x.Event_to_Evaluation[0].submit_plan_date) ||
         (
-          x.d_date_to && 
-          (qdate.getDateDiff(qdate.extractDate(x.d_date_to.trim(), "D/M/YYYY"), new Date()) < 0) && 
+          x.d_date_to &&
+          (qdate.getDateDiff(qdate.extractDate(x.d_date_to.trim(), "D/M/YYYY"), new Date()) < 0) &&
           (x.Event_to_Evaluation && x.Event_to_Evaluation[0] && !x.Event_to_Evaluation[0].submit_eval_date)
         )
       )? true: false
@@ -683,13 +657,10 @@ awaitApproval((result) => {
 awaitApprovalPrepaidRecords((result) => {
   if (result.data) awaitApprovalPrepaidRecords.value = result.data.Event_Prepaid
 })
-// functions 
+// functions
 function showDetail(evt, row, index) {
-  /* eventDetailDialog.value = true
-  selectedEventID.value = row.c_act_code
-  */
  router.push({
-  path: "/event/detail/" + row.c_act_code.trim(),
+  path: "/event/detail/" + row.c_act_code.trim() + "/content",
  })
 }
 

@@ -287,7 +287,8 @@ import { date as qdate, is, useQuasar } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
 import MemberRelated from "components/Member/MemberRelated.vue"
 import PrintReceipt from "components/Account/PrintReceipt.vue"
-import { LATEST_MEMBER_ID, LATEST_RECEIPT_NO } from "/src/graphQueries/Member/query.js";
+import { useAccountProvider } from "src/providers/account.js"
+import { LATEST_MEMBER_ID } from "/src/graphQueries/Member/query.js";
 import {
   ADD_MEMBER_FROM_ID,
   ADD_MEMBER_FROM_ID_WITH_PAYMENT,
@@ -318,11 +319,7 @@ const { result: MemberData, loadingMem } = useSubscription(
   LATEST_MEMBER_ID,
 );
 
-// load graphql subscription on latest receipt number
-const { result: ReceiptData } = useSubscription(
-  LATEST_RECEIPT_NO,
-);
-
+const { latestReceiptNo } = useAccountProvider()
 
 const { onResult: checkDuplicateMember_Completed, refetch, variables: checkDuplicateMemberVariables } = useQuery(gql`
   query checkDuplicateMember(
@@ -378,15 +375,6 @@ const { mutate: addMemberAndRelationFromIDWithPayment, onDone: addMemberAndRelat
 // computed
 const username = computed(() => $store.getters["userModule/getUsername"])
 const latestMemberID = computed(() => MemberData.value? (parseInt(MemberData.value.Member[0].c_mem_id)+1).toString(): "")
-const latestReceiptNO = computed(() => {
-  if (ReceiptData.value) {
-    let token = ReceiptData.value.tbl_account[0].c_receipt_no.split("-")
-    let receiptNo = parseInt(token[1])
-    receiptNo = (receiptNo + 1).toString()
-    while (receiptNo.length < 4) receiptNo = "0" + receiptNo
-    return token[0] + "-" + receiptNo
-  } else return null
-})
 
 // constants
 const membershipFee = ref({
@@ -933,7 +921,7 @@ function addMember() {
   })
 
   const accountObject = ref({
-    c_receipt_no: latestReceiptNO,
+    c_receipt_no: latestReceiptNo.value,
     d_create: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     i_receipt_type: 1, //type 1 = membership fee
     c_desc: receiptDescription.value,

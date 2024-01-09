@@ -9,9 +9,9 @@
       </div>
       <q-separator/>
       <div class="row items-center">
-        <q-select 
-          :options="EventOptions" 
-          
+        <q-select
+          :options="EventOptions"
+
           use-input
           fill-input
           menu-self="bottom end"
@@ -54,12 +54,12 @@ import { computed, ref } from "vue";
 import { useStore } from "vuex";
 import { useQuasar, date as qdate} from "quasar";
 import { EVENT_GET_ALL_ACTIVE, EVENT_APPLY_BY_ACT_CODE, EVENT_BY_PK, EVENT_FEE_BY_ACT_CODE } from "/src/graphQueries/Event/query.js"
-import { LATEST_RECEIPT_NO } from "/src/graphQueries/Member/query.js"
 import { EVENT_REGISTRATION, FREE_EVENT_REGISTRATION, EVENT_UNREGISTRATION, FREE_EVENT_UNREGISTRATION } from "/src/graphQueries/Event/mutation.js"
-import { useQuery, useMutation, useSubscription } from "@vue/apollo-composable"
+import { useQuery, useMutation } from "@vue/apollo-composable"
 import Receipt from "components/Account/Receipt.vue"
 import MemberInfoByID from "src/components/Member/MemberInfoByID.vue"
 import MemberSelection from "components/Member/MemberSelection.vue"
+import { useAccountProvider } from "src/providers/account";
 
 // variables
 const $q = useQuasar()
@@ -109,11 +109,8 @@ const { onResult: onApplyResult, onError: EventApplyError } = useQuery(
   });
 */
 
-const { result: ReceiptData } = useSubscription(
-    LATEST_RECEIPT_NO,
-  );
 
-
+const { latestReceiptNo } = useAccountProvider()
 const { mutate: eventRegistration, onDone: eventRegistration_Completed, onError: eventRegistration_Error } = useMutation(EVENT_REGISTRATION)
 const { mutate: freeEventRegistration, onDone: freeEventRegistration_Completed, onError: freeEventRegistration_Error } = useMutation(FREE_EVENT_REGISTRATION)
 
@@ -130,15 +127,7 @@ const Fee = ref([])
 const userProfileLogout = () => $store.dispatch("userModule/logout")
 
 
-const latestReceiptNO = computed(() => {
-  if (ReceiptData.value) {
-    let token = ReceiptData.value.tbl_account[0].c_receipt_no.split("-")
-    let receiptNo = parseInt(token[1])
-    receiptNo = (receiptNo + 1).toString()
-    while (receiptNo.length < 4) receiptNo = "0" + receiptNo
-    return token[0] + "-" + receiptNo
-  } else return null
-})
+
 
 const columns = ref([
   {
@@ -250,7 +239,7 @@ const pagination = ref({
 時間 Time：18:15 - 19:15
 */
 /*
-function submitApplication() {  
+function submitApplication() {
   let remark = ""
   ApplicationQueue.value.forEach((item) => {
     remark = "服務資料 Service Detail\r\n"
@@ -258,7 +247,7 @@ function submitApplication() {
     if (Event.value.c_week) remark += " 逢星期" + Event.value.c_week
     remark += "\r\n"
     if (Event.value.d_time_from && Event.value.d_time_to) remark += "時間 Time：" + Event.value.d_time_from.trim() + " - " + Event.value.d_time_to.trim()
-    
+
     const logObject = ref({
       "username": username,
       "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
@@ -267,7 +256,7 @@ function submitApplication() {
     })
 
     const accountObject = ref({
-      c_receipt_no: latestReceiptNO,
+      c_receipt_no: latestReceiptNo.value,
       d_create: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
       i_receipt_type: 2, //type 2 = activity fee
       c_desc: Event.value.c_act_name? Event.value.c_act_name.trim() :"",
@@ -292,7 +281,7 @@ function submitApplication() {
     const regObject = ref({
       c_mem_id: item.c_mem_id,
       c_act_code: props.c_act_code.trim(),
-      c_receipt_no: Event.value.b_freeofcharge? null: latestReceiptNO,
+      c_receipt_no: Event.value.b_freeofcharge? null: latestReceiptNo.value,
       c_type: Event.value.b_freeofcharge? null: item.u_fee.label,
       c_remarks: item.remarks,
       c_bus: null,
@@ -349,7 +338,7 @@ function newFee(val, done) {
     } else {
       done(Fee.value[i], 'toggle')
     }
-    
+
   }
 }
 function startValidation() {
@@ -357,7 +346,7 @@ function startValidation() {
     $q.notify({ message: "請輸入會員號碼！", icon: 'error', color: 'negative', textColor: 'white' })
     return
   }
-  
+
   if (ApplicationQueue.value[0].c_name == "無此人") {
     $q.notify({ message: "請輸入正確會員號碼！", icon: 'error', color: 'negative', textColor: 'white' })
     return
@@ -383,7 +372,7 @@ function unregister() {
     "module": "活動系統",
     "action": "會員" + unregisterItem.value.c_mem_id + "(" + unregisterItem.value.c_name + ") 取消報名活動 " + unregisterItem.value.c_act_code
   })
-  
+
   const unregObject = ref({
     b_refund: true,
     d_refund: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss")
@@ -403,7 +392,7 @@ function unregister() {
         ID: unregisterItem.value.ID
       })
     }
-  
+
 }
 
 function printReceipt(c_receipt_no) {
@@ -428,7 +417,7 @@ EventFee_Completed((result) => {
 onApplyResult((result) => {
   // hide refunded record
   if (result.data) ApplyHistory.value = result.data.tbl_act_reg.filter(x => !x.b_refund)
-  
+
   // all record including those refund
   // if (result.data) ApplyHistory.value = result.data.tbl_act_reg
 })
@@ -498,7 +487,7 @@ function eventFilter(val, update) {
 
   update(() => {
     EventOptions.value = OriginalEventOptions.value
-    EventOptions.value = EventOptions.value.filter(v => 
+    EventOptions.value = EventOptions.value.filter(v =>
       (v.c_act_code? v.c_act_code.indexOf(val) > -1 : false) ||
       (v.c_act_name? v.c_act_name.toLowerCase().indexOf(val.toLowerCase()) > -1 : false)
     )

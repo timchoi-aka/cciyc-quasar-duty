@@ -43,13 +43,13 @@
         </q-td>
         <q-td key="d_act" :props="props">
           {{ props.row.d_act }}
-          <q-popup-edit v-if="!props.row.d_act && props.row.isEdit" filled v-model="props.row.d_act" title="活動月份" 
+          <q-popup-edit v-if="!props.row.d_act && props.row.isEdit" filled v-model="props.row.d_act" title="活動月份"
             auto-save v-slot="scope"
             :validate="eventMonthValidation"
             @hide="eventMonthValidation"
             >
-            <q-input v-model="scope.value" mask="##/####" hint="MM/YYYY" dense autofocus counter 
-              @keyup.enter="scope.set" 
+            <q-input v-model="scope.value" mask="##/####" hint="MM/YYYY" dense autofocus counter
+              @keyup.enter="scope.set"
               :error="errorDate"
               :error-message="errorMessageDate"
               />
@@ -115,13 +115,11 @@ import { date as qdate, useQuasar, uid} from "quasar";
 import { EVENT_STAT_BY_PK } from "/src/graphQueries/Event/query.js"
 import { UPDATE_EVENT_STAT_BY_PK, DELETE_EVENT_STAT } from "/src/graphQueries/Event/mutation.js"
 import { useQuery, useMutation } from "@vue/apollo-composable"
-
-// props
-const props = defineProps({
-  c_act_code: String, 
-})
+import { useRoute } from 'vue-router'
 
 // variables
+const route = useRoute()
+const c_act_code = ref(route.params.id)
 const $q = useQuasar()
 const $store = useStore();
 const StatData = ref([])
@@ -230,7 +228,7 @@ const pagination = ref({
 const { onResult, onError: EventStatError, loading, refetch } = useQuery(
   EVENT_STAT_BY_PK,
   () => ({
-    c_act_code: props.c_act_code
+    c_act_code: c_act_code.value
   }), {
     notifyOnNetworkStatusChange: true
   });
@@ -245,7 +243,7 @@ onResult((result) => {
   if (res.length > 0) {
     for (let i = 0; i < res.length; i++) {
       delete res[i]["__typename"]
-    }  
+    }
     originalData.value = JSON.parse(JSON.stringify(res))
     StatData.value = JSON.parse(JSON.stringify(res))
   }
@@ -262,7 +260,7 @@ const deadline = computed(() => {
   else return qdate.startOfDate(qdate.subtractFromDate(d, {month: 1}), 'month')
 })
 const isEdit = computed(() => {
-  if (StatData.value.length > 0) 
+  if (StatData.value.length > 0)
     return StatData.value.filter((x) => x.isEdit).length > 0
   return false
 })
@@ -270,10 +268,10 @@ const isEdit = computed(() => {
 // functions
 function addRow() {
   StatData.value.push({
-    c_act_code: props.c_act_code.trim(),
+    c_act_code: c_act_code.value.trim(),
     d_act: "",
     i_number: 0,
-    i_people_count: 0, 
+    i_people_count: 0,
     i_number_a: 0,
     i_people_count_a: 0,
     i_number_b: 0,
@@ -311,14 +309,14 @@ function saveRow(s_GUID) {
       "username": username,
       "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
       "module": "活動系統",
-      "action": "修改活動統計數據: " + props.c_act_code + "舊資料:" + JSON.stringify(originalData.value[j], null, 2) + "。新資料:" + JSON.stringify(StatData.value[i], null, 2)
+      "action": "修改活動統計數據: " + c_act_code.value + "舊資料:" + JSON.stringify(originalData.value[j], null, 2) + "。新資料:" + JSON.stringify(StatData.value[i], null, 2)
     })
   } else { // new entry
     logObject = ref({
       "username": username,
       "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
       "module": "活動系統",
-      "action": "新增活動統計數據: " + props.c_act_code + "。新資料:" + JSON.stringify(StatData.value[i], null, 2)
+      "action": "新增活動統計數據: " + c_act_code.value + "。新資料:" + JSON.stringify(StatData.value[i], null, 2)
     })
     data.s_GUID = uid()
   }
@@ -336,7 +334,7 @@ function eventMonthValidation(val) {
     errorDate.value = true
     return false
   }
-  errorDate.value = false 
+  errorDate.value = false
   return true
 }
 
@@ -364,12 +362,12 @@ function deleteRow(s_GUID) {
         "username": username,
         "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
         "module": "活動系統",
-        "action": "刪除活動統計數據: " + props.c_act_code + "。刪除資料:" + JSON.stringify(StatData.value[index], null, 2)
+        "action": "刪除活動統計數據: " + c_act_code.value + "。刪除資料:" + JSON.stringify(StatData.value[index], null, 2)
       })
 
       deleteEventStat({
         delete_dAct: StatData.value[index].d_act,
-        delete_cActCode: props.c_act_code,
+        delete_cActCode: c_act_code.value,
         delete_inCenter: StatData.value[index].inCenter,
         logObject: logObject.value,
       })
@@ -401,7 +399,7 @@ function notifyClientError(error) {
 function notifyClientSuccess(result) {
   refetch()
   $q.notify({
-    message: "更新活動統計資料" + props.c_act_code + "完成。",
+    message: "更新活動統計資料" + c_act_code.value + "完成。",
   })
 }
 
@@ -424,6 +422,6 @@ updateEventStat_Completed((result) => {
 })
 
 deleteEventStat_Completed((result) => {
-  notifyClientSuccess(props.c_act_code)
+  notifyClientSuccess(c_act_code.value)
 })
 </script>

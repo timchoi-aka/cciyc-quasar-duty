@@ -2,7 +2,7 @@ import { gql } from "graphql-tag"
 
 export const GET_RELATION_BY_PK = gql`
 query GetRelationByPK($c_mem_id: String = "") {
-  Member_by_pk(c_mem_id: $c_mem_id) 
+  Member_by_pk(c_mem_id: $c_mem_id)
   {
     c_mem_id
     b_mem_type1
@@ -63,7 +63,7 @@ query GetRelationByPK($c_mem_id: String = "") {
 
 export const GET_MEM_DETAIL_AND_RELATION_BY_PK = gql`
 query GetMemDetailAndRelationByPK($c_mem_id: String = "") {
-  Member_by_pk(c_mem_id: $c_mem_id) 
+  Member_by_pk(c_mem_id: $c_mem_id)
   {
     c_mem_id
     b_mem_type1
@@ -137,11 +137,12 @@ export const LATEST_MEMBER_ID = gql`
       c_mem_id
     }
   }`
-  
+
 export const LATEST_RECEIPT_NO = gql`
   subscription getLatestReceiptNo {
     tbl_account(limit: 1, order_by: {c_receipt_no: desc}, where: {c_receipt_no: {_lt: "M"}}) {
       c_receipt_no
+      d_create
     }
   }`
 

@@ -43,7 +43,7 @@
         </q-btn>
       </q-card-section>
       <q-card-section>
-        <EventParticipantPrint :EventID="props.c_act_code"/>
+        <EventParticipantPrint :EventID="c_act_code"/>
       </q-card-section>
     </q-card>
   </q-dialog>
@@ -105,7 +105,7 @@
           spellcheck="false"
           @submit="startValidation"
           @reset="ApplicationQueue.splice(0,1)">
-    <div class="row fit">
+    <div class="row fit items-center">
       <q-chip size="lg" class="bg-yellow">報名期限：{{Event.d_sale_start}} - {{Event.d_sale_end}}</q-chip>
       <q-btn @click="ApplicationQueue.push({c_mem_id: '', u_fee: 0, c_name: '', remark: '', c_sex: '', i_age: '', c_tel: '', d_expired_1: ''})" label="新增報名" dense icon="celebration" class="q-ml-md bg-positive text-white" size="lg" v-if="(qdate.isBetweenDates(Date.now(), qdate.extractDate(Event.d_sale_start, 'D/M/YYYY'), qdate.extractDate(Event.d_sale_end, 'D/M/YYYY'), { inclusiveFrom: true, inclusiveTo: true }) && ApplicationQueue.length == 0)"/>
       <q-btn type="submit" label="儲存" dense icon="save" class="q-ml-md bg-primary text-white" size="lg" v-if="(ApplicationQueue.length > 0)"/>
@@ -192,9 +192,11 @@ import { EVENT_APPLY_AND_RECEIPT_BY_ACT_CODE, EVENT_BY_PK, EVENT_FEE_BY_ACT_CODE
 import { LATEST_RECEIPT_NO } from "/src/graphQueries/Member/query.js"
 import { EVENT_REGISTRATION, FREE_EVENT_REGISTRATION, EVENT_UNREGISTRATION, FREE_EVENT_UNREGISTRATION } from "/src/graphQueries/Event/mutation.js"
 import { useQuery, useMutation, useSubscription } from "@vue/apollo-composable"
+import { useAccountProvider } from "src/providers/account";
 import Receipt from "components/Account/Receipt.vue"
 import MemberInfoByID from "src/components/Member/MemberInfoByID.vue"
 import MemberSelection from "components/Member/MemberSelection.vue"
+import { useRoute } from 'vue-router'
 
 const EventParticipantPrint = defineAsyncComponent(() =>
   import('components/Event/Participants.vue')
@@ -204,12 +206,9 @@ const EventReregistration = defineAsyncComponent(() =>
   import('components/Event/EventReapply.vue')
 )
 
-// props
-const props = defineProps({
-  c_act_code: String,
-})
-
 // variables
+const route = useRoute()
+const c_act_code = ref(route.params.id)
 const $q = useQuasar()
 const $store = useStore();
 const printReceiptDisplay = ref(false)
@@ -224,26 +223,29 @@ const printParticipantModel = ref(false)
 const { result: EventData, onError: EventDataError } = useQuery(
   EVENT_BY_PK,
   () => ({
-    c_act_code: props.c_act_code
+    c_act_code: c_act_code.value
   }));
 
 const { onResult: EventFee_Completed, onError: EventFeeError } = useQuery(
   EVENT_FEE_BY_ACT_CODE,
   () => ({
-    c_act_code: props.c_act_code
+    c_act_code: c_act_code.value
   }));
 
 const { onResult: onApplyResult, onError: EventApplyError } = useQuery(
   EVENT_APPLY_AND_RECEIPT_BY_ACT_CODE,
   () => ({
-    c_act_code: props.c_act_code,
+    c_act_code: c_act_code.value,
   }), {
     pollInterval: 5000
   });
 
+/*
 const { result: ReceiptData } = useSubscription(
     LATEST_RECEIPT_NO,
   );
+*/
+const { latestReceiptNo } = useAccountProvider()
 
 const { mutate: eventRegistration, onDone: eventRegistration_Completed, onError: eventRegistration_Error } = useMutation(EVENT_REGISTRATION)
 const { mutate: freeEventRegistration, onDone: freeEventRegistration_Completed, onError: freeEventRegistration_Error } = useMutation(FREE_EVENT_REGISTRATION)
@@ -259,16 +261,6 @@ const ApplyHistory = ref([])
 const Event = computed(() => EventData.value?.HTX_Event_by_pk??[])
 const Fee = ref([])
 const userProfileLogout = () => $store.dispatch("userModule/logout")
-
-const latestReceiptNO = computed(() => {
-  if (ReceiptData.value) {
-    let token = ReceiptData.value.tbl_account[0].c_receipt_no.split("-")
-    let receiptNo = parseInt(token[1])
-    receiptNo = (receiptNo + 1).toString()
-    while (receiptNo.length < 4) receiptNo = "0" + receiptNo
-    return token[0] + "-" + receiptNo
-  } else return null
-})
 
 const columns = ref([
   {
@@ -392,15 +384,15 @@ function submitApplication() {
       "username": username,
       "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
       "module": "活動系統",
-      "action": "會員" + item.c_mem_id + " 報名活動 " + props.c_act_code.trim() + Event.value.b_freeofcharge? "": " 費用: " + item.u_fee.value,
+      "action": "會員" + item.c_mem_id + " 報名活動 " + c_act_code.value.trim() + Event.value.b_freeofcharge? "": " 費用: " + item.u_fee.value,
     })
 
     const accountObject = ref({
-      c_receipt_no: latestReceiptNO,
+      c_receipt_no: latestReceiptNo.value,
       d_create: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
       i_receipt_type: 2, //type 2 = activity fee
       c_desc: Event.value.c_act_name? Event.value.c_act_name.trim() :"",
-      c_act_code: props.c_act_code.trim(),
+      c_act_code: c_act_code.value.trim(),
       c_type: Event.value.c_acc_type? Event.value.c_acc_type.trim(): "",
       u_discount: 0,
       u_price_after_discount: parseFloat(item.u_fee.value),
@@ -420,8 +412,8 @@ function submitApplication() {
     })
     const regObject = ref({
       c_mem_id: item.c_mem_id,
-      c_act_code: props.c_act_code.trim(),
-      c_receipt_no: Event.value.b_freeofcharge? null: latestReceiptNO,
+      c_act_code: c_act_code.value.trim(),
+      c_receipt_no: Event.value.b_freeofcharge? null: latestReceiptNo.value,
       c_type: Event.value.b_freeofcharge? null: item.u_fee.label,
       c_remarks: item.remarks,
       c_bus: null,

@@ -1,6 +1,6 @@
 import { reactive, toRefs, toRef, unref, ref, computed } from "vue";
 import gql from "graphql-tag";
-import { useSubscription, useLazyQuery, useQuery } from "@vue/apollo-composable";
+import { useSubscription, useQuery } from "@vue/apollo-composable";
 // import { provideApolloClient, DefaultApolloClient } from "@vue/apollo-composable";
 // provideApolloClient(DefaultApolloClient)
 
@@ -11,7 +11,7 @@ export default function useMember(param, displayOptions) {
   });
 
   const defaultParam = ref({})
-  
+
   function buildParam() {
     let res = {}
     res.loadReceipt = displayOptions.value.loadReceipt? displayOptions.value.loadReceipt: false
@@ -27,19 +27,19 @@ export default function useMember(param, displayOptions) {
     Object.keys(param.value).forEach((e) => {
       if (param.value[e]["value"]) {
         res.where["_and"].push({ [e]: {[param.value[e]["compare"]]: param.value[e]["value"]}})
-      } 
+      }
     })
-    
+
     return res
   }
-  
+
   const { onResult: latestMemberID_Result } = useSubscription(gql`
     subscription Member_getLatestMemberID {
       Member(limit: 1, order_by: {c_mem_id: desc}, offset: 1) {
         c_mem_id
       }
     }`)
-  
+
   const { onResult: MemberInfo_Result, loading } = useQuery(gql`
     fragment BasicInfo on Member {
       c_mem_id,

@@ -1,7 +1,7 @@
-<template>  
+<template>
    <!-- loading dialog -->
   <LoadingDialog v-model="loading" message="處理中"/>
-  
+
   <div class="col-12 row justify-center">
     <q-chip class="bg-grey-4" size="lg" square :label="props.type"/>
     <q-btn flat v-if="!edit && (!props.isSubmitted || isCenterIC)" icon="edit" class="bg-white text-primary" @click="startEdit"/>
@@ -16,18 +16,18 @@
       <q-tooltip>
          日期：{{ qdate.formatDate(item.txn_date, "YYYY年M月D日") }}
       </q-tooltip>
-    </q-item>   
+    </q-item>
   </q-list>
   <q-list v-if="edit && editObject.length > 0" class="col-12 self-start" bordered separator>
     <span v-for="(newPlanIncome, index) in editObject" class="row">
-      <q-input hide-hint class="col-7" type="text" label="項目名稱" v-model="editObject[index].description"/>
+      <q-select use-input hide-hint :options="inputOptions" @new-value="newValue" class="col-7" type="text" label="項目名稱" v-model="editObject[index].description"/>
       <q-input hide-hint class="col-3" type="number" label="金額" v-model="editObject[index].amount"/>
       <div class="col-2 row">
         <span class="text-negative" v-if="removeRecord.includes(editObject[index].account_uuid)">會刪除</span>
         <q-btn v-if="edit" icon="delete" class="bg-white text-negative" flat @click="removeRecord.push(editObject[index].account_uuid)"/>
       </div>
       <div class="col-12"><DateComponent v-model="editObject[index].txn_date"/></div>
-    </span>   
+    </span>
   </q-list>
   <div class="col-12 text-right q-mt-sm q-px-sm">總數: HK${{total}}</div>
   <div class="col-12 text-right q-mt-sm" v-if="props.type == '支出' && props.planeval == '計劃'">
@@ -57,7 +57,15 @@ const removeRecord = ref([])
 const loading = ref(0)
 const $q = useQuasar()
 
-
+const inputOptions = ref([
+  "中心津貼: 整筆過撥款",
+  "中心津貼: 捐款儲備",
+  "中心津貼: 非資助儲備",
+  "其他資助: 青年發展計劃暑期一般活動",
+  "其他資助: 青年發展計劃地區青年活動",
+  "其他資助: 地區夥伴協作計劃",
+  "報名費"
+])
 // props
 const props = defineProps({
   type: String,
@@ -89,7 +97,7 @@ const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
 // functions
 function addObject() {
   editObject.value.push({
-    description: "", 
+    description: "",
     amount: 0,
     type: props.type,
     eval_uuid: props.eval_uuid,
@@ -118,8 +126,15 @@ function startEdit() {
       }
     }
   })
-  
+
   edit.value = true
+}
+
+function newValue(value, done) {
+  if (value) {
+    inputOptions.value.push(value)
+  }
+  done(value)
 }
 
 function save() {
@@ -129,7 +144,7 @@ function save() {
     "module": "活動系統",
     "action": "修改活動計劃/檢討: " + props.c_act_code + "的財務預算。新資料:" + JSON.stringify(editObject.value, null, 2) + " 刪除記錄: " + JSON.stringify(removeRecord.value, null, 2)
   })
-  
+
   editObject.value.forEach((obj) => {
     obj.type = obj.type.trim()
     obj.amount = parseFloat(obj.amount)
@@ -153,7 +168,7 @@ function save() {
 // UI functions
 function notifyClientSuccess(result) {
   refetch()
-  loading.value--  
+  loading.value--
   $q.notify({
     message: "財政預算" + props.c_act_code + "更新完成。",
   })

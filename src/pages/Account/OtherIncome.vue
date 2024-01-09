@@ -79,6 +79,7 @@ import { LATEST_MRECEIPT_NO } from "/src/graphQueries/Member/query.js"
 import { useMutation, useSubscription } from "@vue/apollo-composable"
 import LoadingDialog from "components/LoadingDialog.vue"
 import Receipt from "components/Account/Receipt.vue"
+import { useAccountProvider } from "src/providers/account";
 
 // variables
 const $q = useQuasar()
@@ -93,9 +94,8 @@ const totalAmount = ref(0)
 const loading = ref(0)
 
 // query
-const { result: ReceiptData } = useSubscription(
-    LATEST_MRECEIPT_NO,
-  );
+const { latestReceiptNo } = useAccountProvider()
+
 const { mutate: addOtherIncome, onDone: addOtherIncome_Completed, onError: addOtherIncome_Error} = useMutation(gql`
 mutation addOtherIncome (
   $logObject: Log_insert_input! = {},
@@ -112,15 +112,6 @@ mutation addOtherIncome (
 
 // computed
 const username = computed(() => $store.getters["userModule/getUsername"])
-const latestReceiptNO = computed(() => {
-  if (ReceiptData.value) {
-    let token = ReceiptData.value.tbl_account[0].c_receipt_no.split("-")
-    let receiptNo = parseInt(token[1])
-    receiptNo = (receiptNo + 1).toString()
-    while (receiptNo.length < 4) receiptNo = "0" + receiptNo
-    return token[0] + "-" + receiptNo
-  } else return null
-})
 
 // functions
 function reset() {
@@ -148,12 +139,12 @@ function save() {
     "username": username,
     "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     "module": "會計系統",
-    "action": "雜項收費。會員(" + MemberObject.value.c_mem_id + ")" + MemberObject.value.c_name? MemberObject.value.c_name: MemberObject.value.c_name_other + "，收費項目：" + incomeType.value.value + "（$" + incomeType.value.u_fee + ") 數目：" + quantity.value + " 總數：" + quantity.value * incomeType.value.u_fee + " 收據號碼：" + latestReceiptNO.value,
+    "action": "雜項收費。會員(" + MemberObject.value.c_mem_id + ")" + MemberObject.value.c_name? MemberObject.value.c_name: MemberObject.value.c_name_other + "，收費項目：" + incomeType.value.value + "（$" + incomeType.value.u_fee + ") 數目：" + quantity.value + " 總數：" + quantity.value * incomeType.value.u_fee + " 收據號碼：" + latestReceiptNo.value,
   })
 
   const remark = incomeType.value.value + "： \r" + quantity.value + " X HK$" + incomeType.value.u_fee.toFixed(2) + "\r"
   const accountObject = ref({
-    c_receipt_no: latestReceiptNO,
+    c_receipt_no: latestReceiptNo.value,
     d_create: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     i_receipt_type: 7, //type 7 = 雜項收費
     c_desc: incomeType.value.value? incomeType.value.value.trim() :"",

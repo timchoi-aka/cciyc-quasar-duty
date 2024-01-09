@@ -2,32 +2,6 @@
   <!-- loading dialog -->
   <LoadingDialog :model-value="(loading || os2loading || os5loading)? 1: 0" message="處理中"/>
 
-  <!-- rowDetail modal -->
-  <q-dialog v-if="$q.screen.lt.md"
-    v-model="detailModal"
-    persistent
-    maximized
-    full-width
-    transition-show="slide-up"
-    transition-hide="slide-down"
-  >
-    <EventDetail :EventID="showEventID" @hide-component="() => detailModal = false"/>
-  </q-dialog>
-
-  <q-dialog v-else
-    v-model="detailModal"
-    persistent
-    full-height
-    full-width
-    transition-show="slide-up"
-    transition-hide="slide-down"
-    class="q-pa-none"
-  >
-    <q-card style="min-width: 70vw; width: 70vw; max-width: 70vw;">
-      <EventDetail :EventID="showEventID" @hide-component="() => detailModal = false"/>
-    </q-card>
-  </q-dialog>
-
   <!-- 開放節數記錄 -->
   <q-dialog
     v-model="openingModal"
@@ -522,7 +496,6 @@ import { computed, ref, watch, onMounted, defineAsyncComponent } from "vue";
 import { exportFile, date as qdate, is } from "quasar";
 import { useQuery } from "@vue/apollo-composable"
 import { gql } from "graphql-tag"
-import EventDetail from "components/Event/EventDetail.vue";
 import LoadingDialog from "components/LoadingDialog.vue"
 import Excel from "src/lib/exportExcel"
 import { getDocs, query, where } from "firebase/firestore";
@@ -1207,7 +1180,7 @@ function rowDetail(evt, row, index) {
     /* detailModal.value = true;
     showEventID.value = row.c_act_code; */
     router.push({
-      path: "/event/detail/" + row.c_act_code.trim()
+      path: "/event/detail/" + row.c_act_code.trim() + "/content"
     })
   }
 }

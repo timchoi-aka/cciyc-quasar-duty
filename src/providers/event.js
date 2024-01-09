@@ -5,7 +5,13 @@ import { gql } from "graphql-tag"
 // Function to provide attendance data
 export function useEventProvider(options = {}) {
   // Destructure galleryID from options, default to a new ref if not provided
-  const { c_act_code = ref() } = options
+  const {
+    c_act_code = ref(),
+    loadEvaluation = ref(false),
+    loadSession = ref(false),
+    loadFullDetail = ref(false),
+    loadWeb = ref(false),
+  } = options
 
   // Ref to keep track of the number of pending async operations
   const awaitNumber = ref(0);
@@ -18,46 +24,144 @@ export function useEventProvider(options = {}) {
 
   // GraphQL query string
   let GET_EVENT = gql`
-  query GetEvent($c_act_code: String! = "") {
+  fragment IncludeFullDetail on HTX_Event {
+    s_GUID
+    s_Generation
+    s_Lineage
+    u_income
+    u_tutor_pay
+    i_success_percent
+    i_year_from
+    i_year_to
+    c_vol_level_1
+    c_vol_level_2
+    c_vol_level_3
+    i_course_credit1
+    i_course_credit2
+    i_course_credit3
+    i_course_credit4
+    i_course_credit5
+    i_lessons_attend1
+    i_lessons_attend2
+    i_lessons_attend3
+    i_lessons_attend4
+    i_lessons_attend5
+    c_subsidizes
+    c_course_tutor2
+    c_course_tutor3
+    c_course_tutor4
+    c_centre_id
+    c_check_acttype
+    c_check_memtype
+    c_checksex
+    c_corwithmember
+    c_course_level
+    c_acttype_control
+    c_acttype_together
+    c_age_control
+    c_apply_code
+    c_appraises
+    b_print_age
+    b_print_birth
+    b_print_no_period
+    b_print_other
+    b_print_time
+    b_hardcopy
+  }
+  fragment IncludeWeb on HTX_Event {
+    EventContent
+    EventContentEN
+  }
+  fragment IncludeEvaluation on HTX_Event {
+    Event_to_Evaluation {
+      attendance
+      remarks
+      c_act_code
+      eval_attend_headcount_children
+      eval_attend_headcount_others
+      eval_attend_headcount_parent
+      eval_attend_headcount_youth
+      eval_attend_session_children
+      eval_attend_session_others
+      eval_attend_session_parent
+      eval_end_date
+      eval_attend_session_youth
+      eval_end_time
+      eval_sessions
+      eval_start_date
+      eval_start_time
+      eval_volunteer_count
+      ic
+      ic_plan_date
+      ic_eval_date
+      objective
+      objective_achieved
+      objective_achieved_reason
+      objective_followup
+      objective_detail
+      objective_review_method
+      plan_attend_headcount_children
+      plan_attend_headcount_others
+      plan_attend_headcount_parent
+      plan_attend_headcount_youth
+      plan_attend_session_children
+      plan_attend_session_others
+      plan_attend_session_parent
+      plan_attend_session_youth
+      plan_end_date
+      plan_end_time
+      plan_start_date
+      plan_start_time
+      plan_sessions
+      staff_name
+      submit_plan_date
+      submit_eval_date
+      supervisor
+      supervisor_date
+      uuid
+      supervisor_comment
+      ic_comment
+      tutor_name
+      tutor_phone
+      partner_agency
+      partner_name
+      partner_phone
+    }
+  }
+  fragment IncludeSession on HTX_Event {
+    Event_to_Session {
+      c_act_code
+      d_act
+      i_number
+      i_people_count
+      inCenter
+      s_GUID
+    }
+  }
+  query GetEvent(
+    $c_act_code: String! = "",
+    $loadEvaluation: Boolean! = false,
+    $loadSession: Boolean! = false,
+    $loadFullDetail: Boolean! = false,
+    $loadWeb: Boolean! = false,
+  ) {
     HTX_Event_by_pk(c_act_code: $c_act_code) {
       EventClassID
-      EventContent
-      EventContentEN
       Gen_m_remark
       IsShow
       b_can_repeat_reg
       b_course
       b_finish
       b_freeofcharge
-      b_hardcopy
       b_not_change_price
       b_open_oth
       b_open_own
-      b_print_age
-      b_print_birth
-      b_print_no_period
-      b_print_other
-      b_print_time
       c_act_code
       c_acc_type
       c_act_name
       c_act_nameen
-      c_acttype_control
-      c_acttype_together
-      c_age_control
-      c_apply_code
-      c_appraises
-      c_centre_id
-      c_check_acttype
-      c_check_memtype
-      c_checksex
-      c_corwithmember
-      c_course_level
       c_course_no
       c_course_tutor
-      c_course_tutor2
-      c_course_tutor3
-      c_course_tutor4
       c_course_type
       c_dest
       c_end_collect
@@ -74,12 +178,8 @@ export function useEventProvider(options = {}) {
       c_sex_control
       c_start_collect
       c_status
-      c_subsidizes
       c_type
       c_user_id
-      c_vol_level_1
-      c_vol_level_2
-      c_vol_level_3
       c_week
       c_whojoin
       c_worker
@@ -93,22 +193,9 @@ export function useEventProvider(options = {}) {
       d_sale_start
       d_time_from
       d_time_to
-      i_course_credit1
-      i_course_credit2
-      i_course_credit3
-      i_course_credit4
-      i_course_credit5
       i_lessons
-      i_lessons_attend1
-      i_lessons_attend2
-      i_lessons_attend3
-      i_lessons_attend4
-      i_lessons_attend5
       i_quota_cssa_max
       i_quota_max
-      i_success_percent
-      i_year_from
-      i_year_to
       m_appraises_rem
       m_content
       m_evaluation_rem
@@ -116,11 +203,10 @@ export function useEventProvider(options = {}) {
       m_remark
       m_remind_content
       poster
-      s_GUID
-      s_Generation
-      s_Lineage
-      u_income
-      u_tutor_pay
+      ...IncludeWeb @include(if: $loadWeb)
+      ...IncludeFullDetail @include(if: $loadFullDetail)
+      ...IncludeEvaluation @include(if: $loadEvaluation)
+      ...IncludeSession @include(if: $loadSession)
     }
   }`;
 
@@ -441,7 +527,11 @@ export function useEventProvider(options = {}) {
   const execute = async () => {
     const { onResult } = useQuery(GET_EVENT,
       () => ({
-        c_act_code: c_act_code,
+        c_act_code: c_act_code.value,
+        loadEvaluation: loadEvaluation.value,
+        loadSession: loadSession.value,
+        loadFullDetail: loadFullDetail.value,
+        loadWeb: loadWeb.value,
       }));
 
     onResult((res) => {

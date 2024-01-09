@@ -343,10 +343,11 @@ import { date as qdate, is, useQuasar, uid} from "quasar";
 import { DELETE_MEMBER_BY_ID, UPDATE_RELATED_YOUTH_MEMBER_STATUS, QUIT_MEMBER_BY_ID, UPDATE_MEMBER_BY_ID, UPDATE_YOUTH_MEMBER_STATUS, INSERT_RELATION, UPDATE_RELATION, DELETE_RELATION, RENEW_MEMBER_FROM_ID_WITH_PAYMENT } from "/src/graphQueries/Member/mutation.js"
 import { GET_RELATED_MEMBER_FROM_ID, LATEST_RECEIPT_NO, GET_MEM_DETAIL_AND_RELATION_BY_PK, GET_RELATION_BY_PK,  } from "/src/graphQueries/Member/query.js"
 import ageUtil from "src/lib/calculateAge.js"
-import { useQuery, useSubscription, useMutation } from "@vue/apollo-composable"
+import { useQuery, useMutation } from "@vue/apollo-composable"
 import MemberRelated from "components/Member/MemberRelated.vue"
 import MemberSelection from "components/Member/MemberSelection.vue"
 import PrintReceipt from "components/Account/PrintReceipt.vue"
+import { useAccountProvider } from "src/providers/account";
 
 // props
 const props = defineProps({
@@ -386,7 +387,7 @@ const udf1List = [
 ]
 
 // query
-const { result: ReceiptData } = useSubscription(LATEST_RECEIPT_NO);
+const { latestReceiptNo } = useAccountProvider()
 const { result: GetMemDetailAndRelationByPK, refetch } = useQuery(GET_MEM_DETAIL_AND_RELATION_BY_PK,
   () => ({
     c_mem_id: props.modelValue
@@ -410,16 +411,6 @@ watch(updateQueue.value, (newQueue, oldQueue)  => {
   }
 })
 
-// computed
-const latestReceiptNO = computed(() => {
-  if (ReceiptData.value) {
-    let token = ReceiptData.value.tbl_account[0].c_receipt_no.split("-")
-    let receiptNo = parseInt(token[1])
-    receiptNo = (receiptNo + 1).toString()
-    while (receiptNo.length < 4) receiptNo = "0" + receiptNo
-    return token[0] + "-" + receiptNo
-  } else return null
-})
 const username = computed(() => $store.getters["userModule/getUsername"])
 const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"])
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
@@ -727,7 +718,7 @@ function renewMember(renewObject) {
   })
 
   const accountObject = ref({
-    c_receipt_no: latestReceiptNO.value,
+    c_receipt_no: latestReceiptNo.value,
     d_create: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     i_receipt_type: 1, //type 1 = membership fee
     c_desc: renewObject.duration == 1? "會員續會費" : "永久會員(會員升級)續會費",

@@ -5,27 +5,30 @@
   </q-dialog>
 
   <!-- JSPDF module -->
-  <div class="print-area q-pa-none q-ma-none" v-if="!waitingAsync">
+  <div class="print-area q-pa-none q-ma-none" v-if="!waitingAsync && $q.platform.is.desktop">
     <q-pdfviewer
-      v-if="src != null"
+      v-if="src != null "
       type="html5"
       :src="src"
     />
   </div>
+  <div v-if="$q.platform.is.mobile">請在新視窗開啟PDF</div>
 </template>
 
 <script setup>
 import { computed, ref, watch } from "vue";
 import { EVENT_BY_PK, APPLICANTS_BY_ACT_CODE } from "/src/graphQueries/Event/query.js"
 import { useQuery } from "@vue/apollo-composable"
-import { date as qdate } from "quasar";
+import { date as qdate, useQuasar } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
 import jspdf from 'jspdf'
 import { font } from "/src/assets/NotoSansTC-Regular-normal.js"
 import { useRoute } from 'vue-router'
+import { openURL, is } from 'quasar'
 
 const route = useRoute()
 const c_act_code = route.params.id
+const $q = useQuasar()
 
 // queries
 const { onResult: EventData, loading: eventLoading} = useQuery(
@@ -52,6 +55,7 @@ const src = ref(null)
 
 // watcher
 watch([Applicants, Event], ([newApp, newEvent], [oldApp, oldEvent]) => {
+  if (newApp.length > 0 && is.object(newEvent))
   generatePDF(newApp, newEvent, numberOfApplicantSlots.value, numberOfDateSlots.value)
 })
 
@@ -148,7 +152,8 @@ function drawFooter(doc) {
   doc.line(10, 204, 285, 204)
 }
 
-function generatePDF(applicants, event, appSlots, dateSlots) {
+async function generatePDF(applicants, event, appSlots, dateSlots) {
+  if (event.c_act_code == null) return
   var doc = new jspdf({
     orientation: 'l',
     unit: 'mm',
@@ -186,9 +191,15 @@ function generatePDF(applicants, event, appSlots, dateSlots) {
   doc.setProperties({
     title: event.c_act_code + '點名表.pdf',
     filename: event.c_act_code + '點名表.pdf',
+    subject: event.c_act_code + '點名表',
+    keywords: "點名表, " + event.c_act_code,
+    creator: "CCIYC",
+    author: "CCIYC",
   })
 
-  src.value = doc.output("datauristring", {filename: event.c_act_code + '點名表.pdf'})
+  $q.platform.is.mobile?
+    openURL(doc.output('bloburi', {filename: event.c_act_code + '點名表.pdf'})):
+    src.value = doc.output("datauristring", {filename: event.c_act_code + '點名表.pdf'})
 }
 </script>
 

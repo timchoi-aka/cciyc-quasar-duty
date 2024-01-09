@@ -135,9 +135,34 @@ const routes = [
             component: () => import('src/components/Event/EventContent.vue'), meta: {requiresAuth: true},
           },
           {
+            name: "EventFee",
+            path: 'fee',
+            component: () => import('src/components/Event/EventFee.vue'), meta: {requiresAuth: true},
+          },
+          {
+            name: "EventApply",
+            path: 'apply',
+            component: () => import('src/components/Event/EventApply.vue'), meta: {requiresAuth: true},
+          },
+          {
+            name: "EventStat",
+            path: 'stat',
+            component: () => import('src/components/Event/EventStat.vue'), meta: {requiresAuth: true},
+          },
+          {
+            name: "EventEvaluation",
+            path: 'evaluation',
+            component: () => import('src/components/Event/EventEvaluation.vue'), meta: {requiresAuth: true},
+          },
+          {
             name: "TakeAttendance",
             path: 'take-attendance',
             component: () => import('src/components/Event/AttendanceTake.vue'), meta: {requiresAuth: true},
+          },
+          {
+            name: "EventAttendanceReport",
+            path: 'attendance-report',
+            component: () => import('src/components/Event/EventAttendanceReport.vue'), meta: {requiresAuth: true},
           },
           {
             name: "AttendancePrint",
@@ -155,6 +180,7 @@ const routes = [
         component: () => import('src/pages/Event/EventActiveList.vue'), meta: {requiresAuth: true},
       },
       {
+        name: "EventSearch",
         path: 'search',
         component: () => import('src/pages/Event/EventSearch.vue'), meta: {requiresAuth: true},
       },

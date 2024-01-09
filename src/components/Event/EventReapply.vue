@@ -63,6 +63,7 @@ import { LATEST_RECEIPT_NO } from "/src/graphQueries/Member/query.js"
 import { EVENT_REREGISTRATION } from "/src/graphQueries/Event/mutation.js"
 import { useMutation, useSubscription } from "@vue/apollo-composable"
 import LoadingDialog from "components/LoadingDialog.vue"
+import { useAccountProvider } from "src/providers/account";
 
 
 // props
@@ -114,10 +115,7 @@ const $q = useQuasar()
 const $store = useStore();
 const reregistrationModal = ref(false)
 
-// query
-const { result: ReceiptData } = useSubscription(
-  LATEST_RECEIPT_NO,
-);
+const { latestReceiptNo } = useAccountProvider()
 
 const { mutate: eventReregistration, onDone: eventReregistration_Completed, onError: eventReregistration_Error } = useMutation(EVENT_REREGISTRATION)
 
@@ -128,29 +126,19 @@ const u_fee = ref()
 const remark2 = ref()
 const loading = ref(0)
 
-const latestReceiptNO = computed(() => {
-  if (ReceiptData.value) {
-    let token = ReceiptData.value.tbl_account[0].c_receipt_no.split("-")
-    let receiptNo = parseInt(token[1])
-    receiptNo = (receiptNo + 1).toString()
-    while (receiptNo.length < 4) receiptNo = "0" + receiptNo
-    return token[0] + "-" + receiptNo
-  } else return null
-})
-
 // functions
 /*
 服務資料 Service Detail
 日期 Date：24/08/2022
 時間 Time：18:15 - 19:15
 */
-function submitApplication() {  
+function submitApplication() {
   let remark = "服務資料 Service Detail\r\n"
   if (props.d_date_from && props.d_date_to) remark += "日期 Date：" + qdate.formatDate(qdate.extractDate(props.d_date_from, "D/M/YYYY"), "YYYY年M月D日") + " 至 " + qdate.formatDate(qdate.extractDate(props.d_date_to, "D/M/YYYY"), "YYYY年M月D日")
   if (props.c_week) remark += " 逢星期" + props.c_week
   remark += "\r\n"
   if (props.d_time_from && props.d_time_to) remark += "時間 Time：" + props.d_time_from.trim() + " - " + props.d_time_to.trim()
-  
+
   const logObject = ref({
     "username": username,
     "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
@@ -159,7 +147,7 @@ function submitApplication() {
   })
 
   const accountObject = ref({
-    c_receipt_no: latestReceiptNO,
+    c_receipt_no: latestReceiptNo.value,
     d_create: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     i_receipt_type: 20, //type 20 = activity fee (repeat)
     c_desc: props.c_act_name? props.c_act_name.trim() :"",
@@ -182,7 +170,7 @@ function submitApplication() {
     i_prints: 0,
     b_delete: false,
   })
-  
+
   /*
   console.log("remark:" + remark)
   console.log("logObject:" + JSON.stringify(logObject.value))

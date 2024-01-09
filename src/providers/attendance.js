@@ -21,21 +21,29 @@ export function useAttendanceProvider(options = {}) {
   query Event_AttendancesByActCode(
     $c_act_code: String! = ""
     ) {
-    tbl_act_attend (where: {c_act_code: {_eq: $c_act_code}}) {
-      d_date
-      d_datetime
-      d_timefrom
-      d_timeto
-      i_marks
-      ID
+    Attendance {
+      b_attend
+      b_is_youth
       c_act_code
-      c_act_detail
       c_mem_id
       c_name
+      c_slot
       c_user_id
+      d_date
+      d_updatetime
+      uuid
+    }
+    AttendanceOthers {
+      c_act_code
+      c_slot
+      c_updateuser
+      d_date
+      d_updatetime
+      i_count
     }
   }`;
 
+  /*
   const ADD_ATTENDANCE = gql`
     mutation AddAttendance(
       $objects: [tbl_act_attend_insert_input!] = {},
@@ -46,20 +54,51 @@ export function useAttendanceProvider(options = {}) {
       affected_rows
     }
   }`
+  */
+  const ADD_ATTENDANCE = gql`
+    mutation AddAttendance(
+      $objects: [Attendance_insert_input!] = {},
+      ) {
+    insert_Attendance(
+      objects: $objects,
+      if_matched: {match_columns: [c_mem_id, c_act_code, d_date, c_slot], update_columns: [c_name, c_user_id, d_updatetime, b_attend, b_is_youth]}) {
+      returning {
+        b_attend
+        b_is_youth
+        c_act_code
+        c_mem_id
+        c_name
+        c_slot
+        c_user_id
+        d_date
+        d_updatetime
+        uuid
+      }
+    }
+  }`
 
   const { mutate: AddAttendance, onError: onError_addAttendance } = useMutation(ADD_ATTENDANCE, {
-    update: (cache, { data: { insert_tbl_act_attend } }) => {
+    update: (cache, { data: { insert_Attendance } }) => {
       // Read the data from our cache for this query.
       const existingAttendance = cache.readQuery({ query: GET_ATTENDANCE });
 
       // Check if the data is in the cache
       if (existingAttendance) {
-        // Add the new attendance to the cache
-        const updatedAttendance = [...existingAttendance.tbl_act_attend, insert_tbl_act_attend];
+        let updatedAttendance = [...existingAttendance.Attendance]
+        // if existingAttendance.Attendance contains data from insert_Attendance.returning, update it
+        // else, add insert_Attendance.returning to existingAttendance.Attendance
+        insert_Attendance.returning.forEach((element) => {
+          const index = updatedAttendance.findIndex((item) => item.uuid == element.uuid)
+          if (index > -1) {
+            updatedAttendance[index] = element
+          } else {
+            updatedAttendance.push(element)
+          }
+        })
 
         // Write our data back to the cache.
         cache.writeQuery({ query: GET_ATTENDANCE, data: {
-          tbl_act_attend: updatedAttendance
+          Attendance: updatedAttendance
         }});
         result.value = updatedAttendance
       }

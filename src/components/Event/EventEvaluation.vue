@@ -10,12 +10,12 @@
       </q-card-section>
       <q-card-section>
         <div>注意：刪除後不能再回復！</div>
-        <div>請在以下輸入活動編號{{props.EventID}}</div>
+        <div>請在以下輸入活動編號{{c_act_code}}</div>
         <q-input type="text" v-model="deleteCheck"/>
       </q-card-section>
       <q-card-actions align="right">
         <q-btn color="warning" label="取消" v-close-popup/>
-        <q-btn :disable="deleteCheck != props.EventID.trim()" color="positive" label="確定" @click="onOKDelete" v-close-popup/>
+        <q-btn :disable="deleteCheck != c_act_code.trim()" color="positive" label="確定" @click="onOKDelete" v-close-popup/>
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -35,7 +35,7 @@
       </q-card-actions>
     </q-card>
   </q-dialog>
-  
+
    <!-- confirm submit eval dialog -->
    <q-dialog v-model="confirmEvalDialog">
     <q-card class="q-dialog-plugin">
@@ -56,7 +56,7 @@
   <q-dialog v-model="approvalDialog">
     <q-card class="q-dialog-plugin">
       <q-card-section class="bg-primary text-white text-body1">
-        <span v-if="mode == 'plan'">計劃</span><span v-else>檢討</span>批核 - {{Event.c_act_name}}({{EventID}}) 
+        <span v-if="mode == 'plan'">計劃</span><span v-else>檢討</span>批核 - {{Event.c_act_name}}({{c_act_code}})
       </q-card-section>
       <q-card-section class="row q-mt-md">
         <div class="col-12">主管意見：</div>
@@ -72,7 +72,7 @@
 
   <div class="q-px-md text-h6 bg-primary text-white q-py-md row">
     <span class="col-xs-12 col-sm-6 col-md-6 row">
-      <div class="col-xs-12">{{EventID}} - {{Event.c_act_name}}</div>
+      <div class="col-xs-12">{{ c_act_code }} - {{Event.c_act_name}}</div>
       <div class="col-xs-12">
         <q-btn v-if="!edit && (!isSubmitted || isEventApprove)" icon="edit" flat @click="startEdit">
           <q-tooltip class="bg-white text-primary">修改</q-tooltip>
@@ -83,7 +83,7 @@
         <q-btn v-if="edit" icon="cancel" flat @click="edit = false">
           <q-tooltip class="bg-white text-primary">取消</q-tooltip>
         </q-btn>
-        
+
         <q-btn-dropdown v-if="!edit && planSubmitted " flat icon="print" color="bg-primary text-white">
           <q-list>
             <q-item v-if="!edit && planSubmitted" clickable v-close-popup @click="printPlan = true">
@@ -127,8 +127,8 @@
   <div v-if="$q.screen.gt.xs">
     <div class="row text-h6">
       <div v-if="PlanEval.ic_comment" class="col-12 q-my-sm" style="border: 1px dotted red;">審批評語: <span class="col-10" v-if="edit && isEventApprove"><q-input filled type="text" v-model="editObject.ic_comment"/></span><span class="col-10" v-else>{{PlanEval.ic_comment}}</span></div>
-      <div class="col-2 q-my-sm">工作目的: </div><span class="col-10" v-if="edit"><q-input filled type="text" v-model="editObject.objective"/></span><span class="col-10" v-else>{{PlanEval.objective}}</span>
-      <div class="col-2 q-my-sm">工作內容: </div><span class="col-10" v-if="edit"><q-input filled type="text" v-model="editObject.objective_detail"/></span><span class="col-10" v-else>{{PlanEval.objective_detail}}</span>
+      <div class="col-2 q-my-sm">工作目的: </div><span class="col-10" v-if="edit"><q-input filled type="text" v-model="editObject.objective" maxlength="200"/></span><span class="col-10" v-else>{{PlanEval.objective}}</span>
+      <div class="col-2 q-my-sm">工作內容: </div><span class="col-10" v-if="edit"><q-input filled type="text" v-model="editObject.objective_detail" maxlength="200"/></span><span class="col-10" v-else>{{PlanEval.objective_detail}}</span>
       <div class="col-2 q-my-sm">合辦機構: </div><span class="col-10" v-if="edit"><q-input filled type="text" v-model="editObject.partner_agency"/></span><span class="col-10" v-else>{{PlanEval.partner_agency}}</span>
       <div class="col-2 q-my-sm">合辦聯絡人: </div><span class="col-4" v-if="edit"><q-input filled type="text" v-model="editObject.partner_name"/></span><span class="col-4" v-else>{{PlanEval.partner_name}}</span>
       <div class="col-2 q-my-sm">聯絡人電話: </div><span class="col-4" v-if="edit"><q-input filled type="text" v-model="editObject.partner_phone"/></span><span class="col-4" v-else>{{PlanEval.partner_phone}}</span>
@@ -177,7 +177,7 @@
               </div>
               <div class="col-10 invisible" v-else>{{PlanEval.eval_volunteer_count}}</div>
           </div>
-          
+
           <div class="row fit q-pa-sm" style="border: 1px solid">
             <q-chip class="fit" square label="出席記錄"/>
             <div class="col-3 q-my-sm">青年節數: <span v-if="edit"><q-input type="number" filled v-model="editObject.plan_attend_session_youth"/></span><span v-else>{{PlanEval.plan_attend_session_youth}}</span></div>
@@ -241,7 +241,7 @@
               </div>
               <div class="col-10" v-else>{{PlanEval.eval_volunteer_count}}</div>
           </div>
-          
+
           <div class="row fit q-pa-sm" style="border: 1px solid">
             <q-chip class="fit" square label="出席記錄"/>
             <div class="col-3 q-my-sm">青年節數: <span v-if="edit"><q-input type="number" filled v-model="editObject.eval_attend_session_youth"/></span><span v-else>{{PlanEval.eval_attend_session_youth}}</span></div>
@@ -298,7 +298,7 @@
     Mobile version developing, refer to desktop for now
   </div>
 
-  <q-dialog 
+  <q-dialog
     v-model="printEvaluation"
     maximized
     full-width
@@ -308,8 +308,8 @@
     >
     <EventEvaluationPrint :model-value="Event"/>
   </q-dialog>
-  
-  <q-dialog 
+
+  <q-dialog
     v-model="printPlan"
     maximized
     full-width
@@ -337,14 +337,11 @@ import { onBeforeRouteLeave } from "vue-router"
 import { httpsCallable } from "@firebase/functions";
 import { getDocs, where, query } from "firebase/firestore"
 import { FirebaseFunctions, usersCollection } from "boot/firebase";
-
-
-// props
-const props = defineProps({
-  EventID: String, 
-})
+import { useRoute } from "vue-router";
 
 // variables
+const route = useRoute()
+const c_act_code = ref(route.params.id)
 const splitterModel = ref(50) // default split at 50%
 const edit = ref(false)
 const loading = ref(0)
@@ -383,7 +380,7 @@ getDocs(userQuery).then((user) => {
 const { result: EventEvaluation, onError: EventEvaluationError, refetch } = useQuery(
   EVENT_EVALUATION_BY_ACT_CODE,
   () => ({
-    c_act_code: props.EventID
+    c_act_code: c_act_code.value
   }));
 const { mutate: addEvaluationFromActCode, onDone: addEvaluationFromActCode_Completed, onError: addEvaluationFromActCode_Error } = useMutation(ADD_EVALUATION_FROM_ACT_CODE)
 const { mutate: updateEvaluationFromActCode, onDone: updateEvaluationFromActCode_Completed, onError: updateEvaluationFromActCode_Error } = useMutation(UPDATE_EVALUATION_FROM_PK)
@@ -393,17 +390,17 @@ const { mutate: approvePlan, onDone: approvePlan_Completed, onError: approvePlan
 const { mutate: approveEvaluation, onDone: approveEvaluation_Completed, onError: approveEvaluation_Error } = useMutation(APPROVE_EVALUATION)
 const { mutate: denyPlan, onDone: denyPlan_Completed, onError: denyPlan_Error } = useMutation(gql`
 mutation denyPlanFromUUID(
-  $uuid: uniqueidentifier = "", 
+  $uuid: uniqueidentifier = "",
   $c_act_code: String = "",
-  $ic: String = "", 
+  $ic: String = "",
   $ic_plan_date: smalldatetime = "",
   $ic_comment: String = "",
   $logObject: Log_insert_input! = {}
   ) {
   update_Event_Evaluation_by_pk(
-    pk_columns: {uuid: $uuid}, 
+    pk_columns: {uuid: $uuid},
     _set: {
-      ic: $ic, 
+      ic: $ic,
       ic_plan_date: $ic_plan_date,
       ic_comment: $ic_comment,
       submit_plan_date: null,
@@ -428,17 +425,17 @@ mutation denyPlanFromUUID(
 
 const { mutate: denyEvaluation, onDone: denyEvaluation_Completed, onError: denyEvaluation_Error } = useMutation(gql`
 mutation denyEvaluationFromUUID(
-  $uuid: uniqueidentifier = "", 
+  $uuid: uniqueidentifier = "",
   $c_act_code: String = "",
-  $ic: String = "", 
+  $ic: String = "",
   $ic_eval_date: smalldatetime = "",
   $ic_comment: String = "",
   $logObject: Log_insert_input! = {}
   ) {
   update_Event_Evaluation_by_pk(
-    pk_columns: {uuid: $uuid}, 
+    pk_columns: {uuid: $uuid},
     _set: {
-      ic: $ic, 
+      ic: $ic,
       ic_eval_date: $ic_eval_date,
       ic_comment: $ic_comment,
       submit_eval_date: null,
@@ -463,11 +460,11 @@ mutation denyEvaluationFromUUID(
 
 const { mutate: deletePlanEval, onDone: deletePlanEval_Completed, onError: deletePlanEval_Error } = useMutation(gql`
 mutation deletePlanEvalFromUUID(
-  $uuid: uniqueidentifier = "", 
+  $uuid: uniqueidentifier = "",
   $logObject: Log_insert_input! = {}
   ) {
   delete_Event_Evaluation_by_pk(
-    uuid: $uuid 
+    uuid: $uuid
   ) {
     uuid
     c_act_code
@@ -504,7 +501,7 @@ submitEvaluation_Completed((result) => {
     const notifyUser = httpsCallable(FirebaseFunctions,
       "notification-notifyUser"
     );
-    
+
     notifyUser({
       topic: "eventApprove",
       data: {
@@ -522,7 +519,7 @@ submitPlan_Completed((result) => {
     const notifyUser = httpsCallable(FirebaseFunctions,
       "notification-notifyUser"
     );
-    
+
     notifyUser({
       topic: "eventApprove",
       data: {
@@ -545,7 +542,7 @@ approvePlan_Completed((result) => {
     const notifyUser = httpsCallable(FirebaseFunctions,
       "notification-notifyUser"
     );
-    
+
     notifyUser({
       topic: userMapping.value[result.data.update_Event_Evaluation_by_pk.staff_name.trim()],
       data: {
@@ -568,7 +565,7 @@ approveEvaluation_Completed((result) => {
     const notifyUser = httpsCallable(FirebaseFunctions,
       "notification-notifyUser"
     );
-    
+
     notifyUser({
       topic: userMapping.value[result.data.update_Event_Evaluation_by_pk.staff_name.trim()],
       data: {
@@ -587,7 +584,7 @@ denyEvaluation_Completed((result) => {
     const notifyUser = httpsCallable(FirebaseFunctions,
       "notification-notifyUser"
     );
-    
+
     notifyUser({
       topic: userMapping.value[result.data.update_Event_Evaluation_by_pk.staff_name.trim()],
       data: {
@@ -605,7 +602,7 @@ denyPlan_Completed((result) => {
     const notifyUser = httpsCallable(FirebaseFunctions,
       "notification-notifyUser"
     );
-    
+
     notifyUser({
       topic: userMapping.value[result.data.update_Event_Evaluation_by_pk.staff_name.trim()],
       data: {
@@ -695,9 +692,9 @@ function ApproveOK() {
       "username": username.value,
       "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
       "module": "活動系統",
-      "action": "批核活動" + mode.value == 'plan'? "計劃: ": "檢討: " + props.EventID.trim() + "。主管評語：" + EvaluationComment.value,
+      "action": "批核活動" + mode.value == 'plan'? "計劃: ": "檢討: " + c_act_code.value.trim() + "。主管評語：" + EvaluationComment.value,
     })
-    
+
     loading.value++
     if (mode.value == 'plan') {
       approvePlan({
@@ -706,7 +703,7 @@ function ApproveOK() {
         ic_plan_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
         ic_eval_date: null,
         ic_comment: EvaluationComment.value,
-        c_act_code: props.EventID.trim(),
+        c_act_code: c_act_code.value.trim(),
         uuid: PlanEval.value.uuid,
       })
     } else {
@@ -715,7 +712,7 @@ function ApproveOK() {
         ic: username.value,
         ic_eval_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
         ic_comment: EvaluationComment.value,
-        c_act_code: props.EventID.trim(),
+        c_act_code: c_act_code.value.trim(),
         uuid: PlanEval.value.uuid,
       })
     }
@@ -729,7 +726,7 @@ function ApproveDeny() {
       "username": username.value,
       "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
       "module": "活動系統",
-      "action": "發回活動" + mode.value == 'plan'? "計劃: ": "檢討: " + props.EventID.trim() + "。主管評語：" + EvaluationComment.value,
+      "action": "發回活動" + mode.value == 'plan'? "計劃: ": "檢討: " + c_act_code.value.trim() + "。主管評語：" + EvaluationComment.value,
     })
 
     loading.value++
@@ -740,7 +737,7 @@ function ApproveDeny() {
         ic_plan_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
         submit_plan_date: null,
         ic_comment: EvaluationComment.value,
-        c_act_code: props.EventID.trim(),
+        c_act_code: c_act_code.value.trim(),
         uuid: PlanEval.value.uuid,
       })
     } else {
@@ -750,7 +747,7 @@ function ApproveDeny() {
         ic_eval_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
         submit_eval_date: null,
         ic_comment: EvaluationComment.value,
-        c_act_code: props.EventID.trim(),
+        c_act_code: c_act_code.value.trim(),
         uuid: PlanEval.value.uuid,
       })
     }
@@ -815,7 +812,7 @@ function onOKDelete() {
     "username": username.value,
     "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     "module": "活動系統",
-    "action": "刪除活動計劃: " + props.EventID + " 內容：" + JSON.stringify(PlanEval.value, null, " ")
+    "action": "刪除活動計劃: " + c_act_code.value + " 內容：" + JSON.stringify(PlanEval.value, null, " ")
   })
   loading.value++
   deletePlanEval({
@@ -829,7 +826,7 @@ function onOKClickPlan() {
     "username": username.value,
     "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     "module": "活動系統",
-    "action": "提交活動計劃: " + props.EventID
+    "action": "提交活動計劃: " + c_act_code.value
   })
   //console.log(PlanEval.value.uuid)
   //console.log(username.value)
@@ -838,7 +835,7 @@ function onOKClickPlan() {
   loading.value++
   submitPlan({
     uuid: PlanEval.value.uuid,
-    staff_name: username.value, 
+    staff_name: username.value,
     submit_plan_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     logObject: logObject.value,
   })
@@ -849,7 +846,7 @@ function onOKClickEval() {
     "username": username.value,
     "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     "module": "活動系統",
-    "action": "提交活動檢討: " + props.EventID
+    "action": "提交活動檢討: " + c_act_code.value
   })
   //console.log(PlanEval.value.uuid)
   //console.log(username.value)
@@ -858,7 +855,7 @@ function onOKClickEval() {
   loading.value++
   submitEvaluation({
     uuid: PlanEval.value.uuid,
-    staff_name: username.value, 
+    staff_name: username.value,
     submit_eval_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     logObject: logObject.value,
   })
@@ -872,9 +869,9 @@ function saveRecord() {
       "username": username.value,
       "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
       "module": "活動系統",
-      "action": "修改活動計劃/檢討: " + props.EventID.trim() + " 內容：" + JSON.stringify(editObject.value, null, "")
+      "action": "修改活動計劃/檢討: " + c_act_code.value.trim() + " 內容：" + JSON.stringify(editObject.value, null, "")
     })
-    
+
     loading.value++
     updateEvaluationFromActCode({
       uuid: PlanEval.value.uuid,
@@ -886,9 +883,9 @@ function saveRecord() {
       "username": username.value,
       "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
       "module": "活動系統",
-      "action": "新增活動計劃/檢討: " + props.EventID.trim() + " 內容：" + JSON.stringify(editObject.value, null, " ")
+      "action": "新增活動計劃/檢討: " + c_act_code.value.trim() + " 內容：" + JSON.stringify(editObject.value, null, " ")
     })
-    
+
     loading.value++
     addEvaluationFromActCode({
       evaluationObject: editObject.value,
@@ -900,54 +897,54 @@ function saveRecord() {
 // copy server data to editObject for modification
 function clonePlanValue() {
   editObject.value = {
-    attendance: PlanEval.value?.attendance??null,
-    c_act_code: props.EventID.trim(),
-    eval_attend_headcount_children: PlanEval.value?.eval_attend_headcount_children??0,
-    eval_attend_headcount_others: PlanEval.value?.eval_attend_headcount_others??0,
-    eval_attend_headcount_parent: PlanEval.value?.eval_attend_headcount_parent??0,
-    eval_attend_headcount_youth: PlanEval.value?.eval_attend_headcount_youth??0,
-    eval_attend_session_children: PlanEval.value?.eval_attend_session_children??0,
-    eval_attend_session_others: PlanEval.value?.eval_attend_session_others??0,
-    eval_attend_session_parent: PlanEval.value?.eval_attend_session_parent??0,
-    eval_attend_session_youth: PlanEval.value?.eval_attend_session_youth??0,
-    eval_end_date: PlanEval.value?.eval_end_date??null,
-    eval_end_time: PlanEval.value?.eval_end_time??null,
-    eval_sessions: PlanEval.value?.eval_sessions??null,
-    eval_start_date: PlanEval.value?.eval_start_date??null,
-    eval_start_time: PlanEval.value?.eval_start_time??null,
-    eval_volunteer_count: PlanEval.value?.eval_volunteer_count??0,
-    ic: PlanEval.value?.ic??null,
-    ic_plan_date: PlanEval.value?.ic_plan_date??null,
+    attendance: PlanEval.value && PlanEval.value.attendance? PlanEval.value.attendance.trim(): null,
+    c_act_code: c_act_code.value.trim(),
+    eval_attend_headcount_children: PlanEval.value && PlanEval.value.eval_attend_headcount_children? PlanEval.value.eval_attend_headcount_children: 0,
+    eval_attend_headcount_others: PlanEval.value && PlanEval.value.eval_attend_headcount_others? PlanEval.value.eval_attend_headcount_others: 0,
+    eval_attend_headcount_parent: PlanEval.value && PlanEval.value.eval_attend_headcount_parent? PlanEval.value.eval_attend_headcount_parent: 0,
+    eval_attend_headcount_youth: PlanEval.value && PlanEval.value.eval_attend_headcount_youth? PlanEval.value.eval_attend_headcount_youth: 0,
+    eval_attend_session_children: PlanEval.value && PlanEval.value.eval_attend_session_children? PlanEval.value.eval_attend_session_children: 0,
+    eval_attend_session_others: PlanEval.value && PlanEval.value.eval_attend_session_others? PlanEval.value.eval_attend_session_others: 0,
+    eval_attend_headcount_parent: PlanEval.value && PlanEval.value.eval_attend_headcount_parent? PlanEval.value.eval_attend_headcount_parent: 0,
+    eval_attend_session_youth: PlanEval.value && PlanEval.value.eval_attend_session_youth? PlanEval.value.eval_attend_session_youth: 0,
+    eval_end_date: PlanEval.value && PlanEval.value.eval_end_date? PlanEval.value.eval_end_date: null,
+    eval_end_time: PlanEval.value && PlanEval.value.eval_end_time? PlanEval.value.eval_end_time: null,
+    eval_sessions: PlanEval.value && PlanEval.value.eval_sessions? PlanEval.value: null,
+    eval_start_date: PlanEval.value && PlanEval.value.eval_start_date? PlanEval.value.eval_start_date: null,
+    eval_start_time: PlanEval.value && PlanEval.value.eval_start_time? PlanEval.value.eval_start_time: null,
+    eval_volunteer_count: PlanEval.value && PlanEval.value.eval_volunteer_count? PlanEval.value.eval_volunteer_count: 0,
+    ic: PlanEval.value && PlanEval.value.ic? PlanEval.value.ic.trim(): null,
+    ic_plan_date: PlanEval.value && PlanEval.value.ic_plan_date? PlanEval.value.ic_plan_date: null,
     ic_comment: PlanEval.value && PlanEval.value.ic_comment? PlanEval.value.ic_comment.trim():null,
-    objective: PlanEval.value?.objective??null,
-    objective_achieved: PlanEval.value?.objective_achieved??null,
-    objective_achieved_reason: PlanEval.value?.objective_achieved_reason??null,
-    objective_followup: PlanEval.value?.objective_followup??null,
-    objective_detail: PlanEval.value?.objective_detail??null,
-    objective_review_method: PlanEval.value?.objective_review_method??null,
-    partner_agency: PlanEval.value?.partner_agency??null,
-    partner_name: PlanEval.value?.partner_name??null,
-    partner_phone: PlanEval.value?.partner_phone??null,
-    tutor_name: PlanEval.value?.tutor_name??null,
-    tutor_phone: PlanEval.value?.tutor_phone??null,
-    remarks: PlanEval.value?.remarks??null,
-    plan_attend_headcount_children: PlanEval.value?.plan_attend_headcount_children??0,
-    plan_attend_headcount_others: PlanEval.value?.plan_attend_headcount_others??0,
-    plan_attend_headcount_parent: PlanEval.value?.plan_attend_headcount_parent??0,
-    plan_attend_headcount_youth: PlanEval.value?.plan_attend_headcount_youth??0,
-    plan_attend_session_children: PlanEval.value?.plan_attend_session_children??0,
-    plan_attend_session_others: PlanEval.value?.plan_attend_session_others??0,
-    plan_attend_session_parent: PlanEval.value?.plan_attend_session_parent??0,
-    plan_attend_session_youth: PlanEval.value?.plan_attend_session_youth??0,
-    plan_end_date: PlanEval.value?.plan_end_date??null,
-    plan_end_time: PlanEval.value?.plan_end_time??null,
-    plan_start_date: PlanEval.value ? qdate.formatDate(PlanEval.value.plan_start_date, "YYYY/MM/DD") : null,
-    plan_start_time: PlanEval.value?.plan_start_time??null,
-    plan_sessions: PlanEval.value?.plan_sessions??0,
-    staff_name: PlanEval.value?.staff_name??null,
-    submit_plan_date: PlanEval.value?.submit_plan_date??null,
-    supervisor: PlanEval.value?.supervisor??null,
-    supervisor_date: PlanEval.value?.supervisor_date??null,
+    objective: PlanEval.value && PlanEval.value.objective? PlanEval.value.objective.trim(): null,
+    objective_achieved: PlanEval.value && PlanEval.value.objective_achieved? PlanEval.value.objective_achieved.trim(): null,
+    objective_achieved_reason: PlanEval.value && PlanEval.value.objective_achieved_reason? PlanEval.value.objective_achieved_reason.trim(): null,
+    objective_followup: PlanEval.value && PlanEval.value.objective_followup? PlanEval.value.objective_followup.trim(): null,
+    objective_detail: PlanEval.value && PlanEval.value.objective_detail? PlanEval.value.objective_detail.trim(): null,
+    objective_review_method: PlanEval.value && PlanEval.value.objective_review_method? PlanEval.value.objective_review_method.trim(): null,
+    partner_agency: PlanEval.value && PlanEval.value.partner_agency? PlanEval.value.partner_agency.trim(): null,
+    partner_name: PlanEval.value && PlanEval.value.partner_name? PlanEval.value.partner_name.trim(): null,
+    partner_phone: PlanEval.value && PlanEval.value.partner_phone? PlanEval.value.partner_phone.trim(): null,
+    tutor_name: PlanEval.value && PlanEval.value.tutor_name? PlanEval.value.tutor_name.trim(): null,
+    tutor_phone: PlanEval.value && PlanEval.value.tutor_phone? PlanEval.value.tutor_phone.trim(): null,
+    remarks: PlanEval.value && PlanEval.value.remarks? PlanEval.value.remarks.trim(): null,
+    plan_attend_headcount_children: PlanEval.value && PlanEval.value.plan_attend_headcount_children? PlanEval.value.plan_attend_headcount_children: 0,
+    plan_attend_headcount_others: PlanEval.value && PlanEval.value.plan_attend_headcount_others? PlanEval.value.plan_attend_headcount_others: 0,
+    plan_attend_headcount_parent: PlanEval.value && PlanEval.value.plan_attend_headcount_parent? PlanEval.value.plan_attend_headcount_parent: 0,
+    plan_attend_headcount_youth: PlanEval.value && PlanEval.value.plan_attend_headcount_youth? PlanEval.value.plan_attend_headcount_youth: 0,
+    plan_attend_session_children: PlanEval.value && PlanEval.value.plan_attend_session_children? PlanEval.value.plan_attend_session_children: 0,
+    plan_attend_session_others: PlanEval.value && PlanEval.value.plan_attend_session_others? PlanEval.value.plan_attend_session_others: 0,
+    plan_attend_session_parent: PlanEval.value && PlanEval.value.plan_attend_session_parent? PlanEval.value.plan_attend_session_parent: 0,
+    plan_attend_session_youth: PlanEval.value && PlanEval.value.plan_attend_session_youth? PlanEval.value.plan_attend_session_youth: 0,
+    plan_end_date: PlanEval.value && PlanEval.value.plan_end_date? qdate.formatDate(PlanEval.value.plan_end_date, "YYYY/MM/DD"): null,
+    plan_end_time: PlanEval.value && PlanEval.value.plan_end_time? PlanEval.value.plan_end_time: null,
+    plan_start_date: PlanEval.value && PlanEval.value.plan_start_date? qdate.formatDate(PlanEval.value.plan_start_date, "YYYY/MM/DD"): null,
+    plan_start_time: PlanEval.value && PlanEval.value.plan_start_time? PlanEval.value.plan_start_time: null,
+    plan_sessions: PlanEval.value && PlanEval.value.plan_sessions? PlanEval.value.plan_sessions: 0,
+    staff_name: PlanEval.value && PlanEval.value.staff_name? PlanEval.value.staff_name.trim(): null,
+    submit_plan_date: PlanEval.value && PlanEval.value.submit_plan_date? PlanEval.value.submit_plan_date: null,
+    supervisor: PlanEval.value && PlanEval.value.supervisor? PlanEval.value.supervisor.trim(): null,
+    supervisor_date: PlanEval.value && PlanEval.value.supervisor_date? PlanEval.value.supervisor_date: null,
   }
 }
 
@@ -962,19 +959,19 @@ function notifyClientError(error) {
       .catch((error) => console.log("error", error));
   } else {
     $q.notify({ message: "系統錯誤，請重新載入頁面." });
-  }  
+  }
 }
 
 function notifyClientSuccess(c_act_code) {
   refetch()
-  loading.value--  
+  loading.value--
   $q.notify({
     message: "活動計劃" + c_act_code + "更新完成。",
   })
 }
 
 onBeforeRouteLeave((to, from) => {
-  if (edit) {
+  if (edit.value) {
     return new Promise((resolve, reject) => {
       $q.dialog({
         title: "請確認",

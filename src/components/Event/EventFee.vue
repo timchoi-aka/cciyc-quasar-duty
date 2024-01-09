@@ -43,14 +43,12 @@ import { useQuasar, date as qdate} from "quasar";
 import { EVENT_FEE_BY_ACT_CODE } from "/src/graphQueries/Event/query.js"
 import { UPDATE_EVENT_FEE, DELETE_EVENT_FEE } from "/src/graphQueries/Event/mutation.js"
 import { useQuery, useMutation } from "@vue/apollo-composable"
+import { useRoute } from 'vue-router'
 
-// props
-const props = defineProps({
-  c_act_code: String, 
-})
 
 // variables
-const $q = useQuasar()
+const route = useRoute()
+const c_act_code = ref(route.params.id)
 const $store = useStore();
 const edit = ref(false)
 const newitem = ref([])
@@ -61,7 +59,7 @@ const deleteItem = ref([])
 const { result, onError: EventFeeError, refetch } = useQuery(
   EVENT_FEE_BY_ACT_CODE,
   () => ({
-    c_act_code: props.c_act_code
+    c_act_code: c_act_code.value
   }));
 
 const { mutate: updateFee, onDone: updateFee_Completed, onError: updateFee_Error } = useMutation(UPDATE_EVENT_FEE)
@@ -108,22 +106,22 @@ function save() {
   if (newitem.value.length > 0) {
     newitem.value.forEach((item) => {
       updateObject.push({
-        c_act_code: props.c_act_code.trim(),
+        c_act_code: c_act_code.value.trim(),
         c_type: item.c_type,
         u_fee: parseFloat(item.u_fee),
         b_cssa: false
       })
     })
   }
-  
+
   if (updateObject.length > 0) {
     const logObject = ref({
       "username": username,
       "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
       "module": "活動系統",
-      "action": "修改活動" + props.c_act_code + "收費。資料:" + JSON.stringify(updateObject, null, 2)
+      "action": "修改活動" + c_act_code.value + "收費。資料:" + JSON.stringify(updateObject, null, 2)
     })
-    
+
     updateFee({
       logObject: logObject.value,
       objects: updateObject
@@ -139,9 +137,9 @@ function save() {
       "username": username,
       "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
       "module": "活動系統",
-      "action": "刪除" + props.c_act_code + " 內容:" + JSON.stringify(deleteItem.value, null, 2)
+      "action": "刪除" + c_act_code.value + " 內容:" + JSON.stringify(deleteItem.value, null, 2)
     })
-      
+
     deleteFee({
       logObject: logObject.value,
       c_act_code: deleteItem.value.map(a => a.c_act_code),

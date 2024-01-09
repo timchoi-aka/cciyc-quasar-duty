@@ -1,14 +1,5 @@
 <template>
   <q-page class="row">
-    <q-dialog
-      full-height
-      full-width
-      persistent
-      v-model="eventDetailDialog"
-    >
-      <EventDetail :EventID="selectedEventID" @hide-component="() => eventDetailDialog = false"/>
-    </q-dialog>
-
     <div class="col-2" style="border: 1px solid;">
       <q-form
         @submit="submitSearch"
@@ -23,7 +14,7 @@
         <div><q-input clearable label="活動名稱" v-model="search.c_act_name"/></div>
         <div><q-select clearable label="會計類別" :options="acc_type" v-model="search.c_acc_type"/></div>
         <div><q-select clearable label="性質" :options="c_nature" v-model="search.c_nature"/></div>
-        <div><q-select clearable use-input input-debounce="0" @new-value="newUser" label="負責人員" :options="userList" v-model="search.c_respon"/></div>
+        <div><StaffSelection :multiple="false" v-model="search.c_respon" /></div>
         <div><q-select clearable label="大分類" :options="group1" v-model="search.c_group1"/></div>
         <div><q-select clearable label="狀態" :options="status" v-model="search.c_status"/></div>
       </div>
@@ -52,51 +43,92 @@ import { computed, ref } from "vue";
 import { useQuery } from "@vue/apollo-composable";
 import { useStore } from "vuex";
 import { EVENT_SEARCH } from "/src/graphQueries/Event/query.js";
-import { usersCollection } from "boot/firebase";
-import EventDetail from "components/Event/EventDetail.vue";
 import { useQuasar } from "quasar";
-import { getDocs, query, where } from "firebase/firestore";
-import { useRouter } from "vue-router"
-const router = useRouter()
-const UserList = ref([])
-const userQuery = query(usersCollection,
-  where("privilege.systemAdmin", "==", false),
-  where("privilege.tmp", "!=", true)
-)
+import { useRouter, useRoute } from "vue-router"
+import StaffSelection from "src/components/Basic/StaffSelection.vue";
 
-getDocs(userQuery).then((userDoc) => {
-  userDoc.forEach((doc) => {
-    if (doc.data().enable) UserList.value.push(doc.data().name)
-  })
-})
+const route = useRoute()
+const router = useRouter()
+
 
 const $q = useQuasar()
-const userList = ref(UserList.value)
-const eventDetailDialog = ref(false)
-const selectedEventID = ref("")
 // save current module
 const $store = useStore();
 // $q.localStorage.set("module", "event");
 const userProfileLogout = () => $store.dispatch("userModule/logout")
 
-const searchCondition = ref({
-  //condition: {}
-})
-
 const search = ref({
   c_act_name: "",
   c_act_code: "",
-  c_respon: "",
+  c_respon: {
+    label: "",
+    value: ""
+  },
   c_status: "",
   c_acc_type: "",
   c_group1: "",
   c_nature: "",
 })
 
+// parse and formulate search condition from query path
+const searchCondition = computed(() => {
+  let res = {}
+  if (route.query.condition) {
+    let queryString = route.query.condition
+    let queryArray = queryString.split('&')
+    queryArray.forEach((query) => {
+      let queryPair = query.split('=')
+      if (queryPair[0] == 'c_act_name') {
+        search.value.c_act_name = queryPair[1]
+        res.c_act_name = {"_like" : "%"+queryPair[1]+"%"}
+      }
+      if (queryPair[0] == 'c_act_code') {
+        search.value.c_act_code = queryPair[1]
+        res.c_act_code = {"_like" : "%"+queryPair[1]+"%"}
+      }
+      if (queryPair[0] == 'c_respon') {
+        search.value.c_respon = {
+          label: queryPair[1],
+          value: queryPair[1]
+        }
+        res.c_respon = {"_eq" : queryPair[1]}
+      }
+      if (queryPair[0] == 'c_status') {
+        search.value.c_status = queryPair[1]
+        res.c_status = {"_eq" : queryPair[1]}
+      }
+      if (queryPair[0] == 'c_acc_type') {
+        search.value.c_acc_type = queryPair[1]
+        res.c_acc_type = {"_eq" : queryPair[1]}
+      }
+      if (queryPair[0] == 'c_group1') {
+        search.value.c_group1 = queryPair[1]
+        res.c_group1 = {"_eq" : queryPair[1]}
+      }
+      if (queryPair[0] == 'c_nature') {
+        search.value.c_nature = queryPair[1]
+        res.c_nature = {"_eq" : queryPair[1]}
+      }
+    })
+  } else {
+    search.value = {
+      c_act_name: "",
+      c_act_code: "",
+      c_respon: {
+        label: "",
+        value: ""
+      },
+      c_status: "",
+      c_acc_type: "",
+      c_group1: "",
+      c_nature: "",
+    }
+  }
+  return {condition: res}
+})
 
 
 // computed variables
-const uid = computed(() => $store.getters["userModule/getUID"])
 const EventList = computed(() => eventList.value?.HTX_Event??[])
 
 // table config
@@ -199,52 +231,39 @@ const eventListColumns = ref([
 
 //function
 function submitSearch() {
-  searchCondition.value.condition = {}
-  if (search.value.c_act_name) searchCondition.value.condition.c_act_name = {"_like" : "%"+search.value.c_act_name+"%"}
-  if (search.value.c_act_code) searchCondition.value.condition.c_act_code = {"_eq" : search.value.c_act_code}
-  if (search.value.c_respon) searchCondition.value.condition.c_respon = {"_eq" : search.value.c_respon}
-  if (search.value.c_status) searchCondition.value.condition.c_status = {"_eq" : search.value.c_status}
-  if (search.value.c_acc_type) searchCondition.value.condition.c_acc_type = {"_eq" : search.value.c_acc_type}
-  if (search.value.c_group1) searchCondition.value.condition.c_group1 = {"_eq" : search.value.c_group1}
-  if (search.value.c_nature) searchCondition.value.condition.c_nature = {"_eq" : search.value.c_nature}
-  //console.log(searchCondition.value)
-  refetch()
+  let queryString = ""
+  if (search.value.c_act_name) queryString += 'c_act_name=' + search.value.c_act_name + '&'
+  if (search.value.c_act_code) queryString += 'c_act_code=' + search.value.c_act_code + '&'
+  if (search.value.c_respon && search.value.c_respon.label != '') queryString += 'c_respon=' + search.value.c_respon.label + '&'
+  if (search.value.c_status) queryString += 'c_status=' + search.value.c_status + '&'
+  if (search.value.c_acc_type) queryString += 'c_acc_type=' + search.value.c_acc_type + '&'
+  if (search.value.c_group1) queryString += 'c_group1=' + search.value.c_group1 + '&'
+  if (search.value.c_nature) queryString += 'c_nature=' + search.value.c_nature + '&'
+
+  // trim last &
+  queryString = queryString.slice(0, -1)
+
+  router.push({
+    name: "EventSearch",
+    query: {
+      condition: queryString
+    }
+  })
 }
 
 function showDetail(evt, row, index) {
-  /*
-  eventDetailDialog.value = true
-  selectedEventID.value = row.c_act_code
-  */
  router.push({
-  path: "/event/detail/" + row.c_act_code.trim(),
+  path: "/event/detail/" + row.c_act_code.trim() + "/content",
  })
 }
 
 function clearSearch() {
-  search.value = {
-    c_act_name: "",
-    c_act_code: "",
-    c_respon: "",
-    c_status: "",
-    c_acc_type: "",
-    c_group1: "",
-    c_nature: "",
-  }
-  delete searchCondition.value.condition
-  refetch()
+  router.push({name: "EventSearch"})
 }
 
-function newUser(val, done) {
-  if (val.length > 0) {
-    if (!userList.value.includes(val)) {
-      userList.value.push(val)
-    }
-    done(val, 'toggle')
-  }
-}
-// actual query
-const { result: eventList, loading, refetch, onError: EventListError } = useQuery(EVENT_SEARCH, searchCondition.value);
+
+// query
+const { result: eventList, loading, onError: EventListError } = useQuery(EVENT_SEARCH, searchCondition);
 
 EventListError((error) => {
   // console.log("error in module:" + JSON.stringify(error))
