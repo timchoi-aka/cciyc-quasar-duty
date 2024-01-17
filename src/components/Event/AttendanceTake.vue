@@ -2,8 +2,9 @@
   <!-- Main container -->
   <div class="row items-center q-pa-md">
     <!-- Event date selection -->
-    <div class="col-md-3 col-sm-6 col-xs-6">
-      <q-select use-input new-value-mode="add-unique" label="活動點名日期" v-model="eventDate" @new-value="addDate" :options="eventDateOptions">
+    <div class="col-md-3 col-sm-6 col-xs-6 row">
+      <div class="text-h6 col-grow">活動點名日期</div>
+      <q-select use-input new-value-mode="add-unique" v-model="eventDate" @new-value="addDate" :options="eventDateOptions" class="col-auto text-h6">
         <!-- Date picker icon and popup -->
         <template v-slot:append>
           <q-icon name="event" class="cursor-pointer">
@@ -34,26 +35,59 @@
   </div>
 
   <!-- Information chip -->
-  <div class="row items-center q-px-md"><q-chip>每節為4小時</q-chip></div>
-  <div class="row items-center q-px-md"><q-chip class="bg-primary text-white">已報名會員</q-chip></div>
-  <!-- List of applicants -->
-  <div v-for="(app, index) in ApplicantsData" class="row col-12 q-px-md items-center">
-    <!-- Applicant details -->
-    <div class="col-xs-8 col-sm-4 col-md-3"><span>{{ index+1 }}</span><span>)</span> <span>{{ app.c_name }}({{ app.c_mem_id }}) - {{ app.i_age }}歲 <q-chip color="amber" v-if="app.MemberData.isYouth(eventDate)" label="青年"/><q-chip color="blue-3" v-if="app.MemberData.b_mem_type10" label="青年家人"/></span></div>
-    <!-- Attendance toggle buttons -->
-    <q-btn-toggle size="sm" clearable class="col-xs-auto col-sm-auto col-md-auto" v-model="attendanceList[app.c_mem_id+'-slot_a']" :options="[{label: '早', value: true}]"/>
-    <q-btn-toggle size="sm" clearable class="col-xs-auto col-sm-auto col-md-auto" v-model="attendanceList[app.c_mem_id+'-slot_b']" :options="[{label: '午', value: true}]"/>
-    <q-btn-toggle size="sm" clearable class="col-xs-auto col-sm-auto col-md-auto" v-model="attendanceList[app.c_mem_id+'-slot_c']" :options="[{label: '晚', value: true}]"/>
+  <div class="row col-12 q-px-md text-body1 items-center">
+    <div class="col-xs-8 col-sm-4 col-md-3 q-my-sm"><q-chip>每節為4小時</q-chip></div>
+    <div class="col-xs-2 col-sm-2 col-md-2 row justify-center"><q-chip class="bg-primary text-white">節數-在中心舉行</q-chip></div>
+    <div class="col-xs-2 col-sm-2 col-md-2 row justify-center"><q-chip class="bg-negative text-white">節數-不在中心舉行</q-chip></div>
   </div>
-  <div class="row items-center q-px-md"><q-chip class="bg-teal text-white">非報名會員</q-chip></div>
-  <div class="row items-center q-px-md items-center">
-    <div class="col-md-2 col-xs-4 col-sm-4 row items-center"><span>早：</span><q-input type="number" v-model="slot_a_attendance"/></div>
-    <div class="col-md-2 col-xs-4 col-sm-4 row items-center"><span>午：</span><q-input type="number" v-model="slot_b_attendance"/></div>
-    <div class="col-md-2 col-xs-4 col-sm-4 row items-center"><span>晚：</span><q-input type="number" v-model="slot_c_attendance"/></div>
+  <div class="row col-12 q-px-md text-body1 items-center">
+    <div class="col-xs-8 col-sm-4 col-md-3 q-my-sm"><q-chip class="bg-primary text-white">已報名會員</q-chip></div>
+    <div class="col-xs-2 col-sm-2 col-md-2 row justify-center">
+      <q-btn-toggle color="blue-1" text-color="black" clearable v-model="inCenterSession" :options="[{label: '1節', value: 1}, {label: '2節', value: 2}, {label: '3節', value: 3}]"/>
+    </div>
+    <div class="col-xs-2 col-sm-2 col-md-2 row justify-center">
+      <q-btn-toggle color="red-1" text-color="black" toggle-color="negative" clearable v-model="outCenterSession" :options="[{label: '1節', value: 1}, {label: '2節', value: 2}, {label: '3節', value: 3}]"/>
+    </div>
+  </div>
+  <!-- List of applicants -->
+  <div v-for="(app, index) in ApplicantsData" :class="['row', 'col-12', 'q-px-md', 'items-center', 'text-body1', index%2==0? 'bg-grey-3': 'bg-grey-0']">
+    <!-- Applicant details -->
+    <div class="col-xs-8 col-sm-4 col-md-3 q-my-sm"><span>{{ index+1 }}</span><span>)</span> <span>{{ app.c_name }}({{ app.c_mem_id }}) - {{ app.i_age }}歲 <q-chip color="amber" v-if="app.MemberData.isYouth(eventDate)" label="青年"/><q-chip color="blue-3" v-if="app.MemberData.b_mem_type10" label="青年家人"/></span></div>
+    <!-- Attendance toggle buttons - in centre -->
+    <div class="col-xs-2 col-sm-2 col-md-2 row justify-center">
+      <q-btn-toggle color="blue-1" text-color="black"  clearable v-model="inCenterAttendanceList[app.c_mem_id]" :options="[{label: '1節', value: 1}, {label: '2節', value: 2}, {label: '3節', value: 3}]"/>
+    </div>
+     <!-- Attendance toggle buttons - out of centre -->
+     <div class="col-xs-2 col-sm-2 col-md-2 row justify-center">
+      <q-btn-toggle color="red-1" text-color="black"  toggle-color="negative" clearable v-model="outCenterAttendanceList[app.c_mem_id]" :options="[{label: '1節', value: 1}, {label: '2節', value: 2}, {label: '3節', value: 3}]"/>
+    </div>
+  </div>
+
+  <!-- other attendance - youth -->
+  <div class="row col-12 q-px-md text-body1 items-center">
+    <div class="col-xs-8 col-sm-4 col-md-3 q-my-sm"><div class="text-purple text-body1">15-24歲青年出席</div></div>
+    <div class="col-xs-2 col-sm-2 col-md-2 row justify-center">
+      <q-btn-toggle color="purple-1" toggle-color="purple-7" text-color="black" clearable v-model="youthSession" :options="[{label: '1節', value: 1}, {label: '2節', value: 2}, {label: '3節', value: 3}]"/>
+    </div>
+    <div class="col-xs-2 col-sm-2 col-md-2 row justify-center items-center">
+      人次：<q-input v-model="youthAttendance" type="number" dense/>
+    </div>
+  </div>
+
+  <!-- other attendance - youth family -->
+  <div class="row col-12 q-px-md text-body1 items-center">
+    <div class="col-xs-8 col-sm-4 col-md-3 q-my-sm"><div class="text-orange text-body1">15-24歲青年家屬出席</div></div>
+    <div class="col-xs-2 col-sm-2 col-md-2 row justify-center">
+      <q-btn-toggle color="orange-1" toggle-color="orange-7" text-color="black" clearable v-model="youthFamilySession" :options="[{label: '1節', value: 1}, {label: '2節', value: 2}, {label: '3節', value: 3}]"/>
+    </div>
+    <div class="col-xs-2 col-sm-2 col-md-2 row justify-center items-center">
+      人次：<q-input v-model="youthFamilyAttendance" type="number" dense/>
+    </div>
   </div>
 
   <div class="q-pa-md">
-    <q-btn label="提交" class="bg-positive text-white" @click="save" flat :disable="is.deepEqual(originalAttendanceList, attendanceList) && slot_a_attendance + slot_b_attendance + slot_c_attendance == 0"/>
+    開發中 - 未能使用
+    <!--<q-btn label="提交" class="bg-positive text-white" @click="save" flat :disable="is.deepEqual(originalAttendanceList, attendanceList) && slot_a_attendance + slot_b_attendance + slot_c_attendance == 0"/>-->
   </div>
 </template>
 
@@ -81,6 +115,14 @@ const eventDate = ref(qdate.formatDate(new Date(), 'YYYY-MM-DD'))
 const slot_a_attendance = ref(0)
 const slot_b_attendance = ref(0)
 const slot_c_attendance = ref(0)
+const inCenterSession = ref()
+const outCenterSession = ref()
+const inCenterAttendanceList = ref({})
+const outCenterAttendanceList = ref({})
+const youthSession = ref({})
+const youthFamilySession = ref({})
+const youthAttendance = ref(0)
+const youthFamilyAttendance = ref(0)
 
 // queries
 const { result: attendanceResult, loading: loadAttendance, addAttendance } = useAttendanceProvider({ c_act_code: c_act_code})
@@ -88,7 +130,7 @@ const { result: attendanceOthersResult, loading: loadAttendanceOthers, addAttend
 const { result: applicantResult, loading: loadApplicant } = useApplicantProvider({ c_act_code: c_act_code})
 const { addNewLog } = useLogProvider({ module: ref("活動系統")})
 
-const ApplicantsData = computed(() => applicantResult.value? applicantResult.value: [])
+const ApplicantsData = computed(() => applicantResult.value? applicantResult.value.sort((a, b)=> a.c_mem_id - b.c_mem_id): [])
 
 // update attendance list when event date or attendance result changes
 watch(([eventDate, attendanceResult]), ([newEventDate, newResult]) => {
@@ -110,6 +152,7 @@ watch(([eventDate, attendanceResult]), ([newEventDate, newResult]) => {
 
   if (newEventDate && attendanceResult.value.length > 0) {
     attendanceList.value = {}
+    // sort attendanceResult.value by c_mem_id in ascending order
     attendanceResult.value.forEach((att) => {
       if (qdate.formatDate(att.d_date, 'YYYY-MM-DD') == newEventDate) attendanceList.value[att.c_mem_id + "-" + att.c_slot] = att.b_attend
     })

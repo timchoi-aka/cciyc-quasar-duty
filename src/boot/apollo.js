@@ -191,6 +191,7 @@ export default boot(
       //link: link,
       defaultOptions: {
         fetchPolicy: 'network-only',
+        //fetchPolicy: 'cache-and-network',
       },
     })
 

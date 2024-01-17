@@ -20,9 +20,9 @@
       <q-card
         flat
         class="q-pa-none flex"
-        style="min-height: 100%; height: 100%;" 
+        style="min-height: 100%; height: 100%;"
         >
-        <Receipt :c_receipt_no="ReceiptNo"/>
+        <Receipt :c_receipt_no="ReceiptNo" :key="ReceiptNo"/>
       </q-card>
     </div>
   </div>
@@ -55,7 +55,7 @@ const {result, loading, refetch} = useQuery(GET_MEMBER_RECEIPTS_BY_PK, {
 })
 
 // computed
-const account = computed(() => result.value?.Member_by_pk.MemberAccount??[])
+const account = computed(() => result.value?.Member_by_pk.MemberAccount.filter(x=>!x.b_delete)??[])
 
 // table settings
 const columns = ref([

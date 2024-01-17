@@ -79,7 +79,7 @@ function drawHeader(doc, applicants, event, dateSlots) {
   if (event.c_act_code) doc.text(event.c_act_code, 32, 20, "left")
   doc.line(32, 22, 55, 22)
   doc.text("活動名稱：", 60, 20, "left")
-  if (event.c_act_name) doc.text(event.c_act_name, 82, 20, "left", {maxWidth: 95})
+  if (event.c_act_name) doc.text(event.c_act_name, 82, 20, {align: "left", maxWidth: 95})
   doc.line(82, 22, 190, 22)
   doc.text("性質：", 195, 20, "left")
   if (event.c_nature) doc.text(event.c_nature, 210, 20, "left")
@@ -180,9 +180,9 @@ async function generatePDF(applicants, event, appSlots, dateSlots) {
     for (let i = 1; i <= Math.min(applicants.length-page*appSlots, appSlots); i++) {
       let endOfLine = 62+(180-62)/appSlots*i
       let lineHeight = (180-62)/appSlots
-      doc.text((page*appSlots + i).toString(), 18, endOfLine - lineHeight/2.5 , "left")
-      doc.text(applicants[page*appSlots+i-1].c_name + "(" + applicants[page*appSlots+i-1].c_mem_id + ")", 43, endOfLine - lineHeight/2.5, "left")
-      doc.text(applicants[page*appSlots+i-1].i_age.toString(), 88, endOfLine - lineHeight/2.5, "left")
+      doc.text((page*appSlots + i).toString(), 20, endOfLine - lineHeight/2.5 , "center")
+      doc.text(applicants[page*appSlots+i-1].c_name + "(" + applicants[page*appSlots+i-1].c_mem_id + ")", 55, endOfLine - lineHeight/2.5, {align: "center", maxWidth: 60})
+      doc.text(applicants[page*appSlots+i-1].i_age.toString(), 90, endOfLine - lineHeight/2.5, "center")
     }
 
     drawFooter(doc)

@@ -12,7 +12,7 @@
       <q-route-tab v-if="!isFree" icon="paid" label="費用設定" :to="{ name: 'EventFee', params: { id: route.params.id}}"/>
       <q-route-tab icon="approval" label="報名" :to="{ name: 'EventApply', params: { id: route.params.id}}"/>
       <q-route-tab icon="leaderboard" label="統計節數" :to="{ name: 'EventStat', params: { id: route.params.id}}"/>
-      <q-route-tab icon="person_add" label="點名" :to="{ name: 'TakeAttendance', params: { id: route.params.id}}"/>
+      <q-route-tab icon="person_add" label="每日統計" :to="{ name: 'TakeAttendance', params: { id: route.params.id}}"/>
       <q-route-tab icon="report" label="每月服務統計" :to="{ name: 'EventAttendanceReport', params: { id: route.params.id}}"/>
       <q-route-tab icon="summarize" label="計劃檢討" :to="{ name: 'EventEvaluation', params: { id: route.params.id}}"/>
       <FavourateEvent v-if="$q.screen.gt.xs" :c_act_code="c_act_code" :username="username" />
@@ -45,7 +45,7 @@ const previousRoute = router.options.history.state.back
 const c_act_code = ref(route.params.id)
 const $store = useStore();
 
-const { result } = useEventProvider({ c_act_code: c_act_code.value})
+const { result } = useEventProvider({ c_act_code: c_act_code})
 
 // computed
 const username = computed(() => $store.getters["userModule/getUsername"])

@@ -245,6 +245,7 @@ export const GET_MEMBER_RECEIPTS_BY_PK = gql`
         u_price_after_discount
         c_name
         b_clear
+        b_delete
       }
     }
   }

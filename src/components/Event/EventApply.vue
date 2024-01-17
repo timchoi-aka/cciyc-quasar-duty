@@ -507,24 +507,30 @@ function unregister() {
     d_refund: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss")
   })
 
+  /*
+  console.log("Event: " + JSON.stringify(Event.value))
+  console.log("logObject: " + JSON.stringify(logObject.value))
+  console.log("unregObject: " + JSON.stringify(unregObject.value))
+  */
+
   if (Event.value.b_freeofcharge) {
-      freeEventUnregistration({
+    freeEventUnregistration({
+      logObject: logObject.value,
+      unregObject: unregObject.value,
+      ID: unregisterItem.value.ID
+    })
+  } else {
+    //unregisterItem.value.c_receipt_no.forEach(receipt => {
+      eventUnregistration({
         logObject: logObject.value,
         unregObject: unregObject.value,
+        //c_receipt_no: receipt.c_receipt_no,
         ID: unregisterItem.value.ID
       })
-    } else {
-      // unregisterItem.value.c_receipt_no.forEach(receipt => {
-        eventUnregistration({
-          logObject: logObject.value,
-          unregObject: unregObject.value,
-          /* c_receipt_no: receipt.c_receipt_no, */
-          ID: unregisterItem.value.ID
-        })
-      // })
-    }
-
+    //})
+  }
 }
+
 
 function printReceipt(c_receipt_no) {
   printReceiptDisplay.value = true;

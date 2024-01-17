@@ -307,6 +307,8 @@ const printReceiptMember = ref("")
 let addNewRecord = false
 const duplicateMemberModal = ref(false)
 const duplicateMemberObject = ref([])
+const memberRelation = ref([]);
+const related_ids = ref([])
 
 // save current module
 const $store = useStore();
@@ -773,7 +775,7 @@ function checkForm() {
 
   relationTable.value.forEach((rel) => {
     if (rel.name != "" && rel.name != "無此人") {
-      if (rel.relation == "") {
+      if (rel.relation != "") {
         memberRelation.value.push({
           c_mem_id_1: latestMemberID,
           c_mem_id_2: rel.c_mem_id_2,
@@ -860,12 +862,11 @@ function addMember() {
   memberInfo.value.d_expired_1 = expiryDate.value
   personalInfo.value.age = age.value
 
-  let memberRelation = ref([]);
   let receiptDescription = ref("")
   let price = ref(0)
   let remark = ref("")
-  const related_ids = ref([])
 
+  /*
   relationTable.value.forEach((rel) => {
     if (rel.name != "" && rel.name != "無此人" && rel.relation) {
       memberRelation.value.push({
@@ -876,6 +877,7 @@ function addMember() {
       related_ids.value.push(rel.c_mem_id_2)
     }
   });
+  */
 
   switch(memberInfo.value.c_udf_1.value) {
     case "永久會員":

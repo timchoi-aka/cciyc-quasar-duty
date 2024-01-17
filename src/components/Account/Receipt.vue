@@ -138,7 +138,7 @@ const { result, loading, refetch } = useAccountProvider({
   c_receipt_no: ref(props.c_receipt_no)
 })
 
-const Receipt = computed(() => result.value?.tbl_account??[])
+const Receipt = computed(() => result.value?.tbl_account[0]??{})
 
 const { mutate: addReceiptPrintCount, onDone: addReceiptPrintCount_Completed, onError: addReceiptPrintCount_Error } = useMutation(ADD_RECEIPT_PRINT_COUNT)
 const { mutate: refund, onDone: refund_Completed, onError: refund_Error } = useMutation(REFUND_BY_RECEIPT_NO)
@@ -147,7 +147,7 @@ const { mutate: deleteReceipt, onDone: deleteReceipt_Completed, onError: deleteR
 // regenerate pdf if data change
 watch(Receipt, (newVal, oldVal) => {
   if (newVal != oldVal) {
-    displayPDF(newVal[0])
+    displayPDF(newVal)
   }
 })
 
