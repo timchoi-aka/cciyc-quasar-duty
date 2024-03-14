@@ -126,6 +126,16 @@ export function useEventProvider(options = {}) {
       partner_agency
       partner_name
       partner_phone
+      Evaluation_to_Account {
+        account_uuid
+        amount
+        c_act_code
+        description
+        eval_uuid
+        planeval
+        type
+        txn_date
+      }
     }
   }
   fragment IncludeSession on HTX_Event {
@@ -144,6 +154,7 @@ export function useEventProvider(options = {}) {
     $loadSession: Boolean! = false,
     $loadFullDetail: Boolean! = false,
     $loadWeb: Boolean! = false,
+    $loadAccount: Boolean! = false
   ) {
     HTX_Event_by_pk(c_act_code: $c_act_code) {
       EventClassID

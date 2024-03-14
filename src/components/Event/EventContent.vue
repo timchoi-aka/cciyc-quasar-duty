@@ -1,6 +1,6 @@
 <template>
   <!-- loading dialog -->
-  <LoadingDialog v-model="loading" message="處理中"/>
+  <LoadingDialog v-model="loading" message="處理中" />
 
   <!-- delete modal -->
   <q-dialog v-model="deleteDialog">
@@ -10,12 +10,13 @@
       </q-card-section>
       <q-card-section class="text-h6">
         <div>確定刪除活動？刪除後將不能回復！</div>
-        <div>請在以下輸入活動編號{{c_act_code}}</div>
-        <q-input type="text" v-model="deleteCheck"/>
+        <div>請在以下輸入活動編號{{ c_act_code }}</div>
+        <q-input type="text" v-model="deleteCheck" />
       </q-card-section>
       <q-card-actions align="right">
-        <q-btn :disable="deleteCheck != c_act_code.trim()" icon="check" label="確定" class="bg-positive text-white" v-close-popup="-1" @click="deleteAct"/>
-        <q-btn icon="cancel" label="取消" class="bg-negative text-white" v-close-popup/>
+        <q-btn :disable="deleteCheck != c_act_code.trim()" icon="check" label="確定" class="bg-positive text-white"
+          v-close-popup="-1" @click="deleteAct" />
+        <q-btn icon="cancel" label="取消" class="bg-negative text-white" v-close-popup />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -30,8 +31,8 @@
         確定新增活動？
       </q-card-section>
       <q-card-actions>
-        <q-btn icon="check" label="確定" class="bg-positive text-white" v-close-popup="-1" @click="save"/>
-        <q-btn icon="cancel" label="取消" class="bg-negative text-white" v-close-popup/>
+        <q-btn icon="check" label="確定" class="bg-positive text-white" v-close-popup="-1" @click="save" />
+        <q-btn icon="cancel" label="取消" class="bg-negative text-white" v-close-popup />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -55,11 +56,15 @@
       <div class="row q-gutter-lg q-ml-sm col-12 justify-start">
         <span class="col-auto row">
           <div class="col-12">活動編號:</div>
-          <div class="col-12">{{c_act_code}}</div>
+          <div class="col-12">{{ c_act_code }}</div>
         </span>
         <span class="col-grow row justify-start">
-          <div class="col-12 row"><span class="col-auto">活動名稱(中文): </span><q-input v-if="edit" filled type="text" class="col-grow text-h6" v-model="editObject.c_act_name"/><span class="text-h6 col-auto" v-else>{{Event.c_act_name}}</span></div>
-          <div class="col-12 row q-mt-sm"><span class="col-auto">活動名稱(英文): </span><q-input class="col-grow text-h6" filled v-if="edit" type="text" v-model="editObject.c_act_nameen"/><span class="text-h6 col-auto" v-else>{{Event.c_act_nameen}}</span></div>
+          <div class="col-12 row"><span class="col-auto">活動名稱(中文): </span><q-input v-if="edit" filled type="text"
+              class="col-grow text-h6" v-model="editObject.c_act_name" /><span class="text-h6 col-auto" v-else>{{
+                Event.c_act_name }}</span></div>
+          <div class="col-12 row q-mt-sm"><span class="col-auto">活動名稱(英文): </span><q-input class="col-grow text-h6" filled
+              v-if="edit" type="text" v-model="editObject.c_act_nameen" /><span class="text-h6 col-auto" v-else>{{
+                Event.c_act_nameen }}</span></div>
         </span>
       </div>
     </q-card-section>
@@ -67,45 +72,77 @@
     <q-card-section class="row bg-yellow-2 q-pl-none q-pt-none q-pb-lg">
       <q-chip class="col-12 bg-yellow-4" size="xl">類別</q-chip>
       <div class="row col-12 q-gutter-lg q-ml-sm">
-        <span class="col-3">會計類別： <q-select v-if="edit" :options="acc_type" v-model="editObject.c_acc_type"/><span v-else>{{Event.c_acc_type}}</span></span>
-        <span class="col-3">狀況: <q-select v-if="edit" :options="status" v-model="editObject.c_status"/><span v-else>{{Event.c_status}}</span></span>
+        <span class="col-3">會計類別： <q-select v-if="edit" :options="acc_type" v-model="editObject.c_acc_type" /><span
+            v-else>{{ Event.c_acc_type }}</span></span>
+        <span class="col-3">狀況: <q-select v-if="edit" :options="status" v-model="editObject.c_status" /><span v-else>{{
+          Event.c_status }}</span></span>
         <span class="col-2 column">
-          <span class="col">免費: <q-checkbox v-if="edit" v-model="editObject.b_freeofcharge"/><span v-else><q-icon class="text-green" v-if="Event.b_freeofcharge" name="check"/><q-icon class="text-red" v-else name="cancel"/></span></span>
-          <span class="col">完成: <q-checkbox v-if="edit" v-model="editObject.b_finish"/><span v-else><q-icon class="text-green" v-if="Event.b_finish" name="check"/><q-icon class="text-red" v-else name="cancel"/></span></span>
+          <span class="col">免費: <q-checkbox v-if="edit" v-model="editObject.b_freeofcharge" /><span v-else><q-icon
+                class="text-green" v-if="Event.b_freeofcharge" name="check" /><q-icon class="text-red" v-else
+                name="cancel" /></span></span>
+          <span class="col">完成: <q-checkbox v-if="edit" v-model="editObject.b_finish" /><span v-else><q-icon
+                class="text-green" v-if="Event.b_finish" name="check" /><q-icon class="text-red" v-else
+                name="cancel" /></span></span>
         </span>
-        <span class="col-3">達標日期: <span v-if="edit"><DateComponent v-model="editObject.d_finish_goal"/></span><span v-else>{{qdate.formatDate(Event.d_finish_goal, "YYYY年M月D日")}}</span></span>
+        <span class="col-3">達標日期: <span v-if="edit">
+            <DateComponent v-model="editObject.d_finish_goal" />
+          </span><span v-else>{{ qdate.formatDate(Event.d_finish_goal, "YYYY年M月D日") }}</span></span>
       </div>
       <div class="row col-12 q-gutter-lg q-ml-sm">
-        <span class="col-3">類別： <q-select v-if="edit" filled :options="type" v-model="editObject.c_type"/><span v-else>{{Event.c_type}}</span></span>
-        <span class="col-7">性質： <q-select v-if="edit" filled :options="nature" v-model="editObject.c_nature"/><span v-else>{{Event.c_nature}}</span></span>
+        <span class="col-3">類別： <q-select v-if="edit" filled :options="type" v-model="editObject.c_type" /><span v-else>{{
+          Event.c_type }}</span></span>
+        <span class="col-7">性質： <q-select v-if="edit" filled :options="nature" v-model="editObject.c_nature" /><span
+            v-else>{{ Event.c_nature }}</span></span>
       </div>
       <div class="row col-12 q-gutter-lg q-ml-sm">
-        <span class="col-3">大分類： <q-select v-if="edit" filled :options="group1" v-model="editObject.c_group1"/><span v-else>{{Event.c_group1}}</span></span>
-        <span class="col-7">細類： <q-select v-if="edit" filled :options="group2" v-model="editObject.c_group2"/><span v-else>{{Event.c_group2}}</span></span>
+        <span class="col-3">大分類： <q-select v-if="edit" filled :options="group1" v-model="editObject.c_group1" /><span
+            v-else>{{ Event.c_group1 }}</span></span>
+        <span class="col-7">細類： <q-select v-if="edit" filled :options="group2" v-model="editObject.c_group2" /><span
+            v-else>{{ Event.c_group2 }}</span></span>
       </div>
       <div class="row col-12 q-gutter-lg q-ml-sm">
-        <span class="col-3">對象: <q-select v-if="edit" filled :options="whojoin" v-model="editObject.c_whojoin"/><span v-else>{{Event.c_whojoin}}</span></span>
-        <span class="col-3">負責職員: <q-select v-if="edit" filled :options="UserList" v-model="editObject.c_respon"/><span v-else>{{Event.c_respon}}</span></span>
-        <span class="col-3">協助職員: <StaffSelectionMultiple :includeTemp="true" v-if="edit" hint="先刪除舊清單才能修改" v-model="editObject.c_worker" /><span v-else>{{Event.c_worker}}</span></span>
+        <span class="col-3">對象: <q-select v-if="edit" filled :options="whojoin" v-model="editObject.c_whojoin" /><span
+            v-else>{{ Event.c_whojoin }}</span></span>
+        <span class="col-3">負責職員: <q-select v-if="edit" filled :options="UserList" v-model="editObject.c_respon" /><span
+            v-else>{{ Event.c_respon }}</span></span>
+        <span class="col-3">協助職員:
+          <StaffSelectionMultiple :includeTemp="true" v-if="edit" hint="先刪除舊清單才能修改" v-model="editObject.c_worker" /><span
+            v-else>{{ Event.c_worker }}</span>
+        </span>
       </div>
     </q-card-section>
 
     <q-card-section class="row bg-red-1 q-pl-none q-pt-none q-pb-lg">
       <q-chip class="col-12 bg-red-3" size="xl">活動資料</q-chip>
       <div class="row col-12 q-gutter-lg q-ml-sm">
-        <span class="col-3">開始日期: <span v-if="edit"><DateComponent v-model="editObject.d_date_from"/></span><span v-else>{{Event.d_date_from}}</span></span>
-        <span class="col-3">開始時間: <span v-if="edit"><TimeComponent v-model="editObject.d_time_from"/></span><span v-else>{{Event.d_time_from}}</span></span>
-        <span class="col-3">報名日期(開始): <span v-if="edit"><DateComponent v-model="editObject.d_sale_start"/></span><span v-else>{{Event.d_sale_start}}</span></span>
+        <span class="col-3">開始日期: <span v-if="edit">
+            <DateComponent v-model="editObject.d_date_from" />
+          </span><span v-else>{{ Event.d_date_from }}</span></span>
+        <span class="col-3">開始時間: <span v-if="edit">
+            <TimeComponent v-model="editObject.d_time_from" />
+          </span><span v-else>{{ Event.d_time_from }}</span></span>
+        <span class="col-3">報名日期(開始): <span v-if="edit">
+            <DateComponent v-model="editObject.d_sale_start" />
+          </span><span v-else>{{ Event.d_sale_start }}</span></span>
       </div>
       <div class="row col-12 q-gutter-lg q-ml-sm">
-        <span class="col-3">終結日期: <span v-if="edit"><DateComponent v-model="editObject.d_date_to"/></span><span v-else>{{Event.d_date_to}}</span></span>
-        <span class="col-3">終結時間: <span v-if="edit"><TimeComponent v-model="editObject.d_time_to"/></span><span v-else>{{Event.d_time_to}}</span></span>
-        <span class="col-3">報名日期(完結): <span v-if="edit"><DateComponent v-model="editObject.d_sale_end"/></span><span v-else>{{Event.d_sale_end}}</span></span>
+        <span class="col-3">終結日期: <span v-if="edit">
+            <DateComponent v-model="editObject.d_date_to" />
+          </span><span v-else>{{ Event.d_date_to }}</span></span>
+        <span class="col-3">終結時間: <span v-if="edit">
+            <TimeComponent v-model="editObject.d_time_to" />
+          </span><span v-else>{{ Event.d_time_to }}</span></span>
+        <span class="col-3">報名日期(完結): <span v-if="edit">
+            <DateComponent v-model="editObject.d_sale_end" />
+          </span><span v-else>{{ Event.d_sale_end }}</span></span>
       </div>
       <div class="row col-12 q-gutter-lg q-ml-sm">
-        <span class="col-3">名額: <q-input v-if="edit" filled type="number" v-model="editObject.i_quota_max"/><span v-else>{{Event.i_quota_max}}</span></span>
-        <span class="col-3">總堂數: <q-input v-if="edit" filled type="number" v-model="editObject.i_lessons"/><span v-else>{{Event.i_lessons}}</span></span>
-        <span class="col-3">逢星期: <q-select v-if="edit" filled use-input input-debounce="0" @new-value="newWeek" :options="week" v-model="editObject.c_week"/><span v-else>{{Event.c_week}}</span></span>
+        <span class="col-3">名額: <q-input v-if="edit" filled type="number" v-model="editObject.i_quota_max" /><span
+            v-else>{{ Event.i_quota_max }}</span></span>
+        <span class="col-3">總堂數: <q-input v-if="edit" filled type="number" v-model="editObject.i_lessons" /><span
+            v-else>{{ Event.i_lessons }}</span></span>
+        <span class="col-3">逢星期: <q-select v-if="edit" filled use-input input-debounce="0" @new-value="newWeek"
+            :options="week" v-model="editObject.c_week" /><span v-else>{{ Event.c_week }}</span></span>
       </div>
     </q-card-section>
 
@@ -113,36 +150,32 @@
       <div class="col-6 row items-start content-start">
         <q-chip class="col-12 row bg-brown-3" size="lg">地點</q-chip>
         <div class="row col-12 q-gutter-lg q-ml-sm items-start">
-          <span class="col-11">舉行地點: <q-select v-if="edit" filled use-input input-debounce="0" @filter="saveBuffer" @blur="textBuffer.length > 0? updateBuffer(editObject, 'c_dest'): ''" @new-value="newDest" :options="dest" v-model="editObject.c_dest"/><span v-else>{{Event.c_dest}}</span></span>
-          <span class="col-11">集合地點: <q-select v-if="edit" filled use-input input-debounce="0" @filter="saveBuffer" @blur="textBuffer.length > 0? updateBuffer(editObject, 'c_start_collect'): ''" @new-value="newDest" :options="dest" v-model="editObject.c_start_collect"/><span v-else>{{Event.c_start_collect}}</span></span>
-          <span class="col-11">解散地點: <q-select v-if="edit" filled use-input input-debounce="0" @filter="saveBuffer" @blur="textBuffer.length > 0? updateBuffer(editObject, 'c_end_collect'): ''" @new-value="newDest" :options="dest" v-model="editObject.c_end_collect"/><span v-else>{{Event.c_end_collect}}</span></span>
+          <span class="col-11">舉行地點: <q-select v-if="edit" filled use-input input-debounce="0" @filter="saveBuffer"
+              @blur="textBuffer.length > 0 ? updateBuffer(editObject, 'c_dest') : ''" @new-value="newDest" :options="dest"
+              v-model="editObject.c_dest" /><span v-else>{{ Event.c_dest }}</span></span>
+          <span class="col-11">集合地點: <q-select v-if="edit" filled use-input input-debounce="0" @filter="saveBuffer"
+              @blur="textBuffer.length > 0 ? updateBuffer(editObject, 'c_start_collect') : ''" @new-value="newDest"
+              :options="dest" v-model="editObject.c_start_collect" /><span v-else>{{ Event.c_start_collect
+              }}</span></span>
+          <span class="col-11">解散地點: <q-select v-if="edit" filled use-input input-debounce="0" @filter="saveBuffer"
+              @blur="textBuffer.length > 0 ? updateBuffer(editObject, 'c_end_collect') : ''" @new-value="newDest"
+              :options="dest" v-model="editObject.c_end_collect" /><span v-else>{{ Event.c_end_collect }}</span></span>
         </div>
       </div>
       <div class="col-6 row items-start content-start">
         <q-chip class="col-12 bg-brown-2" size="lg">網頁</q-chip>
         <div class="row col-12 q-gutter-lg q-ml-sm">
-          <span class="col-12 row">顯示網頁: <q-checkbox v-if="edit" v-model="editObject.IsShow"/><span v-else><q-icon class="text-green" v-if="Event.IsShow" name="check"/><q-icon class="text-red" v-else name="cancel"/></span></span>
-          <span class="col-12 row">網頁海報: <span v-if=edit>{{ editObject.poster }}</span><span v-else>{{ Event.poster }}</span>
+          <span class="col-12 row">顯示網頁: <q-checkbox v-if="edit" v-model="editObject.IsShow" /><span v-else><q-icon
+                class="text-green" v-if="Event.IsShow" name="check" /><q-icon class="text-red" v-else
+                name="cancel" /></span></span>
+          <span class="col-12 row">網頁海報: <span v-if=edit>{{ editObject.poster }}</span><span v-else>{{ Event.poster
+          }}</span>
             <div class="col-12 row" v-if="edit">
-              <q-btn icon="delete" class="bg-negative text-white" label="刪除現有海報" @click="editObject.poster = ''"/>
-              <q-uploader
-                class="col-11"
-                :url="upload_API + '/file-savefiletostorage'"
-                color="primary"
-                flat
-                :auto-upload="true"
-                bordered
-                :headers="[
-                  {name: 'Access-Control-Allow-Origin', value: '*'},
-                  {name: 'Accept-Language', value: '*'},
-                  {name: 'Access-Control-Allow-Headers', value: 'Origin, X-Requested-With, Content-Type, Accept'},
-                  {name: 'Authorization', value: `Bearer ${token}`}
-                ]"
-                @uploaded="updateFilenames"
-              />
+              <q-btn icon="delete" class="bg-negative text-white" label="刪除現有海報" @click="editObject.poster = ''" />
+              <FileUpload class="col-11" mode="single" path="" @onDone="(val) => updateFilenames(val)" />
             </div>
             <div class="col-12 row" v-else>
-              <q-img v-if="Event.poster" class="col-11" :src="Event.poster" fit="scale-down"/>
+              <q-img v-if="Event.poster" class="col-11" :src="Event.poster" fit="scale-down" />
               <div v-else>沒有海報</div>
             </div>
           </span>
@@ -154,11 +187,13 @@
       <q-chip class="col-12 bg-green-3" size="lg">備註</q-chip>
       <div class="row col-12 q-gutter-lg q-ml-sm">
         <span class="col-11">收據: </span>
-        <span class="col-11" style="border: 1px solid"><q-input v-if="edit" type="textarea" v-model="editObject.m_remind_content"/><span v-else>{{Event.m_remind_content}}</span></span>
+        <span class="col-11" style="border: 1px solid"><q-input v-if="edit" type="textarea"
+            v-model="editObject.m_remind_content" /><span v-else>{{ Event.m_remind_content }}</span></span>
       </div>
       <div class="row col-12 q-gutter-lg q-ml-sm q-mt-sm q-pb-md">
         <span class="col-11">備註: </span>
-        <span class="col-11" style="border: 1px solid"><q-input v-if="edit" type="textarea" v-model="editObject.m_remark"/><span v-else>{{Event.m_remark}}</span></span>
+        <span class="col-11" style="border: 1px solid"><q-input v-if="edit" type="textarea"
+            v-model="editObject.m_remark" /><span v-else>{{ Event.m_remark }}</span></span>
       </div>
     </q-card-section>
   </q-card>
@@ -166,204 +201,196 @@
   <!-- mobile interface -->
   <div v-else>
     <!-- 基本資料 -->
-    <q-expansion-item
-      header-class="bg-grey-4 text-body1">
-        <template v-slot:header>
-          <q-item-section avatar>
-            <q-avatar icon="info"/>
-          </q-item-section>
-          <q-item-section >
-            <span>基本資料</span>
-          </q-item-section>
-        </template>
-        <div class="row q-px-sm col-12 justify-start text-body1">
-          <span class="col-auto row items-start">
-            <div class="col-auto">活動編號:</div>
-            <div class="col-auto">{{c_act_code}}</div>
-          </span>
-          <span class="col-12 row justify-start items-start">
-            <div class="col-12 row"><span class="col-auto">活動名稱(中文): </span><q-input v-if="edit" filled type="text" class="col-grow" v-model="editObject.c_act_name"/><span class="col-auto" v-else>{{Event.c_act_name}}</span></div>
-            <div class="col-12 row"><span class="col-auto">活動名稱(英文): </span><q-input class="col-grow" filled v-if="edit" type="text" v-model="editObject.c_act_nameen"/><span class="col-auto" v-else>{{Event.c_act_nameen}}</span></div>
-          </span>
-        </div>
+    <q-expansion-item header-class="bg-grey-4 text-body1">
+      <template v-slot:header>
+        <q-item-section avatar>
+          <q-avatar icon="info" />
+        </q-item-section>
+        <q-item-section>
+          <span>基本資料</span>
+        </q-item-section>
+      </template>
+      <div class="row q-px-sm col-12 justify-start text-body1">
+        <span class="col-auto row items-start">
+          <div class="col-auto">活動編號:</div>
+          <div class="col-auto">{{ c_act_code }}</div>
+        </span>
+        <span class="col-12 row justify-start items-start">
+          <div class="col-12 row"><span class="col-auto">活動名稱(中文): </span><q-input v-if="edit" filled type="text"
+              class="col-grow" v-model="editObject.c_act_name" /><span class="col-auto" v-else>{{ Event.c_act_name
+              }}</span>
+          </div>
+          <div class="col-12 row"><span class="col-auto">活動名稱(英文): </span><q-input class="col-grow" filled v-if="edit"
+              type="text" v-model="editObject.c_act_nameen" /><span class="col-auto" v-else>{{ Event.c_act_nameen
+              }}</span>
+          </div>
+        </span>
+      </div>
     </q-expansion-item>
 
     <!-- 類別 -->
-    <q-expansion-item
-      header-class="bg-yellow-4 text-body1">
-        <template v-slot:header>
-          <q-item-section avatar>
-            <q-avatar icon="category"/>
-          </q-item-section>
-          <q-item-section >
-            <span>類別</span>
-          </q-item-section>
-        </template>
-        <div class="row col-12 q-px-sm text-body1">
-          <span class="col-12">會計類別： <q-select v-if="edit" :options="acc_type" v-model="editObject.c_acc_type"/><span v-else>{{Event.c_acc_type}}</span></span>
-          <span class="col-12">狀況: <q-select v-if="edit" :options="status" v-model="editObject.c_status"/><span v-else>{{Event.c_status}}</span></span>
-          <span class="col-12 row ">
-            <span class="col">免費: <q-checkbox v-if="edit" v-model="editObject.b_freeofcharge"/><span v-else><q-icon class="text-green" v-if="Event.b_freeofcharge" name="check"/><q-icon class="text-red" v-else name="cancel"/></span></span>
-            <span class="col">完成: <q-checkbox v-if="edit" v-model="editObject.b_finish"/><span v-else><q-icon class="text-green" v-if="Event.b_finish" name="check"/><q-icon class="text-red" v-else name="cancel"/></span></span>
-          </span>
-          <span class="col-12">達標日期: <span v-if="edit"><DateComponent v-model="editObject.d_finish_goal"/></span><span v-else>{{qdate.formatDate(Event.d_finish_goal, "YYYY年M月D日")}}</span></span>
-          <span class="col-12">類別： <q-select v-if="edit" filled :options="type" v-model="editObject.c_type"/><span v-else>{{Event.c_type}}</span></span>
-          <span class="col-12">性質： <q-select v-if="edit" filled :options="nature" v-model="editObject.c_nature"/><span v-else>{{Event.c_nature}}</span></span>
-          <span class="col-12">大分類： <q-select v-if="edit" filled :options="group1" v-model="editObject.c_group1"/><span v-else>{{Event.c_group1}}</span></span>
-          <span class="col-12">細類： <q-select v-if="edit" filled :options="group2" v-model="editObject.c_group2"/><span v-else>{{Event.c_group2}}</span></span>
-          <span class="col-12">對象: <q-select v-if="edit" filled :options="whojoin" v-model="editObject.c_whojoin"/><span v-else>{{Event.c_whojoin}}</span></span>
-          <span class="col-12">負責職員: <q-select v-if="edit" filled :options="UserList" v-model="editObject.c_respon"/><span v-else>{{Event.c_respon}}</span></span>
-          <span class="col-12">協助職員: <StaffSelectionMultiple :includeTemp="true" v-if="edit" hint="先刪除舊清單才能修改" v-model="editObject.c_worker" /><span v-else>{{Event.c_worker}}</span></span>
-        </div>
+    <q-expansion-item header-class="bg-yellow-4 text-body1">
+      <template v-slot:header>
+        <q-item-section avatar>
+          <q-avatar icon="category" />
+        </q-item-section>
+        <q-item-section>
+          <span>類別</span>
+        </q-item-section>
+      </template>
+      <div class="row col-12 q-px-sm text-body1">
+        <span class="col-12">會計類別： <q-select v-if="edit" :options="acc_type" v-model="editObject.c_acc_type" /><span
+            v-else>{{ Event.c_acc_type }}</span></span>
+        <span class="col-12">狀況: <q-select v-if="edit" :options="status" v-model="editObject.c_status" /><span v-else>{{
+          Event.c_status }}</span></span>
+        <span class="col-12 row ">
+          <span class="col">免費: <q-checkbox v-if="edit" v-model="editObject.b_freeofcharge" /><span v-else><q-icon
+                class="text-green" v-if="Event.b_freeofcharge" name="check" /><q-icon class="text-red" v-else
+                name="cancel" /></span></span>
+          <span class="col">完成: <q-checkbox v-if="edit" v-model="editObject.b_finish" /><span v-else><q-icon
+                class="text-green" v-if="Event.b_finish" name="check" /><q-icon class="text-red" v-else
+                name="cancel" /></span></span>
+        </span>
+        <span class="col-12">達標日期: <span v-if="edit">
+            <DateComponent v-model="editObject.d_finish_goal" />
+          </span><span v-else>{{ qdate.formatDate(Event.d_finish_goal, "YYYY年M月D日") }}</span></span>
+        <span class="col-12">類別： <q-select v-if="edit" filled :options="type" v-model="editObject.c_type" /><span
+            v-else>{{ Event.c_type }}</span></span>
+        <span class="col-12">性質： <q-select v-if="edit" filled :options="nature" v-model="editObject.c_nature" /><span
+            v-else>{{ Event.c_nature }}</span></span>
+        <span class="col-12">大分類： <q-select v-if="edit" filled :options="group1" v-model="editObject.c_group1" /><span
+            v-else>{{ Event.c_group1 }}</span></span>
+        <span class="col-12">細類： <q-select v-if="edit" filled :options="group2" v-model="editObject.c_group2" /><span
+            v-else>{{ Event.c_group2 }}</span></span>
+        <span class="col-12">對象: <q-select v-if="edit" filled :options="whojoin" v-model="editObject.c_whojoin" /><span
+            v-else>{{ Event.c_whojoin }}</span></span>
+        <span class="col-12">負責職員: <q-select v-if="edit" filled :options="UserList" v-model="editObject.c_respon" /><span
+            v-else>{{ Event.c_respon }}</span></span>
+        <span class="col-12">協助職員:
+          <StaffSelectionMultiple :includeTemp="true" v-if="edit" hint="先刪除舊清單才能修改" v-model="editObject.c_worker" /><span
+            v-else>{{ Event.c_worker }}</span>
+        </span>
+      </div>
     </q-expansion-item>
 
     <!-- 活動資料 -->
-    <q-expansion-item
-      header-class="bg-red-3 text-body1">
-        <template v-slot:header>
-          <q-item-section avatar>
-            <q-avatar icon="event_note"/>
-          </q-item-section>
-          <q-item-section >
-            <span>活動資料</span>
-          </q-item-section>
-        </template>
-        <div class="row col-12 q-px-sm text-body1">
-          <span class="col-12">開始日期: <span v-if="edit"><DateComponent v-model="editObject.d_date_from"/></span><span v-else>{{Event.d_date_from}}</span></span>
-          <span class="col-12">開始時間: <span v-if="edit"><TimeComponent v-model="editObject.d_time_from"/></span><span v-else>{{Event.d_time_from}}</span></span>
-          <span class="col-12">報名日期(開始): <span v-if="edit"><DateComponent v-model="editObject.d_sale_start"/></span><span v-else>{{Event.d_sale_start}}</span></span>
-          <span class="col-12">終結日期: <span v-if="edit"><DateComponent v-model="editObject.d_date_to"/></span><span v-else>{{Event.d_date_to}}</span></span>
-          <span class="col-12">終結時間: <span v-if="edit"><TimeComponent v-model="editObject.d_time_to"/></span><span v-else>{{Event.d_time_to}}</span></span>
-          <span class="col-12">報名日期(完結): <span v-if="edit"><DateComponent v-model="editObject.d_sale_end"/></span><span v-else>{{Event.d_sale_end}}</span></span>
-          <span class="col-12">名額: <q-input v-if="edit" filled type="number" v-model="editObject.i_quota_max"/><span v-else>{{Event.i_quota_max}}</span></span>
-          <span class="col-12">總堂數: <q-input v-if="edit" filled type="number" v-model="editObject.i_lessons"/><span v-else>{{Event.i_lessons}}</span></span>
-          <span class="col-12">逢星期: <q-select v-if="edit" filled use-input input-debounce="0" @new-value="newWeek" :options="week" v-model="editObject.c_week"/><span v-else>{{Event.c_week}}</span></span>
-        </div>
+    <q-expansion-item header-class="bg-red-3 text-body1">
+      <template v-slot:header>
+        <q-item-section avatar>
+          <q-avatar icon="event_note" />
+        </q-item-section>
+        <q-item-section>
+          <span>活動資料</span>
+        </q-item-section>
+      </template>
+      <div class="row col-12 q-px-sm text-body1">
+        <span class="col-12">開始日期: <span v-if="edit">
+            <DateComponent v-model="editObject.d_date_from" />
+          </span><span v-else>{{ Event.d_date_from }}</span></span>
+        <span class="col-12">開始時間: <span v-if="edit">
+            <TimeComponent v-model="editObject.d_time_from" />
+          </span><span v-else>{{ Event.d_time_from }}</span></span>
+        <span class="col-12">報名日期(開始): <span v-if="edit">
+            <DateComponent v-model="editObject.d_sale_start" />
+          </span><span v-else>{{ Event.d_sale_start }}</span></span>
+        <span class="col-12">終結日期: <span v-if="edit">
+            <DateComponent v-model="editObject.d_date_to" />
+          </span><span v-else>{{ Event.d_date_to }}</span></span>
+        <span class="col-12">終結時間: <span v-if="edit">
+            <TimeComponent v-model="editObject.d_time_to" />
+          </span><span v-else>{{ Event.d_time_to }}</span></span>
+        <span class="col-12">報名日期(完結): <span v-if="edit">
+            <DateComponent v-model="editObject.d_sale_end" />
+          </span><span v-else>{{ Event.d_sale_end }}</span></span>
+        <span class="col-12">名額: <q-input v-if="edit" filled type="number" v-model="editObject.i_quota_max" /><span
+            v-else>{{ Event.i_quota_max }}</span></span>
+        <span class="col-12">總堂數: <q-input v-if="edit" filled type="number" v-model="editObject.i_lessons" /><span
+            v-else>{{ Event.i_lessons }}</span></span>
+        <span class="col-12">逢星期: <q-select v-if="edit" filled use-input input-debounce="0" @new-value="newWeek"
+            :options="week" v-model="editObject.c_week" /><span v-else>{{ Event.c_week }}</span></span>
+      </div>
     </q-expansion-item>
 
     <!-- 地點 -->
-    <q-expansion-item
-      header-class="bg-brown-3 text-body1">
-        <template v-slot:header>
-          <q-item-section avatar>
-            <q-avatar icon="location_on"/>
-          </q-item-section>
-          <q-item-section >
-            <span>地點</span>
-          </q-item-section>
-        </template>
-        <div class="row col-12 q-px-sm text-body1">
-          <span class="col-11">舉行地點: <q-select v-if="edit" filled use-input input-debounce="0" @filter="saveBuffer" @blur="textBuffer.length > 0? updateBuffer(editObject, 'c_dest'): ''" @new-value="newDest" :options="dest" v-model="editObject.c_dest"/><span v-else>{{Event.c_dest}}</span></span>
-          <span class="col-11">集合地點: <q-select v-if="edit" filled use-input input-debounce="0" @filter="saveBuffer" @blur="textBuffer.length > 0? updateBuffer(editObject, 'c_start_collect'): ''" @new-value="newDest" :options="dest" v-model="editObject.c_start_collect"/><span v-else>{{Event.c_start_collect}}</span></span>
-          <span class="col-11">解散地點: <q-select v-if="edit" filled use-input input-debounce="0" @filter="saveBuffer" @blur="textBuffer.length > 0? updateBuffer(editObject, 'c_end_collect'): ''" @new-value="newDest" :options="dest" v-model="editObject.c_end_collect"/><span v-else>{{Event.c_end_collect}}</span></span>
-        </div>
+    <q-expansion-item header-class="bg-brown-3 text-body1">
+      <template v-slot:header>
+        <q-item-section avatar>
+          <q-avatar icon="location_on" />
+        </q-item-section>
+        <q-item-section>
+          <span>地點</span>
+        </q-item-section>
+      </template>
+      <div class="row col-12 q-px-sm text-body1">
+        <span class="col-11">舉行地點: <q-select v-if="edit" filled use-input input-debounce="0" @filter="saveBuffer"
+            @blur="textBuffer.length > 0 ? updateBuffer(editObject, 'c_dest') : ''" @new-value="newDest" :options="dest"
+            v-model="editObject.c_dest" /><span v-else>{{ Event.c_dest }}</span></span>
+        <span class="col-11">集合地點: <q-select v-if="edit" filled use-input input-debounce="0" @filter="saveBuffer"
+            @blur="textBuffer.length > 0 ? updateBuffer(editObject, 'c_start_collect') : ''" @new-value="newDest"
+            :options="dest" v-model="editObject.c_start_collect" /><span v-else>{{ Event.c_start_collect }}</span></span>
+        <span class="col-11">解散地點: <q-select v-if="edit" filled use-input input-debounce="0" @filter="saveBuffer"
+            @blur="textBuffer.length > 0 ? updateBuffer(editObject, 'c_end_collect') : ''" @new-value="newDest"
+            :options="dest" v-model="editObject.c_end_collect" /><span v-else>{{ Event.c_end_collect }}</span></span>
+      </div>
     </q-expansion-item>
 
-     <!-- 網頁 -->
-     <q-expansion-item
-      header-class="bg-brown-2 text-body1">
-        <template v-slot:header>
-          <q-item-section avatar>
-            <q-avatar icon="home"/>
-          </q-item-section>
-          <q-item-section >
-            <span>網頁</span>
-          </q-item-section>
-        </template>
-        <div class="row col-12 q-px-sm text-body1">
-          <span class="col-12 row">顯示網頁: <q-checkbox v-if="edit" v-model="editObject.IsShow"/><span v-else><q-icon class="text-green" v-if="Event.IsShow" name="check"/><q-icon class="text-red" v-else name="cancel"/></span></span>
-          <span class="col-12 row">網頁海報: <span v-if=edit>{{ editObject.poster }}</span><span v-else>{{ Event.poster }}</span>
-            <div class="col-12 row" v-if="edit">
-              <q-btn icon="delete" class="bg-negative text-white" label="刪除現有海報" @click="editObject.poster = ''"/>
-              <q-uploader
-                class="col-11"
-                :url="upload_API + '/file-savefiletostorage'"
-                color="primary"
-                flat
-                :auto-upload="true"
-                bordered
-                :headers="[
-                  {name: 'Access-Control-Allow-Origin', value: '*'},
-                  {name: 'Accept-Language', value: '*'},
-                  {name: 'Access-Control-Allow-Headers', value: 'Origin, X-Requested-With, Content-Type, Accept'},
-                  {name: 'Authorization', value: `Bearer ${token}`}
-                ]"
-                @uploaded="updateFilenames"
-              />
-            </div>
-            <div class="col-12 row" v-else>
-              <q-img v-if="Event.poster" class="col-11" :src="Event.poster" fit="scale-down"/>
-              <div v-else>沒有海報</div>
-            </div>
-          </span>
-        </div>
+    <!-- 網頁 -->
+    <q-expansion-item header-class="bg-brown-2 text-body1">
+      <template v-slot:header>
+        <q-item-section avatar>
+          <q-avatar icon="home" />
+        </q-item-section>
+        <q-item-section>
+          <span>網頁</span>
+        </q-item-section>
+      </template>
+      <div class="row col-12 q-px-sm text-body1">
+        <span class="col-12 row">顯示網頁: <q-checkbox v-if="edit" v-model="editObject.IsShow" /><span v-else><q-icon
+              class="text-green" v-if="Event.IsShow" name="check" /><q-icon class="text-red" v-else
+              name="cancel" /></span></span>
+        <span class="col-12 row">網頁海報: <span v-if=edit>{{ editObject.poster }}</span><span v-else>{{ Event.poster
+        }}</span>
+          <div class="col-12 row" v-if="edit">
+            <q-btn icon="delete" class="bg-negative text-white" label="刪除現有海報" @click="editObject.poster = ''" />
+            <FileUpload class="col-11" mode="single" path="" @onDone="(val) => updateFilenames(val)" />
+          </div>
+          <div class="col-12 row" v-else>
+            <q-img v-if="Event.poster" class="col-11" :src="Event.poster" fit="scale-down" />
+            <div v-else>沒有海報</div>
+          </div>
+        </span>
+      </div>
     </q-expansion-item>
 
     <!-- 備註 -->
-    <q-expansion-item
-      header-class="bg-green-3 text-body1">
-        <template v-slot:header>
-          <q-item-section avatar>
-            <q-avatar icon="help"/>
-          </q-item-section>
-          <q-item-section >
-            <span>備註</span>
-          </q-item-section>
-        </template>
-        <div class="row col-12 q-px-sm text-body1">
-          <span class="col-12">收據: </span>
-          <span class="col-12" style="border: 1px solid"><q-input v-if="edit" type="textarea" v-model="editObject.m_remind_content"/><span v-else>{{Event.m_remind_content}}</span></span>
-          <span class="col-12">備註: </span>
-        <span class="col-12" style="border: 1px solid"><q-input v-if="edit" type="textarea" v-model="editObject.m_remark"/><span v-else>{{Event.m_remark}}</span></span>
-        </div>
+    <q-expansion-item header-class="bg-green-3 text-body1">
+      <template v-slot:header>
+        <q-item-section avatar>
+          <q-avatar icon="help" />
+        </q-item-section>
+        <q-item-section>
+          <span>備註</span>
+        </q-item-section>
+      </template>
+      <div class="row col-12 q-px-sm text-body1">
+        <span class="col-12">收據: </span>
+        <span class="col-12" style="border: 1px solid"><q-input v-if="edit" type="textarea"
+            v-model="editObject.m_remind_content" /><span v-else>{{ Event.m_remind_content }}</span></span>
+        <span class="col-12">備註: </span>
+        <span class="col-12" style="border: 1px solid"><q-input v-if="edit" type="textarea"
+            v-model="editObject.m_remark" /><span v-else>{{ Event.m_remark }}</span></span>
+      </div>
     </q-expansion-item>
   </div>
 
   <!-- sticky button at bottom - mobile only -->
-  <q-page-sticky
-    v-if="$q.screen.lt.sm"
-    position="bottom-right"
-    :offset="[20, 20]"
-    style="z-index: 1"
-  >
-    <q-fab
-      unelevated
-      color="primary"
-      icon="keyboard_arrow_up"
-      direction="up"
-    >
-      <q-fab-action
-        v-if="!edit"
-        label="修改"
-        icon="edit"
-        class="bg-white text-primary"
-        push
-        @click="startEdit"
-      />
-      <q-fab-action
-        v-if="edit"
-        label="儲存"
-        icon="save"
-        class="bg-white text-positive"
-        push
-        @click="saveEdit"
-      />
-      <q-fab-action
-        v-if="edit"
-        label="取消"
-        icon="cancel"
-        class="bg-white text-warning"
-        push
-        @click="edit = false"
-      />
-      <q-fab-action
-        v-if="!edit && isCenterIC"
-        label="刪除"
-        icon="delete"
-        class="text-negative"
-        push
-        @click="deleteDialog = true"
-      />
+  <q-page-sticky v-if="$q.screen.lt.sm" position="bottom-right" :offset="[20, 20]" style="z-index: 1">
+    <q-fab unelevated color="primary" icon="keyboard_arrow_up" direction="up">
+      <q-fab-action v-if="!edit" label="修改" icon="edit" class="bg-white text-primary" push @click="startEdit" />
+      <q-fab-action v-if="edit" label="儲存" icon="save" class="bg-white text-positive" push @click="saveEdit" />
+      <q-fab-action v-if="edit" label="取消" icon="cancel" class="bg-white text-warning" push @click="edit = false" />
+      <q-fab-action v-if="!edit && isCenterIC" label="刪除" icon="delete" class="text-negative" push
+        @click="deleteDialog = true" />
     </q-fab>
   </q-page-sticky>
 </template>
@@ -371,17 +398,18 @@
 <script setup>
 import { computed, ref, onMounted } from "vue";
 import { useStore } from "vuex";
-import { date as qdate, useQuasar} from "quasar";
+import { date as qdate, useQuasar } from "quasar";
 import { EVENT_BY_PK } from "/src/graphQueries/Event/query.js"
 import { DELETE_EVENT_BY_PK, UPDATE_EVENT_BY_PK } from "/src/graphQueries/Event/mutation.js"
 import { useQuery, useMutation } from "@vue/apollo-composable"
 import DateComponent from "components/Basic/DateComponent.vue"
 import TimeComponent from "components/Basic/TimeComponent.vue"
 import LoadingDialog from "components/LoadingDialog.vue"
-import { usersCollection, FirebaseAuth} from "boot/firebase";
+import { usersCollection, FirebaseAuth } from "boot/firebase";
 import { getDocs, query, where } from "firebase/firestore";
 import StaffSelectionMultiple from "src/components/Basic/StaffSelectionMultiple.vue";
 import { useRoute, onBeforeRouteLeave } from "vue-router";
+import FileUpload from 'src/components/Basic/FileUpload.vue'
 
 const route = useRoute()
 const token = ref()
@@ -406,8 +434,8 @@ const serverObject = ref({})
 const saveDialog = ref(false)
 const textBuffer = ref("")
 const loading = ref(0)
-const upload_API = process.env.NODE_ENV === "development"? "http://localhost:5001/manage-hr/asia-east2" : "https://asia-east2-manage-hr.cloudfunctions.net"
-const WEB_IMG_PREFIX = process.env.NODE_ENV === "development"? "http://localhost:9199/cciyc-web/": "https://storage.googleapis.com/cciyc-web/"
+const upload_API = process.env.NODE_ENV === "development" ? "http://localhost:5001/manage-hr/asia-east2" : "https://asia-east2-manage-hr.cloudfunctions.net"
+const WEB_IMG_PREFIX = process.env.NODE_ENV === "development" ? "http://localhost:9199/cciyc-web/" : "https://storage.googleapis.com/cciyc-web/"
 const acc_type = ref([
   'PF', 'CF', 'RF', 'MF', 'SF'
 ])
@@ -425,11 +453,11 @@ const nature = ref([
 ])
 
 const group1 = ref([
-  '社交/興趣','學習/發展','義務工作','青少年就業','家長服務','新來港人士服務','社區服務','中心設施'
+  '社交/興趣', '學習/發展', '義務工作', '青少年就業', '家長服務', '新來港人士服務', '社區服務', '中心設施'
 ])
 
 const group2 = ref([
-  '領䄂訓練','青年義務工作','參與地區公民事務','內地交流活動'
+  '領䄂訓練', '青年義務工作', '參與地區公民事務', '內地交流活動'
 ])
 
 const whojoin = ref([
@@ -482,7 +510,7 @@ getDocs(userDocQuery).then((docs) =>
 )
 
 const username = computed(() => $store.getters["userModule/getUsername"])
-const Event = computed(() => EventData.value?.HTX_Event_by_pk??[])
+const Event = computed(() => EventData.value?.HTX_Event_by_pk ?? [])
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
 const userProfileLogout = () => $store.dispatch("userModule/logout")
 
@@ -497,20 +525,20 @@ function startEdit() {
     editObject.value[key] = value
   }
   delete editObject.value["__typename"]
-  editObject.value.d_date_from = editObject.value.d_date_from? qdate.formatDate(qdate.extractDate(editObject.value.d_date_from, "D/M/YYYY"), "YYYY-MM-DD"): null
-  editObject.value.d_date_to = editObject.value.d_date_to? qdate.formatDate(qdate.extractDate(editObject.value.d_date_to, "D/M/YYYY"), "YYYY-MM-DD"): null
-  editObject.value.d_sale_start = editObject.value.d_sale_start? qdate.formatDate(qdate.extractDate(editObject.value.d_sale_start, "D/M/YYYY"), "YYYY-MM-DD"): null
-  editObject.value.d_sale_end = editObject.value.d_sale_end? qdate.formatDate(qdate.extractDate(editObject.value.d_sale_end, "D/M/YYYY"), "YYYY-MM-DD"): null
-  editObject.value.d_finish_goal = editObject.value.d_finish_goal? qdate.formatDate(editObject.value.d_finish_goal, "YYYY-MM-DD"): null
-  editObject.value.d_time_from = editObject.value.d_time_from? qdate.formatDate(qdate.extractDate(editObject.value.d_time_from, "h:mm:ss A"), "HH:mm"): null
-  editObject.value.d_time_to = editObject.value.d_time_to? qdate.formatDate(qdate.extractDate(editObject.value.d_time_to, "h:mm:ss A"), "HH:mm"): null
-  editObject.value.IsShow = editObject.value.IsShow == 1? true: false
+  editObject.value.d_date_from = editObject.value.d_date_from ? qdate.formatDate(qdate.extractDate(editObject.value.d_date_from, "D/M/YYYY"), "YYYY-MM-DD") : null
+  editObject.value.d_date_to = editObject.value.d_date_to ? qdate.formatDate(qdate.extractDate(editObject.value.d_date_to, "D/M/YYYY"), "YYYY-MM-DD") : null
+  editObject.value.d_sale_start = editObject.value.d_sale_start ? qdate.formatDate(qdate.extractDate(editObject.value.d_sale_start, "D/M/YYYY"), "YYYY-MM-DD") : null
+  editObject.value.d_sale_end = editObject.value.d_sale_end ? qdate.formatDate(qdate.extractDate(editObject.value.d_sale_end, "D/M/YYYY"), "YYYY-MM-DD") : null
+  editObject.value.d_finish_goal = editObject.value.d_finish_goal ? qdate.formatDate(editObject.value.d_finish_goal, "YYYY-MM-DD") : null
+  editObject.value.d_time_from = editObject.value.d_time_from ? qdate.formatDate(qdate.extractDate(editObject.value.d_time_from, "h:mm:ss A"), "HH:mm") : null
+  editObject.value.d_time_to = editObject.value.d_time_to ? qdate.formatDate(qdate.extractDate(editObject.value.d_time_to, "h:mm:ss A"), "HH:mm") : null
+  editObject.value.IsShow = editObject.value.IsShow == 1 ? true : false
   edit.value = true
 }
 
 function saveBuffer(buf, onDone) {
   textBuffer.value = buf
-  onDone(() => {})
+  onDone(() => { })
 }
 
 // update web url
@@ -555,45 +583,45 @@ function deleteAct() {
 
 function purityData() {
   serverObject.value.c_act_code = c_act_code.trim()
-  serverObject.value.c_act_name = serverObject.value.c_act_name? serverObject.value.c_act_name.trim() : null
-  serverObject.value.c_act_nameen = serverObject.value.c_act_nameen? serverObject.value.c_act_nameen.trim() : null
-  serverObject.value.c_acc_type = serverObject.value.c_acc_type? serverObject.value.c_acc_type.trim() : null
-  serverObject.value.c_group1 = serverObject.value.c_group1? serverObject.value.c_group1.trim() : null
-  serverObject.value.c_group2 = serverObject.value.c_group2? serverObject.value.c_group2.trim() : null
-  serverObject.value.c_nature = serverObject.value.c_nature? serverObject.value.c_nature.trim() : null
-  serverObject.value.c_respon = serverObject.value.c_respon? serverObject.value.c_respon.trim() : null
-  serverObject.value.c_respon2 = serverObject.value.c_respon2? serverObject.value.c_respon2.trim() : null
-  serverObject.value.c_dest = serverObject.value.c_dest? serverObject.value.c_dest.trim() : null
-  serverObject.value.c_start_collect = serverObject.value.c_start_collect? serverObject.value.c_start_collect.trim() : null
-  serverObject.value.c_end_collect = serverObject.value.c_end_collect? serverObject.value.c_end_collect.trim() : null
-  serverObject.value.c_status = serverObject.value.c_status? serverObject.value.c_status.trim() : null
-  serverObject.value.c_type = serverObject.value.c_type? serverObject.value.c_type.trim() : null
-  serverObject.value.c_week = serverObject.value.c_week? serverObject.value.c_week.trim() : null
-  serverObject.value.c_whojoin = serverObject.value.c_whojoin? serverObject.value.c_whojoin.trim() : null
-  serverObject.value.c_worker = serverObject.value.c_worker? Array.isArray(serverObject.value.c_worker)? serverObject.value.c_worker.map(x => x.label).join(',') : serverObject.value.c_worker.trim() : null
-  serverObject.value.c_worker2 = serverObject.value.c_worker2? serverObject.value.c_worker2.trim() : null
-  serverObject.value.m_remind_content = serverObject.value.m_remind_content? serverObject.value.m_remind_content.trim() : null
-  serverObject.value.m_remark = serverObject.value.m_remark? serverObject.value.m_remark.trim() : null
-  serverObject.value.IsShow = serverObject.value.IsShow? 1: 0
+  serverObject.value.c_act_name = serverObject.value.c_act_name ? serverObject.value.c_act_name.trim() : null
+  serverObject.value.c_act_nameen = serverObject.value.c_act_nameen ? serverObject.value.c_act_nameen.trim() : null
+  serverObject.value.c_acc_type = serverObject.value.c_acc_type ? serverObject.value.c_acc_type.trim() : null
+  serverObject.value.c_group1 = serverObject.value.c_group1 ? serverObject.value.c_group1.trim() : null
+  serverObject.value.c_group2 = serverObject.value.c_group2 ? serverObject.value.c_group2.trim() : null
+  serverObject.value.c_nature = serverObject.value.c_nature ? serverObject.value.c_nature.trim() : null
+  serverObject.value.c_respon = serverObject.value.c_respon ? serverObject.value.c_respon.trim() : null
+  serverObject.value.c_respon2 = serverObject.value.c_respon2 ? serverObject.value.c_respon2.trim() : null
+  serverObject.value.c_dest = serverObject.value.c_dest ? serverObject.value.c_dest.trim() : null
+  serverObject.value.c_start_collect = serverObject.value.c_start_collect ? serverObject.value.c_start_collect.trim() : null
+  serverObject.value.c_end_collect = serverObject.value.c_end_collect ? serverObject.value.c_end_collect.trim() : null
+  serverObject.value.c_status = serverObject.value.c_status ? serverObject.value.c_status.trim() : null
+  serverObject.value.c_type = serverObject.value.c_type ? serverObject.value.c_type.trim() : null
+  serverObject.value.c_week = serverObject.value.c_week ? serverObject.value.c_week.trim() : null
+  serverObject.value.c_whojoin = serverObject.value.c_whojoin ? serverObject.value.c_whojoin.trim() : null
+  serverObject.value.c_worker = serverObject.value.c_worker ? Array.isArray(serverObject.value.c_worker) ? serverObject.value.c_worker.map(x => x.label).join(',') : serverObject.value.c_worker.trim() : null
+  serverObject.value.c_worker2 = serverObject.value.c_worker2 ? serverObject.value.c_worker2.trim() : null
+  serverObject.value.m_remind_content = serverObject.value.m_remind_content ? serverObject.value.m_remind_content.trim() : null
+  serverObject.value.m_remark = serverObject.value.m_remark ? serverObject.value.m_remark.trim() : null
+  serverObject.value.IsShow = serverObject.value.IsShow ? 1 : 0
   serverObject.value.EventClassID = whojoin_class.value[serverObject.value.c_group1]
-  serverObject.value.i_quota_max = serverObject.value.i_quota_max? parseInt(serverObject.value.i_quota_max): 0
-  serverObject.value.i_lessons = serverObject.value.i_lessons? parseInt(serverObject.value.i_lessons): 0
-  serverObject.value.EventClassID = serverObject.value.c_whojoin? whojoin_class.value[serverObject.value.c_whojoin]: null
-  serverObject.value.b_finish = serverObject.value.b_finish? true: false
-  serverObject.value.d_date_from = serverObject.value.d_date_from? qdate.formatDate(serverObject.value.d_date_from, "D/M/YYYY"): null
-  serverObject.value.d_date_to = serverObject.value.d_date_to? qdate.formatDate(serverObject.value.d_date_to, "D/M/YYYY"): null
+  serverObject.value.i_quota_max = serverObject.value.i_quota_max ? parseInt(serverObject.value.i_quota_max) : 0
+  serverObject.value.i_lessons = serverObject.value.i_lessons ? parseInt(serverObject.value.i_lessons) : 0
+  serverObject.value.EventClassID = serverObject.value.c_whojoin ? whojoin_class.value[serverObject.value.c_whojoin] : null
+  serverObject.value.b_finish = serverObject.value.b_finish ? true : false
+  serverObject.value.d_date_from = serverObject.value.d_date_from ? qdate.formatDate(serverObject.value.d_date_from, "D/M/YYYY") : null
+  serverObject.value.d_date_to = serverObject.value.d_date_to ? qdate.formatDate(serverObject.value.d_date_to, "D/M/YYYY") : null
   //serverObject.value.d_finish_goal = serverObject.value.d_finish_goal? qdate.formatDate(serverObject.value.d_finish_goal, "D/M/YYYY"): null
   serverObject.value.d_finish_goal = serverObject.value.d_finish_goal
-  serverObject.value.d_sale_start = serverObject.value.d_sale_start? qdate.formatDate(serverObject.value.d_sale_start, "D/M/YYYY"): null
-  serverObject.value.d_sale_end = serverObject.value.d_sale_end? qdate.formatDate(serverObject.value.d_sale_end, "D/M/YYYY"): null
+  serverObject.value.d_sale_start = serverObject.value.d_sale_start ? qdate.formatDate(serverObject.value.d_sale_start, "D/M/YYYY") : null
+  serverObject.value.d_sale_end = serverObject.value.d_sale_end ? qdate.formatDate(serverObject.value.d_sale_end, "D/M/YYYY") : null
 
   // append seconds
-  serverObject.value.d_time_from = serverObject.value.d_time_from? serverObject.value.d_time_from + ":00": null
-  serverObject.value.d_time_to = serverObject.value.d_time_to? serverObject.value.d_time_to + ":00": null
+  serverObject.value.d_time_from = serverObject.value.d_time_from ? serverObject.value.d_time_from + ":00" : null
+  serverObject.value.d_time_to = serverObject.value.d_time_to ? serverObject.value.d_time_to + ":00" : null
 
   // convert to 12H server format
-  serverObject.value.d_time_from = serverObject.value.d_time_from? qdate.formatDate(qdate.extractDate(serverObject.value.d_time_from, "HH:mm:ss"), "h:mm:ss A"): null
-  serverObject.value.d_time_to = serverObject.value.d_time_to? qdate.formatDate(qdate.extractDate(serverObject.value.d_time_to, "HH:mm:ss"), "h:mm:ss A"): null
+  serverObject.value.d_time_from = serverObject.value.d_time_from ? qdate.formatDate(qdate.extractDate(serverObject.value.d_time_from, "HH:mm:ss"), "h:mm:ss A") : null
+  serverObject.value.d_time_to = serverObject.value.d_time_to ? qdate.formatDate(qdate.extractDate(serverObject.value.d_time_to, "HH:mm:ss"), "h:mm:ss A") : null
 }
 
 // UI functions
@@ -660,15 +688,15 @@ updateEvent_Error((error) => {
 
 // route guard
 onBeforeRouteLeave((to, from, next) => {
-  if(edit.value) {
+  if (edit.value) {
     $q.dialog({
       title: "是否確認離開本頁？",
       message: "所有未儲存的資料都會遺失！",
       persistent: true,
       cancel: true
-    }).onOk(()=>{
+    }).onOk(() => {
       next()
-    }).onCancel(() => {})
+    }).onCancel(() => { })
   } else {
     next()
   }

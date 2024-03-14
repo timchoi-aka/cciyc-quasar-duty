@@ -152,7 +152,7 @@
         <div class="row col-xs-12">
           <q-btn v-if="isSystemAdmin || isCenterIC" class="bg-white bg-red" dense flat icon="delete" label="刪除" @click="confirmDeleteModal = true"/>
 
-          <q-btn-dropdown unelevated class="q-mx-sm" v-if="member.c_udf_1 != '永久會員' && !member.d_exit_1" color="positive" icon="mail" label="續會" >
+          <q-btn-dropdown unelevated class="q-mx-sm" v-if="member.c_udf_1 != '永久會員' && !member.d_exit_1 && member.b_mem_type1" color="positive" icon="mail" label="續會" >
             <q-list>
               <q-item clickable v-close-popup @click="renewMemberModal(member, 1)">
                 <q-item-section>

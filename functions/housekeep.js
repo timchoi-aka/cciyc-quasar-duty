@@ -48,7 +48,7 @@ query housekeep_getMemberNameFromID($c_mem_ids: [String!]) {
 const mutation = `
 mutation updateMemberStatus(
   $upsertObjects: [Member_insert_input!] = [],
-  $logObject: Log_insert_input! = {}, 
+  $logObject: Log_insert_input! = {},
   ) {
   insert_Member(
     objects: $upsertObjects, if_matched: {match_columns: c_mem_id, update_columns: [b_mem_type1]}
@@ -62,10 +62,10 @@ mutation updateMemberStatus(
 
 const mutation_updateYouthMemberStatus = `
 mutation housekeep_updateYouthMemberStatus(
-  $c_mem_id: String = "", 
+  $c_mem_id: String = "",
   $b_mem_type10: Boolean = false,
   $d_expired_1: datetime2,
-  $logObject: Log_insert_input! = {}, 
+  $logObject: Log_insert_input! = {},
   ) {
   update_Member_by_pk(pk_columns: {c_mem_id: $c_mem_id}, _set: {b_mem_type10: $b_mem_type10, d_expired_1: $d_expired_1}) {
     c_mem_id
@@ -95,7 +95,8 @@ exports.updateMemberStatus = functions.region("asia-east2").pubsub.schedule("0 0
 
   const Members = json.data.Member;
   const Relations = json.data.Relation;
-
+  console.log("會員數目：" + Members.length);
+  console.log("關係數目：" + Relations.length);
 
   if (Members.length) {
     const queue = [];
@@ -107,13 +108,15 @@ exports.updateMemberStatus = functions.region("asia-east2").pubsub.schedule("0 0
         const d_expired_1 = new Date(member.d_expired_1);
         const now = new Date();
 
+        /* if date in d_expired_1 is later than now, set b_mem_type1 to true
+        else set b_mem_type1 to false */
         if (now - d_expired_1 < 0) {
           b_mem_type1 = true;
         } else b_mem_type1 = false;
 
         // expired or quit, set active member status to false
         if (b_mem_type1 != original_b_mem_type1) {
-          // console.log(member.c_mem_id + ":" + original_b_mem_type1 + ":" + b_mem_type1 + ":" + member.d_expired_1 + ":" + d_expired_1 + ":" + (now - d_expired_1))
+          console.log("會員：" + member.c_mem_id + "，原會藉:" + original_b_mem_type1 + "，新會藉" + b_mem_type1 + "，屆滿日期:" + member.d_expired_1 + "，距離屆滿日期:" + (now - d_expired_1) / (1000 * 60 * 60 * 24) + "天");
           queue.push({
             c_mem_id: member.c_mem_id,
             b_mem_type1: b_mem_type1,

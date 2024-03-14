@@ -151,8 +151,27 @@ const routes = [
           },
           {
             name: "EventEvaluation",
-            path: 'evaluation',
+            path: 'evaluation/:action/:type?',
             component: () => import('src/components/Event/EventEvaluation.vue'), meta: {requiresAuth: true},
+            /*
+            children: [
+              {
+                name: "EventEvaluationContentView",
+                path: 'view',
+                component: () => import('src/components/Event/EventEvaluationContentView.vue'), meta: {requiresAuth: true},
+              },
+              {
+                name: "EventEvaluationContentEdit",
+                path: 'edit',
+                component: () => import('src/components/Event/EventEvaluationContentEdit.vue'), meta: {requiresAuth: true},
+              },
+              {
+                name: "Print",
+                path: 'print/:type',
+                component: () => import('src/components/Event/EventEvaluationReportPDF.vue'), meta: {requiresAuth: true},
+              },
+            ]
+            */
           },
           {
             name: "TakeAttendance",

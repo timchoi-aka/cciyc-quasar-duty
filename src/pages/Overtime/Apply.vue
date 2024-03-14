@@ -3,22 +3,6 @@
     <!-- loading dialog -->
     <LoadingDialog v-model="loading" message="讀取資料中" />
 
-    <!-- sticky button at bottom -->
-    <q-page-sticky
-      position="bottom-right"
-      :offset="[20, 20]"
-      style="z-index: 1"
-    >
-      <q-fab
-        :disable="!isAllValidDate()"
-        v-if="applicationList.length > 0"
-        label="確定申請"
-        color="primary"
-        push
-        @click="confirmDialog = !confirmDialog"
-      />
-    </q-page-sticky>
-
     <!-- confirm dialog -->
     <q-dialog v-model="confirmDialog">
       <q-card style="border-radius: 30px">
@@ -33,7 +17,7 @@
 
         <q-card-section class="q-pa-md">
           <div v-for="app in applicationList">
-            {{ app.date }} - {{ app.type }} - {{ app.hours }}小時 -
+            {{ qdate.formatDate(qdate.extractDate(app.date, "YYYY/MM/DD"), "YYYY年M月D日") }} - {{ app.type }} - {{ parseFloat(app.hours).toFixed(1) }}小時 -
             {{ app.remarks }}
           </div>
         </q-card-section>
@@ -90,204 +74,223 @@
       </div>
 
       <!-- header row -->
-      <q-table
-        dense
-        flat
-        :grid="$q.screen.lt.md"
-        :rows="applicationList"
-        :columns="columns"
-        :pagination="defaultPagination"
-        :hide-bottom="true"
-        color="primary"
-        row-key="date"
-      >
+      <q-form @submit="confirmDialog = !confirmDialog">
+        <q-table
+          dense
+          flat
+          :grid="$q.screen.lt.md"
+          :rows="applicationList"
+          :columns="columns"
+          :pagination="defaultPagination"
+          :hide-bottom="true"
+          color="primary"
+          row-key="date"
+        >
 
-        <!-- date cell template -->
-        <template v-slot:body-cell-date="props">
-          <q-td class="q-pa-sm" style="font-size: 1.5vw; text-align: center"
-            ><q-input
-              v-model="applicationList[props.rowIndex].date"
-              borderless
-              filled
-              debounce="500"
-              error-message="這日期已有超時補假記錄！"
-              :error="!isValidDate(applicationList.indexOf(props.row))"
-            >
-            <template v-slot:append>
-              <q-icon name="event" class="cursor-pointer">
-                <q-popup-proxy
-                  cover
-                  transition-show="scale"
-                  transition-hide="scale"
-                >
-                  <q-date v-model="applicationList[props.rowIndex].date"
+          <!-- date cell template -->
+          <template v-slot:body-cell-date="props">
+            <q-td class="q-pa-sm" style="font-size: 1.5vw; text-align: center"
+              ><q-input
+                v-model="applicationList[props.rowIndex].date"
+                borderless
+                filled
+                debounce="1000"
+                :rules="[isValidDate]"
+              >
+              <template v-slot:append>
+                <q-icon name="event" class="cursor-pointer">
+                  <q-popup-proxy
+                    cover
+                    transition-show="scale"
+                    transition-hide="scale"
                   >
-                    <div class="row items-center justify-end">
-                      <q-btn v-close-popup label="關閉" color="primary" flat />
-                    </div>
-                  </q-date>
-                </q-popup-proxy>
-              </q-icon>
-            </template>
-            </q-input>
-          </q-td>
-        </template>
+                    <q-date v-model="applicationList[props.rowIndex].date"
+                    >
+                      <div class="row items-center justify-end">
+                        <q-btn v-close-popup label="關閉" color="primary" flat />
+                      </div>
+                    </q-date>
+                  </q-popup-proxy>
+                </q-icon>
+              </template>
+              </q-input>
+            </q-td>
+          </template>
 
-        <!-- type cell template -->
-        <template v-slot:body-cell-type="props">
-          <q-td class="q-pa-sm" style="font-size: 1.5vw; text-align: center"
-            ><q-btn-toggle
-              size="md"
-              class="bg-light-blue-2"
-              v-model="applicationList[applicationList.indexOf(props.row)].type"
-              push
-              toggle-color="primary"
-              :options="[
-                { label: 'OT', value: 'OT' },
-                { label: '補OT', value: '補OT' },
-              ]"
-            />
-          </q-td>
-        </template>
+          <!-- type cell template -->
+          <template v-slot:body-cell-type="props">
+            <q-td class="q-pa-sm" style="font-size: 1.5vw; text-align: center"
+              ><q-btn-toggle
+                size="md"
+                class="bg-light-blue-2"
+                v-model="applicationList[applicationList.indexOf(props.row)].type"
+                push
+                toggle-color="primary"
+                :options="[
+                  { label: 'OT', value: 'OT' },
+                  { label: '補OT', value: '補OT' },
+                ]"
+              />
+            </q-td>
+          </template>
 
-        <!-- hours cell template -->
-        <template v-slot:body-cell-hours="props">
-          <q-td class="q-pa-sm" style="font-size: 1.5vw; text-align: center">
-            <q-input
-              :rules="[
-                (val) => val >= 0 || '數值要大於0',
-                (val) =>
-                  (props.row.type == '補OT' ? val <= ot_balance : true) ||
-                  '沒有足夠OT時數',
-              ]"
-              type="number"
-              step="0.5"
-              v-model="
-                applicationList[applicationList.indexOf(props.row)].hours
-              "
-            ></q-input>
-          </q-td>
-        </template>
+          <!-- hours cell template -->
+          <template v-slot:body-cell-hours="props">
+            <q-td class="q-pa-sm" style="font-size: 1.5vw; text-align: center">
+              <q-input
+                :lazy-rules="true"
+                :rules="[
+                  (val) => val > 0 || '數值要大於0',
+                  (val) =>
+                    (props.row.type == '補OT' ? val <= ot_balance : true) ||
+                    '沒有足夠OT時數',
+                ]"
+                type="number"
+                step="0.5"
+                v-model="
+                  applicationList[applicationList.indexOf(props.row)].hours
+                "
+              ></q-input>
+            </q-td>
+          </template>
 
-        <!-- remarks cell template -->
-        <template v-slot:body-cell-remarks="props">
-          <q-td class="q-pa-sm" style="font-size: 1.5vw; text-align: center">
-            <q-input
-              type="text"
-              v-model="
-                applicationList[applicationList.indexOf(props.row)].remarks
-              "
-            ></q-input>
-          </q-td>
-        </template>
+          <!-- remarks cell template -->
+          <template v-slot:body-cell-remarks="props">
+            <q-td class="q-pa-sm" style="font-size: 1.5vw; text-align: center">
+              <q-input
+                type="text"
+                v-model="
+                  applicationList[applicationList.indexOf(props.row)].remarks
+                "
+              ></q-input>
+            </q-td>
+          </template>
 
-        <!-- action cell template -->
-        <template v-slot:body-cell-actions="props">
-          <q-td class="q-pa-sm" style="font-size: 1.5vw; text-align: center">
-            <q-btn
-              color="red"
-              label="刪除"
-              @click="
-                applicationList.splice(applicationList.indexOf(props.row), 1)
-              "
-            ></q-btn>
-          </q-td>
-        </template>
-
-        <!-- grid template -->
-        <template v-slot:item="props">
-          <q-card class="q-pa-xs q-mb-xs col-xs-12 col-sm-12 col-md-12">
-            <q-card-section
-              ><q-btn
+          <!-- action cell template -->
+          <template v-slot:body-cell-actions="props">
+            <q-td class="q-pa-sm" style="font-size: 1.5vw; text-align: center">
+              <q-btn
                 color="red"
-                class="absolute-top-right"
-                icon="cancel"
+                label="刪除"
                 @click="
                   applicationList.splice(applicationList.indexOf(props.row), 1)
                 "
               ></q-btn>
-            </q-card-section>
-            <q-card-section>
-              <div class="row items-center">
-                <div class="col-xs-2 col-sm-2 col-md-2 text-h6">日期:</div>
-                <div class="col-xs-10 col-sm-4 col-md-4">
-                  <q-input
-                    v-model="applicationList[props.rowIndex].date"
-                    borderless
-                    filled
-                    debounce="500"
-                    error-message="這日期已有超時補假記錄！"
-                    :error="!isValidDate(applicationList.indexOf(props.row))"
-                  >
-                  <template v-slot:append>
-                    <q-icon name="event" class="cursor-pointer">
-                      <q-popup-proxy
-                        cover
-                        transition-show="scale"
-                        transition-hide="scale"
-                      >
-                        <q-date v-model="applicationList[props.rowIndex].date"
+            </q-td>
+          </template>
+
+          <!-- grid template -->
+          <template v-slot:item="props">
+            <q-card class="q-pa-xs q-mb-xs col-xs-12 col-sm-12 col-md-12">
+              <q-card-section
+                ><q-btn
+                  color="red"
+                  class="absolute-top-right"
+                  icon="cancel"
+                  @click="
+                    applicationList.splice(applicationList.indexOf(props.row), 1)
+                  "
+                ></q-btn>
+              </q-card-section>
+              <q-card-section>
+                <div class="row items-center">
+                  <div class="col-xs-2 col-sm-2 col-md-2 text-h6">日期:</div>
+                  <div class="col-xs-10 col-sm-4 col-md-4">
+                    <q-input
+                      v-model="applicationList[props.rowIndex].date"
+                      borderless
+                      filled
+                      debounce="1000"
+                      :lazy-rules="true"
+                      :rules="[isValidDate]"
+                    >
+                    <template v-slot:append>
+                      <q-icon name="event" class="cursor-pointer">
+                        <q-popup-proxy
+                          cover
+                          transition-show="scale"
+                          transition-hide="scale"
                         >
-                          <div class="row items-center justify-end">
-                            <q-btn v-close-popup label="關閉" color="primary" flat />
-                          </div>
-                        </q-date>
-                      </q-popup-proxy>
-                    </q-icon>
-                  </template>
-                  </q-input>
+                          <q-date v-model="applicationList[props.rowIndex].date"
+                          >
+                            <div class="row items-center justify-end">
+                              <q-btn v-close-popup label="關閉" color="primary" flat />
+                            </div>
+                          </q-date>
+                        </q-popup-proxy>
+                      </q-icon>
+                    </template>
+                    </q-input>
+                  </div>
+
+                  <div class="col-xs-2 col-sm-2 col-md-2 text-h6">種類:</div>
+                  <div class="col-xs-5 col-sm-3 col-md-3">
+                    <q-btn-toggle
+                      size="md"
+                      class="bg-light-blue-2"
+                      v-model="
+                        applicationList[applicationList.indexOf(props.row)].type
+                      "
+                      push
+                      toggle-color="primary"
+                      :options="[
+                        { label: 'OT', value: 'OT' },
+                        { label: '補OT', value: '補OT' },
+                      ]"
+                    />
+                  </div>
+                  <div class="col-xs-2 col-sm-2 col-md-2 text-h6">時數:</div>
+                  <div class="col-xs-3 col-sm-2 col-md-2">
+                    <q-input
+                      :lazy-rules="true"
+                      :rules="[
+                        (val) => val > 0 || '數值要大於0',
+                        (val) =>
+                          (props.row.type == '補OT' ? val <= ot_balance : true) ||
+                          '沒有足夠OT時數',
+                      ]"
+                      type="number"
+                      step="0.5"
+                      v-model="
+                        applicationList[applicationList.indexOf(props.row)].hours
+                      "
+                    ></q-input>
+                  </div>
                 </div>
 
-                <div class="col-xs-2 col-sm-2 col-md-2 text-h6">種類:</div>
-                <div class="col-xs-5 col-sm-3 col-md-3">
-                  <q-btn-toggle
-                    size="md"
-                    class="bg-light-blue-2"
-                    v-model="
-                      applicationList[applicationList.indexOf(props.row)].type
-                    "
-                    push
-                    toggle-color="primary"
-                    :options="[
-                      { label: 'OT', value: 'OT' },
-                      { label: '補OT', value: '補OT' },
-                    ]"
-                  />
+                <div class="row">
+                  <div class="col-xs-2 col-sm-2 col-md-2 text-h6">備註:</div>
+                  <div class="col-xs-10 col-sm-5 col-md-5">
+                    <q-input
+                      type="text"
+                      v-model="
+                        applicationList[applicationList.indexOf(props.row)]
+                          .remarks
+                      "
+                    ></q-input>
+                  </div>
                 </div>
-                <div class="col-xs-2 col-sm-2 col-md-2 text-h6">時數:</div>
-                <div class="col-xs-3 col-sm-2 col-md-2">
-                  <q-input
-                    :rules="[
-                      (val) => val >= 0 || '數值要大於0',
-                      (val) =>
-                        (props.row.type == '補OT' ? val <= ot_balance : true) ||
-                        '沒有足夠OT時數',
-                    ]"
-                    type="number"
-                    step="0.5"
-                    v-model="
-                      applicationList[applicationList.indexOf(props.row)].hours
-                    "
-                  ></q-input>
-                </div>
-              </div>
+              </q-card-section>
+            </q-card>
+          </template>
+        </q-table>
 
-              <div class="row">
-                <div class="col-xs-2 col-sm-2 col-md-2 text-h6">備註:</div>
-                <div class="col-xs-10 col-sm-5 col-md-5">
-                  <q-input
-                    type="text"
-                    v-model="
-                      applicationList[applicationList.indexOf(props.row)]
-                        .remarks
-                    "
-                  ></q-input>
-                </div>
-              </div>
-            </q-card-section>
-          </q-card>
-        </template>
-      </q-table>
+        <!-- sticky button at bottom -->
+        <q-page-sticky
+          position="bottom-right"
+          :offset="[20, 20]"
+          style="z-index: 1"
+        >
+          <q-btn
+            type="submit"
+            v-if="applicationList.length > 0"
+            label="確定申請"
+            color="primary"
+            push
+            :disable="!isAllValidDate()"
+          />
+        </q-page-sticky>
+      </q-form>
     </div>
   </div>
 </template>
@@ -297,7 +300,7 @@ import { FirebaseFunctions, OTCollection } from "boot/firebase";
 import LoadingDialog from "components/LoadingDialog.vue"
 import { useStore } from "vuex";
 import { ref, computed, onMounted } from "vue";
-import { date as qdate, useQuasar } from "quasar";
+import { date as qdate, useQuasar, is } from "quasar";
 import { httpsCallable } from "@firebase/functions";
 import { getDocs, query, where } from "firebase/firestore";
 
@@ -312,10 +315,6 @@ const confirmDialog = ref(false)
 const OTHistory = ref([])
 const applicationList = ref([])
 const loading = ref(0)
-const leaveMap = ref({
-  OT: "OT",
-  CL: "補OT",
-})
 const leaveInverseMap = ref({
   OT: "OT",
   補OT: "CL",
@@ -386,15 +385,17 @@ if (!isLogin.value) {
 }
 
 // function
-function isValidDate(index) {
-  let result = true;
-  if (OTHistory.value.includes(applicationList.value[index].date)) result = false;
+function isValidDate(val) {
+  let index = applicationList.value.findIndex((e) => e.date == val);
+  if (OTHistory.value.includes(applicationList.value[index].date)) return "這日期已有超時補假記錄！";
   for (let i = 0; i < applicationList.value.length; i++) {
+    if (qdate.isSameDate(qdate.extractDate(applicationList.value[i].date, "YYYY/MM/DD"), qdate.extractDate("1900/01/01", "YYYY/MM/DD")))
+      return "日期錯誤";
     if (index == i) continue;
     if (applicationList.value[index].date == applicationList.value[i].date)
-      result = false;
+      return "日期重覆";
   }
-  return result;
+  return true;
 }
 
 function isAllValidDate() {
@@ -436,7 +437,7 @@ function confirmOTApplication() {
 
   applicationList.value.forEach((leave) => {
     leaveData.push({
-      date: new Date(leave.date),
+      date: qdate.extractDate(leave.date, "YYYY/MM/DD"),
       type: leaveInverseMap.value[leave.type],
       hours:
         leaveInverseMap.value[leave.type] == "CL"
@@ -452,6 +453,7 @@ function confirmOTApplication() {
 
   // call https functions to add leaves
   const addOT = httpsCallable(FirebaseFunctions, "ot-addLeaveByDocid");
+
   loading.value++;
   addOT(leaveData)
     .then(() => {
@@ -462,6 +464,7 @@ function confirmOTApplication() {
     .catch((error) => {
       console.log(error.message);
     });
+
 }
 
 function fetchAllOTRecords() {

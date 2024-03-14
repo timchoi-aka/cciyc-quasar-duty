@@ -1,6 +1,6 @@
 <template>
   <!-- loading dialog -->
-  <LoadingDialog v-model="loading" message="處理中"/>
+  <LoadingDialog v-model="loading" message="處理中" />
 
   <!-- confirm delete plan dialog SYSTEM-ADMIN only -->
   <q-dialog v-model="confirmDeleteDialog">
@@ -10,12 +10,13 @@
       </q-card-section>
       <q-card-section>
         <div>注意：刪除後不能再回復！</div>
-        <div>請在以下輸入活動編號{{c_act_code}}</div>
-        <q-input type="text" v-model="deleteCheck"/>
+        <div>請在以下輸入活動編號{{ c_act_code }}</div>
+        <q-input type="text" v-model="deleteCheck" />
       </q-card-section>
       <q-card-actions align="right">
-        <q-btn color="warning" label="取消" v-close-popup/>
-        <q-btn :disable="deleteCheck != c_act_code.trim()" color="positive" label="確定" @click="onOKDelete" v-close-popup/>
+        <q-btn color="warning" label="取消" v-close-popup />
+        <q-btn :disable="deleteCheck != c_act_code.trim()" color="positive" label="確定" @click="onOKDelete"
+          v-close-popup />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -24,30 +25,30 @@
   <q-dialog v-model="confirmPlanDialog">
     <q-card class="q-dialog-plugin">
       <q-card-section>
-        用 {{username}} 的身份提交計劃？
+        用 {{ username }} 的身份提交計劃？
       </q-card-section>
       <q-card-section>
         注意：提交後不能再修改報告！
       </q-card-section>
       <q-card-actions align="right">
-        <q-btn color="warning" label="取消" v-close-popup/>
-        <q-btn color="positive" label="確定" @click="onOKClickPlan" v-close-popup/>
+        <q-btn color="warning" label="取消" v-close-popup />
+        <q-btn color="positive" label="確定" @click="onOKClickPlan" v-close-popup />
       </q-card-actions>
     </q-card>
   </q-dialog>
 
-   <!-- confirm submit eval dialog -->
-   <q-dialog v-model="confirmEvalDialog">
+  <!-- confirm submit eval dialog -->
+  <q-dialog v-model="confirmEvalDialog">
     <q-card class="q-dialog-plugin">
       <q-card-section>
-        用 {{username}} 的身份提交檢討？
+        用 {{ username }} 的身份提交檢討？
       </q-card-section>
       <q-card-section>
         注意：提交後不能再修改報告！
       </q-card-section>
       <q-card-actions align="right">
-        <q-btn color="warning" label="取消" v-close-popup/>
-        <q-btn color="positive" label="確定" @click="onOKClickEval" v-close-popup/>
+        <q-btn color="warning" label="取消" v-close-popup />
+        <q-btn color="positive" label="確定" @click="onOKClickEval" v-close-popup />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -56,269 +57,88 @@
   <q-dialog v-model="approvalDialog">
     <q-card class="q-dialog-plugin">
       <q-card-section class="bg-primary text-white text-body1">
-        <span v-if="mode == 'plan'">計劃</span><span v-else>檢討</span>批核 - {{Event.c_act_name}}({{c_act_code}})
+        <span v-if="mode == 'plan'">計劃</span><span v-else>檢討</span>批核 - {{ Event.c_act_name }}({{ c_act_code }})
       </q-card-section>
       <q-card-section class="row q-mt-md">
         <div class="col-12">主管意見：</div>
-        <q-input class="col-12" v-model="EvaluationComment" filled type="textarea"/>
+        <q-input class="col-12" v-model="EvaluationComment" filled type="textarea" />
       </q-card-section>
       <q-card-actions align="right">
-        <q-btn color="warning" label="取消" v-close-popup/>
-        <q-btn color="negative" label="發回" @click="ApproveDeny" v-close-popup/>
-        <q-btn color="positive" label="批准" @click="ApproveOK" v-close-popup/>
+        <q-btn color="warning" label="取消" v-close-popup />
+        <q-btn color="negative" label="發回" @click="ApproveDeny" v-close-popup />
+        <q-btn color="positive" label="批准" @click="ApproveOK" v-close-popup />
       </q-card-actions>
     </q-card>
   </q-dialog>
 
   <div class="q-px-md text-h6 bg-primary text-white q-py-md row">
     <span class="col-xs-12 col-sm-6 col-md-6 row">
-      <div class="col-xs-12">{{ c_act_code }} - {{Event.c_act_name}}</div>
+      <div class="col-xs-12">{{ c_act_code }} - {{ Event.c_act_name }}</div>
       <div class="col-xs-12">
-        <q-btn v-if="!edit && (!isSubmitted || isEventApprove)" icon="edit" flat @click="startEdit">
+        <q-btn icon="description" flat :to="{ path: '/event/detail/' + route.params.id + '/evaluation/view' }">
+          <q-tooltip class="bg-white text-primary">檢視</q-tooltip>
+        </q-btn>
+
+        <q-btn v-if="!edit && (!isSubmitted || isEventApprove)" icon="edit" flat :to="{
+    path: '/event/detail/' + route.params.id + '/evaluation/edit'
+  }">
           <q-tooltip class="bg-white text-primary">修改</q-tooltip>
         </q-btn>
-        <q-btn v-if="edit" icon="save" flat @click="saveEdit">
-          <q-tooltip class="bg-white text-primary">儲存</q-tooltip>
-        </q-btn>
-        <q-btn v-if="edit" icon="cancel" flat @click="edit = false">
-          <q-tooltip class="bg-white text-primary">取消</q-tooltip>
-        </q-btn>
 
-        <q-btn-dropdown v-if="!edit && planSubmitted " flat icon="print" color="bg-primary text-white">
-          <q-list>
-            <q-item v-if="!edit && planSubmitted" clickable v-close-popup @click="printPlan = true">
-              <q-item-section>
-                <q-item-label>計劃</q-item-label>
-              </q-item-section>
-            </q-item>
-
-            <q-item v-if="!edit && evalSubmitted" clickable v-close-popup @click="printEvaluation = true">
-              <q-item-section>
-                <q-item-label>檢討</q-item-label>
-              </q-item-section>
-            </q-item>
-          </q-list>
-        </q-btn-dropdown>
-        <q-btn v-if="isSystemAdmin && Object.keys(PlanEval).length > 0" icon="delete" class="text-negative" flat @click="confirmDeleteDialog = true">
+        <q-btn v-if="isSystemAdmin && !edit && Object.keys(PlanEval).length > 0" icon="delete" class="text-negative"
+          flat @click="confirmDeleteDialog = true">
           <q-tooltip class="bg-white text-negative">刪除</q-tooltip>
+        </q-btn>
+
+        <q-btn v-if="isSystemAdmin && !edit && planSubmitted" icon="print" flat
+          :to="{ path: '/event/detail/' + route.params.id + '/evaluation/print/planning' }">
+          <!--<q-btn icon="print" flat @click="pdfModal = true">-->
+          <q-tooltip class="bg-white text-primary">列印計劃</q-tooltip>
+          <q-badge>計劃</q-badge>
+        </q-btn>
+
+        <q-btn v-if="isSystemAdmin && !edit && evalSubmitted" icon="print" flat
+          :to="{ path: '/event/detail/' + route.params.id + '/evaluation/print/evaluation' }">
+          <!--<q-btn icon="print" flat @click="pdfModal = true">-->
+          <q-tooltip class="bg-white text-primary">列印檢討</q-tooltip>
+          <q-badge>檢討</q-badge>
         </q-btn>
       </div>
     </span>
-    <q-space/>
+    <q-space />
     <div class="col-xs-12 col-sm-2 col-md-2">
-      <q-btn bordered class="bg-positive text-white" v-if="PlanEval.submit_plan_date && !PlanEval.ic_plan_date && isEventApprove" @click="startApprove('plan')" icon="verified" label="批核計劃"/>
-      <q-btn bordered class="bg-positive text-white" v-if="PlanEval.submit_eval_date && !PlanEval.ic_eval_date && isEventApprove" @click="startApprove('eval')" icon="verified" label="批核檢討"/>
-      <q-btn v-if="Object.keys(PlanEval).length > 0 && !PlanEval.submit_plan_date && !edit" icon="verified" label="提交計劃" class="bg-positive text-white" bordered @click="confirmPlanDialog = true" />
-      <q-btn v-if="Object.keys(PlanEval).length > 0 && !PlanEval.submit_eval_date && PlanEval.submit_plan_date && PlanEval.ic_plan_date && !edit" icon="verified" label="提交檢討" class="bg-purple-6 text-white" bordered @click="confirmEvalDialog = true" />
+      <q-btn bordered class="bg-positive text-white"
+        v-if="PlanEval.submit_plan_date && !PlanEval.ic_plan_date && isEventApprove" @click="startApprove('plan')"
+        icon="verified" label="批核計劃" />
+      <q-btn bordered class="bg-positive text-white"
+        v-if="PlanEval.submit_eval_date && !PlanEval.ic_eval_date && isEventApprove" @click="startApprove('eval')"
+        icon="verified" label="批核檢討" />
+      <q-btn v-if="Object.keys(PlanEval).length > 0 && !PlanEval.submit_plan_date && !edit" icon="verified" label="提交計劃"
+        class="bg-positive text-white" bordered @click="confirmPlanDialog = true" />
+      <q-btn
+        v-if="Object.keys(PlanEval).length > 0 && !PlanEval.submit_eval_date && PlanEval.submit_plan_date && PlanEval.ic_plan_date && !edit"
+        icon="verified" label="提交檢討" class="bg-purple-6 text-white" bordered @click="confirmEvalDialog = true" />
     </div>
     <div class="col-xs-12 col-sm-4 col-md-4 text-right">
       <div class="col-6">
-        <q-chip dense v-if="PlanEval.submit_plan_date">已提交計劃：{{PlanEval.staff_name}} @ {{qdate.formatDate(PlanEval.submit_plan_date, "YYYY年M月D日")}}</q-chip>
-        <q-chip dense v-if="PlanEval.ic_plan_date">已審批計劃：{{qdate.formatDate(PlanEval.ic_plan_date, "YYYY年M月D日")}}</q-chip>
+        <q-chip dense v-if="PlanEval.submit_plan_date">已提交計劃：{{ PlanEval.staff_name }} @
+          {{ qdate.formatDate(PlanEval.submit_plan_date, "YYYY年M月D日") }}</q-chip>
+        <q-chip dense v-if="PlanEval.ic_plan_date">已審批計劃：{{ qdate.formatDate(PlanEval.ic_plan_date,
+    "YYYY年M月D日") }}</q-chip>
       </div>
       <div class="col-6">
-        <q-chip dense v-if="PlanEval.submit_eval_date">已提交檢討：{{PlanEval.staff_name}} @ {{qdate.formatDate(PlanEval.submit_eval_date, "YYYY年M月D日")}}</q-chip>
-        <q-chip dense v-if="PlanEval.ic_eval_date">已審批檢討：{{qdate.formatDate(PlanEval.ic_eval_date, "YYYY年M月D日")}}</q-chip>
+        <q-chip dense v-if="PlanEval.submit_eval_date">已提交檢討：{{ PlanEval.staff_name }} @
+          {{ qdate.formatDate(PlanEval.submit_eval_date, "YYYY年M月D日") }}</q-chip>
+        <q-chip dense v-if="PlanEval.ic_eval_date">已審批檢討：{{ qdate.formatDate(PlanEval.ic_eval_date,
+    "YYYY年M月D日") }}</q-chip>
       </div>
     </div>
   </div>
 
-  <!-- desktop -->
-  <div v-if="$q.screen.gt.xs">
-    <div class="row text-h6">
-      <div v-if="PlanEval.ic_comment" class="col-12 q-my-sm" style="border: 1px dotted red;">審批評語: <span class="col-10" v-if="edit && isEventApprove"><q-input filled type="text" v-model="editObject.ic_comment"/></span><span class="col-10" v-else>{{PlanEval.ic_comment}}</span></div>
-      <div class="col-2 q-my-sm">工作目的: </div><span class="col-10" v-if="edit"><q-input filled type="text" v-model="editObject.objective" maxlength="200"/></span><span class="col-10" v-else>{{PlanEval.objective}}</span>
-      <div class="col-2 q-my-sm">工作內容: </div><span class="col-10" v-if="edit"><q-input filled type="text" v-model="editObject.objective_detail" maxlength="200"/></span><span class="col-10" v-else>{{PlanEval.objective_detail}}</span>
-      <div class="col-2 q-my-sm">合辦機構: </div><span class="col-10" v-if="edit"><q-input filled type="text" v-model="editObject.partner_agency"/></span><span class="col-10" v-else>{{PlanEval.partner_agency}}</span>
-      <div class="col-2 q-my-sm">合辦聯絡人: </div><span class="col-4" v-if="edit"><q-input filled type="text" v-model="editObject.partner_name"/></span><span class="col-4" v-else>{{PlanEval.partner_name}}</span>
-      <div class="col-2 q-my-sm">聯絡人電話: </div><span class="col-4" v-if="edit"><q-input filled type="text" v-model="editObject.partner_phone"/></span><span class="col-4" v-else>{{PlanEval.partner_phone}}</span>
-      <div class="col-2 q-my-sm">導師: </div><span class="col-4" v-if="edit"><q-input filled type="text" v-model="editObject.tutor_name"/></span><span class="col-4" v-else>{{PlanEval.tutor_name}}</span>
-      <div class="col-2 q-my-sm">導師電話: </div><span class="col-4" v-if="edit"><q-input filled type="text" v-model="editObject.tutor_phone"/></span><span class="col-4" v-else>{{PlanEval.tutor_phone}}</span>
-      <div class="col-2 q-my-sm">備註: </div><span class="col-10" v-if="edit"><q-input filled type="text" v-model="editObject.remarks"/></span><span class="col-10" v-else>{{PlanEval.remarks}}</span>
-    </div>
-    <q-splitter
-      v-model="splitterModel"
-      class="fit">
-        <template v-slot:before>
-          <div class="q-pa-md text-h6 bg-secondary text-white">
-            計劃 <q-btn flat v-if="edit" icon="download" label="載入活動資料" @click="loadEventToPlan"/>
-          </div>
-          <div class="row fit q-pa-sm" style="border: 1px solid">
-            <q-chip class="fit" square label="基本資料"/>
-              <div class="col-2 q-my-sm">開始日期: </div>
-              <div class="col-10" v-if="edit">
-                <DateComponent v-model="editObject.plan_start_date"/>
-              </div>
-              <div class="col-10" v-else>{{qdate.formatDate(PlanEval.plan_start_date, "YYYY-MM-DD")}}</div>
-            <div class="col-2 q-my-sm">結束日期: </div>
-              <div class="col-10" v-if="edit">
-                <DateComponent v-model="editObject.plan_end_date"/>
-              </div>
-              <div class="col-10" v-else>{{qdate.formatDate(PlanEval.plan_end_date, "YYYY-MM-DD")}}</div>
-            <div class="col-2 q-my-sm">開始時間: </div>
-              <div class="col-10" v-if="edit">
-                <TimeComponent v-model="editObject.plan_start_time"/>
-              </div>
-              <div class="col-10" v-else>{{PlanEval.plan_start_time ? PlanEval.plan_start_time.split(":")[0] + ":" + PlanEval.plan_start_time.split(":")[1]: ""}}</div>
-              <!--<div class="col-10" v-else>{{PlanEval.plan_start_time}}</div>-->
-            <div class="col-2 q-my-sm">結束時間: </div>
-              <div class="col-10" v-if="edit">
-                <TimeComponent v-model="editObject.plan_end_time"/>
-              </div>
-              <div class="col-10" v-else>{{PlanEval.plan_end_time ? PlanEval.plan_end_time.split(":")[0] + ":" + PlanEval.plan_end_time.split(":")[1] : ""}}</div>
-            <div class="col-2 q-my-sm">次數: </div>
-              <div class="col-10" v-if="edit">
-                <q-input type="number" filled v-model="editObject.plan_sessions"/>
-              </div>
-              <div class="col-10" v-else>{{PlanEval.plan_sessions}}</div>
-            <div class="col-2 q-my-sm invisible">協助義工人數: </div>
-              <div class="col-10 invisible" v-if="edit">
-                <q-input type="number" filled v-model="editObject.eval_volunteer_count"/>
-              </div>
-              <div class="col-10 invisible" v-else>{{PlanEval.eval_volunteer_count}}</div>
-          </div>
-
-          <div class="row fit q-pa-sm" style="border: 1px solid">
-            <q-chip class="fit" square label="出席記錄"/>
-            <div class="col-3 q-my-sm">青年節數: <span v-if="edit"><q-input type="number" filled v-model="editObject.plan_attend_session_youth"/></span><span v-else>{{PlanEval.plan_attend_session_youth}}</span></div>
-            <div class="col-3 q-my-sm">兒童節數: <span v-if="edit"><q-input type="number" filled v-model="editObject.plan_attend_session_children"/></span><span v-else>{{PlanEval.plan_attend_session_children}}</span></div>
-            <div class="col-3 q-my-sm">家長節數: <span v-if="edit"><q-input type="number" filled v-model="editObject.plan_attend_session_parent"/></span><span v-else>{{PlanEval.plan_attend_session_parent}}</span></div>
-            <div class="col-3 q-my-sm">公眾節數: <span v-if="edit"><q-input type="number" filled v-model="editObject.plan_attend_session_others"/></span><span v-else>{{PlanEval.plan_attend_session_others}}</span></div>
-            <q-separator class="fit" inset/>
-            <div class="col-3 q-my-sm">青年人次: <span v-if="edit"><q-input type="number" filled v-model="editObject.plan_attend_headcount_youth"/></span><span v-else>{{PlanEval.plan_attend_headcount_youth}}</span></div>
-            <div class="col-3 q-my-sm">兒童人次: <span v-if="edit"><q-input type="number" filled v-model="editObject.plan_attend_headcount_children"/></span><span v-else>{{PlanEval.plan_attend_headcount_children}}</span></div>
-            <div class="col-3 q-my-sm">家長人次: <span v-if="edit"><q-input type="number" filled v-model="editObject.plan_attend_headcount_parent"/></span><span v-else>{{PlanEval.plan_attend_headcount_parent}}</span></div>
-            <div class="col-3 q-my-sm">公眾人次: <span v-if="edit"><q-input type="number" filled v-model="editObject.plan_attend_headcount_others"/></span><span v-else>{{PlanEval.plan_attend_headcount_others}}</span></div>
-          </div>
-
-          <div class="row fit q-pa-sm" style="border: 1px solid">
-            <q-chip class="fit" square label="財政預算"/>
-            <div v-if="Object.keys(PlanEval).length == 0">先儲存活動計劃才能開始財政預算</div>
-            <div v-else class="row col-grow">
-              <div class="col-6 row content-start">
-                <EvaluationAccount :respon="[Event.c_respon? Event.c_respon.trim(): '', Event.c_respon2? Event.c_respon2.trim(): '']" :isSubmitted="isSubmitted" type="收入" planeval="計劃" :eval_uuid="PlanEval.uuid" :c_act_code="PlanEval.c_act_code"/>
-              </div>
-              <div class="col-6 row content-start">
-                <EvaluationAccount :respon="[Event.c_respon? Event.c_respon.trim(): '', Event.c_respon2? Event.c_respon2.trim(): '']" :isSubmitted="isSubmitted" type="支出" planeval="計劃" :eval_uuid="PlanEval.uuid" :c_act_code="PlanEval.c_act_code"/>
-              </div>
-            </div>
-          </div>
-        </template>
-        <template v-slot:after>
-          <div class="q-pa-md text-h6 bg-warning text-white">
-            檢討 <q-btn flat v-if="edit" icon="download" label="載入活動資料" @click="loadEventToEval"/>
-          </div>
-          <div class="row fit q-pa-sm" style="border: 1px solid">
-            <q-chip class="fit" square label="基本資料"/>
-              <div class="col-2 q-my-sm">開始日期: </div>
-              <div class="col-10" v-if="edit">
-                <DateComponent v-model="editObject.eval_start_date"/>
-              </div>
-              <div class="col-10" v-else>{{qdate.formatDate(PlanEval.eval_start_date, "YYYY-MM-DD")}}</div>
-            <div class="col-2 q-my-sm">結束日期: </div>
-              <div class="col-10" v-if="edit">
-                <DateComponent v-model="editObject.eval_end_date"/>
-              </div>
-              <div class="col-10" v-else>{{qdate.formatDate(PlanEval.eval_end_date, "YYYY-MM-DD")}}</div>
-            <div class="col-2 q-my-sm">開始時間: </div>
-              <div class="col-10" v-if="edit">
-                <TimeComponent v-model="editObject.eval_start_time"/>
-              </div>
-              <div class="col-10" v-else>{{PlanEval.eval_start_time ? PlanEval.eval_start_time.split(":")[0] + ":" + PlanEval.eval_start_time.split(":")[1]: ""}}</div>
-            <div class="col-2 q-my-sm">結束時間: </div>
-              <div class="col-10" v-if="edit">
-                <TimeComponent v-model="editObject.eval_end_time"/>
-              </div>
-              <div class="col-10" v-else>{{PlanEval.eval_end_time ? PlanEval.eval_end_time.split(":")[0] + ":" + PlanEval.eval_end_time.split(":")[1] : ""}}</div>
-            <div class="col-2 q-my-sm">次數: </div>
-              <div class="col-10" v-if="edit">
-                <q-input type="number" filled v-model="editObject.eval_sessions"/>
-              </div>
-              <div class="col-10" v-else>{{PlanEval.eval_sessions}}</div>
-            <div class="col-2 q-my-sm">協助義工人數: </div>
-              <div class="col-10" v-if="edit">
-                <q-input type="number" filled v-model="editObject.eval_volunteer_count"/>
-              </div>
-              <div class="col-10" v-else>{{PlanEval.eval_volunteer_count}}</div>
-          </div>
-
-          <div class="row fit q-pa-sm" style="border: 1px solid">
-            <q-chip class="fit" square label="出席記錄"/>
-            <div class="col-3 q-my-sm">青年節數: <span v-if="edit"><q-input type="number" filled v-model="editObject.eval_attend_session_youth"/></span><span v-else>{{PlanEval.eval_attend_session_youth}}</span></div>
-            <div class="col-3 q-my-sm">兒童節數: <span v-if="edit"><q-input type="number" filled v-model="editObject.eval_attend_session_children"/></span><span v-else>{{PlanEval.eval_attend_session_children}}</span></div>
-            <div class="col-3 q-my-sm">家長節數: <span v-if="edit"><q-input type="number" filled v-model="editObject.eval_attend_session_parent"/></span><span v-else>{{PlanEval.eval_attend_session_parent}}</span></div>
-            <div class="col-3 q-my-sm">公眾節數: <span v-if="edit"><q-input type="number" filled v-model="editObject.eval_attend_session_others"/></span><span v-else>{{PlanEval.eval_attend_session_others}}</span></div>
-            <q-separator class="fit" inset/>
-            <div class="col-3 q-my-sm">青年人次: <span v-if="edit"><q-input type="number" filled v-model="editObject.eval_attend_headcount_youth"/></span><span v-else>{{PlanEval.eval_attend_headcount_youth}}</span></div>
-            <div class="col-3 q-my-sm">兒童人次: <span v-if="edit"><q-input type="number" filled v-model="editObject.eval_attend_headcount_children"/></span><span v-else>{{PlanEval.eval_attend_headcount_children}}</span></div>
-            <div class="col-3 q-my-sm">家長人次: <span v-if="edit"><q-input type="number" filled v-model="editObject.eval_attend_headcount_parent"/></span><span v-else>{{PlanEval.eval_attend_headcount_parent}}</span></div>
-            <div class="col-3 q-my-sm">公眾人次: <span v-if="edit"><q-input type="number" filled v-model="editObject.eval_attend_headcount_others"/></span><span v-else>{{PlanEval.eval_attend_headcount_others}}</span></div>
-          </div>
-
-          <div class="row fit q-pa-sm" style="border: 1px solid">
-            <q-chip class="fit" square label="財政檢討"/>
-            <div v-if="Object.keys(PlanEval).length == 0">先儲存活動計劃才能開始財政檢討</div>
-            <div v-else class="row col-grow">
-              <div class="col-6 row content-start">
-                <EvaluationAccount :respon="[Event.c_respon? Event.c_respon.trim(): '', Event.c_respon2? Event.c_respon2.trim(): '']" :isSubmitted="isSubmitted" type="收入" planeval="檢討" :eval_uuid="PlanEval.uuid" :c_act_code="PlanEval.c_act_code"/>
-              </div>
-              <div class="col-6 row content-start">
-                <EvaluationAccount :respon="[Event.c_respon? Event.c_respon.trim(): '', Event.c_respon2? Event.c_respon2.trim(): '']" :isSubmitted="isSubmitted" type="支出" planeval="檢討" :eval_uuid="PlanEval.uuid" :c_act_code="PlanEval.c_act_code"/>
-              </div>
-            </div>
-          </div>
-
-          <div class="row fit q-pa-sm items-stretch" style="border: 1px solid">
-            <q-chip class="col-12" square label="成效檢討"/>
-            <div class="col-2 q-my-sm">檢討方法: </div>
-            <div class="col-10 q-my-sm" v-if="edit">
-              <q-input filled type="text" v-model="editObject.objective_review_method"/>
-            </div>
-            <div class="col-10 q-my-sm" v-else>{{PlanEval.objective_review_method}}</div>
-            <div class="col-2 q-my-sm">目標達成: </div>
-              <div class="col-10 q-my-sm" v-if="edit">
-                <q-input class="q-my-sm" type="text" filled v-model="editObject.objective_achieved"/>
-              </div>
-              <div class="col-10 q-my-sm" v-else>{{PlanEval.objective_achieved}}</div>
-            <div class="col-2 q-my-sm">原因: </div>
-              <div class="col-10 q-my-sm" v-if="edit">
-                <q-input class="q-my-sm" type="textarea" filled v-model="editObject.objective_achieved_reason"/>
-              </div>
-              <div class="col-10 q-my-sm" v-else>{{PlanEval.objective_achieved_reason}}</div>
-            <div class="col-2 q-my-sm">跟進/建議: </div>
-              <div class="col-10 q-my-sm" v-if="edit">
-                <q-input class="q-my-sm" type="textarea" filled v-model="editObject.objective_followup"/>
-              </div>
-              <div class="col-10 q-my-sm" v-else>{{PlanEval.objective_followup}}</div>
-          </div>
-        </template>
-    </q-splitter>
-  </div>
-  <div v-else>
-    Mobile version developing, refer to desktop for now
-  </div>
-
-  <q-dialog
-    v-model="printEvaluation"
-    maximized
-    full-width
-    full-height
-    transition-show="slide-up"
-    transition-hide="slide-down"
-    >
-    <EventEvaluationPrint :model-value="Event"/>
-  </q-dialog>
-
-  <q-dialog
-    v-model="printPlan"
-    maximized
-    full-width
-    full-height
-    transition-show="slide-up"
-    transition-hide="slide-down"
-    >
-    <EventPlanPrint :model-value="Event"/>
-  </q-dialog>
+  <EventEvaluationContentView v-if="route.params.action == 'view'" />
+  <EventEvaluationContentEdit v-if="route.params.action == 'edit'" />
+  <EventEvaluationReportPDF v-if="route.params.action == 'print'" :reportType="route.params.type"
+    :c_act_code="route.params.id" />
 </template>
 
 <script setup>
@@ -330,20 +150,18 @@ import { ADD_EVALUATION_FROM_ACT_CODE, UPDATE_EVALUATION_FROM_PK, SUBMIT_EVALUAT
 import { useQuery, useMutation } from "@vue/apollo-composable"
 import { date as qdate, useQuasar } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
-import DateComponent from "components/Basic/DateComponent.vue"
-import TimeComponent from "components/Basic/TimeComponent.vue"
-import EvaluationAccount from "components/Account/EvaluationAccount.vue"
 import { onBeforeRouteLeave } from "vue-router"
 import { httpsCallable } from "@firebase/functions";
 import { getDocs, where, query } from "firebase/firestore"
 import { FirebaseFunctions, usersCollection } from "boot/firebase";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 
 // variables
 const route = useRoute()
+const router = useRouter()
 const c_act_code = ref(route.params.id)
 const splitterModel = ref(50) // default split at 50%
-const edit = ref(false)
+const edit = computed(() => route.path.split("/")[route.path.split("/").length - 1] == 'edit')
 const loading = ref(0)
 const $q = useQuasar()
 const editObject = ref({})
@@ -351,6 +169,7 @@ const $store = useStore();
 const confirmPlanDialog = ref(false)
 const confirmEvalDialog = ref(false)
 const confirmDeleteDialog = ref(false)
+const pdfModal = ref(false)
 const deleteCheck = ref("")
 const approvalDialog = ref(false)
 const EvaluationComment = ref("")
@@ -358,11 +177,14 @@ const userMapping = ref({})
 const mode = ref("")
 const printPlan = ref(false)
 const printEvaluation = ref(false)
-const EventEvaluationPrint = defineAsyncComponent(() =>
-  import('components/Event/EventEvaluationPrint.vue')
+const EventEvaluationReportPDF = defineAsyncComponent(() =>
+  import("components/Event/EventEvaluationReportPDF.vue")
 )
-const EventPlanPrint = defineAsyncComponent(() =>
-  import('components/Event/EventPlanPrint.vue')
+const EventEvaluationContentView = defineAsyncComponent(() =>
+  import("components/Event/EventEvaluationContentView.vue")
+)
+const EventEvaluationContentEdit = defineAsyncComponent(() =>
+  import("components/Event/EventEvaluationContentEdit.vue")
 )
 
 // FireDB Query setup user mapping
@@ -475,20 +297,20 @@ mutation deletePlanEvalFromUUID(
 }
 `)
 // computed
-const Event = computed(() => EventEvaluation.value?.HTX_Event_by_pk??[])
-const PlanEval = computed(() => EventEvaluation.value?.HTX_Event_by_pk.Event_to_Evaluation[0]??[])
+const Event = computed(() => EventEvaluation.value?.HTX_Event_by_pk ?? [])
+const PlanEval = computed(() => EventEvaluation.value?.HTX_Event_by_pk.Event_to_Evaluation[0] ?? [])
 const username = computed(() => $store.getters["userModule/getUsername"])
 const isEventApprove = computed(() => $store.getters["userModule/getEventApprove"])
 const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"])
-const isSubmitted = computed(() => PlanEval.value.submit_plan_date && PlanEval.value.submit_eval_date? PlanEval.value.submit_plan_date.length > 0 && PlanEval.value.submit_eval_date.length > 0 : false)
-const planSubmitted = computed(() => PlanEval.value.submit_plan_date? PlanEval.value.submit_plan_date.length > 0: false)
-const evalSubmitted = computed(() => PlanEval.value.submit_eval_date? PlanEval.value.submit_eval_date.length > 0 : false)
+const isSubmitted = computed(() => PlanEval.value.submit_plan_date && PlanEval.value.submit_eval_date ? PlanEval.value.submit_plan_date.length > 0 && PlanEval.value.submit_eval_date.length > 0 : false)
+const planSubmitted = computed(() => PlanEval.value.submit_plan_date ? PlanEval.value.submit_plan_date.length > 0 : false)
+const evalSubmitted = computed(() => PlanEval.value.submit_eval_date ? PlanEval.value.submit_eval_date.length > 0 : false)
 // success callbacks
-updateEvaluationFromActCode_Completed((result)=>{
+updateEvaluationFromActCode_Completed((result) => {
   notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
 })
 
-addEvaluationFromActCode_Completed((result)=>{
+addEvaluationFromActCode_Completed((result) => {
   notifyClientSuccess(result.data.insert_Event_Evaluation_one.c_act_code)
 })
 
@@ -502,15 +324,17 @@ submitEvaluation_Completed((result) => {
       "notification-notifyUser"
     );
 
-    notifyUser({
-      topic: "eventApprove",
-      data: {
-        title: "提交活動檢討",
-        body: username.value + "提交了活動計劃" + result.data.update_Event_Evaluation_by_pk.c_act_code,
-      }
-    }).then(() => {
-      notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
-    })
+    if (process.env.NODE_ENV != 'development') {
+      notifyUser({
+        topic: "eventApprove",
+        data: {
+          title: "提交活動檢討",
+          body: username.value + "提交了活動計劃" + result.data.update_Event_Evaluation_by_pk.c_act_code,
+        }
+      }).then(() => {
+        notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
+      })
+    }
   }
 })
 
@@ -520,15 +344,19 @@ submitPlan_Completed((result) => {
       "notification-notifyUser"
     );
 
-    notifyUser({
-      topic: "eventApprove",
-      data: {
-        title: "提交活動計劃",
-        body: username.value + "提交了活動計劃" + result.data.update_Event_Evaluation_by_pk.c_act_code,
-      }
-    }).then(() => {
+    if (process.env.NODE_ENV != 'development') {
+      notifyUser({
+        topic: "eventApprove",
+        data: {
+          title: "提交活動計劃",
+          body: username.value + "提交了活動計劃" + result.data.update_Event_Evaluation_by_pk.c_act_code,
+        }
+      }).then(() => {
+        notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
+      })
+    } else {
       notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
-    })
+    }
   }
 })
 
@@ -543,15 +371,19 @@ approvePlan_Completed((result) => {
       "notification-notifyUser"
     );
 
-    notifyUser({
-      topic: userMapping.value[result.data.update_Event_Evaluation_by_pk.staff_name.trim()],
-      data: {
-        title: "活動計劃",
-        body: result.data.update_Event_Evaluation_by_pk.c_act_code + "的計劃已被審批",
-      }
-    }).then(() => {
+    if (process.env.NODE_ENV != 'development') {
+      notifyUser({
+        topic: userMapping.value[result.data.update_Event_Evaluation_by_pk.staff_name.trim()],
+        data: {
+          title: "活動計劃",
+          body: result.data.update_Event_Evaluation_by_pk.c_act_code + "的計劃已被審批",
+        }
+      }).then(() => {
+        notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
+      })
+    } else {
       notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
-    })
+    }
   }
 })
 
@@ -566,15 +398,19 @@ approveEvaluation_Completed((result) => {
       "notification-notifyUser"
     );
 
-    notifyUser({
-      topic: userMapping.value[result.data.update_Event_Evaluation_by_pk.staff_name.trim()],
-      data: {
-        title: "活動檢討",
-        body: result.data.update_Event_Evaluation_by_pk.c_act_code + "的檢討已被審批",
-      }
-    }).then(() => {
+    if (process.env.NODE_ENV != 'development') {
+      notifyUser({
+        topic: userMapping.value[result.data.update_Event_Evaluation_by_pk.staff_name.trim()],
+        data: {
+          title: "活動檢討",
+          body: result.data.update_Event_Evaluation_by_pk.c_act_code + "的檢討已被審批",
+        }
+      }).then(() => {
+        notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
+      })
+    } else {
       notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
-    })
+    }
   }
 })
 
@@ -585,15 +421,19 @@ denyEvaluation_Completed((result) => {
       "notification-notifyUser"
     );
 
-    notifyUser({
-      topic: userMapping.value[result.data.update_Event_Evaluation_by_pk.staff_name.trim()],
-      data: {
-        title: "活動檢討",
-        body: result.data.update_Event_Evaluation_by_pk.c_act_code + "的檢討已被發回",
-      }
-    }).then(() => {
+    if (process.env.NODE_ENV != 'development') {
+      notifyUser({
+        topic: userMapping.value[result.data.update_Event_Evaluation_by_pk.staff_name.trim()],
+        data: {
+          title: "活動檢討",
+          body: result.data.update_Event_Evaluation_by_pk.c_act_code + "的檢討已被發回",
+        }
+      }).then(() => {
+        notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
+      })
+    } else {
       notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
-    })
+    }
   }
 })
 
@@ -603,15 +443,19 @@ denyPlan_Completed((result) => {
       "notification-notifyUser"
     );
 
-    notifyUser({
-      topic: userMapping.value[result.data.update_Event_Evaluation_by_pk.staff_name.trim()],
-      data: {
-        title: "活動計劃",
-        body: result.data.update_Event_Evaluation_by_pk.c_act_code + "的計劃已被審批",
-      }
-    }).then(() => {
+    if (process.env.NODE_ENV != 'development') {
+      notifyUser({
+        topic: userMapping.value[result.data.update_Event_Evaluation_by_pk.staff_name.trim()],
+        data: {
+          title: "活動計劃",
+          body: result.data.update_Event_Evaluation_by_pk.c_act_code + "的計劃已被審批",
+        }
+      }).then(() => {
+        notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
+      })
+    } else {
       notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
-    })
+    }
   }
 })
 
@@ -651,39 +495,12 @@ denyEvaluation_Error((error) => {
 denyPlan_Error((error) => {
   notifyClientError(error)
 })
-// functions
-// start editing
-function startEdit() {
-  clonePlanValue()
-  edit.value = true
-}
 
+// functions
 function startApprove(m) {
   mode.value = m
-  EvaluationComment.value = PlanEval.value.ic_comment? PlanEval.value.ic_comment.trim(): ''
+  EvaluationComment.value = PlanEval.value.ic_comment ? PlanEval.value.ic_comment.trim() : ''
   approvalDialog.value = true
-}
-
-// save
-function saveEdit() {
-  saveRecord()
-  edit.value = false
-}
-
-function loadEventToPlan() {
-  editObject.value.plan_start_date = Event.value.d_date_from? qdate.formatDate(qdate.extractDate(Event.value.d_date_from.trim(), "D/M/YYYY"), "YYYY/MM/DD"): ""
-  editObject.value.plan_end_date = Event.value.d_date_to? qdate.formatDate(qdate.extractDate(Event.value.d_date_to.trim(), "D/M/YYYY"), "YYYY/MM/DD"): ""
-  editObject.value.plan_start_time = Event.value.d_time_from? qdate.formatDate(qdate.extractDate(Event.value.d_time_from.trim(), "h:mm:ss A"), "HH:mm:ss"): ""
-  editObject.value.plan_end_time = Event.value.d_time_to? qdate.formatDate(qdate.extractDate(Event.value.d_time_to.trim(), "h:mm:ss A"), "HH:mm:ss"): ""
-  editObject.value.plan_sessions = Event.value.i_lessons? parseInt(Event.value.i_lessons): 0
-}
-
-function loadEventToEval() {
-  editObject.value.eval_start_date = Event.value.d_date_from? qdate.formatDate(qdate.extractDate(Event.value.d_date_from.trim(), "D/M/YYYY"), "YYYY/MM/DD"): ""
-  editObject.value.eval_end_date = Event.value.d_date_to? qdate.formatDate(qdate.extractDate(Event.value.d_date_to.trim(), "D/M/YYYY"), "YYYY/MM/DD"): ""
-  editObject.value.eval_start_time = Event.value.d_time_from? qdate.formatDate(qdate.extractDate(Event.value.d_time_from.trim(), "h:mm:ss A"), "HH:mm:ss"): ""
-  editObject.value.eval_end_time = Event.value.d_time_to? qdate.formatDate(qdate.extractDate(Event.value.d_time_to.trim(), "h:mm:ss A"), "HH:mm:ss"): ""
-  editObject.value.eval_sessions = Event.value.i_lessons? parseInt(Event.value.i_lessons): 0
 }
 
 function ApproveOK() {
@@ -692,7 +509,7 @@ function ApproveOK() {
       "username": username.value,
       "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
       "module": "活動系統",
-      "action": "批核活動" + mode.value == 'plan'? "計劃: ": "檢討: " + c_act_code.value.trim() + "。主管評語：" + EvaluationComment.value,
+      "action": "批核活動" + mode.value == 'plan' ? "計劃: " : "檢討: " + c_act_code.value.trim() + "。主管評語：" + EvaluationComment.value,
     })
 
     loading.value++
@@ -726,7 +543,7 @@ function ApproveDeny() {
       "username": username.value,
       "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
       "module": "活動系統",
-      "action": "發回活動" + mode.value == 'plan'? "計劃: ": "檢討: " + c_act_code.value.trim() + "。主管評語：" + EvaluationComment.value,
+      "action": "發回活動" + mode.value == 'plan' ? "計劃: " : "檢討: " + c_act_code.value.trim() + "。主管評語：" + EvaluationComment.value,
     })
 
     loading.value++
@@ -756,55 +573,6 @@ function ApproveDeny() {
   // delete Event_Evaluatoin(submit_plan_date)
 }
 
-// purify data before sending to server
-function purifyRecord() {
-  // basic
-  editObject.value.objective = editObject.value.objective? editObject.value.objective.trim() : null
-  editObject.value.objective_detail = editObject.value.objective_detail? editObject.value.objective_detail.trim() : null
-  editObject.value.partner_agency = editObject.value.partner_agency? editObject.value.partner_agency.trim(): null
-  editObject.value.partner_name = editObject.value.partner_name? editObject.value.partner_name.trim(): null
-  editObject.value.partner_phone = editObject.value.partner_phone? editObject.value.partner_phone.trim(): null
-  editObject.value.tutor_name = editObject.value.tutor_name? editObject.value.tutor_name.trim(): null
-  editObject.value.tutor_phone = editObject.value.tutor_phone? editObject.value.tutor_phone.trim(): null
-  editObject.value.remarks = editObject.value.remarks? editObject.value.remarks.trim(): null
-
-  // plan
-  editObject.value.plan_start_date = !editObject.value.plan_start_date? null: qdate.formatDate(editObject.value.plan_start_date, "YYYY-MM-DD")
-  editObject.value.plan_end_date = !editObject.value.plan_end_date? null: qdate.formatDate(editObject.value.plan_end_date, "YYYY-MM-DD")
-  editObject.value.plan_start_time = !editObject.value.plan_start_time? null: editObject.value.plan_start_time
-  editObject.value.plan_end_time = !editObject.value.plan_end_time? null: editObject.value.plan_end_time
-  editObject.value.plan_sessions = !editObject.value.plan_sessions? null: parseInt(editObject.value.plan_sessions)
-  editObject.value.plan_attend_session_youth = !editObject.value.plan_attend_session_youth? null: parseInt(editObject.value.plan_attend_session_youth)
-  editObject.value.plan_attend_session_children = !editObject.value.plan_attend_session_children? null: parseInt(editObject.value.plan_attend_session_children)
-  editObject.value.plan_attend_session_parent = !editObject.value.plan_attend_session_parent? null: parseInt(editObject.value.plan_attend_session_parent)
-  editObject.value.plan_attend_session_others = !editObject.value.plan_attend_session_others? null: parseInt(editObject.value.plan_attend_session_others)
-  editObject.value.plan_attend_headcount_youth = !editObject.value.plan_attend_headcount_youth? null: parseInt(editObject.value.plan_attend_headcount_youth)
-  editObject.value.plan_attend_headcount_children = !editObject.value.plan_attend_headcount_children? null: parseInt(editObject.value.plan_attend_headcount_children)
-  editObject.value.plan_attend_headcount_parent = !editObject.value.plan_attend_headcount_parent? null: parseInt(editObject.value.plan_attend_headcount_parent)
-  editObject.value.plan_attend_headcount_others = !editObject.value.plan_attend_headcount_others? null: parseInt(editObject.value.plan_attend_headcount_others)
-
-  // eval
-  editObject.value.eval_start_date = !editObject.value.eval_start_date? null: qdate.formatDate(editObject.value.eval_start_date, "YYYY-MM-DD")
-  editObject.value.eval_end_date = !editObject.value.eval_end_date? null: qdate.formatDate(editObject.value.eval_end_date, "YYYY-MM-DD")
-  editObject.value.eval_start_time = !editObject.value.eval_start_time? null: editObject.value.eval_start_time
-  editObject.value.eval_end_time = !editObject.value.eval_end_time? null: editObject.value.eval_end_time
-  editObject.value.eval_sessions = !editObject.value.eval_sessions? null: parseInt(editObject.value.eval_sessions)
-  editObject.value.eval_attend_session_youth = !editObject.value.eval_attend_session_youth? null: parseInt(editObject.value.eval_attend_session_youth)
-  editObject.value.eval_attend_session_children = !editObject.value.eval_attend_session_children? null: parseInt(editObject.value.eval_attend_session_children)
-  editObject.value.eval_attend_session_parent = !editObject.value.eval_attend_session_parent? null: parseInt(editObject.value.eval_attend_session_parent)
-  editObject.value.eval_attend_session_others = !editObject.value.eval_attend_session_others? null: parseInt(editObject.value.eval_attend_session_others)
-  editObject.value.eval_attend_headcount_youth = !editObject.value.eval_attend_headcount_youth? null: parseInt(editObject.value.eval_attend_headcount_youth)
-  editObject.value.eval_attend_headcount_children = !editObject.value.eval_attend_headcount_children? null: parseInt(editObject.value.eval_attend_headcount_children)
-  editObject.value.eval_attend_headcount_parent = !editObject.value.eval_attend_headcount_parent? null: parseInt(editObject.value.eval_attend_headcount_parent)
-  editObject.value.eval_attend_headcount_others = !editObject.value.eval_attend_headcount_others? null: parseInt(editObject.value.eval_attend_headcount_others)
-
-  // eval only data
-  editObject.value.eval_volunteer_count = !editObject.value.eval_volunteer_count? null: parseInt(editObject.value.eval_volunteer_count)
-  editObject.value.objective_review_method = !editObject.value.objective_review_method? null: editObject.value.objective_review_method.trim()
-  editObject.value.objective_achieved = !editObject.value.objective_achieved? null: editObject.value.objective_achieved.trim()
-  editObject.value.objective_achieved_reason = !editObject.value.objective_achieved_reason? null: editObject.value.objective_achieved_reason.trim()
-  editObject.value.objective_followup = !editObject.value.objective_followup? null: editObject.value.objective_followup.trim()
-}
 
 // admin only - delete plan/eval
 function onOKDelete() {
@@ -828,10 +596,14 @@ function onOKClickPlan() {
     "module": "活動系統",
     "action": "提交活動計劃: " + c_act_code.value
   })
-  //console.log(PlanEval.value.uuid)
-  //console.log(username.value)
-  //console.log(qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"))
-  //console.log(logObject.value)
+
+  /*
+  console.log(PlanEval.value.uuid)
+  console.log(username.value)
+  console.log(qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"))
+  console.log(logObject.value)
+  */
+
   loading.value++
   submitPlan({
     uuid: PlanEval.value.uuid,
@@ -861,92 +633,6 @@ function onOKClickEval() {
   })
 }
 
-// save the record
-function saveRecord() {
-  purifyRecord()
-  if (PlanEval.value && PlanEval.value.uuid) {
-    const logObject = ref({
-      "username": username.value,
-      "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-      "module": "活動系統",
-      "action": "修改活動計劃/檢討: " + c_act_code.value.trim() + " 內容：" + JSON.stringify(editObject.value, null, "")
-    })
-
-    loading.value++
-    updateEvaluationFromActCode({
-      uuid: PlanEval.value.uuid,
-      logObject: logObject.value,
-      evaluationObject: editObject.value,
-    })
-  } else {
-    const logObject = ref({
-      "username": username.value,
-      "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-      "module": "活動系統",
-      "action": "新增活動計劃/檢討: " + c_act_code.value.trim() + " 內容：" + JSON.stringify(editObject.value, null, " ")
-    })
-
-    loading.value++
-    addEvaluationFromActCode({
-      evaluationObject: editObject.value,
-      logObject: logObject.value
-    })
-  }
-}
-
-// copy server data to editObject for modification
-function clonePlanValue() {
-  editObject.value = {
-    attendance: PlanEval.value && PlanEval.value.attendance? PlanEval.value.attendance.trim(): null,
-    c_act_code: c_act_code.value.trim(),
-    eval_attend_headcount_children: PlanEval.value && PlanEval.value.eval_attend_headcount_children? PlanEval.value.eval_attend_headcount_children: 0,
-    eval_attend_headcount_others: PlanEval.value && PlanEval.value.eval_attend_headcount_others? PlanEval.value.eval_attend_headcount_others: 0,
-    eval_attend_headcount_parent: PlanEval.value && PlanEval.value.eval_attend_headcount_parent? PlanEval.value.eval_attend_headcount_parent: 0,
-    eval_attend_headcount_youth: PlanEval.value && PlanEval.value.eval_attend_headcount_youth? PlanEval.value.eval_attend_headcount_youth: 0,
-    eval_attend_session_children: PlanEval.value && PlanEval.value.eval_attend_session_children? PlanEval.value.eval_attend_session_children: 0,
-    eval_attend_session_others: PlanEval.value && PlanEval.value.eval_attend_session_others? PlanEval.value.eval_attend_session_others: 0,
-    eval_attend_headcount_parent: PlanEval.value && PlanEval.value.eval_attend_headcount_parent? PlanEval.value.eval_attend_headcount_parent: 0,
-    eval_attend_session_youth: PlanEval.value && PlanEval.value.eval_attend_session_youth? PlanEval.value.eval_attend_session_youth: 0,
-    eval_end_date: PlanEval.value && PlanEval.value.eval_end_date? PlanEval.value.eval_end_date: null,
-    eval_end_time: PlanEval.value && PlanEval.value.eval_end_time? PlanEval.value.eval_end_time: null,
-    eval_sessions: PlanEval.value && PlanEval.value.eval_sessions? PlanEval.value: null,
-    eval_start_date: PlanEval.value && PlanEval.value.eval_start_date? PlanEval.value.eval_start_date: null,
-    eval_start_time: PlanEval.value && PlanEval.value.eval_start_time? PlanEval.value.eval_start_time: null,
-    eval_volunteer_count: PlanEval.value && PlanEval.value.eval_volunteer_count? PlanEval.value.eval_volunteer_count: 0,
-    ic: PlanEval.value && PlanEval.value.ic? PlanEval.value.ic.trim(): null,
-    ic_plan_date: PlanEval.value && PlanEval.value.ic_plan_date? PlanEval.value.ic_plan_date: null,
-    ic_comment: PlanEval.value && PlanEval.value.ic_comment? PlanEval.value.ic_comment.trim():null,
-    objective: PlanEval.value && PlanEval.value.objective? PlanEval.value.objective.trim(): null,
-    objective_achieved: PlanEval.value && PlanEval.value.objective_achieved? PlanEval.value.objective_achieved.trim(): null,
-    objective_achieved_reason: PlanEval.value && PlanEval.value.objective_achieved_reason? PlanEval.value.objective_achieved_reason.trim(): null,
-    objective_followup: PlanEval.value && PlanEval.value.objective_followup? PlanEval.value.objective_followup.trim(): null,
-    objective_detail: PlanEval.value && PlanEval.value.objective_detail? PlanEval.value.objective_detail.trim(): null,
-    objective_review_method: PlanEval.value && PlanEval.value.objective_review_method? PlanEval.value.objective_review_method.trim(): null,
-    partner_agency: PlanEval.value && PlanEval.value.partner_agency? PlanEval.value.partner_agency.trim(): null,
-    partner_name: PlanEval.value && PlanEval.value.partner_name? PlanEval.value.partner_name.trim(): null,
-    partner_phone: PlanEval.value && PlanEval.value.partner_phone? PlanEval.value.partner_phone.trim(): null,
-    tutor_name: PlanEval.value && PlanEval.value.tutor_name? PlanEval.value.tutor_name.trim(): null,
-    tutor_phone: PlanEval.value && PlanEval.value.tutor_phone? PlanEval.value.tutor_phone.trim(): null,
-    remarks: PlanEval.value && PlanEval.value.remarks? PlanEval.value.remarks.trim(): null,
-    plan_attend_headcount_children: PlanEval.value && PlanEval.value.plan_attend_headcount_children? PlanEval.value.plan_attend_headcount_children: 0,
-    plan_attend_headcount_others: PlanEval.value && PlanEval.value.plan_attend_headcount_others? PlanEval.value.plan_attend_headcount_others: 0,
-    plan_attend_headcount_parent: PlanEval.value && PlanEval.value.plan_attend_headcount_parent? PlanEval.value.plan_attend_headcount_parent: 0,
-    plan_attend_headcount_youth: PlanEval.value && PlanEval.value.plan_attend_headcount_youth? PlanEval.value.plan_attend_headcount_youth: 0,
-    plan_attend_session_children: PlanEval.value && PlanEval.value.plan_attend_session_children? PlanEval.value.plan_attend_session_children: 0,
-    plan_attend_session_others: PlanEval.value && PlanEval.value.plan_attend_session_others? PlanEval.value.plan_attend_session_others: 0,
-    plan_attend_session_parent: PlanEval.value && PlanEval.value.plan_attend_session_parent? PlanEval.value.plan_attend_session_parent: 0,
-    plan_attend_session_youth: PlanEval.value && PlanEval.value.plan_attend_session_youth? PlanEval.value.plan_attend_session_youth: 0,
-    plan_end_date: PlanEval.value && PlanEval.value.plan_end_date? qdate.formatDate(PlanEval.value.plan_end_date, "YYYY/MM/DD"): null,
-    plan_end_time: PlanEval.value && PlanEval.value.plan_end_time? PlanEval.value.plan_end_time: null,
-    plan_start_date: PlanEval.value && PlanEval.value.plan_start_date? qdate.formatDate(PlanEval.value.plan_start_date, "YYYY/MM/DD"): null,
-    plan_start_time: PlanEval.value && PlanEval.value.plan_start_time? PlanEval.value.plan_start_time: null,
-    plan_sessions: PlanEval.value && PlanEval.value.plan_sessions? PlanEval.value.plan_sessions: 0,
-    staff_name: PlanEval.value && PlanEval.value.staff_name? PlanEval.value.staff_name.trim(): null,
-    submit_plan_date: PlanEval.value && PlanEval.value.submit_plan_date? PlanEval.value.submit_plan_date: null,
-    supervisor: PlanEval.value && PlanEval.value.supervisor? PlanEval.value.supervisor.trim(): null,
-    supervisor_date: PlanEval.value && PlanEval.value.supervisor_date? PlanEval.value.supervisor_date: null,
-  }
-}
 
 // UI response
 function notifyClientError(error) {
@@ -996,4 +682,3 @@ onBeforeRouteLeave((to, from) => {
   }
 })
 </script>
-
