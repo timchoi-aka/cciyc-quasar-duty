@@ -396,7 +396,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from "vue";
+import { computed, ref, onMounted, watch } from "vue";
 import { useStore } from "vuex";
 import { date as qdate, useQuasar } from "quasar";
 import { EVENT_BY_PK } from "/src/graphQueries/Event/query.js"
@@ -408,20 +408,14 @@ import LoadingDialog from "components/LoadingDialog.vue"
 import { usersCollection, FirebaseAuth } from "boot/firebase";
 import { getDocs, query, where } from "firebase/firestore";
 import StaffSelectionMultiple from "src/components/Basic/StaffSelectionMultiple.vue";
-import { useRoute, onBeforeRouteLeave } from "vue-router";
+import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router";
 import FileUpload from 'src/components/Basic/FileUpload.vue'
+import { useEventProvider } from "src/providers/event.js";
+import User from "src/components/class/user.js";
 
 const route = useRoute()
-const token = ref()
-onMounted(async () => {
-  token.value = await FirebaseAuth.currentUser.getIdToken();
-})
-
+const router = useRouter()
 const c_act_code = route.params.id
-// props
-const props = defineProps({
-  c_act_code: String,
-})
 
 // variables
 const $q = useQuasar()
@@ -461,7 +455,7 @@ const group2 = ref([
 ])
 
 const whojoin = ref([
-  '2-6歲幼兒', '7-11歲兒童', '12-14歲青少年', '15-24歲青年', '義工', '童軍', '親子', '新來港人士', '其他人士'
+  '2.5-5歲幼兒', '2-6歲幼兒', '6-14歲兒童/青少年', '7-11歲兒童', '12-14歲青少年', '15-24歲青年', '義工', '童軍', '親子', '新來港人士', '其他人士'
 ])
 
 const whojoin_class = ref({
@@ -473,7 +467,9 @@ const whojoin_class = ref({
   '12-14歲青少年': 10,
   '7-11歲兒童': 11,
   '親子': 12,
-  '新來港人士': 13
+  '新來港人士': 13,
+  '6-14歲兒童/青少年': 14,
+  "2.5-5歲幼兒": 15,
 })
 
 const week = ref([
@@ -485,30 +481,23 @@ const dest = ref([
 ])
 
 
-// query
-const { result: EventData, onError: EventDataError, refetch } = useQuery(
-  EVENT_BY_PK,
-  () => ({
-    c_act_code: c_act_code
-  }));
-const { mutate: delEvent, onDone: delEvent_Completed, onError: delEvent_Error } = useMutation(DELETE_EVENT_BY_PK)
+// call eventProvider
+const { result: EventData, refetch, deleteEventById } = useEventProvider({
+  c_act_code: ref(c_act_code),
+  loadSession: ref(false),
+  loadEvaluation: ref(false),
+})
+
+/* TODO: migrate mutation to provider */
 const { mutate: updateEvent, onDone: updateEvent_Completed, onError: updateEvent_Error } = useMutation(UPDATE_EVENT_BY_PK)
 
-// computed
-const userDocQuery = query(usersCollection,
-  // where("privilege.systemAdmin", "==", false),
-  where("privilege.tmp", "!=", true),
-  where("enable", "==", true)
-)
-
+// load user list
 const UserList = ref([])
+User.loadPermUsers().then((result) => {
+  UserList.value = result.map((user) => user.name)
+})
 
-getDocs(userDocQuery).then((docs) =>
-  docs.forEach((doc) => {
-    UserList.value.push(doc.data().name)
-  })
-)
-
+// computed
 const username = computed(() => $store.getters["userModule/getUsername"])
 const Event = computed(() => EventData.value?.HTX_Event_by_pk ?? [])
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
@@ -568,16 +557,18 @@ function saveEdit() {
 }
 
 function deleteAct() {
-  const logObject = ref({
-    "username": username,
-    "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-    "module": "活動系統",
-    "action": "刪除活動: " + c_act_code + "。最後資料:" + JSON.stringify(Event.value, null, 2)
-  })
-
-  delEvent({
+  /* console.log({
     c_act_code: c_act_code,
-    logObject: logObject.value,
+    staff_name: username.value,
+    eventContent: Event.value
+  }) */
+
+  deleteEventById({
+    c_act_code: c_act_code,
+    staff_name: username.value,
+    eventContent: Event.value
+  }).then(() => {
+    router.push({ name: "EventSearch" })
   })
 }
 
@@ -603,7 +594,7 @@ function purityData() {
   serverObject.value.m_remind_content = serverObject.value.m_remind_content ? serverObject.value.m_remind_content.trim() : null
   serverObject.value.m_remark = serverObject.value.m_remark ? serverObject.value.m_remark.trim() : null
   serverObject.value.IsShow = serverObject.value.IsShow ? 1 : 0
-  serverObject.value.EventClassID = whojoin_class.value[serverObject.value.c_group1]
+  // serverObject.value.EventClassID = whojoin_class.value[serverObject.value.c_group1]
   serverObject.value.i_quota_max = serverObject.value.i_quota_max ? parseInt(serverObject.value.i_quota_max) : 0
   serverObject.value.i_lessons = serverObject.value.i_lessons ? parseInt(serverObject.value.i_lessons) : 0
   serverObject.value.EventClassID = serverObject.value.c_whojoin ? whojoin_class.value[serverObject.value.c_whojoin] : null
@@ -654,12 +645,13 @@ function notifyClientError(error) {
 }
 
 // callback success
+/*
 delEvent_Completed((result) => {
   loading.value--
   $q.notify({
     message: "刪除活動" + result.data.delete_HTX_Event_by_pk.c_act_code + "完成。",
   })
-})
+}) */
 
 updateEvent_Completed((result) => {
   serverObject.value = {}
@@ -674,14 +666,15 @@ updateEvent_Completed((result) => {
 })
 
 // callback error
+/*
 delEvent_Error((error) => {
   notifyClientError(error)
-})
+}) */
 
-EventDataError((error) => {
+/* EventDataError((error) => {
   notifyClientError(error)
 })
-
+ */
 updateEvent_Error((error) => {
   notifyClientError(error)
 })

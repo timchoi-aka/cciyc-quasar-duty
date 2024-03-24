@@ -44,7 +44,7 @@ import { EVENT_FEE_BY_ACT_CODE } from "/src/graphQueries/Event/query.js"
 import { UPDATE_EVENT_FEE, DELETE_EVENT_FEE } from "/src/graphQueries/Event/mutation.js"
 import { useQuery, useMutation } from "@vue/apollo-composable"
 import { useRoute } from 'vue-router'
-
+import { useEventProvider } from "src/providers/event.js"
 
 // variables
 const route = useRoute()
@@ -56,18 +56,15 @@ const editItem = ref([])
 const deleteItem = ref([])
 
 // query
-const { result, onError: EventFeeError, refetch } = useQuery(
-  EVENT_FEE_BY_ACT_CODE,
-  () => ({
-    c_act_code: c_act_code.value
-  }));
+const { result, refetch } = useEventProvider({ c_act_code: c_act_code, loadFee: ref(true) })
 
+/* TODO: migrate mutation to providers */
 const { mutate: updateFee, onDone: updateFee_Completed, onError: updateFee_Error } = useMutation(UPDATE_EVENT_FEE)
 const { mutate: deleteFee, onDone: deleteFee_Completed, onError: deleteFee_Error } = useMutation(DELETE_EVENT_FEE)
 
 // computed
 const username = computed(() => $store.getters["userModule/getUsername"])
-const Fee = computed(() => result.value?.tbl_act_fee??[])
+const Fee = computed(() => result.value && result.value.HTX_Event_by_pk? result.value.HTX_Event_by_pk.Event_to_Fee: [])
 const userProfileLogout = () => $store.dispatch("userModule/logout")
 
 // functions
@@ -175,9 +172,9 @@ deleteFee_Error((error) => {
   notifyClientError(error)
 })
 
-EventFeeError((error) => {
+/* EventFeeError((error) => {
   notifyClientError(error)
-})
+}) */
 
 // UI function
 function notifyClientError(error) {

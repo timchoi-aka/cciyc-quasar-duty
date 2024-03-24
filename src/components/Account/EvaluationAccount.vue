@@ -64,7 +64,7 @@ const inputOptions = ref([
   "其他資助: 青年發展計劃暑期一般活動",
   "其他資助: 青年發展計劃地區青年活動",
   "其他資助: 地區夥伴協作計劃",
-  "報名費"
+  "活動收費"
 ])
 // props
 const props = defineProps({

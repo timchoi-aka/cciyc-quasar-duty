@@ -190,8 +190,8 @@ export default boot(
       link: from([errorLink, link]),
       //link: link,
       defaultOptions: {
-        fetchPolicy: 'network-only',
-        //fetchPolicy: 'cache-and-network',
+        // fetchPolicy: 'network-only',
+        fetchPolicy: 'cache-and-network',
       },
     })
 
@@ -206,11 +206,13 @@ export default boot(
       defaultOptions: {
         $query: {
           loadingKey: 'loading',
-          fetchPolicy: 'network-only',
+          // fetchPolicy: 'network-only',
+          fetchPolicy: 'cache-and-network'
         },
         $mutate: {
           loadingKey: 'loading',
-          fetchPolicy: 'network-only',
+          // fetchPolicy: 'network-only',
+          fetchPolicy: 'cache-and-network'
         }
       },
     })

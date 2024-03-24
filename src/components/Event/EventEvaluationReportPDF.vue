@@ -72,6 +72,46 @@ async function drawContent(doc, event, type) {
   const EvalData = event.Event_to_Evaluation && event.Event_to_Evaluation.length > 0 ? event.Event_to_Evaluation[0] : {}
   const AccountData = event.Event_to_Evaluation && event.Event_to_Evaluation.length > 0 && event.Event_to_Evaluation[0].Evaluation_to_Account ? event.Event_to_Evaluation[0].Evaluation_to_Account : []
 
+  // Use reduce to aggregate data by name, summing income and expenses.
+  const incomeData = computed(() =>
+    AccountData.filter(item => item.type.trim() == '收入').reduce((acc, {description, planeval, amount}) => {
+      if (reportType.value == '檢討' || planeval.trim() === "計劃") {
+        // Initialize the accumulator for this name if it doesn't already exist.
+        let i = acc.findIndex(item => item[0] == description.trim())
+        if (i < 0) {
+          acc.push([description.trim(), 0, 0]);
+        }
+        i = acc.findIndex(item => item[0] == description.trim())
+        // Add to the appropriate type (income or expense).
+        if (planeval.trim() === "計劃") {
+            acc[i][1] += amount;
+        } else if (planeval.trim() === "檢討") {
+            acc[i][2] += amount;
+        }
+      }
+
+      return acc;
+    }, []))
+  const expenseData = computed(() =>
+    AccountData.filter(item => item.type.trim() == '支出').reduce((acc, {description, planeval, amount}) => {
+      if (reportType.value == '檢討' || planeval.trim() === "計劃") {
+        // Initialize the accumulator for this name if it doesn't already exist.
+        let i = acc.findIndex(item => item[0] == description.trim())
+        if (i < 0) {
+          acc.push([description.trim(), 0, 0]);
+        }
+        i = acc.findIndex(item => item[0] == description.trim())
+        // Add to the appropriate type (income or expense).
+        if (planeval.trim() === "計劃") {
+            acc[i][1] += amount;
+        } else if (planeval.trim() === "檢討") {
+            acc[i][2] += amount;
+        }
+      }
+
+      return acc;
+    }, []))
+
   // title and logo
   doc.addImage(logoImage, 'PNG', 60, 2, 13, 12)
   doc.setFontSize(14)
@@ -82,8 +122,8 @@ async function drawContent(doc, event, type) {
   // first line
   let lineNo = 1
   doc.text("活動名稱：", 5, atLine(lineNo), "left")
-  if (event.c_act_code || event.c_act_name) doc.text(event.c_act_name.trim() + "（" + event.c_act_code.trim() + "）", 27, atLine(lineNo), { align: 'left', maxWidth: 100 })
-  doc.line(27, atLine(lineNo) + 1, 120, atLine(lineNo) + 1)
+  if (event.c_act_code || event.c_act_name) doc.text(event.c_act_name.trim() + "（" + event.c_act_code.trim() + "）", 27, atLine(lineNo), { align: 'left', maxWidth: 110 })
+  doc.line(27, atLine(lineNo) + 1, 125, atLine(lineNo) + 1)
   doc.text("性質：", 130, atLine(1), "left")
   if (event.c_nature) doc.text(event.c_nature.trim(), 145, atLine(1), "left")
   doc.line(145, atLine(lineNo) + 1, 200, atLine(lineNo) + 1)
@@ -113,7 +153,7 @@ async function drawContent(doc, event, type) {
   doc.line(30, atLine(lineNo) + 1, 200, atLine(lineNo) + 1)
 
   // forth line - 檢討
-  if (s_evalDateTime.length > 0) {
+  if (reportType.value == '檢討' && s_evalDateTime.length > 0) {
     lineNo++
     doc.text(s_evalDateTime, 30, atLine(lineNo), "left")
     doc.line(30, atLine(lineNo) + 1, 200, atLine(lineNo) + 1)
@@ -176,7 +216,7 @@ async function drawContent(doc, event, type) {
   if (event.tutor_phone) doc.text(event.tutor_phone, 95, atLine(lineNo), "left")
   doc.line(95, atLine(lineNo) + 1, 125, atLine(lineNo) + 1)
   doc.text("協助義工：", 130, atLine(lineNo), "left")
-  if (EvalData.eval_volunteer_count) doc.text(EvalData.eval_volunteer_count, 155, atLine(lineNo), "left")
+  if (EvalData.eval_volunteer_count) doc.text(EvalData.eval_volunteer_count.toString(), 155, atLine(lineNo), "left")
   doc.line(155, atLine(lineNo) + 1, 200, atLine(lineNo) + 1)
 
   // tenth line - 青年節數
@@ -184,12 +224,12 @@ async function drawContent(doc, event, type) {
   doc.text("青年節數：", 5, atLine(lineNo), "left")
   let youthSession = ''
   youthSession += EvalData.plan_attend_session_youth ? "計劃： " + EvalData.plan_attend_session_youth : ''
-  youthSession += EvalData.eval_attend_session_youth ? "/ 檢討： " + EvalData.eval_attend_session_youth : ''
+  if (reportType.value == '檢討') youthSession += EvalData.eval_attend_session_youth ? "/ 檢討： " + EvalData.eval_attend_session_youth : ''
   if (youthSession.length > 0) doc.text(youthSession, 30, atLine(lineNo), "left")
   doc.line(30, atLine(lineNo) + 1, 95, atLine(lineNo) + 1)
   let youthHeadcount = ''
   youthHeadcount += EvalData.plan_attend_headcount_youth ? "計劃： " + EvalData.plan_attend_headcount_youth : ''
-  youthHeadcount += EvalData.eval_attend_headcount_youth ? "/ 檢討： " + EvalData.eval_attend_headcount_youth : ''
+  if (reportType.value == '檢討') youthHeadcount += EvalData.eval_attend_headcount_youth ? "/ 檢討： " + EvalData.eval_attend_headcount_youth : ''
   doc.text("青年人次：", 100, atLine(lineNo), "left")
   if (youthHeadcount.length > 0) doc.text(youthHeadcount, 125, atLine(lineNo), "left")
   doc.line(125, atLine(lineNo) + 1, 200, atLine(lineNo) + 1)
@@ -205,7 +245,7 @@ async function drawContent(doc, event, type) {
   const columns = (reportType.value == '計劃') ? [
     {
       title: "項目",
-      columnWidth: 80,
+      columnWidth: 90,
     },
     {
       title: "計劃",
@@ -215,35 +255,22 @@ async function drawContent(doc, event, type) {
     [
       {
         title: "項目",
-        columnWidth: 70,
+        columnWidth: 73,
       },
       {
         title: "計劃",
-        columnWidth: 15,
+        columnWidth: 17,
       },
       {
         title: "檢討",
-        columnWidth: 15,
+        columnWidth: 10,
       },
     ];
 
-  // Table data
-  const incomeData = (reportType.value == '計劃') ?
-    // 計劃 only
-    AccountData.filter(item => item.type.trim() == '收入').map(item => [item.description.trim(), parseFloat(item.amount)]) :
-    // 計劃 and 檢討
-    AccountData.filter(item => item.type.trim() == '收入').map(item => [item.description.trim(), item.planeval.trim() == '計劃' ? parseFloat(item.amount) : '0', item.planeval.trim() == '檢討' ? parseFloat(item.amount) : '0'])
-
-  const expenseData = (reportType.value == '計劃') ?
-    // 計劃 only
-    AccountData.filter(item => item.type.trim() == '支出').map(item => [item.description.trim(), parseFloat(item.amount)]) :
-    // 計劃 and 檢討
-    AccountData.filter(item => item.type.trim() == '支出').map(item => [item.description.trim(), item.planeval.trim() == '計劃' ? parseFloat(item.amount) : '0', item.planeval.trim() == '檢討' ? parseFloat(item.amount) : '0'])
-
   // draw table
   let incomeTableRows, expenseTableRows = 0
-  incomeTableRows = drawTable(doc, columns, incomeData, 5, lineNo) - lineNo
-  expenseTableRows = drawTable(doc, columns, expenseData, 110, lineNo) - lineNo
+  incomeTableRows = drawTable(doc, columns, incomeData.value, 5, lineNo) - lineNo
+  expenseTableRows = drawTable(doc, columns, expenseData.value, 110, lineNo) - lineNo
   //console.log(incomeTableRows, expenseTableRows)
   lineNo += Math.max(incomeTableRows, expenseTableRows)
 
@@ -256,24 +283,28 @@ async function drawContent(doc, event, type) {
 
   // footer - 簽署
   lineNo += 2
-  doc.text("簽署：", 5, atLine(lineNo), "left")
-  lineNo++
-  doc.text("負責職員簽署：", 5, atLine(lineNo), "left")
+  //doc.text("簽署：", 5, atLine(lineNo), "left")
+  //lineNo++
+  doc.text("負責職員：", 5, atLine(lineNo), "left")
   doc.text("中心主任審閱：", 110, atLine(lineNo), "left")
-  if (event.c_respon) doc.text("（" + event.c_respon.trim() + "）", 70, atLine(lineNo), "left")
-  if (EvalData.ic) doc.text("（" + EvalData.ic.trim() + "）", 180, atLine(lineNo), "left")
-  doc.line(35, atLine(lineNo) + 1, 70, atLine(lineNo) + 1)
+  if (event.c_respon) doc.text(event.c_respon.trim(), 35, atLine(lineNo), "left")
+  if (EvalData.ic) doc.text(EvalData.ic.trim(), 150, atLine(lineNo), "left")
+  doc.line(30, atLine(lineNo) + 1, 70, atLine(lineNo) + 1)
   doc.line(145, atLine(lineNo) + 1, 180, atLine(lineNo) + 1)
 
   // footer - 日期
   lineNo++
   doc.text("日期：", 5, atLine(lineNo), "left")
+  reportType.value == '計劃'? doc.text(date.formatDate(EvalData.submit_plan_date, "YYYY-MM-DD"), 25, atLine(lineNo), "left"): doc.text(date.formatDate(EvalData.submit_eval_date, "YYYY-MM-DD"), 25, atLine(lineNo), "left")
   doc.text("日期：", 110, atLine(lineNo), "left")
+  reportType.value == '計劃'? EvalData.ic_plan_date? doc.text(date.formatDate(EvalData.ic_plan_date, "YYYY-MM-DD"), 135, atLine(lineNo), "left"): '': EvalData.ic_eval_date? doc.text(date.formatDate(EvalData.ic_eval_date, "YYYY-MM-DD"), 135, atLine(lineNo), "left"): ''
   doc.line(20, atLine(lineNo) + 1, 70, atLine(lineNo) + 1)
   doc.line(130, atLine(lineNo) + 1, 180, atLine(lineNo) + 1)
 }
 
 function drawTable(doc, columns, data, initTablePosition, tableStartLine) {
+  // console.log(columns)
+  // console.log("data", data)
   // Draw table headers
   if (data.length > 0) {
     doc.setFontSize(9)
@@ -282,6 +313,9 @@ function drawTable(doc, columns, data, initTablePosition, tableStartLine) {
       doc.text(header.title, curTablePosition, atLine(tableStartLine), { align: index == 0 ? 'left' : 'right' });
       curTablePosition += header.columnWidth;
     });
+    doc.setLineDash([3, 1], 0);
+    doc.line(initTablePosition, atLine(tableStartLine) + 1, initTablePosition + columns.reduce((a, v) => a + parseInt(v.columnWidth), 0) - 10, atLine(tableStartLine) + 1)
+    doc.setLineDash(0, 0);
     tableStartLine++
 
     // Draw table rows
@@ -289,12 +323,18 @@ function drawTable(doc, columns, data, initTablePosition, tableStartLine) {
       curTablePosition = initTablePosition
       row.forEach((cell, index) => {
         //console.log(cell, curTablePosition, atLine(lineNo), 'align: ' + (index%2 == 0? 'left': 'right'))
-        if (index == 0) {
-          doc.text(cell, curTablePosition, atLine(tableStartLine), { align: index == 0 ? 'left' : 'right' });
-        } else {
-          doc.text('HK$' + parseFloat(cell).toFixed(1), curTablePosition, atLine(tableStartLine), "right");
+        if (index < columns.length) {
+          if (index == 0) {
+            doc.text(cell, curTablePosition, atLine(tableStartLine), { align: index == 0 ? 'left' : 'right' });
+          } else {
+            if (Number.isInteger(Number(cell))) {
+              doc.text('$' + parseInt(cell), curTablePosition, atLine(tableStartLine), "right");
+            } else {
+              doc.text('$' + parseFloat(cell).toFixed(2), curTablePosition, atLine(tableStartLine), "right");
+            }
+          }
+          curTablePosition += columns[index].columnWidth;
         }
-        curTablePosition += columns[index].columnWidth;
       });
       tableStartLine++ // Move to the next row
     });
@@ -304,12 +344,12 @@ function drawTable(doc, columns, data, initTablePosition, tableStartLine) {
     doc.line(initTablePosition, atLine(tableStartLine) + 1, initTablePosition + columns.reduce((a, v) => a + parseInt(v.columnWidth), 0) - 10, atLine(tableStartLine) + 1)
     doc.text("合計", curTablePosition, atLine(tableStartLine), "left")
     curTablePosition += columns[0].columnWidth
-    let total = data.reduce((a, b) => a + (b[1] ? b[1] : 0), 0)
-    doc.text('HK$' + parseFloat(total).toFixed(1), curTablePosition, atLine(tableStartLine), "right")
+    let total = data.reduce((a, b) => a + (b[1] ? Number.isInteger(b[1])? parseInt(b[1]): parseFloat(b[1]) : 0), 0)
+    doc.text('$' + (Number.isInteger(total)? parseInt(total).toString() : parseFloat(total).toFixed(2)), curTablePosition, atLine(tableStartLine), "right")
     curTablePosition += columns[1].columnWidth
     if (columns.length > 2) {
-      total = data.reduce((a, b) => a + (b[2] ? b[2] : 0), 0)
-      doc.text('HK$' + parseFloat(total).toFixed(1), curTablePosition, atLine(tableStartLine), "right")
+      total = data.reduce((a, b) => a + (b[2] ? Number.isInteger(b[2])? parseInt(b[2]): parseFloat(b[2]) : 0), 0)
+      doc.text('$' + (Number.isInteger(total)? parseInt(total).toString(): parseFloat(total).toFixed(2)), curTablePosition, atLine(tableStartLine), "right")
     }
   }
   return tableStartLine + 1

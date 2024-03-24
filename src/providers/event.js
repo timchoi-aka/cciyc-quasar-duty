@@ -1,16 +1,19 @@
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { useQuery, useMutation } from "@vue/apollo-composable";
 import { gql } from "graphql-tag"
+import { date, extend } from "quasar";
+import { useNotifier } from "./notifier";
 
-// Function to provide attendance data
+// Function to provide event data
 export function useEventProvider(options = {}) {
-  // Destructure galleryID from options, default to a new ref if not provided
+  // Destructure parameters from options
   const {
     c_act_code = ref(),
     loadEvaluation = ref(false),
     loadSession = ref(false),
     loadFullDetail = ref(false),
     loadWeb = ref(false),
+    loadFee = ref(false),
   } = options
 
   // Ref to keep track of the number of pending async operations
@@ -22,8 +25,11 @@ export function useEventProvider(options = {}) {
   // Ref to store the result of the async operations
   const result = ref([]);
 
+  // returned message to be displayed to client
+  const message = ref({})
+
   // GraphQL query string
-  let GET_EVENT = gql`
+  const GET_EVENT = gql`
   fragment IncludeFullDetail on HTX_Event {
     s_GUID
     s_Generation
@@ -148,13 +154,21 @@ export function useEventProvider(options = {}) {
       s_GUID
     }
   }
+  fragment IncludeFee on HTX_Event {
+    Event_to_Fee {
+      c_act_code
+      c_type
+      u_fee
+    }
+  }
   query GetEvent(
     $c_act_code: String! = "",
     $loadEvaluation: Boolean! = false,
     $loadSession: Boolean! = false,
     $loadFullDetail: Boolean! = false,
     $loadWeb: Boolean! = false,
-    $loadAccount: Boolean! = false
+    $loadAccount: Boolean! = false,
+    $loadFee: Boolean! = false
   ) {
     HTX_Event_by_pk(c_act_code: $c_act_code) {
       EventClassID
@@ -218,210 +232,184 @@ export function useEventProvider(options = {}) {
       ...IncludeFullDetail @include(if: $loadFullDetail)
       ...IncludeEvaluation @include(if: $loadEvaluation)
       ...IncludeSession @include(if: $loadSession)
+      ...IncludeFee @include(if: $loadFee)
     }
   }`;
 
-  /*
-  // Mutation for toggling visibility
-  const TOGGLE_VISIBILITY_MUTATION = gql`
-    mutation toggleVisibility($IsShow: Int!, $GalleryID: Int!) {
-      update_HTX_ClassGallery_by_pk(pk_columns: { GalleryID: $GalleryID }, _set: { IsShow: $IsShow }) {
-        GalleryID
-        IsShow
-      }
-    }`;
 
-  const DELETE_GALLERY_MUTATION = gql`
-    mutation delGallery($GalleryID: Int!) {
-      delete_HTX_ClassGallery_by_pk(GalleryID: $GalleryID) {
-        GalleryID
+  // Mutation for submitting plan
+  const SUBMIT_PLAN = gql`
+    mutation submitPlanFromUUID(
+      $uuid: uniqueidentifier = "",
+      $staff_name: String = "",
+      $submit_plan_date: smalldatetime = "",
+      $logObject: Log_insert_input! = {}
+      ) {
+      update_Event_Evaluation_by_pk(
+        pk_columns: {uuid: $uuid},
+        _set: {
+          staff_name: $staff_name,
+          submit_plan_date: $submit_plan_date
+          ic_plan_date: null
+        }) {
+          uuid
+          c_act_code
+          submit_plan_date
+          staff_name
+      }
+      insert_Log_one(object: $logObject) {
+        log_id
       }
     }`
 
-  // Define the renameGallery mutation
-  const RENAME_GALLERY_MUTATION = gql`
-    mutation RenameGallery($GalleryID: Int!, $GalleryName: String!) {
-      update_HTX_ClassGallery_by_pk(pk_columns: {GalleryID: $GalleryID}, _set: {GalleryName: $GalleryName}) {
-        GalleryID
-        GalleryName
+  // Mutation for deleting an event
+  const DELETE_EVENT_BY_PK = gql`
+    mutation delEventByPK(
+      $logObject: Log_insert_input! = {},
+      $c_act_code: String = "",
+      ) {
+      delete_HTX_Event_by_pk(c_act_code: $c_act_code) {
+        c_act_code
       }
-    }
-    `;
-
-  // Define the updateCover mutation
-  const UPDATE_COVER_MUTATION = gql`
-    mutation UpdateCover($GalleryID: Int!, $CoverPic: String!) {
-      update_HTX_ClassGallery_by_pk(pk_columns: {GalleryID: $GalleryID}, _set: {CoverPic: $CoverPic}) {
-        GalleryID
-        CoverPic
+      insert_Log_one(object: $logObject) {
+        log_id
+        username
       }
-    }`;
+    }`
 
-  // Define the addGallery mutation
-  const ADD_GALLERY = gql`
-    mutation AddGallery($GalleryName: String!, $GalleryNameEN: String!) {
-      insert_HTX_ClassGallery_one(object: { GalleryName: $GalleryName, GalleryNameEN: $GalleryNameEN }) {
-        GalleryID
-        GalleryName
-      }
-    }
-  `;
-    */
-
-  /*
-  // Use the useMutation hook to create a deleteGallery mutation
-  const { mutate: deleteGallery, onError: onError_deleteGallery } = useMutation(DELETE_GALLERY_MUTATION, {
-    update: (cache, { data: { delete_HTX_ClassGallery_by_pk } }) => {
-      // Read the data from our cache for this query.
-      const existingData = cache.readQuery({
-        query: GET_GALLERIES,
-        variables: galleryID.value ? { galleryID: galleryID.value } : {}
-      });
-
-      if (existingData) {
-        // Filter out the deleted gallery
-        const updatedGalleries = existingData.HTX_ClassGallery.filter(
-          gallery => gallery.GalleryID !== delete_HTX_ClassGallery_by_pk.GalleryID
-        );
-
+  /***
+   * submitPlan: Function to execute the SUBMIT_PLAN mutation.
+   * onDone_submitPlan: Callback function that is called when the SUBMIT_PLAN mutation successfully completes.
+   * onError_submitPlan: Callback function that is called when an error occurs while executing the SUBMIT_PLAN mutation.
+   * ***/
+  const { mutate: submitPlan, onError: onError_submitPlan, onDone: onDone_submitPlan } = useMutation(SUBMIT_PLAN, {
+    update: (cache, { data: { update_Event_Evaluation_by_pk } }) => {
+      const existingEvent = cache.readQuery({ query: GET_EVENT, variables: { c_act_code: update_Event_Evaluation_by_pk.c_act_code.trim(), loadEvaluation: true }});
+      // Check if the data is in the cache
+      if (existingEvent) {
+        // Update its submit_plan_date
+        let updatedEvent = {}
+        extend(true, updatedEvent, existingEvent.HTX_Event_by_pk);
+        updatedEvent.Event_to_Evaluation[0].submit_plan_date = update_Event_Evaluation_by_pk.submit_plan_date;
         // Write our data back to the cache.
         cache.writeQuery({
-          query: GET_GALLERIES,
-          variables: galleryID.value ? { galleryID: galleryID.value } : {},
-          data: {
-            ...existingData,
-            HTX_ClassGallery: updatedGalleries
-          },
+          query: GET_EVENT,
+          variables: { c_act_code: update_Event_Evaluation_by_pk.c_act_code.trim(), loadEvaluation: true },
+          data: { ...existingEvent, HTX_Event_by_pk: updatedEvent },
         });
       }
     },
   });
 
-  // Use the useMutation hook to create an addGallery mutation
-  const { mutate: addGallery, onError: onError_addGallery } = useMutation(ADD_GALLERY, {
-    // Update function to modify the cache after the mutation
-    update: (cache, { data: { insert_HTX_ClassGallery_one } }) => {
-      // Read the data from our cache for this query.
-      const existingGalleries = cache.readQuery({ query: GET_GALLERIES });
-
-      // Check if the data is in the cache
-      if (existingGalleries) {
-        // Add the new gallery to the cache
-        const updatedGalleries = [...existingGalleries.HTX_ClassGallery, insert_HTX_ClassGallery_one];
-
-        // Write our data back to the cache.
-        cache.writeQuery({
-          query: GET_GALLERIES,
+  onDone_submitPlan((res) => {
+    if (res.data) {
+      if (process.env.NODE_ENV != 'development') {
+        const { result } = useNotifier({
+          topic: "eventApprove",
           data: {
-            HTX_ClassGallery: updatedGalleries
-          },
-        });
-      }
-    },
-  });
-
-  // Use the useMutation hook to create an updateCover mutation
-  const { mutate: updateCover, onError: onError_updateCover } = useMutation(UPDATE_COVER_MUTATION, {
-    // Update function to modify the cache after the mutation
-    update: (cache, { data: { update_HTX_ClassGallery_by_pk } }) => {
-      // Read the data from our cache for this query.
-      const existingGalleries = cache.readQuery({ query: GET_GALLERIES });
-
-      // Check if the data is in the cache
-      if (existingGalleries) {
-        // Find the gallery we just updated
-        const galleryIndex = existingGalleries.HTX_ClassGallery.findIndex(gallery => gallery.GalleryID === update_HTX_ClassGallery_by_pk.GalleryID);
-
-        if (galleryIndex > -1) {
-          // Update its CoverPic property
-          const updatedGalleries = [...existingGalleries.HTX_ClassGallery];
-          updatedGalleries[galleryIndex].CoverPic = update_HTX_ClassGallery_by_pk.CoverPic;
-
-          // Write our data back to the cache.
-          cache.writeQuery({
-            query: GET_GALLERIES,
-            data: { ...existingGalleries, HTX_ClassGallery: updatedGalleries },
-          });
-        }
-      }
-    },
-  });
-
-  // Use the useMutation hook to create a renameGallery mutation
-  const { mutate: renameGallery, onError: onError_renameGallery } = useMutation(RENAME_GALLERY_MUTATION, {
-    // Update function to modify the cache after the mutation
-    update: (cache, { data: { update_HTX_ClassGallery_by_pk } }) => {
-      // Read the data from our cache for this query.
-      const existingGalleries = cache.readQuery({ query: GET_GALLERIES });
-
-      // Check if the data is in the cache
-      if (existingGalleries) {
-        // Find the gallery we just updated
-        const galleryIndex = existingGalleries.HTX_ClassGallery.findIndex(gallery => gallery.GalleryID === update_HTX_ClassGallery_by_pk.GalleryID);
-
-        if (galleryIndex > -1) {
-          // Update its GalleryName property
-          const updatedGalleries = [...existingGalleries.HTX_ClassGallery];
-          updatedGalleries[galleryIndex].GalleryName = update_HTX_ClassGallery_by_pk.GalleryName;
-
-          // Write our data back to the cache.
-          cache.writeQuery({
-            query: GET_GALLERIES,
-            data: { ...existingGalleries, HTX_ClassGallery: updatedGalleries },
-          });
-        }
-      }
-    },
-  });
-
-  // Update function to modify the cache after the mutation
-  const { mutate: toggleVisibility, onError: onError_toggleVisibility } = useMutation(TOGGLE_VISIBILITY_MUTATION, {
-      update: (cache, { data: { update_HTX_ClassGallery_by_pk } }) => {
-        const existingGalleries = cache.readQuery({ query: GET_GALLERIES });
-
-        // Check if the data is in the cache
-        if (existingGalleries) {
-          // Find the gallery we just updated
-          const galleryIndex = existingGalleries.HTX_ClassGallery.findIndex(gallery => gallery.GalleryID === update_HTX_ClassGallery_by_pk.GalleryID);
-
-          if (galleryIndex > -1) {
-            // Update its IsShow property
-            const updatedGalleries = [...existingGalleries.HTX_ClassGallery];
-            updatedGalleries[galleryIndex].IsShow = update_HTX_ClassGallery_by_pk.IsShow;
-
-            // Write our data back to the cache.
-            cache.writeQuery({
-              query: GET_GALLERIES,
-              data: { ...existingGalleries, HTX_ClassGallery: updatedGalleries },
-            });
+            title: "提交活動計劃",
+            body: "[" + res.data.update_Event_Evaluation_by_pk.staff_name.trim() + "]" + "提交了活動計劃" + res.data.update_Event_Evaluation_by_pk.c_act_code
           }
+        });
+
+        result.value.then((r) => {
+          if (r.data) {
+            message.value = "成功提交了活動計劃 - " + res.data.update_Event_Evaluation_by_pk.c_act_code
+          }
+        }).catch((error) => {
+          message.value = "提交活動計劃失敗"
+        })
+      } else {  // development channel
+        const { result } = useNotifier({
+          topic: "uqhehdGADfWYglt9jDfaab0LGrC3",
+          data: {
+            title: "[DEV]提交活動計劃",
+            body: "[" + res.data.update_Event_Evaluation_by_pk.staff_name.trim() + "]" + "提交了活動計劃" + res.data.update_Event_Evaluation_by_pk.c_act_code
+          }
+        });
+
+        result.value.then((r) => {
+          if (r.data) {
+            message.value = "成功提交了活動計劃 - " + res.data.update_Event_Evaluation_by_pk.c_act_code
+          }
+        }).catch((e) => {
+          console.log("error: ", e)
+          message.value = "提交活動計劃失敗"
+        })
+      }
+    }
+  })
+
+  onError_submitPlan((error) => {
+    message.value = "操作失敗，請聯絡系統管理員。"
+  })
+
+  /***
+   * deleteEvent: Function to execute the DELETE_EVENT mutation.
+   * onDone_deleteEvent: Callback function that is called when the DELETE_EVENT mutation successfully completes.
+   * It modifies the cache to remove the deleted event from the events list.
+   * onError_deleteEvent: Callback function that is called when an error occurs while executing the DELETE_EVENT mutation.
+   * ***/
+  const { mutate: deleteEvent, onError: onError_deleteEvent, onDone: onDone_deleteEvent } = useMutation(DELETE_EVENT_BY_PK, {
+    update: (cache, { data: { delete_HTX_Event_by_pk } }) => {
+      // Evict the event from the cache
+      cache.evict({ c_act_code: cache.identify({ __typename: 'HTX_Event', c_act_code: delete_HTX_Event_by_pk.c_act_code }) });
+      cache.gc();
+    },
+  });
+
+  onDone_deleteEvent((res) => {
+    if (res.data) {
+      if (process.env.NODE_ENV != 'development') {
+        // no notification for delete event
+        // message return to client
+        message.value = "成功刪除活動 - " + res.data.delete_HTX_Event_by_pk.c_act_code.trim()
+      } else {  // development channel
+        const { result } = useNotifier({
+          topic: "uqhehdGADfWYglt9jDfaab0LGrC3",
+          data: {
+            title: "[DEV]刪除活動",
+            body: "[" + res.data.insert_Log_one.username.trim() + "]" + "刪除了活動" + res.data.delete_HTX_Event_by_pk.c_act_code.trim()
+          }
+        });
+
+        result.value.then((r) => {
+          if (r.data) {
+            message.value = "成功刪除活動 - " + res.data.delete_HTX_Event_by_pk.c_act_code.trim()
+          }
+        }).catch((e) => {
+          console.log("error: ", e)
+          message.value = "刪除活動" + res.data.delete_HTX_Event_by_pk.c_act_code.trim() + "失敗"
+        })
+      }
+    } else { // error
+      message.value = "刪除活動" + res.data.delete_HTX_Event_by_pk.c_act_code.trim() + "失敗"
+    }
+  })
+
+  onError_deleteEvent((error) => {
+    message.value = "操作失敗，請聯絡系統管理員。"
+  })
+
+
+  // Function to submit event plan / evaluation by id
+  const submitPlanById = async (payload) => {
+    const { uuid, staff_name, c_act_code } = payload;
+    // console.log("submitPlanById", payload)
+    // Increment the number of pending async operations
+    awaitNumber.value++;
+    try {
+      // Call the toggleVisibility mutation
+      await submitPlan({
+        uuid: uuid,
+        staff_name: staff_name,
+        submit_plan_date: date.formatDate(new Date(), "YYYY-MM-DDTHH:mm:ss"),
+        logObject: {
+          "username": staff_name,
+          "datetime": date.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+          "module": "活動系統",
+          "action": "提交活動計劃: " + c_act_code
         }
-      },
-    });
-
-  // Function to delete a gallery by its ID
-  const deleteGalleryById = async (galleryID) => {
-    // Increment the number of pending async operations
-    awaitNumber.value++;
-    try {
-      const coverResponse = await axios.delete(baseURL, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'path': 'ClassGalleryCover/'+galleryID
-        }})
-      const response = await axios.delete(baseURL, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          path: 'ClassGalleryPhotos/'+galleryID
-        }})
-
-      // Call the deleteGallery mutation
-      await deleteGallery({
-        GalleryID: galleryID
       });
     } catch (error) {
       console.error(error);
@@ -431,15 +419,21 @@ export function useEventProvider(options = {}) {
     }
   };
 
-  // Function to toggle the visibility of a gallery
-  const toggleVisibilityById = async (galleryID) => {
+  // delete event
+  const deleteEventById = async (payload) => {
+    const { eventContent, staff_name, c_act_code } = payload;
     // Increment the number of pending async operations
     awaitNumber.value++;
     try {
-      // Call the toggleVisibility mutation
-      await toggleVisibility({
-        GalleryID: galleryID,
-        IsShow: result.value.find((element) => element.GalleryID == galleryID).IsShow == 1? 0: 1
+      // Call the deleteEvent mutation
+      await deleteEvent({
+        c_act_code: c_act_code,
+        logObject: {
+          "username": staff_name,
+          "datetime": date.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+          "module": "活動系統",
+          "action": "刪除活動: " + c_act_code + "。最後資料:" + JSON.stringify(eventContent, null, 2)
+        }
       });
     } catch (error) {
       console.error(error);
@@ -449,91 +443,6 @@ export function useEventProvider(options = {}) {
     }
   };
 
-  // Function to toggle the visibility of a gallery
-  const renameGalleryById = async (options) => {
-    const { GalleryID, GalleryName } = options;
-    // Increment the number of pending async operations
-    awaitNumber.value++;
-    try {
-      // Call the toggleVisibility mutation
-      await renameGallery({
-        GalleryID: GalleryID,
-        GalleryName: GalleryName
-      });
-    } catch (error) {
-      console.error(error);
-    } finally {
-      // Decrement the number of pending async operations
-      awaitNumber.value--;
-    }
-  };
-
-  // Function to toggle the visibility of a gallery
-  const updateCoverById = async (options) => {
-    const { GalleryID, CoverPic } = options;
-    // Increment the number of pending async operations
-    awaitNumber.value++;
-    try {
-      // Call the toggleVisibility mutation
-      await updateCover({
-        GalleryID: GalleryID,
-        CoverPic: CoverPic
-      });
-    } catch (error) {
-      console.error(error);
-    } finally {
-      // Decrement the number of pending async operations
-      awaitNumber.value--;
-    }
-  };
-
-  // Function to toggle the visibility of a gallery
-  const addNewGallery = async (GalleryName) => {
-    //const { GalleryName } = options;
-    // Increment the number of pending async operations
-    awaitNumber.value++;
-    try {
-      // Call the toggleVisibility mutation
-      await addGallery({
-        GalleryName: GalleryName,
-        GalleryNameEN: GalleryName,
-      });
-    } catch (error) {
-      console.error(error);
-    } finally {
-      // Decrement the number of pending async operations
-      awaitNumber.value--;
-    }
-  };
-
-  onError_deleteGallery((error) => {
-    // Handle error
-    console.error("刪除相薄失敗", error)
-  });
-
-  onError_toggleVisibility((error) => {
-    // Handle error
-    console.error("隱藏顯示相簿失敗", error)
-  });
-
-  // Handle error for renameGallery
-  onError_renameGallery((error) => {
-    // Handle error
-    console.error("Renaming gallery failed", error)
-  });
-
-  // Handle error for updateCover
-  onError_updateCover((error) => {
-    // Handle error
-    console.error("Updating cover failed", error)
-  });
-
-  // Handle error for addGallery
-  onError_addGallery((error) => {
-    // Handle error
-    console.error("Adding gallery failed", error)
-  });
-  */
   // Function to execute the query
   const execute = async () => {
     const { onResult } = useQuery(GET_EVENT,
@@ -543,23 +452,12 @@ export function useEventProvider(options = {}) {
         loadSession: loadSession.value,
         loadFullDetail: loadFullDetail.value,
         loadWeb: loadWeb.value,
+        loadFee: loadFee.value,
       }));
 
     onResult((res) => {
       if (res.data) {
         result.value = res.data
-        /*
-        res.data.HTX_ClassGallery.forEach((data) => {
-          result.value.push({
-            AddTime: new Date(data.AddTime),
-            CoverPic: data.CoverPic? (data.CoverPic.includes("googleapis")? data.CoverPic: eventGalleryServerPath + data.CoverPic): null,
-            GalleryName: data.GalleryName,
-            GalleryNameEN: data.GalleryNameEN,
-            IsShow: data.IsShow,
-            Obsolete: data.CoverPic? !data.CoverPic.includes("googleapis"): false,
-            GalleryID: data.GalleryID,
-          })
-        })*/
         awaitNumber.value--;
       }
     })
@@ -569,6 +467,5 @@ export function useEventProvider(options = {}) {
   execute();
 
   // Return the provided data and functions
-  //return { result, loading, deleteGalleryById, toggleVisibilityById, refetch: execute, renameGalleryById, updateCoverById, addNewGallery };
-  return { result, loading };
+  return { result, message, loading, submitPlanById, refetch: execute, deleteEventById};
 }

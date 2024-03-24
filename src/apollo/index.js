@@ -158,7 +158,8 @@ export /* async */ function getClientOptions(/* {app, router, ...} */ options) {
         }
       ),
       defaultOptions: {
-        fetchPolicy: 'network-only',
+        // fetchPolicy: 'network-only',
+        fetchPolicy: 'cache-and-network'
       },
     },
     // Specific Quasar mode options.

@@ -1,6 +1,6 @@
 <template>
   <!-- loading dialog -->
-  <LoadingDialog v-model="loading" message="處理中" />
+  <LoadingDialog :model-value="loading? 1: 0" message="處理中" />
 
   <!-- confirm delete plan dialog SYSTEM-ADMIN only -->
   <q-dialog v-model="confirmDeleteDialog">
@@ -57,7 +57,8 @@
   <q-dialog v-model="approvalDialog">
     <q-card class="q-dialog-plugin">
       <q-card-section class="bg-primary text-white text-body1">
-        <span v-if="mode == 'plan'">計劃</span><span v-else>檢討</span>批核 - {{ Event.c_act_name }}({{ c_act_code }})
+        <span v-if="mode == 'plan'">計劃</span><span v-else>檢討</span>批核 - {{ Event ? Event.c_act_name : '' }} ({{
+    c_act_code }})
       </q-card-section>
       <q-card-section class="row q-mt-md">
         <div class="col-12">主管意見：</div>
@@ -73,7 +74,7 @@
 
   <div class="q-px-md text-h6 bg-primary text-white q-py-md row">
     <span class="col-xs-12 col-sm-6 col-md-6 row">
-      <div class="col-xs-12">{{ c_act_code }} - {{ Event.c_act_name }}</div>
+      <div class="col-xs-12">{{ c_act_code }} - {{ Event ? Event.c_act_name : '' }} </div>
       <div class="col-xs-12">
         <q-btn icon="description" flat :to="{ path: '/event/detail/' + route.params.id + '/evaluation/view' }">
           <q-tooltip class="bg-white text-primary">檢視</q-tooltip>
@@ -90,14 +91,14 @@
           <q-tooltip class="bg-white text-negative">刪除</q-tooltip>
         </q-btn>
 
-        <q-btn v-if="isSystemAdmin && !edit && planSubmitted" icon="print" flat
+        <q-btn v-if="!edit && planSubmitted" icon="print" flat
           :to="{ path: '/event/detail/' + route.params.id + '/evaluation/print/planning' }">
           <!--<q-btn icon="print" flat @click="pdfModal = true">-->
           <q-tooltip class="bg-white text-primary">列印計劃</q-tooltip>
           <q-badge>計劃</q-badge>
         </q-btn>
 
-        <q-btn v-if="isSystemAdmin && !edit && evalSubmitted" icon="print" flat
+        <q-btn v-if="!edit && evalSubmitted" icon="print" flat
           :to="{ path: '/event/detail/' + route.params.id + '/evaluation/print/evaluation' }">
           <!--<q-btn icon="print" flat @click="pdfModal = true">-->
           <q-tooltip class="bg-white text-primary">列印檢討</q-tooltip>
@@ -138,12 +139,12 @@
   <EventEvaluationContentView v-if="route.params.action == 'view'" />
   <EventEvaluationContentEdit v-if="route.params.action == 'edit'" />
   <EventEvaluationReportPDF v-if="route.params.action == 'print'" :reportType="route.params.type"
-    :c_act_code="route.params.id" />
+    :c_act_code="route.params.id" :key="route.params.type + route.params.id"/>
 </template>
 
 <script setup>
 import { gql } from "graphql-tag"
-import { computed, ref, defineAsyncComponent } from "vue";
+import { computed, ref, defineAsyncComponent, onMounted, watch } from "vue";
 import { useStore } from "vuex";
 import { EVENT_EVALUATION_BY_ACT_CODE } from "/src/graphQueries/Event/query.js"
 import { ADD_EVALUATION_FROM_ACT_CODE, UPDATE_EVALUATION_FROM_PK, SUBMIT_EVALUATION, SUBMIT_PLAN, APPROVE_EVALUATION, APPROVE_PLAN } from "/src/graphQueries/Event/mutation.js"
@@ -152,9 +153,10 @@ import { date as qdate, useQuasar } from "quasar";
 import LoadingDialog from "components/LoadingDialog.vue"
 import { onBeforeRouteLeave } from "vue-router"
 import { httpsCallable } from "@firebase/functions";
-import { getDocs, where, query } from "firebase/firestore"
 import { FirebaseFunctions, usersCollection } from "boot/firebase";
 import { useRoute, useRouter } from "vue-router";
+import { useEventProvider } from "src/providers/event";
+
 
 // variables
 const route = useRoute()
@@ -162,7 +164,6 @@ const router = useRouter()
 const c_act_code = ref(route.params.id)
 const splitterModel = ref(50) // default split at 50%
 const edit = computed(() => route.path.split("/")[route.path.split("/").length - 1] == 'edit')
-const loading = ref(0)
 const $q = useQuasar()
 const editObject = ref({})
 const $store = useStore();
@@ -173,7 +174,6 @@ const pdfModal = ref(false)
 const deleteCheck = ref("")
 const approvalDialog = ref(false)
 const EvaluationComment = ref("")
-const userMapping = ref({})
 const mode = ref("")
 const printPlan = ref(false)
 const printEvaluation = ref(false)
@@ -187,23 +187,22 @@ const EventEvaluationContentEdit = defineAsyncComponent(() =>
   import("components/Event/EventEvaluationContentEdit.vue")
 )
 
-// FireDB Query setup user mapping
-const userQuery = query(usersCollection,
-  where("enable", "==", true)
-)
 
-getDocs(userQuery).then((user) => {
-  user.forEach((u) => {
-    userMapping.value[u.data().name] = u.data().uid
-  });
-});
+const { result: EventEvaluation, submitPlanById, loading, message } = useEventProvider({ c_act_code: c_act_code, loadEvaluation: ref(true) })
+
+watch(message, (value) => {
+  if (value) {
+    $q.notify({ message: value })
+  }
+})
+
+onMounted(async () => {
+
+})
+
+
 
 // queries
-const { result: EventEvaluation, onError: EventEvaluationError, refetch } = useQuery(
-  EVENT_EVALUATION_BY_ACT_CODE,
-  () => ({
-    c_act_code: c_act_code.value
-  }));
 const { mutate: addEvaluationFromActCode, onDone: addEvaluationFromActCode_Completed, onError: addEvaluationFromActCode_Error } = useMutation(ADD_EVALUATION_FROM_ACT_CODE)
 const { mutate: updateEvaluationFromActCode, onDone: updateEvaluationFromActCode_Completed, onError: updateEvaluationFromActCode_Error } = useMutation(UPDATE_EVALUATION_FROM_PK)
 const { mutate: submitPlan, onDone: submitPlan_Completed, onError: submitPlan_Error } = useMutation(SUBMIT_PLAN)
@@ -297,14 +296,15 @@ mutation deletePlanEvalFromUUID(
 }
 `)
 // computed
-const Event = computed(() => EventEvaluation.value?.HTX_Event_by_pk ?? [])
-const PlanEval = computed(() => EventEvaluation.value?.HTX_Event_by_pk.Event_to_Evaluation[0] ?? [])
+const Event = computed(() => EventEvaluation.value ? EventEvaluation.value.HTX_Event_by_pk : {})
+const PlanEval = computed(() => EventEvaluation.value && EventEvaluation.value.HTX_Event_by_pk ? EventEvaluation.value.HTX_Event_by_pk.Event_to_Evaluation[0] : {})
 const username = computed(() => $store.getters["userModule/getUsername"])
 const isEventApprove = computed(() => $store.getters["userModule/getEventApprove"])
 const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"])
 const isSubmitted = computed(() => PlanEval.value.submit_plan_date && PlanEval.value.submit_eval_date ? PlanEval.value.submit_plan_date.length > 0 && PlanEval.value.submit_eval_date.length > 0 : false)
 const planSubmitted = computed(() => PlanEval.value.submit_plan_date ? PlanEval.value.submit_plan_date.length > 0 : false)
 const evalSubmitted = computed(() => PlanEval.value.submit_eval_date ? PlanEval.value.submit_eval_date.length > 0 : false)
+
 // success callbacks
 updateEvaluationFromActCode_Completed((result) => {
   notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code)
@@ -468,9 +468,9 @@ updateEvaluationFromActCode_Error((error) => {
   notifyClientError(error)
 })
 
-EventEvaluationError((error) => {
+/* EventEvaluationError((error) => {
   notifyClientError(error)
-})
+}) */
 
 submitPlan_Error((error) => {
   notifyClientError(error)
@@ -512,7 +512,7 @@ function ApproveOK() {
       "action": "批核活動" + mode.value == 'plan' ? "計劃: " : "檢討: " + c_act_code.value.trim() + "。主管評語：" + EvaluationComment.value,
     })
 
-    loading.value++
+    // loading.value++
     if (mode.value == 'plan') {
       approvePlan({
         logObject: logObject.value,
@@ -546,7 +546,7 @@ function ApproveDeny() {
       "action": "發回活動" + mode.value == 'plan' ? "計劃: " : "檢討: " + c_act_code.value.trim() + "。主管評語：" + EvaluationComment.value,
     })
 
-    loading.value++
+    // loading.value++
     if (mode.value == 'plan') {
       denyPlan({
         logObject: logObject.value,
@@ -582,7 +582,7 @@ function onOKDelete() {
     "module": "活動系統",
     "action": "刪除活動計劃: " + c_act_code.value + " 內容：" + JSON.stringify(PlanEval.value, null, " ")
   })
-  loading.value++
+  // loading.value++
   deletePlanEval({
     uuid: PlanEval.value.uuid,
     logObject: logObject.value,
@@ -604,11 +604,10 @@ function onOKClickPlan() {
   console.log(logObject.value)
   */
 
-  loading.value++
-  submitPlan({
+  submitPlanById({
+    c_act_code: c_act_code.value,
     uuid: PlanEval.value.uuid,
     staff_name: username.value,
-    submit_plan_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
     logObject: logObject.value,
   })
 }
@@ -624,7 +623,7 @@ function onOKClickEval() {
   //console.log(username.value)
   //console.log(qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"))
   //console.log(logObject.value)
-  loading.value++
+  // loading.value++
   submitEvaluation({
     uuid: PlanEval.value.uuid,
     staff_name: username.value,
@@ -649,8 +648,8 @@ function notifyClientError(error) {
 }
 
 function notifyClientSuccess(c_act_code) {
-  refetch()
-  loading.value--
+  // refetch()
+  // loading.value--
   $q.notify({
     message: "活動計劃" + c_act_code + "更新完成。",
   })

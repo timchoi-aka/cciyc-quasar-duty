@@ -16,21 +16,21 @@
       <q-item v-bind="scope.itemProps">
         <q-item-section>
           <q-item-label>
-            {{ scope.opt.c_type_no }} - 
-            {{scope.opt.value }} 
+            {{ scope.opt.c_type_no }} -
+            {{scope.opt.value }}
             ({{ scope.opt.c_acc_type }}) - ${{ scope.opt.u_fee }}
           </q-item-label>
         </q-item-section>
       </q-item>
     </template>
     <template v-slot:selected>
-      <div v-if="props.modelValue">{{ props.modelValue.value }} - ${{ props.modelValue.u_fee }}</div>  
+      <div v-if="props.modelValue">{{ props.modelValue.value }} - ${{ props.modelValue.u_fee }}</div>
     </template>
-    <template v-slot:no-option>          
-      沒有結果    
+    <template v-slot:no-option>
+      沒有結果
     </template>
   </q-select>
-  
+
 </template>
 
 <script setup>
@@ -51,7 +51,7 @@ const OriginalIncomeOptions = ref([])
 // query
 const { onResult } = useQuery(gql`
 query getIncomeType {
-  tbl_sel_acc_Income_type(order_by: {i_No: asc}) {
+  tbl_sel_acc_Income_type(where: {b_disable: {_eq: false}}, order_by: {i_No: asc}) {
     b_fixed
     c_acc_type
     c_type
@@ -89,7 +89,7 @@ function incomeFilter(val, update) {
 
   update(() => {
     IncomeOptions.value = OriginalIncomeOptions.value
-    IncomeOptions.value = IncomeOptions.value.filter(v => 
+    IncomeOptions.value = IncomeOptions.value.filter(v =>
       (v.value? v.value.indexOf(val) > -1 : false) ||
       (v.c_type? v.c_type.toLowerCase().indexOf(val.toLowerCase()) > -1 : false) ||
       (v.c_type_no? v.c_type_no.toLowerCase().indexOf(val.toLowerCase()) > -1 : false)
