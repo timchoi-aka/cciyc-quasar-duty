@@ -31,6 +31,15 @@
   "exclude": [
     "dist",
     ".quasar",
-    "node_modules"
+    "node_modules",
+    "functions",
+    "gradle",
+    "public",
+    "app",
+    ".vscode",
+    ".gradle",
+    ".github",
+    ".firebase",
+    "firebase-export-*",
   ]
 }

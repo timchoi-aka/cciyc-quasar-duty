@@ -21,29 +21,13 @@
     </q-card>
   </q-dialog>
 
-  <!-- save modal -->
-  <q-dialog v-model="saveDialog">
-    <q-card>
-      <q-card-section class="text-h6 bg-primary text-white">
-        新增活動
-      </q-card-section>
-      <q-card-section>
-        確定新增活動？
-      </q-card-section>
-      <q-card-actions>
-        <q-btn icon="check" label="確定" class="bg-positive text-white" v-close-popup="-1" @click="save" />
-        <q-btn icon="cancel" label="取消" class="bg-negative text-white" v-close-popup />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
-
   <q-card v-if="$q.screen.gt.xs" bordered flat class="q-pa-none q-ma-none text-h6 fit">
     <q-card-section class="row bg-grey-2 q-pl-none q-pt-none q-pb-lg">
       <q-chip class="col-12 bg-grey-4" size="xl">基本資料
-        <q-btn v-if="!edit" icon="edit" class="text-primary" flat @click="startEdit">
+        <q-btn v-if="!edit" icon="edit" class="text-primary" flat @click="startEdit(Event)">
           <q-tooltip class="bg-white text-primary">修改</q-tooltip>
         </q-btn>
-        <q-btn v-if="edit" icon="save" flat @click="saveEdit">
+        <q-btn v-if="edit" icon="save" flat @click="saveEdit(editObject)">
           <q-tooltip class="bg-white text-primary">儲存</q-tooltip>
         </q-btn>
         <q-btn v-if="edit" icon="cancel" flat @click="edit = false">
@@ -141,8 +125,7 @@
             v-else>{{ Event.i_quota_max }}</span></span>
         <span class="col-3">總堂數: <q-input v-if="edit" filled type="number" v-model="editObject.i_lessons" /><span
             v-else>{{ Event.i_lessons }}</span></span>
-        <span class="col-3">逢星期: <q-select v-if="edit" filled use-input input-debounce="0" @new-value="newWeek"
-            :options="week" v-model="editObject.c_week" /><span v-else>{{ Event.c_week }}</span></span>
+        <span class="col-3">逢星期: <WeekSelection v-if="edit" v-model="editObject.c_week"/><span v-else>{{ Event.c_week }}</span></span>
       </div>
     </q-card-section>
 
@@ -150,16 +133,10 @@
       <div class="col-6 row items-start content-start">
         <q-chip class="col-12 row bg-brown-3" size="lg">地點</q-chip>
         <div class="row col-12 q-gutter-lg q-ml-sm items-start">
-          <span class="col-11">舉行地點: <q-select v-if="edit" filled use-input input-debounce="0" @filter="saveBuffer"
-              @blur="textBuffer.length > 0 ? updateBuffer(editObject, 'c_dest') : ''" @new-value="newDest" :options="dest"
-              v-model="editObject.c_dest" /><span v-else>{{ Event.c_dest }}</span></span>
-          <span class="col-11">集合地點: <q-select v-if="edit" filled use-input input-debounce="0" @filter="saveBuffer"
-              @blur="textBuffer.length > 0 ? updateBuffer(editObject, 'c_start_collect') : ''" @new-value="newDest"
-              :options="dest" v-model="editObject.c_start_collect" /><span v-else>{{ Event.c_start_collect
+          <span class="col-11">舉行地點: <DestSelection v-if="edit" v-model="editObject.c_dest" /><span v-else>{{ Event.c_dest }}</span></span>
+          <span class="col-11">集合地點: <DestSelection v-if="edit" v-model="editObject.c_start_collect" /><span v-else>{{ Event.c_start_collect
               }}</span></span>
-          <span class="col-11">解散地點: <q-select v-if="edit" filled use-input input-debounce="0" @filter="saveBuffer"
-              @blur="textBuffer.length > 0 ? updateBuffer(editObject, 'c_end_collect') : ''" @new-value="newDest"
-              :options="dest" v-model="editObject.c_end_collect" /><span v-else>{{ Event.c_end_collect }}</span></span>
+          <span class="col-11">解散地點: <DestSelection v-if="edit" v-model="editObject.c_end_collect" /><span v-else>{{ Event.c_end_collect }}</span></span>
         </div>
       </div>
       <div class="col-6 row items-start content-start">
@@ -306,8 +283,7 @@
             v-else>{{ Event.i_quota_max }}</span></span>
         <span class="col-12">總堂數: <q-input v-if="edit" filled type="number" v-model="editObject.i_lessons" /><span
             v-else>{{ Event.i_lessons }}</span></span>
-        <span class="col-12">逢星期: <q-select v-if="edit" filled use-input input-debounce="0" @new-value="newWeek"
-            :options="week" v-model="editObject.c_week" /><span v-else>{{ Event.c_week }}</span></span>
+        <span class="col-12">逢星期: <WeekSelection v-if="edit" v-model="editObject.c_week"/><span v-else>{{ Event.c_week }}</span></span>
       </div>
     </q-expansion-item>
 
@@ -322,15 +298,9 @@
         </q-item-section>
       </template>
       <div class="row col-12 q-px-sm text-body1">
-        <span class="col-11">舉行地點: <q-select v-if="edit" filled use-input input-debounce="0" @filter="saveBuffer"
-            @blur="textBuffer.length > 0 ? updateBuffer(editObject, 'c_dest') : ''" @new-value="newDest" :options="dest"
-            v-model="editObject.c_dest" /><span v-else>{{ Event.c_dest }}</span></span>
-        <span class="col-11">集合地點: <q-select v-if="edit" filled use-input input-debounce="0" @filter="saveBuffer"
-            @blur="textBuffer.length > 0 ? updateBuffer(editObject, 'c_start_collect') : ''" @new-value="newDest"
-            :options="dest" v-model="editObject.c_start_collect" /><span v-else>{{ Event.c_start_collect }}</span></span>
-        <span class="col-11">解散地點: <q-select v-if="edit" filled use-input input-debounce="0" @filter="saveBuffer"
-            @blur="textBuffer.length > 0 ? updateBuffer(editObject, 'c_end_collect') : ''" @new-value="newDest"
-            :options="dest" v-model="editObject.c_end_collect" /><span v-else>{{ Event.c_end_collect }}</span></span>
+        <span class="col-11">舉行地點: <DestSelection v-if="edit" v-model="editObject.c_dest" /><span v-else>{{ Event.c_dest }}</span></span>
+        <span class="col-11">集合地點: <DestSelection v-if="edit" v-model="editObject.c_start_collect" /><span v-else>{{ Event.c_start_collect }}</span></span>
+        <span class="col-11">解散地點: <DestSelection v-if="edit" v-model="editObject.c_end_collect" /><span v-else>{{ Event.c_end_collect }}</span></span>
       </div>
     </q-expansion-item>
 
@@ -386,8 +356,8 @@
   <!-- sticky button at bottom - mobile only -->
   <q-page-sticky v-if="$q.screen.lt.sm" position="bottom-right" :offset="[20, 20]" style="z-index: 1">
     <q-fab unelevated color="primary" icon="keyboard_arrow_up" direction="up">
-      <q-fab-action v-if="!edit" label="修改" icon="edit" class="bg-white text-primary" push @click="startEdit" />
-      <q-fab-action v-if="edit" label="儲存" icon="save" class="bg-white text-positive" push @click="saveEdit" />
+      <q-fab-action v-if="!edit" label="修改" icon="edit" class="bg-white text-primary" push @click="startEdit(Event)" />
+      <q-fab-action v-if="edit" label="儲存" icon="save" class="bg-white text-positive" push @click="saveEdit(editObject)" />
       <q-fab-action v-if="edit" label="取消" icon="cancel" class="bg-white text-warning" push @click="edit = false" />
       <q-fab-action v-if="!edit && isCenterIC" label="刪除" icon="delete" class="text-negative" push
         @click="deleteDialog = true" />
@@ -412,10 +382,12 @@ import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router";
 import FileUpload from 'src/components/Basic/FileUpload.vue'
 import { useEventProvider } from "src/providers/event.js";
 import User from "src/components/class/user.js";
+import WeekSelection from "src/components/Basic/WeekSelection.vue";
+import DestSelection from "src/components/Basic/DestSelection.vue";
 
 const route = useRoute()
 const router = useRouter()
-const c_act_code = route.params.id
+const c_act_code = ref(route.params.id)
 
 // variables
 const $q = useQuasar()
@@ -425,7 +397,6 @@ const editObject = ref({})
 const deleteDialog = ref(false)
 const deleteCheck = ref("")
 const serverObject = ref({})
-const saveDialog = ref(false)
 const textBuffer = ref("")
 const loading = ref(0)
 const upload_API = process.env.NODE_ENV === "development" ? "http://localhost:5001/manage-hr/asia-east2" : "https://asia-east2-manage-hr.cloudfunctions.net"
@@ -472,24 +443,17 @@ const whojoin_class = ref({
   "2.5-5歲幼兒": 15,
 })
 
-const week = ref([
-  '一', '二', '三', '四', '五', '六', '日', '一三五', '二四六'
-])
-
-const dest = ref([
-  '大堂', '活動室(一)', '活動室(二)', '舞蹈室', 'Band房', '電腦室', '會議室', '中心廣場', '星有利球場', '南蛇塘體育館', '海傍街體育館', '長洲碼頭', '中環五號碼頭'
-])
-
-
 // call eventProvider
-const { result: EventData, refetch, deleteEventById } = useEventProvider({
-  c_act_code: ref(c_act_code),
-  loadSession: ref(false),
-  loadEvaluation: ref(false),
+const { result: EventData, refetch, deleteEventById, updateEventById, message } = useEventProvider({
+  c_act_code: c_act_code
 })
 
-/* TODO: migrate mutation to provider */
-const { mutate: updateEvent, onDone: updateEvent_Completed, onError: updateEvent_Error } = useMutation(UPDATE_EVENT_BY_PK)
+// watch for message
+watch(message, (value) => {
+  if (value) {
+    $q.notify({ message: value })
+  }
+})
 
 // load user list
 const UserList = ref([])
@@ -501,7 +465,6 @@ User.loadPermUsers().then((result) => {
 const username = computed(() => $store.getters["userModule/getUsername"])
 const Event = computed(() => EventData.value?.HTX_Event_by_pk ?? [])
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
-const userProfileLogout = () => $store.dispatch("userModule/logout")
 
 // functions
 /**
@@ -509,8 +472,8 @@ const userProfileLogout = () => $store.dispatch("userModule/logout")
  * clone the value to an edit object
  * @returns {any}
  */
-function startEdit() {
-  for (const [key, value] of Object.entries(Event.value)) {
+function startEdit(obj) {
+  for (const [key, value] of Object.entries(obj)) {
     editObject.value[key] = value
   }
   delete editObject.value["__typename"]
@@ -525,37 +488,39 @@ function startEdit() {
   edit.value = true
 }
 
-function saveBuffer(buf, onDone) {
-  textBuffer.value = buf
-  onDone(() => { })
-}
-
-// update web url
+/**
+ * Update the filename of the poster
+ * @param {any} filename
+ * @returns {void}
+ */
 function updateFilenames(filename) {
   editObject.value.poster = WEB_IMG_PREFIX + filename.files[0].name
 }
 
-function saveEdit() {
-  // clone the object to a new object before purification
-  // avoid v-model limit during purification
-  Object.assign(serverObject.value, editObject.value)
-  purityData()
+/**
+ * Save the edited content
+ * @param {any} obj
+ * @returns {void}
+ */
+function saveEdit(obj) {
+  // format data for server
+  serverObject.value = purityData(obj)
 
-  const logObject = ref({
-    "username": username,
-    "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-    "module": "活動系統",
-    "action": "修改活動: " + c_act_code + "。新資料:" + JSON.stringify(serverObject.value, null, 2)
-  })
-
-  loading.value++
-  updateEvent({
-    logObject: logObject.value,
-    object: serverObject.value,
-    c_act_code: c_act_code,
+  updateEventById({
+    staff_name: username.value,
+    eventContent: serverObject.value,
+    c_act_code: c_act_code.value,
+  }).then(() => {
+    edit.value = false
+    serverObject.value = {}
+    editObject.value = {}
   })
 }
 
+/**
+ * Delete the event
+ * @returns {void}
+ */
 function deleteAct() {
   /* console.log({
     c_act_code: c_act_code,
@@ -564,7 +529,7 @@ function deleteAct() {
   }) */
 
   deleteEventById({
-    c_act_code: c_act_code,
+    c_act_code: c_act_code.value,
     staff_name: username.value,
     eventContent: Event.value
   }).then(() => {
@@ -572,112 +537,55 @@ function deleteAct() {
   })
 }
 
-function purityData() {
-  serverObject.value.c_act_code = c_act_code.trim()
-  serverObject.value.c_act_name = serverObject.value.c_act_name ? serverObject.value.c_act_name.trim() : null
-  serverObject.value.c_act_nameen = serverObject.value.c_act_nameen ? serverObject.value.c_act_nameen.trim() : null
-  serverObject.value.c_acc_type = serverObject.value.c_acc_type ? serverObject.value.c_acc_type.trim() : null
-  serverObject.value.c_group1 = serverObject.value.c_group1 ? serverObject.value.c_group1.trim() : null
-  serverObject.value.c_group2 = serverObject.value.c_group2 ? serverObject.value.c_group2.trim() : null
-  serverObject.value.c_nature = serverObject.value.c_nature ? serverObject.value.c_nature.trim() : null
-  serverObject.value.c_respon = serverObject.value.c_respon ? serverObject.value.c_respon.trim() : null
-  serverObject.value.c_respon2 = serverObject.value.c_respon2 ? serverObject.value.c_respon2.trim() : null
-  serverObject.value.c_dest = serverObject.value.c_dest ? serverObject.value.c_dest.trim() : null
-  serverObject.value.c_start_collect = serverObject.value.c_start_collect ? serverObject.value.c_start_collect.trim() : null
-  serverObject.value.c_end_collect = serverObject.value.c_end_collect ? serverObject.value.c_end_collect.trim() : null
-  serverObject.value.c_status = serverObject.value.c_status ? serverObject.value.c_status.trim() : null
-  serverObject.value.c_type = serverObject.value.c_type ? serverObject.value.c_type.trim() : null
-  serverObject.value.c_week = serverObject.value.c_week ? serverObject.value.c_week.trim() : null
-  serverObject.value.c_whojoin = serverObject.value.c_whojoin ? serverObject.value.c_whojoin.trim() : null
-  serverObject.value.c_worker = serverObject.value.c_worker ? Array.isArray(serverObject.value.c_worker) ? serverObject.value.c_worker.map(x => x.label).join(',') : serverObject.value.c_worker.trim() : null
-  serverObject.value.c_worker2 = serverObject.value.c_worker2 ? serverObject.value.c_worker2.trim() : null
-  serverObject.value.m_remind_content = serverObject.value.m_remind_content ? serverObject.value.m_remind_content.trim() : null
-  serverObject.value.m_remark = serverObject.value.m_remark ? serverObject.value.m_remark.trim() : null
-  serverObject.value.IsShow = serverObject.value.IsShow ? 1 : 0
-  // serverObject.value.EventClassID = whojoin_class.value[serverObject.value.c_group1]
-  serverObject.value.i_quota_max = serverObject.value.i_quota_max ? parseInt(serverObject.value.i_quota_max) : 0
-  serverObject.value.i_lessons = serverObject.value.i_lessons ? parseInt(serverObject.value.i_lessons) : 0
-  serverObject.value.EventClassID = serverObject.value.c_whojoin ? whojoin_class.value[serverObject.value.c_whojoin] : null
-  serverObject.value.b_finish = serverObject.value.b_finish ? true : false
-  serverObject.value.d_date_from = serverObject.value.d_date_from ? qdate.formatDate(serverObject.value.d_date_from, "D/M/YYYY") : null
-  serverObject.value.d_date_to = serverObject.value.d_date_to ? qdate.formatDate(serverObject.value.d_date_to, "D/M/YYYY") : null
-  //serverObject.value.d_finish_goal = serverObject.value.d_finish_goal? qdate.formatDate(serverObject.value.d_finish_goal, "D/M/YYYY"): null
-  serverObject.value.d_finish_goal = serverObject.value.d_finish_goal
-  serverObject.value.d_sale_start = serverObject.value.d_sale_start ? qdate.formatDate(serverObject.value.d_sale_start, "D/M/YYYY") : null
-  serverObject.value.d_sale_end = serverObject.value.d_sale_end ? qdate.formatDate(serverObject.value.d_sale_end, "D/M/YYYY") : null
-
-  // append seconds
-  serverObject.value.d_time_from = serverObject.value.d_time_from ? serverObject.value.d_time_from + ":00" : null
-  serverObject.value.d_time_to = serverObject.value.d_time_to ? serverObject.value.d_time_to + ":00" : null
-
-  // convert to 12H server format
-  serverObject.value.d_time_from = serverObject.value.d_time_from ? qdate.formatDate(qdate.extractDate(serverObject.value.d_time_from, "HH:mm:ss"), "h:mm:ss A") : null
-  serverObject.value.d_time_to = serverObject.value.d_time_to ? qdate.formatDate(qdate.extractDate(serverObject.value.d_time_to, "HH:mm:ss"), "h:mm:ss A") : null
-}
-
-// UI functions
-function newWeek(val, done) {
-  if (val.length > 0) {
-    if (!week.value.includes(val)) {
-      week.value.push(val)
-    }
-    done(val, 'toggle')
-  }
-}
-
-function newDest(val, done) {
-  if (val.length > 0) {
-    if (!dest.value.includes(val)) {
-      dest.value.push(val)
-    }
-    done(val, 'toggle')
-  }
-}
-
-function updateBuffer(o, key) {
-  o[key] = textBuffer.value
-  textBuffer.value = ""
-}
-
-function notifyClientError(error) {
-  $q.notify({ message: "系統錯誤，請重新登入." })
-  console.log("error", error)
-}
-
-// callback success
-/*
-delEvent_Completed((result) => {
-  loading.value--
-  $q.notify({
-    message: "刪除活動" + result.data.delete_HTX_Event_by_pk.c_act_code + "完成。",
-  })
-}) */
-
-updateEvent_Completed((result) => {
-  serverObject.value = {}
-  editObject.value = {}
-  saveDialog.value = false
-  edit.value = false
-  refetch()
-  loading.value--
-  $q.notify({
-    message: "更新活動" + result.data.update_HTX_Event_by_pk.c_act_code + "完成。",
-  })
-})
-
-// callback error
-/*
-delEvent_Error((error) => {
-  notifyClientError(error)
-}) */
-
-/* EventDataError((error) => {
-  notifyClientError(error)
-})
+/**
+ * Purity data for server
+ * @param {any} obj
+ * @returns {any}
  */
-updateEvent_Error((error) => {
-  notifyClientError(error)
-})
+function purityData(obj) {
+  let returnObj = {}
+  returnObj.c_act_code = c_act_code.value.trim()
+  returnObj.c_act_name = obj.c_act_name ? obj.c_act_name.trim() : null
+  returnObj.c_act_nameen = obj.c_act_nameen ? obj.c_act_nameen.trim() : null
+  returnObj.b_freeofcharge = obj.b_freeofcharge ? true : false
+  returnObj.c_acc_type = obj.c_acc_type ? obj.c_acc_type.trim() : null
+  returnObj.c_group1 = obj.c_group1 ? obj.c_group1.trim() : null
+  returnObj.c_group2 = obj.c_group2 ? obj.c_group2.trim() : null
+  returnObj.c_nature = obj.c_nature ? obj.c_nature.trim() : null
+  returnObj.c_respon = obj.c_respon ? obj.c_respon.trim() : null
+  returnObj.c_respon2 = obj.c_respon2 ? obj.c_respon2.trim() : null
+  returnObj.c_dest = obj.c_dest ? obj.c_dest.trim() : null
+  returnObj.c_start_collect = obj.c_start_collect ? obj.c_start_collect.trim() : null
+  returnObj.c_end_collect = obj.c_end_collect ? obj.c_end_collect.trim() : null
+  returnObj.c_status = obj.c_status ? obj.c_status.trim() : null
+  returnObj.c_type = obj.c_type ? obj.c_type.trim() : null
+  returnObj.c_week = obj.c_week ? obj.c_week.trim() : null
+  returnObj.c_whojoin = obj.c_whojoin ? obj.c_whojoin.trim() : null
+  returnObj.c_worker = obj.c_worker ? Array.isArray(obj.c_worker) ? obj.c_worker.map(x => x.label).join(',') : obj.c_worker.trim() : null
+  returnObj.c_worker2 = obj.c_worker2 ? obj.c_worker2.trim() : null
+  returnObj.d_date_from = obj.d_date_from ? qdate.formatDate(obj.d_date_from, "D/M/YYYY") : null
+  returnObj.d_date_to = obj.d_date_to ? qdate.formatDate(obj.d_date_to, "D/M/YYYY") : null
+  returnObj.d_sale_start = obj.d_sale_start ? qdate.formatDate(obj.d_sale_start, "D/M/YYYY") : null
+  returnObj.d_sale_end = obj.d_sale_end ? qdate.formatDate(obj.d_sale_end, "D/M/YYYY") : null
+  // append seconds
+  returnObj.d_time_from = obj.d_time_from ? obj.d_time_from + ":00" : null
+  returnObj.d_time_to = obj.d_time_to ? obj.d_time_to + ":00" : null
+  // convert to 12H server format
+  returnObj.d_time_from = returnObj.d_time_from ? qdate.formatDate(qdate.extractDate(returnObj.d_time_from, "HH:mm:ss"), "h:mm:ss A") : null
+  returnObj.d_time_to = returnObj.d_time_to ? qdate.formatDate(qdate.extractDate(returnObj.d_time_to, "HH:mm:ss"), "h:mm:ss A") : null
+
+  returnObj.m_remind_content = obj.m_remind_content ? obj.m_remind_content.trim() : null
+  returnObj.m_remark = obj.m_remark ? obj.m_remark.trim() : null
+  returnObj.poster = obj.poster ? obj.poster.trim() : null
+  returnObj.i_quota_max = obj.i_quota_max ? parseInt(obj.i_quota_max) : 0
+  returnObj.IsShow = obj.IsShow ? 1 : 0
+  returnObj.i_lessons = obj.i_lessons ? parseInt(obj.i_lessons) : 0
+  returnObj.d_finish_goal = obj.d_finish_goal
+  returnObj.b_finish = obj.b_finish ? true : false
+  returnObj.EventClassID = obj.c_whojoin ? whojoin_class.value[obj.c_whojoin] : null
+
+  return returnObj
+}
 
 // route guard
 onBeforeRouteLeave((to, from, next) => {

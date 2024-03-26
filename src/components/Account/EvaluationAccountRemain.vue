@@ -39,9 +39,9 @@
         <div class="col-12 text-right q-mt-sm row">
           <q-input class="col-12" type="text" label="支票抬頭" v-model="claim.recipient"/>
           <q-input class="col-12"
-            label="金額" 
+            label="金額"
             :rules="[(val) => parseFloat(val) > 0 && parseFloat(val) <= MaximumClaim || '預支為0或超過上限']"
-            v-model="claim.amount" 
+            v-model="claim.amount"
             />
           <q-btn class="bg-warning text-white text-right q-mx-sm" flat label="取消" type="reset"/>
           <q-btn class="bg-secondary text-white text-right q-mx-sm" flat label="遞交" type="submit"/>
@@ -82,7 +82,7 @@ const { onResult: getEvaluationResult } = useQuery(gql`
     $eval_uuid: uniqueidentifier = "00000000-0000-0000-0000-000000000000",
     ) {
     Event_Evaluation_Account(where: {
-      eval_uuid: {_eq: $eval_uuid}, 
+      eval_uuid: {_eq: $eval_uuid},
       planeval: {_eq: "檢討"},
     }) {
       account_uuid
@@ -100,7 +100,7 @@ const { onResult: getPrepaidResult } = useQuery(gql`
     $eval_uuid: uniqueidentifier = "00000000-0000-0000-0000-000000000000",
     ) {
     Event_Prepaid(where: {
-      eval_uuid: {_eq: $eval_uuid}, 
+      eval_uuid: {_eq: $eval_uuid},
     }) {
       amount
       apply_date
@@ -123,7 +123,7 @@ const { onResult: getPrepaidResult } = useQuery(gql`
 
 const { mutate: addRemainRequest, onDone: addRemainRequest_Completed } = useMutation(gql`
   mutation Remain_addPrepaid(
-    $logObject: Log_insert_input! = {}, 
+    $logObject: Log_insert_input! = {},
     $object: Event_Prepaid_insert_input = {}
     ) {
     insert_Event_Prepaid_one(object: $object) {
@@ -141,20 +141,21 @@ const { mutate: addRemainRequest, onDone: addRemainRequest_Completed } = useMuta
     }
     insert_Log_one(object: $logObject) {
       log_id
+      username
     }
   }`)
 
 const { mutate: approveClaim, onDone: approveClaim_Completed } = useMutation(gql`
 mutation approveClaim(
-  $logObject: Log_insert_input! = {}, 
-  $uuid: uniqueidentifier = "", 
-  $approve_date: datetime2 = "", 
-  $approve_user: String = "", 
-  $approved: Boolean = false, 
+  $logObject: Log_insert_input! = {},
+  $uuid: uniqueidentifier = "",
+  $approve_date: datetime2 = "",
+  $approve_user: String = "",
+  $approved: Boolean = false,
   $payment_method: String = ""
   ) {
   update_Event_Prepaid_by_pk(
-    pk_columns: {uuid: $uuid}, 
+    pk_columns: {uuid: $uuid},
     _set: {approve_date: $approve_date, approve_user: $approve_user, approved: $approved, payment_method: $payment_method}
     ) {
       uuid
@@ -166,14 +167,14 @@ mutation approveClaim(
 
 const { mutate: denyClaim, onDone: denyClaim_Completed } = useMutation(gql`
 mutation denyClaim(
-  $logObject: Log_insert_input! = {}, 
-  $uuid: uniqueidentifier = "", 
-  $approve_date: datetime2 = "", 
-  $approve_user: String = "", 
-  $approved: Boolean = false, 
+  $logObject: Log_insert_input! = {},
+  $uuid: uniqueidentifier = "",
+  $approve_date: datetime2 = "",
+  $approve_user: String = "",
+  $approved: Boolean = false,
   ) {
   update_Event_Prepaid_by_pk(
-    pk_columns: {uuid: $uuid}, 
+    pk_columns: {uuid: $uuid},
     _set: {approve_date: $approve_date, approve_user: $approve_user, approved: $approved}
     ) {
       uuid
@@ -188,7 +189,7 @@ mutation delClaim($uuid: uniqueidentifier = "") {
   delete_Event_Prepaid_by_pk(uuid: $uuid) {
     uuid
   }
-}`) 
+}`)
 
 // computed
 const EvaluatedIncome = ref([])
@@ -211,7 +212,7 @@ function deleteClaim(uuid) {
   })
 }
 
-function save() { 
+function save() {
   let remainObject = {
     amount: parseFloat(claim.value.amount),
     apply_date: new Date(),
@@ -330,7 +331,7 @@ addRemainRequest_Completed((result) => {
   loading.value--
   $q.notify({
     message: "活動" + result.data.insert_Event_Prepaid_one.c_act_code + "，成功新增申請餘款記錄。",
-  }) 
+  })
 })
 
 denyClaim_Completed((result) => {

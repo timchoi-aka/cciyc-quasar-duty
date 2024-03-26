@@ -80,25 +80,25 @@
           <q-tooltip class="bg-white text-primary">檢視</q-tooltip>
         </q-btn>
 
-        <q-btn v-if="!edit && (!isSubmitted || isEventApprove)" icon="edit" flat :to="{
+        <q-btn v-if="displayEditButton" icon="edit" flat :to="{
     path: '/event/detail/' + route.params.id + '/evaluation/edit'
   }">
           <q-tooltip class="bg-white text-primary">修改</q-tooltip>
         </q-btn>
 
-        <q-btn v-if="isSystemAdmin && !edit && Object.keys(PlanEval).length > 0" icon="delete" class="text-negative"
+        <q-btn v-if="displayDeleteButton" icon="delete" class="text-negative"
           flat @click="confirmDeleteDialog = true">
           <q-tooltip class="bg-white text-negative">刪除</q-tooltip>
         </q-btn>
 
-        <q-btn v-if="!edit && planSubmitted" icon="print" flat
+        <q-btn v-if="!edit && isPlanSubmitted" icon="print" flat
           :to="{ path: '/event/detail/' + route.params.id + '/evaluation/print/planning' }">
           <!--<q-btn icon="print" flat @click="pdfModal = true">-->
           <q-tooltip class="bg-white text-primary">列印計劃</q-tooltip>
           <q-badge>計劃</q-badge>
         </q-btn>
 
-        <q-btn v-if="!edit && evalSubmitted" icon="print" flat
+        <q-btn v-if="!edit && isEvalSubmitted" icon="print" flat
           :to="{ path: '/event/detail/' + route.params.id + '/evaluation/print/evaluation' }">
           <!--<q-btn icon="print" flat @click="pdfModal = true">-->
           <q-tooltip class="bg-white text-primary">列印檢討</q-tooltip>
@@ -109,28 +109,28 @@
     <q-space />
     <div class="col-xs-12 col-sm-2 col-md-2">
       <q-btn bordered class="bg-positive text-white"
-        v-if="PlanEval.submit_plan_date && !PlanEval.ic_plan_date && isEventApprove" @click="startApprove('plan')"
+        v-if="displayApprovePlanButton" @click="startApprove('plan')"
         icon="verified" label="批核計劃" />
       <q-btn bordered class="bg-positive text-white"
-        v-if="PlanEval.submit_eval_date && !PlanEval.ic_eval_date && isEventApprove" @click="startApprove('eval')"
+        v-if="displayApproveEvalButton" @click="startApprove('eval')"
         icon="verified" label="批核檢討" />
-      <q-btn v-if="Object.keys(PlanEval).length > 0 && !PlanEval.submit_plan_date && !edit" icon="verified" label="提交計劃"
+      <q-btn v-if="displaySubmitPlanButton" icon="verified" label="提交計劃"
         class="bg-positive text-white" bordered @click="confirmPlanDialog = true" />
       <q-btn
-        v-if="Object.keys(PlanEval).length > 0 && !PlanEval.submit_eval_date && PlanEval.submit_plan_date && PlanEval.ic_plan_date && !edit"
+        v-if="displaySubmitEvalButton"
         icon="verified" label="提交檢討" class="bg-purple-6 text-white" bordered @click="confirmEvalDialog = true" />
     </div>
     <div class="col-xs-12 col-sm-4 col-md-4 text-right">
       <div class="col-6">
-        <q-chip dense v-if="PlanEval.submit_plan_date">已提交計劃：{{ PlanEval.staff_name }} @
+        <q-chip dense v-if="isPlanSubmitted">已提交計劃：{{ PlanEval.staff_name }} @
           {{ qdate.formatDate(PlanEval.submit_plan_date, "YYYY年M月D日") }}</q-chip>
-        <q-chip dense v-if="PlanEval.ic_plan_date">已審批計劃：{{ qdate.formatDate(PlanEval.ic_plan_date,
+        <q-chip dense v-if="isPlanApproved">已審批計劃：{{ qdate.formatDate(PlanEval.ic_plan_date,
     "YYYY年M月D日") }}</q-chip>
       </div>
       <div class="col-6">
-        <q-chip dense v-if="PlanEval.submit_eval_date">已提交檢討：{{ PlanEval.staff_name }} @
+        <q-chip dense v-if="isEvalSubmitted">已提交檢討：{{ PlanEval.staff_name }} @
           {{ qdate.formatDate(PlanEval.submit_eval_date, "YYYY年M月D日") }}</q-chip>
-        <q-chip dense v-if="PlanEval.ic_eval_date">已審批檢討：{{ qdate.formatDate(PlanEval.ic_eval_date,
+        <q-chip dense v-if="isEvalApproved">已審批檢討：{{ qdate.formatDate(PlanEval.ic_eval_date,
     "YYYY年M月D日") }}</q-chip>
       </div>
     </div>
@@ -297,13 +297,21 @@ mutation deletePlanEvalFromUUID(
 `)
 // computed
 const Event = computed(() => EventEvaluation.value ? EventEvaluation.value.HTX_Event_by_pk : {})
-const PlanEval = computed(() => EventEvaluation.value && EventEvaluation.value.HTX_Event_by_pk ? EventEvaluation.value.HTX_Event_by_pk.Event_to_Evaluation[0] : {})
+const PlanEval = computed(() => (EventEvaluation.value && EventEvaluation.value.HTX_Event_by_pk) ? EventEvaluation.value.HTX_Event_by_pk.Event_to_Evaluation[0] : null)
 const username = computed(() => $store.getters["userModule/getUsername"])
-const isEventApprove = computed(() => $store.getters["userModule/getEventApprove"])
+const isEventApprover = computed(() => $store.getters["userModule/getEventApprove"])
 const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"])
-const isSubmitted = computed(() => PlanEval.value.submit_plan_date && PlanEval.value.submit_eval_date ? PlanEval.value.submit_plan_date.length > 0 && PlanEval.value.submit_eval_date.length > 0 : false)
-const planSubmitted = computed(() => PlanEval.value.submit_plan_date ? PlanEval.value.submit_plan_date.length > 0 : false)
-const evalSubmitted = computed(() => PlanEval.value.submit_eval_date ? PlanEval.value.submit_eval_date.length > 0 : false)
+const isSubmitted = computed(() => (PlanEval.value && PlanEval.value.submit_plan_date && PlanEval.value.submit_eval_date) ? (PlanEval.value.submit_plan_date.length > 0 && PlanEval.value.submit_eval_date.length > 0) : false)
+const isPlanSubmitted = computed(() => (PlanEval.value && PlanEval.value.submit_plan_date) ? PlanEval.value.submit_plan_date.length > 0 : false)
+const isEvalSubmitted = computed(() => (PlanEval.value && PlanEval.value.submit_eval_date) ? PlanEval.value.submit_eval_date.length > 0 : false)
+const isPlanApproved = computed(() => PlanEval.value && PlanEval.ic_plan_date)
+const isEvalApproved = computed(() => PlanEval.value && PlanEval.ic_eval_date)
+const displayApprovePlanButton = computed(() => PlanEval.value && PlanEval.value.submit_plan_date && !PlanEval.value.ic_plan_date && isEventApprover.value)
+const displayApproveEvalButton = computed(() => PlanEval.value && PlanEval.value.submit_eval_date && !PlanEval.value.ic_eval_date && isEventApprover.value)
+const displaySubmitPlanButton = computed(() => PlanEval.value && !PlanEval.value.submit_plan_date && !edit.value)
+const displaySubmitEvalButton = computed(() => PlanEval.value && !PlanEval.value.submit_eval_date && PlanEval.value.submit_plan_date && PlanEval.value.ic_plan_date && !edit.value)
+const displayDeleteButton = computed(() => isSystemAdmin.value && !edit.value && PlanEval.value)
+const displayEditButton = computed(() => !edit.value && (!isSubmitted.value || isEventApprover.value))
 
 // success callbacks
 updateEvaluationFromActCode_Completed((result) => {

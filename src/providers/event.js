@@ -1,4 +1,4 @@
-import { ref, computed, watch } from "vue";
+import { ref, computed } from "vue";
 import { useQuery, useMutation } from "@vue/apollo-composable";
 import { gql } from "graphql-tag"
 import { date, extend } from "quasar";
@@ -277,6 +277,158 @@ export function useEventProvider(options = {}) {
       }
     }`
 
+  // Mutation for updating an event
+  const UPDATE_EVENT_BY_PK = gql`
+    mutation updateEventByPK(
+      $logObject: Log_insert_input! = {},
+      $c_act_code: String = "",
+      $object: HTX_Event_set_input = {}
+      ) {
+      update_HTX_Event_by_pk(pk_columns: {c_act_code: $c_act_code}, _set: $object) {
+        Gen_m_remark
+        IsShow
+        b_can_repeat_reg
+        b_course
+        b_finish
+        b_freeofcharge
+        b_hardcopy
+        b_not_change_price
+        b_open_oth
+        b_open_own
+        b_print_age
+        b_print_birth
+        b_print_no_period
+        b_print_other
+        b_print_time
+        c_acc_type
+        c_act_code
+        c_act_name
+        c_act_nameen
+        c_acttype_control
+        c_acttype_together
+        c_age_control
+        c_apply_code
+        c_appraises
+        c_centre_id
+        c_check_acttype
+        c_check_memtype
+        c_checksex
+        c_corwithmember
+        c_course_level
+        c_course_no
+        c_course_tutor
+        c_course_tutor2
+        c_course_tutor3
+        c_course_tutor4
+        c_course_type
+        c_dest
+        c_end_collect
+        c_finish_goal
+        c_group1
+        c_group2
+        c_memtype_control
+        c_nature
+        c_open_other
+        c_ref
+        c_remind_header
+        c_respon
+        c_respon2
+        c_sex_control
+        c_start_collect
+        c_status
+        c_subsidizes
+        c_type
+        c_user_id
+        c_vol_level_1
+        c_vol_level_2
+        c_vol_level_3
+        c_week
+        c_whojoin
+        c_worker
+        c_worker2
+        d_close
+        d_date_from
+        d_date_to
+        d_finish_goal
+        d_open
+        d_sale_end
+        d_sale_start
+        d_time_from
+        d_time_to
+        i_course_credit1
+        i_course_credit2
+        i_course_credit3
+        i_course_credit4
+        i_course_credit5
+        i_lessons
+        i_lessons_attend1
+        i_lessons_attend2
+        i_lessons_attend3
+        i_lessons_attend4
+        i_lessons_attend5
+        i_quota_cssa_max
+        i_quota_max
+        i_success_percent
+        i_year_from
+        i_year_to
+        m_appraises_rem
+        m_content
+        m_evaluation_rem
+        m_other_rem
+        m_remark
+        m_remind_content
+        poster
+        s_GUID
+        s_Generation
+        s_Lineage
+        u_income
+        u_tutor_pay
+      }
+      insert_Log_one(object: $logObject) {
+        log_id
+        username
+      }
+    }`
+
+  // Mutation for updating event fee
+  const UPDATE_EVENT_FEE = gql`
+    mutation updateEventFee(
+      $logObject: Log_insert_input! = {},
+      $objects: [tbl_act_fee_insert_input!] = {}
+      ) {
+      insert_tbl_act_fee(objects: $objects, if_matched: {match_columns: [c_type, c_act_code], update_columns: [u_fee]}) {
+        affected_rows
+        returning {
+          c_act_code
+          c_type
+          u_fee
+        }
+      }
+      insert_Log_one(object: $logObject) {
+        log_id
+        username
+      }
+    }`
+
+  // Mutation for deleting event fee
+  const DELETE_EVENT_FEE = gql`
+    mutation deleteEventFee(
+      $logObject: Log_insert_input! = {},
+      $c_act_code: [String!] = "",
+      $c_type: [String!] = ""
+      ) {
+      delete_tbl_act_fee(where: {c_act_code: {_in: $c_act_code}, c_type: {_in: $c_type}}) {
+        returning {
+          c_act_code
+          c_type
+          u_fee
+        }
+      }
+      insert_Log_one(object: $logObject) {
+        log_id
+        username
+      }
+    }`
   /***
    * submitPlan: Function to execute the SUBMIT_PLAN mutation.
    * onDone_submitPlan: Callback function that is called when the SUBMIT_PLAN mutation successfully completes.
@@ -391,6 +543,184 @@ export function useEventProvider(options = {}) {
     message.value = "操作失敗，請聯絡系統管理員。"
   })
 
+  const { mutate: updateEvent, onError: onError_updateEvent, onDone: onDone_updateEvent } = useMutation(UPDATE_EVENT_BY_PK, {
+    update: (cache, { data: { update_HTX_Event_by_pk } }) => {
+      // console.log("update_HTX_Event_by_pk", update_HTX_Event_by_pk)
+      // update the cache
+      const existingEvent = cache.readQuery({ query: GET_EVENT, variables: { c_act_code: update_HTX_Event_by_pk.c_act_code.trim() }});
+      // Check if the data is in the cache
+      if (existingEvent) {
+        // Update its submit_plan_date
+        let updatedEvent = {}
+        extend(true, updatedEvent, existingEvent.HTX_Event_by_pk);
+        extend(true, updatedEvent, update_HTX_Event_by_pk);
+        // Write our data back to the cache.
+        cache.writeQuery({
+          query: GET_EVENT,
+          variables: { c_act_code: update_HTX_Event_by_pk.c_act_code.trim() },
+          data: { ...existingEvent, HTX_Event_by_pk: updatedEvent },
+        });
+      }
+    },
+  });
+
+  onDone_updateEvent((res) => {
+    if (res.data) {
+      if (process.env.NODE_ENV != 'development') {
+        // no notification for delete event
+        // message return to client
+        message.value = "成功更新活動 - " + res.data.update_HTX_Event_by_pk.c_act_code.trim()
+      } else {  // development channel
+        const { result } = useNotifier({
+          topic: "uqhehdGADfWYglt9jDfaab0LGrC3",
+          data: {
+            title: "[DEV]更新活動",
+            body: "[" + res.data.insert_Log_one.username.trim() + "]" + "更新了活動" + res.data.update_HTX_Event_by_pk.c_act_code.trim()
+          }
+        });
+
+        result.value.then((r) => {
+          if (r.data) {
+            message.value = "成功更新活動 - " + res.data.update_HTX_Event_by_pk.c_act_code.trim()
+          }
+        }).catch((e) => {
+          console.log("error: ", e)
+          message.value = "更新活動" + res.data.update_HTX_Event_by_pk.c_act_code.trim() + "失敗"
+        })
+      }
+    } else { // error
+      message.value = "更新活動" + res.data.update_HTX_Event_by_pk.c_act_code.trim() + "失敗"
+    }
+  })
+
+  /***
+   * updateEventFee: Function to execute the UPDATE_EVENT_FEE mutation.
+   * onDone_updateEventFee: Callback function that is called when the UPDATE_EVENT_FEE mutation successfully completes.
+   * It modifies the cache to update the event fee.
+   * onError_updateEventFee: Callback function that is called when an error occurs while executing the UPDATE_EVENT_FEE mutation.
+   * ***/
+  const { mutate: updateEventFee, onError: onError_updateEventFee, onDone: onDone_updateEventFee } = useMutation(UPDATE_EVENT_FEE, {
+    update: (cache, { data: { insert_tbl_act_fee } }) => {
+      // console.log("insert_tbl_act_fee", insert_tbl_act_fee)
+      const existingEvent = cache.readQuery({ query: GET_EVENT, variables: { c_act_code: insert_tbl_act_fee.returning[0].c_act_code.trim(), loadFee: true }});
+      // Check if the data is in the cache
+      if (existingEvent) {
+        // Update its submit_plan_date
+        let updatedEvent = {}
+        extend(true, updatedEvent, existingEvent.HTX_Event_by_pk);
+        updatedEvent.Event_to_Fee.forEach((fee, index) => {
+          if (insert_tbl_act_fee.returning.map((f) => f.c_type).includes(fee.c_type)) {
+            updatedEvent.Event_to_Fee[index].u_fee = insert_tbl_act_fee.returning.filter((f) => f.c_type == fee.c_type)[0].u_fee;
+          } else {
+            updatedEvent.Event_to_Fee.push({
+              c_act_code: insert_tbl_act_fee.returning[0].c_act_code.trim(),
+              c_type: insert_tbl_act_fee.returning[0].c_type.trim(),
+              u_fee: insert_tbl_act_fee.returning[0].u_fee
+            })
+          }
+        })
+
+        // Write our data back to the cache.
+        cache.writeQuery({
+          query: GET_EVENT,
+          variables: { c_act_code: insert_tbl_act_fee.returning[0].c_act_code.trim(), loadFee: true },
+          data: { ...existingEvent, HTX_Event_by_pk: updatedEvent },
+        });
+      }
+    },
+  });
+
+  onDone_updateEventFee((res) => {
+    if (res.data) {
+      if (process.env.NODE_ENV != 'development') {
+        // no notification for delete event
+        // message return to client
+        message.value = "成功更新活動收費 - " + res.data.insert_tbl_act_fee.returning[0].c_act_code.trim()
+      } else {  // development channel
+        const { result } = useNotifier({
+          topic: "uqhehdGADfWYglt9jDfaab0LGrC3",
+          data: {
+            title: "[DEV]更新活動收費",
+            body: "[" + res.data.insert_Log_one.username.trim() + "]" + "更新了活動收費" + res.data.insert_tbl_act_fee.returning[0].c_act_code.trim()
+          }
+        });
+
+        result.value.then((r) => {
+          if (r.data) {
+            message.value = "成功更新活動收費 - " + res.data.insert_tbl_act_fee.returning[0].c_act_code.trim()
+          }
+        }).catch((e) => {
+          console.log("error: ", e)
+          message.value = "更新活動收費" + res.data.insert_tbl_act_fee.returning[0].c_act_code.trim() + "失敗"
+        })
+      }
+    } else { // error
+      message.value = "更新活動收費" + res.data.insert_tbl_act_fee.returning[0].c_act_code.trim() + "失敗"
+    }
+  })
+
+  onError_updateEventFee((error) => {
+    message.value = "更新活動收費失敗，請聯絡系統管理員。"
+  })
+
+  const { mutate: deleteEventFee, onError: onError_deleteEventFee, onDone: onDone_deleteEventFee } = useMutation(DELETE_EVENT_FEE, {
+    update: (cache, { data: { delete_tbl_act_fee } }) => {
+      const existingEvent = cache.readQuery({ query: GET_EVENT, variables: { c_act_code: delete_tbl_act_fee.returning[0].c_act_code.trim(), loadFee: true }});
+      // Check if the data is in the cache
+      if (existingEvent?.HTX_Event_by_pk) {
+        // Update its submit_plan_date
+        let updatedEvent = {}
+        extend(true, updatedEvent, existingEvent.HTX_Event_by_pk);
+
+        // Filter out the deleted fees from the Event_to_Fee array.
+        updatedEvent.Event_to_Fee = updatedEvent.Event_to_Fee.filter(
+          fee => !delete_tbl_act_fee.returning.some(
+            delFee => delFee.c_type === fee.c_type
+          )
+        );
+
+        // Write our data back to the cache.
+        cache.writeQuery({
+          query: GET_EVENT,
+          variables: { c_act_code: delete_tbl_act_fee.returning[0].c_act_code.trim(), loadFee: true },
+          data: { ...existingEvent, HTX_Event_by_pk: updatedEvent },
+        });
+      }
+    },
+  });
+
+  onDone_deleteEventFee((res) => {
+    if (res.data) {
+      if (process.env.NODE_ENV != 'development') {
+        // no notification for delete event
+        // message return to client
+        message.value = "成功刪除活動收費 - " + res.data.delete_tbl_act_fee.returning[0].c_act_code.trim() + " - " + res.data.delete_tbl_act_fee.returning[0].c_type.trim()
+      } else {  // development channel
+        const { result } = useNotifier({
+          topic: "uqhehdGADfWYglt9jDfaab0LGrC3",
+          data: {
+            title: "[DEV]刪除活動收費",
+            body: "[" + res.data.insert_Log_one.username.trim() + "]" + "刪除了活動收費" + res.data.delete_tbl_act_fee.returning[0].c_act_code.trim()
+          }
+        });
+
+        result.value.then((r) => {
+          if (r.data) {
+            message.value = "成功刪除活動收費 - " + res.data.delete_tbl_act_fee.returning[0].c_act_code.trim() + " - " + res.data.delete_tbl_act_fee.returning[0].c_type.trim()
+          }
+        }).catch((e) => {
+          console.log("error: ", e)
+          message.value = "刪除活動收費" + res.data.delete_tbl_act_fee.returning[0].c_act_code.trim() + "失敗"
+        })
+      }
+    } else { // error
+      message.value = "刪除活動收費" + res.data.delete_tbl_act_fee.returning[0].c_act_code.trim() + "失敗"
+    }
+  })
+
+  onError_updateEventFee((error) => {
+    message.value = "刪除活動收費失敗，請聯絡系統管理員。"
+  })
 
   // Function to submit event plan / evaluation by id
   const submitPlanById = async (payload) => {
@@ -443,6 +773,89 @@ export function useEventProvider(options = {}) {
     }
   };
 
+  // update event
+  const updateEventById = async (payload) => {
+    const { eventContent, staff_name, c_act_code } = payload;
+    // console.log("payload", payload)
+    // Increment the number of pending async operations
+    awaitNumber.value++;
+    try {
+      // Call the deleteEvent mutation
+      await updateEvent({
+        c_act_code: c_act_code,
+        logObject: {
+          "username": staff_name,
+          "datetime": date.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+          "module": "活動系統",
+          "action": "修改活動: " + c_act_code + "。新資料:" + JSON.stringify(eventContent, null, 2)
+        },
+        object: eventContent,
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      // Decrement the number of pending async operations
+      awaitNumber.value--;
+    }
+  };
+
+  // update event fee
+  const updateEventFeeById = async (payload) => {
+    const { feeObject, staff_name, c_act_code } = payload;
+    // console.log("payload", payload)
+    // Increment the number of pending async operations
+    awaitNumber.value++;
+    try {
+      // Call the deleteEvent mutation
+      await updateEventFee({
+        c_act_code: c_act_code,
+        logObject: {
+          "username": staff_name,
+          "datetime": date.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+          "module": "活動系統",
+          "action": "修改活動" +
+            c_act_code +
+            "收費。資料:" +
+            JSON.stringify(feeObject, null, 2),
+        },
+        objects: feeObject,
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      // Decrement the number of pending async operations
+      awaitNumber.value--;
+    }
+  };
+
+  const deleteEventFeeById = async (payload) => {
+    const { feeObject, staff_name, c_act_code } = payload;
+    // console.log("payload", payload)
+    // Increment the number of pending async operations
+    awaitNumber.value++;
+    try {
+      // Call the deleteEvent mutation
+      await deleteEventFee({
+        c_act_code: c_act_code,
+        logObject: {
+          "username": staff_name,
+          "datetime": date.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+          "module": "活動系統",
+          "action": "刪除活動" +
+            c_act_code +
+            "收費。資料:" +
+            JSON.stringify(feeObject, null, 2),
+        },
+        c_type: feeObject,
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      // Decrement the number of pending async operations
+      awaitNumber.value--;
+    }
+  };
+
   // Function to execute the query
   const execute = async () => {
     const { onResult } = useQuery(GET_EVENT,
@@ -467,5 +880,5 @@ export function useEventProvider(options = {}) {
   execute();
 
   // Return the provided data and functions
-  return { result, message, loading, submitPlanById, refetch: execute, deleteEventById};
+  return { result, message, loading, submitPlanById, refetch: execute, deleteEventById, updateEventById, updateEventFeeById, deleteEventFeeById};
 }

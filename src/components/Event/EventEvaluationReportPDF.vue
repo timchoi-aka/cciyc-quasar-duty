@@ -38,7 +38,7 @@ const EventData = computed(() => eventResult.value ? eventResult.value.HTX_Event
 
 watch(() => ([EventData.value, reportType.value]), ([newVal, newReportType], [oldVal, oldReportType]) => generatePDF(newVal, newReportType))
 
-function atLine(lineNo) { return 15 + 7 * lineNo }
+function atLine(lineNo) { return 20 + 7 * lineNo }
 
 function generatePDF(event, type) {
   var doc = new jspdf({
@@ -113,10 +113,10 @@ async function drawContent(doc, event, type) {
     }, []))
 
   // title and logo
-  doc.addImage(logoImage, 'PNG', 60, 2, 13, 12)
+  doc.addImage(logoImage, 'PNG', 60, 7, 13, 12)
   doc.setFontSize(14)
-  doc.text("長洲鄉事委員會青年綜合服務中心", 110, 5, "center")
-  doc.text('活動' + type + '表', 110, 12, "center")
+  doc.text("長洲鄉事委員會青年綜合服務中心", 110, 10, "center")
+  doc.text('活動' + type + '表', 110, 17, "center")
   doc.setFontSize(12)
 
   // first line
@@ -234,12 +234,42 @@ async function drawContent(doc, event, type) {
   if (youthHeadcount.length > 0) doc.text(youthHeadcount, 125, atLine(lineNo), "left")
   doc.line(125, atLine(lineNo) + 1, 200, atLine(lineNo) + 1)
 
-  // eleventh line - 財務狀況
-  lineNo++
+  if (reportType.value == '檢討') {
+    // eleventh line - 成效檢討
+    lineNo += 2
+    doc.text("成效檢討", 5, atLine(lineNo), "left")
+
+    // twelveth line - 檢討方法
+    lineNo++
+    doc.text("檢討方法：", 5, atLine(lineNo), "left")
+    if (event.objective_review_method) doc.text(event.objective_review_method, 30, atLine(lineNo), "left")
+    doc.line(30, atLine(lineNo) + 1, 200, atLine(lineNo) + 1)
+
+    // thirteenth line - 目標達成
+    lineNo++
+    doc.text("目標達成：", 5, atLine(lineNo), "left")
+    if (EvalData.objective_achieved) doc.text(EvalData.objective_achieved, 30, atLine(lineNo), "left")
+    doc.line(30, atLine(lineNo) + 1, 200, atLine(lineNo) + 1)
+
+    // fourteenth line - 原因
+    lineNo++
+    doc.text("原因：", 5, atLine(lineNo), "left")
+    if (EvalData.objective_achieved_reason) doc.text(EvalData.objective_achieved_reason, 30, atLine(lineNo), "left")
+    doc.line(30, atLine(lineNo) + 1, 200, atLine(lineNo) + 1)
+
+    // fifteenth line - 跟進/建議
+    lineNo++
+    doc.text("跟進/建議：", 5, atLine(lineNo), "left")
+    if (EvalData.objective_followup) doc.text(EvalData.objective_followup, 30, atLine(lineNo), "left")
+    doc.line(30, atLine(lineNo) + 1, 200, atLine(lineNo) + 1)
+  }
+
+  // sixteenth line - 財務狀況
+  lineNo += 2
   doc.text("財務狀況 - 收入：", 5, atLine(lineNo), "left")
   doc.text("財務狀況 - 支出：", 110, atLine(lineNo), "left")
 
-  // twelveth line - table
+  // seventeenth line - table
   lineNo++
   // Table columns
   const columns = (reportType.value == '計劃') ? [
