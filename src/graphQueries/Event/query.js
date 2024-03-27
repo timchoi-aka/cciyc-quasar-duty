@@ -389,6 +389,7 @@ query EVENT_EVALUATION_BY_ACT_CODE($c_act_code: String!) {
       plan_start_date
       plan_start_time
       plan_sessions
+      plan_volunteer_count
       staff_name
       submit_plan_date
       submit_eval_date

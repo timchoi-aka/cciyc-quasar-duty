@@ -51,7 +51,6 @@
           </div>
           <div class="col-10" v-else>{{ PlanEval.plan_start_time ? PlanEval.plan_start_time.split(":")[0] + ":" +
     PlanEval.plan_start_time.split(":")[1] : "" }}</div>
-          <!--<div class="col-10" v-else>{{PlanEval.plan_start_time}}</div>-->
           <div class="col-2 q-my-sm">結束時間: </div>
           <div class="col-10" v-if="edit">
             <TimeComponent v-model="editObject.plan_end_time" />
@@ -63,11 +62,11 @@
             <q-input type="number" filled v-model="editObject.plan_sessions" />
           </div>
           <div class="col-10" v-else>{{ PlanEval.plan_sessions }}</div>
-          <div class="col-2 q-my-sm invisible">協助義工人數: </div>
-          <div class="col-10 invisible" v-if="edit">
-            <q-input type="number" filled v-model="editObject.eval_volunteer_count" />
+          <div class="col-2 q-my-sm">協助義工人數: </div>
+          <div class="col-10" v-if="edit">
+            <q-input type="number" filled v-model="editObject.plan_volunteer_count" />
           </div>
-          <div class="col-10 invisible" v-else>{{ PlanEval.eval_volunteer_count }}</div>
+          <div class="col-10" v-else>{{ PlanEval.plan_volunteer_count }}</div>
         </div>
 
         <div class="row fit q-pa-sm" style="border: 1px solid">
@@ -711,6 +710,7 @@ function purifyRecord(editObject) {
   returnObject.value.remarks = editObject.value.remarks ? editObject.value.remarks.trim() : null
 
   // plan
+  returnObject.value.plan_volunteer_count = !editObject.value.plan_volunteer_count ? null : parseInt(editObject.value.plan_volunteer_count)
   returnObject.value.plan_start_date = !editObject.value.plan_start_date ? null : qdate.formatDate(editObject.value.plan_start_date, "YYYY-MM-DD")
   returnObject.value.plan_end_date = !editObject.value.plan_end_date ? null : qdate.formatDate(editObject.value.plan_end_date, "YYYY-MM-DD")
   returnObject.value.plan_start_time = !editObject.value.plan_start_time ? null : editObject.value.plan_start_time
@@ -808,7 +808,7 @@ function onOKClickEval() {
 // save the record
 async function saveRecord() {
   let purifiedRecord = purifyRecord(editObject)
-
+  
   if (PlanEval.value && PlanEval.value.uuid) {
     const logObject = ref({
       "username": username.value,
@@ -886,6 +886,7 @@ function clonePlanValue() {
     plan_start_date: PlanEval.value && PlanEval.value.plan_start_date ? qdate.formatDate(PlanEval.value.plan_start_date, "YYYY/MM/DD") : null,
     plan_start_time: PlanEval.value && PlanEval.value.plan_start_time ? PlanEval.value.plan_start_time : null,
     plan_sessions: PlanEval.value && PlanEval.value.plan_sessions ? PlanEval.value.plan_sessions : 0,
+    plan_volunteer_count: PlanEval.value && PlanEval.value.plan_volunteer_count ? PlanEval.value.plan_volunteer_count : 0,
     staff_name: PlanEval.value && PlanEval.value.staff_name ? PlanEval.value.staff_name.trim() : null,
     submit_plan_date: PlanEval.value && PlanEval.value.submit_plan_date ? PlanEval.value.submit_plan_date : null,
     supervisor: PlanEval.value && PlanEval.value.supervisor ? PlanEval.value.supervisor.trim() : null,

@@ -210,13 +210,16 @@ async function drawContent(doc, event, type) {
   // nineth line - 導師
   lineNo++
   doc.text("導師：", 5, atLine(lineNo), "left")
-  if (event.tutor_name) doc.text(event.tutor_name, 20, atLine(lineNo), "left")
+  if (EvalData.tutor_name) doc.text(EvalData.tutor_name, 20, atLine(lineNo), "left")
   doc.line(20, atLine(lineNo) + 1, 65, atLine(lineNo) + 1)
   doc.text("導師電話：", 70, atLine(lineNo), "left")
-  if (event.tutor_phone) doc.text(event.tutor_phone, 95, atLine(lineNo), "left")
+  if (EvalData.tutor_phone) doc.text(EvalData.tutor_phone, 95, atLine(lineNo), "left")
   doc.line(95, atLine(lineNo) + 1, 125, atLine(lineNo) + 1)
   doc.text("協助義工：", 130, atLine(lineNo), "left")
-  if (EvalData.eval_volunteer_count) doc.text(EvalData.eval_volunteer_count.toString(), 155, atLine(lineNo), "left")
+  let volunteer = ''
+  volunteer += EvalData.plan_volunteer_count ? "計劃： " + EvalData.plan_volunteer_count : ''
+  if (reportType.value == '檢討') volunteer += EvalData.eval_volunteer_count ? "/ 檢討： " + EvalData.eval_volunteer_count : ''
+  if (volunteer.length > 0) doc.text(volunteer, 155, atLine(lineNo), "left")
   doc.line(155, atLine(lineNo) + 1, 200, atLine(lineNo) + 1)
 
   // tenth line - 青年節數
@@ -308,7 +311,7 @@ async function drawContent(doc, event, type) {
   lineNo++
   doc.setFontSize(12)
   doc.text("備註：", 5, atLine(lineNo), "left")
-  if (EvalData.remark) doc.text(EvalData.remark, 20, atLine(lineNo), "left")
+  if (EvalData.remarks) doc.text(EvalData.remarks, 20, atLine(lineNo), "left")
   doc.line(20, atLine(lineNo) + 1, 200, atLine(lineNo) + 1)
 
   // footer - 簽署

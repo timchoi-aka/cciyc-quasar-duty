@@ -402,7 +402,7 @@ const loading = ref(0)
 const upload_API = process.env.NODE_ENV === "development" ? "http://localhost:5001/manage-hr/asia-east2" : "https://asia-east2-manage-hr.cloudfunctions.net"
 const WEB_IMG_PREFIX = process.env.NODE_ENV === "development" ? "http://localhost:9199/cciyc-web/" : "https://storage.googleapis.com/cciyc-web/"
 const acc_type = ref([
-  'PF', 'CF', 'RF', 'MF', 'SF'
+  'PF', 'OF', 'MF', 'SF'
 ])
 
 const status = ref([

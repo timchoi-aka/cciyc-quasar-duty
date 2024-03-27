@@ -103,7 +103,7 @@ const editItem = ref([]);
 const deleteItem = ref([]);
 
 // query
-const { result, refetch, updateEventFeeById, deleteEventFeeById, message } =
+const { result, updateEventFeeById, deleteEventFeeById, message } =
   useEventProvider({
     c_act_code: c_act_code,
     loadFee: ref(true),

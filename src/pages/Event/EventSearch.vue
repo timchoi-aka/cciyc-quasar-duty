@@ -140,7 +140,7 @@ const pagination = ref({
 })
 
 const acc_type = ref([
-  'PF', 'CF', 'RF', 'MF', 'SF'
+  'PF', 'OF', 'MF', 'SF'
 ])
 
 const c_nature = ref([
