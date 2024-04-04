@@ -1,5 +1,30 @@
 <template>
-  <div class="col-grow">{{Member.c_name? Member.c_name : Member.c_name_other? Member.c_name_other: "無此人"}}</div><div class="col-grow">{{ageUtil.calculateAge(Member.d_birth)}}</div><div class="col-grow">{{Member.c_udf_1}}</div><div class="col-grow">{{Member.d_expired_1?qdate.formatDate(Member.d_expired_1, "YYYY年M月D日"):""}}</div>
+  
+  <div v-if="props.modelValue.c_mem_id == '9999'" class="col-grow">
+    <q-input type="text" :model-value="props.modelValue.c_name" label="姓名" 
+      @blur="() => 
+        emit('update:modelValue', {
+          c_mem_id: props.modelValue.c_mem_id,
+          u_fee: props.modelValue.u_fee,
+          c_name: props.modelValue.c_name,
+          c_sex: '',
+          c_tel: '',
+          i_age: 0,
+          d_expired_1: null
+        })"
+      @update:model-value="(val) => 
+        emit('update:modelValue', {
+          c_mem_id: props.modelValue.c_mem_id,
+          u_fee: props.modelValue.u_fee,
+          c_name: val,
+          c_sex: '',
+          c_tel: '',
+          i_age: 0,
+          d_expired_1: null
+        })"
+    />
+  </div>
+  <div v-else class="col-grow">{{Member.c_name? Member.c_name : Member.c_name_other? Member.c_name_other: "無此人"}}</div><div class="col-grow">{{ageUtil.calculateAge(Member.d_birth)}}</div><div class="col-grow">{{Member.c_udf_1}}</div><div class="col-grow">{{Member.d_expired_1?qdate.formatDate(Member.d_expired_1, "YYYY年M月D日"):""}}</div>
 </template>
 
 <script setup>

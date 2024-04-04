@@ -37,11 +37,14 @@
   <div v-if="edit && editItem.length > 0" class="text-h6">
     <div v-for="(value, index) in editItem">
       <div v-if="!editItem[index].delete" class="row q-gutter-md">
-        <q-input
+        <q-select
+          use-input
           class="col-3"
           filled
           label="類別"
           type="text"
+          :options="options"
+          @newValue="newOptions"
           v-model="editItem[index].c_type"
           @update:modelValue="editItem[index].modified = true"
         />
@@ -64,11 +67,14 @@
   </div>
   <div v-if="newitem.length > 0" class="text-h6">
     <div v-for="(value, index) in newitem" class="row q-gutter-md">
-      <q-input
+      <q-select
+        use-input
         class="col-3"
         filled
         label="類別"
         type="text"
+        @newValue="newOptions"
+        :options="options"
         v-model="newitem[index].c_type"
       />
       <q-input
@@ -88,7 +94,7 @@
 <script setup>
 import { computed, ref, watch } from "vue";
 import { useStore } from "vuex";
-import { useQuasar, date as qdate } from "quasar";
+import { useQuasar } from "quasar";
 import { useRoute } from "vue-router";
 import { useEventProvider } from "src/providers/event.js";
 
@@ -101,6 +107,7 @@ const edit = ref(false);
 const newitem = ref([]);
 const editItem = ref([]);
 const deleteItem = ref([]);
+let options = ["活動收費", "學費", "按金"];
 
 // query
 const { result, updateEventFeeById, deleteEventFeeById, message } =
@@ -190,5 +197,14 @@ function save() {
 function deleteRow(index) {
   deleteItem.value.push(editItem.value[index]);
   editItem.value[index].delete = true;
+}
+
+function newOptions(val, done) {
+  if (options.length > 0) {
+    if (!options.includes(val)) {
+      options.push(val);
+    }
+    done(val, "toggle");
+  }
 }
 </script>

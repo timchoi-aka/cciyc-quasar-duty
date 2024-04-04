@@ -91,7 +91,7 @@ NameResult((result) => {
     result.data.Member.forEach((d) => {
       if (
         d.c_mem_id != props.MemberID &&
-        d.c_mem_id != "9999" && // 顧客
+        // d.c_mem_id != "9999" && // include 顧客
         d.d_exit_1 == null &&
         (
           d.d_expired_1 == null || 
