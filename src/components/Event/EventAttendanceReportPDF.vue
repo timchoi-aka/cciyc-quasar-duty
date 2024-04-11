@@ -75,14 +75,14 @@ const attendanceMonthlyRecord = computed(() => {
     props.eventData.HTX_Event_by_pk.Event_to_Session.length > 0
   ) {
     return {
-      youthCount: props.eventData.HTX_Event_by_pk.Event_to_Session.reduce(
-        (a, b) => a + b.i_people_count,
-        0
-      ),
-      session: props.eventData.HTX_Event_by_pk.Event_to_Session.reduce(
-        (a, b) => a + b.i_number,
-        0
-      ),
+      youthCount: props.eventData.HTX_Event_by_pk.Event_to_Session.filter(
+        (session) =>
+          session.d_act.trim() == date.formatDate(props.reportMonth, "MM/YYYY")
+      ).reduce((a, b) => a + b.i_people_count, 0),
+      session: props.eventData.HTX_Event_by_pk.Event_to_Session.filter(
+        (session) =>
+          session.d_act.trim() == date.formatDate(props.reportMonth, "MM/YYYY")
+      ).reduce((a, b) => a + b.i_number, 0),
     };
   } else return {};
   /*
