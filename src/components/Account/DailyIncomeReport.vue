@@ -19,7 +19,7 @@
 </template>
 
 <script setup>
-import { computed, defineProps, ref } from "vue";
+import { computed, ref } from "vue";
 import { openURL, date, useQuasar } from "quasar";
 import jspdf from "jspdf";
 import { font } from "/src/assets/NotoSansTC-Regular-normal.js";
@@ -42,11 +42,13 @@ const accTypeMap = {
   RF: "活動收費",
   CF: "活動收費",
   OF: "其他",
+  續會員費: "會員費",
+  新會員費: "會員費",
 };
 
 // get unique account dates
-const accountDates = computed(() =>
-  Array.from(
+const accountDates = computed(() => {
+  let r = Array.from(
     new Set(
       props.accounts
         ? props.accounts.map((account) =>
@@ -54,8 +56,18 @@ const accountDates = computed(() =>
           )
         : []
     )
-  )
-);
+  );
+
+  // sort by date
+  return r.sort((a, b) => {
+    return date.getDateDiff(
+      date.extractDate(b, "DD/MM/YYYY"),
+      date.extractDate(a, "DD/MM/YYYY")
+    ) > 0
+      ? 1
+      : -1;
+  });
+});
 
 // show accounts by date
 const showAccounts = (d) => {

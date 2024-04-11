@@ -1,11 +1,13 @@
 import { ref, computed } from "vue";
 import { useQuery, useMutation } from "@vue/apollo-composable";
-import { gql } from "graphql-tag"
+import { gql } from "graphql-tag";
+import { date, extend } from "quasar";
+import { useNotifier } from "./notifier";
 
 // Function to provide attendance data
 export function useAttendanceProvider(options = {}) {
   // Destructure galleryID from options, default to a new ref if not provided
-  const { c_act_code = ref() } = options
+  const { c_act_code = ref() } = options;
 
   // Ref to keep track of the number of pending async operations
   const awaitNumber = ref(0);
@@ -13,373 +15,285 @@ export function useAttendanceProvider(options = {}) {
   // Computed property that indicates whether there are any pending async operations
   const loading = computed(() => awaitNumber.value > 0);
 
+  // returned message to be displayed to client
+  const message = ref({});
+
   // Ref to store the result of the async operations
   const result = ref([]);
 
   // GraphQL query string
   let GET_ATTENDANCE = gql`
-  query Event_AttendancesByActCode(
-    $c_act_code: String! = ""
-    ) {
-    Attendance {
-      b_attend
-      b_is_youth
-      c_act_code
-      c_mem_id
-      c_name
-      c_slot
-      c_user_id
-      d_date
-      d_updatetime
-      uuid
-    }
-    AttendanceOthers {
-      c_act_code
-      c_slot
-      c_updateuser
-      d_date
-      d_updatetime
-      i_count
-    }
-  }`;
-
-  /*
-  const ADD_ATTENDANCE = gql`
-    mutation AddAttendance(
-      $objects: [tbl_act_attend_insert_input!] = {},
-      ) {
-    insert_tbl_act_attend(
-      objects: $objects,
-      if_matched: {match_columns: [c_mem_id, c_act_code, d_date, i_marks, c_act_detail], update_columns: [c_name, c_user_id, d_datetime]}) {
-      affected_rows
-    }
-  }`
-  */
-  const ADD_ATTENDANCE = gql`
-    mutation AddAttendance(
-      $objects: [Attendance_insert_input!] = {},
-      ) {
-    insert_Attendance(
-      objects: $objects,
-      if_matched: {match_columns: [c_mem_id, c_act_code, d_date, c_slot], update_columns: [c_name, c_user_id, d_updatetime, b_attend, b_is_youth]}) {
-      returning {
-        b_attend
+    query Event_AttendancesByActCode($c_act_code: String = "") @cached {
+      Attendance(where: { c_act_code: { _eq: $c_act_code } }) {
         b_is_youth
+        b_is_youth_family
         c_act_code
         c_mem_id
         c_name
-        c_slot
         c_user_id
         d_date
         d_updatetime
+        i_in_center_session
+        i_out_center_session
         uuid
       }
-    }
-  }`
-
-  const { mutate: AddAttendance, onError: onError_addAttendance } = useMutation(ADD_ATTENDANCE, {
-    update: (cache, { data: { insert_Attendance } }) => {
-      // Read the data from our cache for this query.
-      const existingAttendance = cache.readQuery({ query: GET_ATTENDANCE });
-
-      // Check if the data is in the cache
-      if (existingAttendance) {
-        let updatedAttendance = [...existingAttendance.Attendance]
-        // if existingAttendance.Attendance contains data from insert_Attendance.returning, update it
-        // else, add insert_Attendance.returning to existingAttendance.Attendance
-        insert_Attendance.returning.forEach((element) => {
-          const index = updatedAttendance.findIndex((item) => item.uuid == element.uuid)
-          if (index > -1) {
-            updatedAttendance[index] = element
-          } else {
-            updatedAttendance.push(element)
-          }
-        })
-
-        // Write our data back to the cache.
-        cache.writeQuery({ query: GET_ATTENDANCE, data: {
-          Attendance: updatedAttendance
-        }});
-        result.value = updatedAttendance
-      }
-    }
-  });
-
-  /*
-  // Mutation for toggling visibility
-  const TOGGLE_VISIBILITY_MUTATION = gql`
-    mutation toggleVisibility($IsShow: Int!, $GalleryID: Int!) {
-      update_HTX_ClassGallery_by_pk(pk_columns: { GalleryID: $GalleryID }, _set: { IsShow: $IsShow }) {
-        GalleryID
-        IsShow
-      }
-    }`;
-
-  const DELETE_GALLERY_MUTATION = gql`
-    mutation delGallery($GalleryID: Int!) {
-      delete_HTX_ClassGallery_by_pk(GalleryID: $GalleryID) {
-        GalleryID
-      }
-    }`
-
-  // Define the renameGallery mutation
-  const RENAME_GALLERY_MUTATION = gql`
-    mutation RenameGallery($GalleryID: Int!, $GalleryName: String!) {
-      update_HTX_ClassGallery_by_pk(pk_columns: {GalleryID: $GalleryID}, _set: {GalleryName: $GalleryName}) {
-        GalleryID
-        GalleryName
-      }
-    }
-    `;
-
-  // Define the updateCover mutation
-  const UPDATE_COVER_MUTATION = gql`
-    mutation UpdateCover($GalleryID: Int!, $CoverPic: String!) {
-      update_HTX_ClassGallery_by_pk(pk_columns: {GalleryID: $GalleryID}, _set: {CoverPic: $CoverPic}) {
-        GalleryID
-        CoverPic
-      }
-    }`;
-
-  // Define the addGallery mutation
-  const ADD_GALLERY = gql`
-    mutation AddGallery($GalleryName: String!, $GalleryNameEN: String!) {
-      insert_HTX_ClassGallery_one(object: { GalleryName: $GalleryName, GalleryNameEN: $GalleryNameEN }) {
-        GalleryID
-        GalleryName
+      AttendanceNonRegistrant {
+        uuid
+        d_date
+        c_act_code
+        i_youth_session
+        i_youth_count
+        i_youth_family_session
+        i_youth_family_count
+        c_updateuser
+        d_updatetime
+        i_in_center_sessions
+        i_out_center_sessions
       }
     }
   `;
-    */
 
-  /*
-  // Use the useMutation hook to create a deleteGallery mutation
-  const { mutate: deleteGallery, onError: onError_deleteGallery } = useMutation(DELETE_GALLERY_MUTATION, {
-    update: (cache, { data: { delete_HTX_ClassGallery_by_pk } }) => {
+  /** Attendance data structure
+   * uuid - uniqueidentifier
+    c_mem_id - nvarchar
+    c_act_code- nvarchar
+    d_date - smalldatetime
+    c_name - nvarchar
+    c_user_id - nvarchar
+    d_updatetime - smalldatetime
+    b_is_youth - bit
+    i_in_center_session - smallint
+    i_out_center_session - smallint
+    b_is_youth_family - bit
+  **/
+
+  /** AttendanceNonRegistrants data structure
+    uuid - uniqueidentifier
+    d_date- smalldatetime
+    c_act_code- nvarchar
+    i_youth_session- smallint
+    i_youth_family_session- smallint
+    i_youth_count- smallint
+    i_youth_family_count- smallint
+    c_updateuser- nvarchar, nullable
+    d_updatetime- smalldatetime
+  **/
+  const ADD_ATTENDANCE = gql`
+    mutation AddAttendance(
+      $registrantsObjects: [Attendance_insert_input!] = []
+      $nonRegistrantsObjects: AttendanceNonRegistrant_insert_input! = {}
+      $logObject: Log_insert_input! = {}
+    ) {
+      insert_Attendance(
+        objects: $registrantsObjects
+        if_matched: {
+          match_columns: [c_mem_id, c_act_code, d_date]
+          update_columns: [
+            c_name
+            c_user_id
+            d_updatetime
+            b_is_youth
+            b_is_youth_family
+            i_in_center_session
+            i_out_center_session
+          ]
+        }
+      ) {
+        returning {
+          b_is_youth
+          b_is_youth_family
+          c_act_code
+          c_mem_id
+          c_name
+          c_user_id
+          d_date
+          d_updatetime
+          i_in_center_session
+          i_out_center_session
+          uuid
+        }
+      }
+      insert_AttendanceNonRegistrant_one(
+        object: $nonRegistrantsObjects
+        if_matched: {
+          match_columns: [c_act_code, d_date]
+          update_columns: [
+            i_youth_session
+            i_youth_family_session
+            i_youth_count
+            i_youth_family_count
+            c_updateuser
+            d_updatetime
+            i_in_center_sessions
+            i_out_center_sessions
+          ]
+        }
+      ) {
+        uuid
+        c_act_code
+        d_date
+        i_youth_session
+        i_youth_family_session
+        i_youth_count
+        i_youth_family_count
+        c_updateuser
+        d_updatetime
+        i_in_center_sessions
+        i_out_center_sessions
+      }
+      insert_Log_one(object: $logObject) {
+        log_id
+        username
+      }
+    }
+  `;
+
+  const {
+    mutate: AddAttendance,
+    onDone: onDone_addAttendance,
+    onError: onError_addAttendance,
+  } = useMutation(ADD_ATTENDANCE, {
+    update: (cache, { data }) => {
+      // console.log("data returned: ", JSON.stringify(data));
       // Read the data from our cache for this query.
-      const existingData = cache.readQuery({
-        query: GET_GALLERIES,
-        variables: galleryID.value ? { galleryID: galleryID.value } : {}
+      const existingAttendance = cache.readQuery({
+        query: GET_ATTENDANCE,
+        variables: {
+          c_act_code: data.insert_AttendanceNonRegistrant_one.c_act_code.trim(),
+        },
       });
-
-      if (existingData) {
-        // Filter out the deleted gallery
-        const updatedGalleries = existingData.HTX_ClassGallery.filter(
-          gallery => gallery.GalleryID !== delete_HTX_ClassGallery_by_pk.GalleryID
-        );
-
-        // Write our data back to the cache.
-        cache.writeQuery({
-          query: GET_GALLERIES,
-          variables: galleryID.value ? { galleryID: galleryID.value } : {},
-          data: {
-            ...existingData,
-            HTX_ClassGallery: updatedGalleries
-          },
+      // Check if the data is in the cache
+      if (existingAttendance) {
+        let updatedAttendance = {};
+        extend(true, updatedAttendance, existingAttendance);
+        // if existingAttendance.Attendance contains data from insert_Attendance.returning, update it
+        // else, add insert_Attendance.returning to existingAttendance.Attendance
+        data.insert_Attendance.returning.forEach((element) => {
+          const index = updatedAttendance.Attendance.findIndex(
+            (item) => item.uuid == element.uuid
+          );
+          if (index >= 0) {
+            updatedAttendance.Attendance[index] = element;
+          } else {
+            updatedAttendance.Attendance.push(element);
+          }
         });
-      }
-    },
-  });
 
-  // Use the useMutation hook to create an addGallery mutation
-  const { mutate: addGallery, onError: onError_addGallery } = useMutation(ADD_GALLERY, {
-    // Update function to modify the cache after the mutation
-    update: (cache, { data: { insert_HTX_ClassGallery_one } }) => {
-      // Read the data from our cache for this query.
-      const existingGalleries = cache.readQuery({ query: GET_GALLERIES });
-
-      // Check if the data is in the cache
-      if (existingGalleries) {
-        // Add the new gallery to the cache
-        const updatedGalleries = [...existingGalleries.HTX_ClassGallery, insert_HTX_ClassGallery_one];
-
-        // Write our data back to the cache.
-        cache.writeQuery({
-          query: GET_GALLERIES,
-          data: {
-            HTX_ClassGallery: updatedGalleries
-          },
-        });
-      }
-    },
-  });
-
-  // Use the useMutation hook to create an updateCover mutation
-  const { mutate: updateCover, onError: onError_updateCover } = useMutation(UPDATE_COVER_MUTATION, {
-    // Update function to modify the cache after the mutation
-    update: (cache, { data: { update_HTX_ClassGallery_by_pk } }) => {
-      // Read the data from our cache for this query.
-      const existingGalleries = cache.readQuery({ query: GET_GALLERIES });
-
-      // Check if the data is in the cache
-      if (existingGalleries) {
-        // Find the gallery we just updated
-        const galleryIndex = existingGalleries.HTX_ClassGallery.findIndex(gallery => gallery.GalleryID === update_HTX_ClassGallery_by_pk.GalleryID);
-
-        if (galleryIndex > -1) {
-          // Update its CoverPic property
-          const updatedGalleries = [...existingGalleries.HTX_ClassGallery];
-          updatedGalleries[galleryIndex].CoverPic = update_HTX_ClassGallery_by_pk.CoverPic;
-
-          // Write our data back to the cache.
-          cache.writeQuery({
-            query: GET_GALLERIES,
-            data: { ...existingGalleries, HTX_ClassGallery: updatedGalleries },
-          });
-        }
-      }
-    },
-  });
-
-  // Use the useMutation hook to create a renameGallery mutation
-  const { mutate: renameGallery, onError: onError_renameGallery } = useMutation(RENAME_GALLERY_MUTATION, {
-    // Update function to modify the cache after the mutation
-    update: (cache, { data: { update_HTX_ClassGallery_by_pk } }) => {
-      // Read the data from our cache for this query.
-      const existingGalleries = cache.readQuery({ query: GET_GALLERIES });
-
-      // Check if the data is in the cache
-      if (existingGalleries) {
-        // Find the gallery we just updated
-        const galleryIndex = existingGalleries.HTX_ClassGallery.findIndex(gallery => gallery.GalleryID === update_HTX_ClassGallery_by_pk.GalleryID);
-
-        if (galleryIndex > -1) {
-          // Update its GalleryName property
-          const updatedGalleries = [...existingGalleries.HTX_ClassGallery];
-          updatedGalleries[galleryIndex].GalleryName = update_HTX_ClassGallery_by_pk.GalleryName;
-
-          // Write our data back to the cache.
-          cache.writeQuery({
-            query: GET_GALLERIES,
-            data: { ...existingGalleries, HTX_ClassGallery: updatedGalleries },
-          });
-        }
-      }
-    },
-  });
-
-  // Update function to modify the cache after the mutation
-  const { mutate: toggleVisibility, onError: onError_toggleVisibility } = useMutation(TOGGLE_VISIBILITY_MUTATION, {
-      update: (cache, { data: { update_HTX_ClassGallery_by_pk } }) => {
-        const existingGalleries = cache.readQuery({ query: GET_GALLERIES });
-
-        // Check if the data is in the cache
-        if (existingGalleries) {
-          // Find the gallery we just updated
-          const galleryIndex = existingGalleries.HTX_ClassGallery.findIndex(gallery => gallery.GalleryID === update_HTX_ClassGallery_by_pk.GalleryID);
-
-          if (galleryIndex > -1) {
-            // Update its IsShow property
-            const updatedGalleries = [...existingGalleries.HTX_ClassGallery];
-            updatedGalleries[galleryIndex].IsShow = update_HTX_ClassGallery_by_pk.IsShow;
-
-            // Write our data back to the cache.
-            cache.writeQuery({
-              query: GET_GALLERIES,
-              data: { ...existingGalleries, HTX_ClassGallery: updatedGalleries },
-            });
+        if (data.insert_AttendanceNonRegistrant_one) {
+          let j = updatedAttendance.AttendanceNonRegistrant.findIndex(
+            (item) => item.uuid == data.insert_AttendanceNonRegistrant_one.uuid
+          );
+          if (j >= 0) {
+            updatedAttendance.AttendanceNonRegistrant[j] =
+              data.insert_AttendanceNonRegistrant_one;
+          } else {
+            updatedAttendance.AttendanceNonRegistrant.push(
+              data.insert_AttendanceNonRegistrant_one
+            );
           }
         }
-      },
-    });
 
-  // Function to delete a gallery by its ID
-  const deleteGalleryById = async (galleryID) => {
-    // Increment the number of pending async operations
-    awaitNumber.value++;
-    try {
-      const coverResponse = await axios.delete(baseURL, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'path': 'ClassGalleryCover/'+galleryID
-        }})
-      const response = await axios.delete(baseURL, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          path: 'ClassGalleryPhotos/'+galleryID
-        }})
+        // Write our data back to the cache.
+        cache.writeQuery({
+          query: GET_ATTENDANCE,
+          variables: {
+            c_act_code:
+              data.insert_AttendanceNonRegistrant_one.c_act_code.trim(),
+          },
+          data: updatedAttendance,
+        });
+        result.value = updatedAttendance;
+      }
+    },
+  });
 
-      // Call the deleteGallery mutation
-      await deleteGallery({
-        GalleryID: galleryID
-      });
-    } catch (error) {
-      console.error(error);
-    } finally {
-      // Decrement the number of pending async operations
-      awaitNumber.value--;
+  onDone_addAttendance((res) => {
+    if (res.data) {
+      if (process.env.NODE_ENV != "development") {
+        // no notification for delete event
+        // message return to client
+        message.value =
+          "活動" +
+          res.data.insert_AttendanceNonRegistrant_one.c_act_code.trim() +
+          "點名成功";
+      } else {
+        // development channel
+        const { result } = useNotifier({
+          topic: "uqhehdGADfWYglt9jDfaab0LGrC3",
+          data: {
+            title: "[DEV]活動點名成功",
+            body:
+              "[" +
+              res.data.insert_AttendanceNonRegistrant_one.c_updateuser.trim() +
+              "]" +
+              "提交了活動" +
+              res.data.insert_AttendanceNonRegistrant_one.c_act_code.trim() +
+              "點名，活動日期：" +
+              date.formatDate(
+                res.data.insert_AttendanceNonRegistrant_one.d_date,
+                "YYYY-MM-DD"
+              ),
+          },
+        });
+
+        result.value
+          .then((r) => {
+            if (r.data) {
+              message.value =
+                "成功提交了活動點名 - " +
+                res.data.insert_AttendanceNonRegistrant_one.c_act_code.trim();
+            }
+          })
+          .catch((e) => {
+            console.log("error: ", e);
+            message.value = "提交活動點名失敗";
+          });
+      }
     }
-  };
-
-  // Function to toggle the visibility of a gallery
-  const toggleVisibilityById = async (galleryID) => {
-    // Increment the number of pending async operations
-    awaitNumber.value++;
-    try {
-      // Call the toggleVisibility mutation
-      await toggleVisibility({
-        GalleryID: galleryID,
-        IsShow: result.value.find((element) => element.GalleryID == galleryID).IsShow == 1? 0: 1
-      });
-    } catch (error) {
-      console.error(error);
-    } finally {
-      // Decrement the number of pending async operations
-      awaitNumber.value--;
-    }
-  };
-
-  // Function to toggle the visibility of a gallery
-  const renameGalleryById = async (options) => {
-    const { GalleryID, GalleryName } = options;
-    // Increment the number of pending async operations
-    awaitNumber.value++;
-    try {
-      // Call the toggleVisibility mutation
-      await renameGallery({
-        GalleryID: GalleryID,
-        GalleryName: GalleryName
-      });
-    } catch (error) {
-      console.error(error);
-    } finally {
-      // Decrement the number of pending async operations
-      awaitNumber.value--;
-    }
-  };
-
-  // Function to toggle the visibility of a gallery
-  const updateCoverById = async (options) => {
-    const { GalleryID, CoverPic } = options;
-    // Increment the number of pending async operations
-    awaitNumber.value++;
-    try {
-      // Call the toggleVisibility mutation
-      await updateCover({
-        GalleryID: GalleryID,
-        CoverPic: CoverPic
-      });
-    } catch (error) {
-      console.error(error);
-    } finally {
-      // Decrement the number of pending async operations
-      awaitNumber.value--;
-    }
-  };
-  */
+  });
 
   // Function to add a new attendance
-  const addAttendance = async (objects) => {
+  const addAttendance = async (param) => {
+    const { username, d_date, registrantsObjects, nonRegistrantsObjects } =
+      param;
+
+    let logObject = ref({
+      username: username.value,
+      datetime: date.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+      module: "活動系統",
+      action:
+        "活動點名: " +
+        c_act_code.value +
+        "。日期：" +
+        date.formatDate(d_date.value, "YYYY-MM-DD") +
+        "。出席會員：" +
+        registrantsObjects.value
+          .map(
+            (item) =>
+              `${item.c_name} (${item.c_mem_id}) - 中心內: ${
+                item.i_in_center_session ? item.i_in_center_session : 0
+              }, 中心外: ${
+                item.i_out_center_session ? item.i_out_center_session : 0
+              }`
+          )
+          .join(", "),
+    });
+
+    // console.log("username: ", username.value);
+    // console.log("d_date: ", d_date.value);
+    // console.log("registrantsObjects: ", registrantsObjects.value);
+    // console.log("nonRegistrantsObjects: ", nonRegistrantsObjects.value);
+    // console.log("logObject: ", logObject.value);
+
     // Increment the number of pending async operations
     awaitNumber.value++;
+
     try {
       // Call the addAttendance mutation
       await AddAttendance({
-        objects: objects
+        registrantsObjects: registrantsObjects.value,
+        nonRegistrantsObjects: nonRegistrantsObjects.value,
+        logObject: logObject.value,
       });
     } catch (error) {
       console.error(error);
@@ -388,54 +302,32 @@ export function useAttendanceProvider(options = {}) {
       awaitNumber.value--;
     }
   };
-  /*
-  onError_deleteGallery((error) => {
-    // Handle error
-    console.error("刪除相薄失敗", error)
-  });
 
-  onError_toggleVisibility((error) => {
-    // Handle error
-    console.error("隱藏顯示相簿失敗", error)
-  });
-
-  // Handle error for renameGallery
-  onError_renameGallery((error) => {
-    // Handle error
-    console.error("Renaming gallery failed", error)
-  });
-
-  // Handle error for updateCover
-  onError_updateCover((error) => {
-    // Handle error
-    console.error("Updating cover failed", error)
-  });
-  */
-  // Handle error for addGallery
+  // Handle error for addAttendance
   onError_addAttendance((error) => {
     // Handle error
-    console.error("Adding attendance failed", error)
+    console.error("Adding attendance failed", error);
   });
 
   // Function to execute the query
   const execute = async () => {
-    const { onResult } = useQuery(GET_ATTENDANCE,
-      () => ({
-        c_act_code: c_act_code,
-      }));
+    awaitNumber.value++;
+    const { onResult } = useQuery(GET_ATTENDANCE, () => ({
+      c_act_code: c_act_code.value,
+    }));
 
     onResult((res) => {
       if (res.data) {
-        result.value = res.data
+        result.value = res.data;
         awaitNumber.value--;
       }
-    })
-  }
+    });
+  };
 
   // Execute the query
   execute();
 
   // Return the provided data and functions
   //return { result, loading, deleteGalleryById, toggleVisibilityById, refetch: execute, renameGalleryById, updateCoverById, addNewGallery };
-  return { result, loading, addAttendance };
+  return { result, loading, message, addAttendance };
 }

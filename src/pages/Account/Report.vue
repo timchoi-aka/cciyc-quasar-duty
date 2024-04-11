@@ -102,7 +102,7 @@
       icon="source"
       :label="'刪除收據細列表(' + DeletedData.length + ')'"
     />
-    <q-tab name="dailyIncome" icon="source" label="每日收費摘要" />
+    <q-tab name="dailyIncome" icon="source" label="每日收款摘要" />
   </q-tabs>
 
   <q-tab-panels

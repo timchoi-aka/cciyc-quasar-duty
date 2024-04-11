@@ -1,15 +1,15 @@
 import { ref, computed } from "vue";
 import { useQuery, useMutation } from "@vue/apollo-composable";
-import { gql } from "graphql-tag"
-import Member from "components/class/member.js"
+import { gql } from "graphql-tag";
+import Member from "components/class/member.js";
 
 /* TODO
-* add Member class, assign Event_Registrations to user class
-*/
+ * add Member class, assign Event_Registrations to user class
+ */
 // Function to provide attendance data
 export function useApplicantProvider(options = {}) {
   // Destructure galleryID from options, default to a new ref if not provided
-  const { c_act_code = ref() } = options
+  const { c_act_code = ref() } = options;
 
   // Ref to keep track of the number of pending async operations
   const awaitNumber = ref(0);
@@ -22,248 +22,251 @@ export function useApplicantProvider(options = {}) {
 
   // GraphQL query string
   let GET_APPLICANT = gql`
-  query Event_ApplicantsByActCode($c_act_code: String! = "") {
-    tbl_act_reg(where: {c_act_code: {_eq: $c_act_code}, b_refund: {_eq: false}}) {
-      ID
-      b_refund
-      c_act_code
-      c_mem_id
-      c_bus
-      c_period
-      c_name
-      c_receipt_no
-      c_remarks
-      c_sex
-      c_tbl
-      c_tel
-      c_type
-      c_user_id
-      d_refund
-      d_reg
-      i_age
-      i_bus_no
-      i_tbl_no
-      EventRegistration_to_Member {
+    query Event_ApplicantsByActCode($c_act_code: String! = "") {
+      tbl_act_reg(
+        where: { c_act_code: { _eq: $c_act_code }, b_refund: { _eq: false } }
+      ) {
         ID
-        b_birth_InHK
-        b_cssa
-        b_emailcontact
-        b_estimate
-        b_family
-        b_finish
-        b_getElderCard
-        b_getsafebell
-        b_instructor
-        b_lib_user
-        b_mem_type1
-        b_mem_type10
-        b_mem_type11
-        b_mem_type12
-        b_mem_type13
-        b_mem_type2
-        b_mem_type3
-        b_mem_type4
-        b_mem_type5
-        b_mem_type6
-        b_mem_type7
-        b_mem_type8
-        b_mem_type9
-        b_memcard
-        b_missed
-        b_notcheckdata
-        b_receive_publish
-        b_single_family
-        b_teamcontact
-        b_udf_1
-        b_visit
-        c_HAD
-        c_HKID
-        c_adds_RM
-        c_adds_Bdt
-        c_adds_area
-        c_adds_block
-        c_adds_district
-        c_adds_est
-        c_adds_floor
-        c_adds_street
-        c_barcode
-        c_card_remarks
-        c_care
-        c_cat
-        c_centre_id
-        c_cis_id
-        c_comefrom
-        c_couse_centre
-        c_couse_id
-        c_cssa_no
-        c_edu
-        c_direct_code
-        c_email
-        c_emer_address
-        c_emer_address2
-        c_emer_name
-        c_emer_address3
-        c_emer_name3
-        c_emer_name2
-        c_emer_re2
-        c_emer_rel
-        c_emer_rel3
-        c_emer_rem
-        c_emer_rem2
-        c_emer_rem3
-        c_emer_tel1_1
-        c_emer_tel1_2
-        c_emer_tel2_1
-        c_emer_tel3_1
-        c_emer_tel2_2
-        c_emer_tel3_2
-        c_fax
-        c_fileno_1
-        c_fileno_2
-        c_fileno_3
-        c_fileno_4
-        c_fileno_5
-        c_fill_name
-        c_group
-        c_intro_source
-        c_introsource
-        c_job
-        c_job_bef_retire
-        c_job_title
-        c_lib_position
-        c_mar_stat
-        c_lossjob_year
-        c_mem_fee_1
-        c_mem_fee_2
-        c_mem_fee_4
-        c_mem_fee_3
-        c_mem_fee_5
+        b_refund
+        c_act_code
         c_mem_id
-        c_mem_relation
-        c_mem_relative_mem_name
-        c_mem_relative_memid
-        c_mem_rep_name1
-        c_mem_rep_name10
-        c_mem_rep_name11
-        c_mem_rep_name12
-        c_mem_rep_name13
-        c_mem_rep_name4
-        c_mem_rep_name2
-        c_mem_rep_name3
-        c_mem_rep_name5
-        c_mem_rep_name6
-        c_mem_rep_name7
-        c_mem_rep_name8
-        c_mem_rep_name9
-        c_mo_tongue
-        c_mobile
+        c_bus
+        c_period
         c_name
-        c_name_other
-        c_pager
-        c_photo_path
-        c_refno
-        c_relative_memid
-        c_religion
-        c_res_class
-        c_res_nat
+        c_receipt_no
+        c_remarks
         c_sex
-        c_status_2
-        c_status_1
-        c_status_3
-        c_status_5
-        c_status_4
+        c_tbl
         c_tel
-        c_tel_com
-        c_udf_1
-        c_udf_3
-        c_udf_2
-        c_udf_4
-        c_udf_5
-        c_udf_6
-        c_update_user
+        c_type
         c_user_id
-        c_vol_ID
-        c_vol_group
-        c_vol_had_service
-        c_vol_had_price
-        c_vol_price_year
-        c_vol_price_frist
-        c_vol_price
-        c_vol_price_year_frist
-        c_vol_ser_unit
-        c_vol_service_health
-        c_vol_service_social
-        c_vol_service_support
-        c_vol_service_time
-        c_vol_skill_act
-        c_vol_skill_arts
-        c_vol_skill_culture
-        c_vol_skill_music
-        c_vol_skill_other
-        d_enter_3
-        d_enter_2
-        d_enter_1
-        d_cssa_expire
-        d_couse_regdate
-        d_come_HK
-        d_birth
-        d__estimate_date
-        c_vol_training
-        d_enter_4
-        d_enter_5
-        d_exit_1
-        d_exit_2
-        d_exit_3
-        d_exit_4
-        d_exit_5
-        d_expired_1
-        d_expired_2
-        d_expired_3
-        d_expired_4
-        d_expired_5
-        d_lossjobDate
-        i_boys_inchi
-        i_arrival_yrs
-        d_update
-        d_write
-        d_udf_1
-        d_renew_5
-        d_renew_4
-        d_renew_3
-        d_renew_2
-        d_renew_1
-        i_boys_inhk
-        i_edu_yrs
-        i_used_reserve_quota
-        i_used_checkout_quota
-        i_udf_2
-        i_udf_1
-        i_total_HK
-        i_total_China
-        i_girls_inhk
-        i_girls_inchi
-        u_udf_1
-        u_rent
-        u_income
-        o_photo
-        m_vol_remarks
-        m_udf_1
-        m_spec
-        m_ser
-        m_res_stat
-        m_res_env
-        m_remarks
-        m_md
-        m_job_want
-        m_econ
-        m_dis
-        m_contact
-        m_addscom
-        m_act
-        i_vol_experience
+        d_refund
+        d_reg
+        i_age
+        i_bus_no
+        i_tbl_no
+        EventRegistration_to_Member {
+          ID
+          b_birth_InHK
+          b_cssa
+          b_emailcontact
+          b_estimate
+          b_family
+          b_finish
+          b_getElderCard
+          b_getsafebell
+          b_instructor
+          b_lib_user
+          b_mem_type1
+          b_mem_type10
+          b_mem_type11
+          b_mem_type12
+          b_mem_type13
+          b_mem_type2
+          b_mem_type3
+          b_mem_type4
+          b_mem_type5
+          b_mem_type6
+          b_mem_type7
+          b_mem_type8
+          b_mem_type9
+          b_memcard
+          b_missed
+          b_notcheckdata
+          b_receive_publish
+          b_single_family
+          b_teamcontact
+          b_udf_1
+          b_visit
+          c_HAD
+          c_HKID
+          c_adds_RM
+          c_adds_Bdt
+          c_adds_area
+          c_adds_block
+          c_adds_district
+          c_adds_est
+          c_adds_floor
+          c_adds_street
+          c_barcode
+          c_card_remarks
+          c_care
+          c_cat
+          c_centre_id
+          c_cis_id
+          c_comefrom
+          c_couse_centre
+          c_couse_id
+          c_cssa_no
+          c_edu
+          c_direct_code
+          c_email
+          c_emer_address
+          c_emer_address2
+          c_emer_name
+          c_emer_address3
+          c_emer_name3
+          c_emer_name2
+          c_emer_re2
+          c_emer_rel
+          c_emer_rel3
+          c_emer_rem
+          c_emer_rem2
+          c_emer_rem3
+          c_emer_tel1_1
+          c_emer_tel1_2
+          c_emer_tel2_1
+          c_emer_tel3_1
+          c_emer_tel2_2
+          c_emer_tel3_2
+          c_fax
+          c_fileno_1
+          c_fileno_2
+          c_fileno_3
+          c_fileno_4
+          c_fileno_5
+          c_fill_name
+          c_group
+          c_intro_source
+          c_introsource
+          c_job
+          c_job_bef_retire
+          c_job_title
+          c_lib_position
+          c_mar_stat
+          c_lossjob_year
+          c_mem_fee_1
+          c_mem_fee_2
+          c_mem_fee_4
+          c_mem_fee_3
+          c_mem_fee_5
+          c_mem_id
+          c_mem_relation
+          c_mem_relative_mem_name
+          c_mem_relative_memid
+          c_mem_rep_name1
+          c_mem_rep_name10
+          c_mem_rep_name11
+          c_mem_rep_name12
+          c_mem_rep_name13
+          c_mem_rep_name4
+          c_mem_rep_name2
+          c_mem_rep_name3
+          c_mem_rep_name5
+          c_mem_rep_name6
+          c_mem_rep_name7
+          c_mem_rep_name8
+          c_mem_rep_name9
+          c_mo_tongue
+          c_mobile
+          c_name
+          c_name_other
+          c_pager
+          c_photo_path
+          c_refno
+          c_relative_memid
+          c_religion
+          c_res_class
+          c_res_nat
+          c_sex
+          c_status_2
+          c_status_1
+          c_status_3
+          c_status_5
+          c_status_4
+          c_tel
+          c_tel_com
+          c_udf_1
+          c_udf_3
+          c_udf_2
+          c_udf_4
+          c_udf_5
+          c_udf_6
+          c_update_user
+          c_user_id
+          c_vol_ID
+          c_vol_group
+          c_vol_had_service
+          c_vol_had_price
+          c_vol_price_year
+          c_vol_price_frist
+          c_vol_price
+          c_vol_price_year_frist
+          c_vol_ser_unit
+          c_vol_service_health
+          c_vol_service_social
+          c_vol_service_support
+          c_vol_service_time
+          c_vol_skill_act
+          c_vol_skill_arts
+          c_vol_skill_culture
+          c_vol_skill_music
+          c_vol_skill_other
+          d_enter_3
+          d_enter_2
+          d_enter_1
+          d_cssa_expire
+          d_couse_regdate
+          d_come_HK
+          d_birth
+          d__estimate_date
+          c_vol_training
+          d_enter_4
+          d_enter_5
+          d_exit_1
+          d_exit_2
+          d_exit_3
+          d_exit_4
+          d_exit_5
+          d_expired_1
+          d_expired_2
+          d_expired_3
+          d_expired_4
+          d_expired_5
+          d_lossjobDate
+          i_boys_inchi
+          i_arrival_yrs
+          d_update
+          d_write
+          d_udf_1
+          d_renew_5
+          d_renew_4
+          d_renew_3
+          d_renew_2
+          d_renew_1
+          i_boys_inhk
+          i_edu_yrs
+          i_used_reserve_quota
+          i_used_checkout_quota
+          i_udf_2
+          i_udf_1
+          i_total_HK
+          i_total_China
+          i_girls_inhk
+          i_girls_inchi
+          u_udf_1
+          u_rent
+          u_income
+          o_photo
+          m_vol_remarks
+          m_udf_1
+          m_spec
+          m_ser
+          m_res_stat
+          m_res_env
+          m_remarks
+          m_md
+          m_job_want
+          m_econ
+          m_dis
+          m_contact
+          m_addscom
+          m_act
+          i_vol_experience
+        }
       }
     }
-  }`;
+  `;
 
   /*
   // Mutation for toggling visibility
@@ -581,16 +584,16 @@ export function useApplicantProvider(options = {}) {
   // Function to execute the query
   const execute = async () => {
     // console.log(c_act_code)
-    const { onResult } = useQuery(GET_APPLICANT,
-      () => ({
-        c_act_code: c_act_code,
-      }));
+    awaitNumber.value++;
+    const { onResult } = useQuery(GET_APPLICANT, () => ({
+      c_act_code: c_act_code.value,
+    }));
 
     onResult((res) => {
       if (res.data) {
-        result.value = []
+        result.value = [];
         res.data.tbl_act_reg.forEach((data) => {
-          const m = new Member(data.EventRegistration_to_Member)
+          const m = new Member(data.EventRegistration_to_Member);
 
           result.value.push({
             ID: data.ID,
@@ -613,12 +616,12 @@ export function useApplicantProvider(options = {}) {
             i_bus_no: data.i_bus_no,
             i_tbl_no: data.i_tbl_no,
             MemberData: m,
-          })
-        })
+          });
+        });
         awaitNumber.value--;
       }
-    })
-  }
+    });
+  };
 
   // Execute the query
   execute();

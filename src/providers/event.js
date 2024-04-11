@@ -179,7 +179,7 @@ export function useEventProvider(options = {}) {
       $loadWeb: Boolean! = false
       $loadAccount: Boolean! = false
       $loadFee: Boolean! = false
-    ) {
+    ) @cached {
       HTX_Event_by_pk(c_act_code: $c_act_code) {
         EventClassID
         Gen_m_remark
