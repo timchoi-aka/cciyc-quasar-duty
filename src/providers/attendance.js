@@ -23,7 +23,7 @@ export function useAttendanceProvider(options = {}) {
 
   // GraphQL query string
   let GET_ATTENDANCE = gql`
-    query Event_AttendancesByActCode($c_act_code: String = "") @cached {
+    query Event_AttendancesByActCode($c_act_code: String = "") {
       Attendance(where: { c_act_code: { _eq: $c_act_code } }) {
         b_is_youth
         b_is_youth_family
@@ -37,7 +37,7 @@ export function useAttendanceProvider(options = {}) {
         i_out_center_session
         uuid
       }
-      AttendanceNonRegistrant {
+      AttendanceNonRegistrant(where: { c_act_code: { _eq: $c_act_code } }) {
         uuid
         d_date
         c_act_code
@@ -148,10 +148,37 @@ export function useAttendanceProvider(options = {}) {
     }
   `;
 
+  const DELETE_ATTENDANCE = gql`
+    mutation DelAttendance(
+      $c_act_code: String = ""
+      $d_date: smalldatetime = ""
+      $logObject: Log_insert_input! = {}
+    ) {
+      delete_Attendance(
+        where: {
+          _and: { c_act_code: { _eq: $c_act_code }, d_date: { _eq: $d_date } }
+        }
+      ) {
+        affected_rows
+      }
+      delete_AttendanceNonRegistrant_by_pk(
+        c_act_code: $c_act_code
+        d_date: $d_date
+      ) {
+        d_date
+        c_act_code
+      }
+      insert_Log_one(object: $logObject) {
+        log_id
+        username
+      }
+    }
+  `;
+
   const {
     mutate: AddAttendance,
-    onDone: onDone_addAttendance,
-    onError: onError_addAttendance,
+    onDone: onDone_AddAttendance,
+    onError: onError_AddAttendance,
   } = useMutation(ADD_ATTENDANCE, {
     update: (cache, { data }) => {
       // console.log("data returned: ", JSON.stringify(data));
@@ -207,7 +234,7 @@ export function useAttendanceProvider(options = {}) {
     },
   });
 
-  onDone_addAttendance((res) => {
+  onDone_AddAttendance((res) => {
     if (res.data) {
       if (process.env.NODE_ENV != "development") {
         // no notification for delete event
@@ -252,6 +279,85 @@ export function useAttendanceProvider(options = {}) {
     }
   });
 
+  // Handle error for addAttendance
+  onError_AddAttendance((error) => {
+    // Handle error
+    console.error("Adding attendance failed", error);
+  });
+
+  const {
+    mutate: DelAttendance,
+    onDone: onDone_DelAttendance,
+    onError: onError_DelAttendance,
+  } = useMutation(DELETE_ATTENDANCE, {
+    update: (cache, { data: { delete_AttendanceNonRegistrant_by_pk } }) => {
+      // Evict the event from the cache
+      cache.evict({
+        c_act_code: cache.identify({
+          __typename: "AttendanceNonRegistrant",
+          c_act_code: delete_AttendanceNonRegistrant_by_pk.c_act_code,
+          d_date: delete_AttendanceNonRegistrant_by_pk.d_date,
+        }),
+      });
+      cache.gc();
+    },
+  });
+
+  onDone_DelAttendance((res) => {
+    if (res.data) {
+      if (process.env.NODE_ENV != "development") {
+        // no notification for delete event
+        // message return to client
+        (message.value =
+          "活動" +
+          res.data.delete_AttendanceNonRegistrant_by_pk.c_act_code.trim() +
+          "刪除點名" +
+          date.formatDate(
+            res.data.delete_AttendanceNonRegistrant_by_pk.d_date,
+            "YYYY-MM-DD"
+          )) + "成功";
+      } else {
+        // development channel
+        const { result } = useNotifier({
+          topic: "uqhehdGADfWYglt9jDfaab0LGrC3",
+          data: {
+            title: "[DEV]刪除活動點名成功",
+            body:
+              "[" +
+              res.data.insert_Log_one.username.trim() +
+              "]" +
+              "刪除了活動" +
+              res.data.delete_AttendanceNonRegistrant_by_pk.c_act_code.trim() +
+              "點名，活動日期：" +
+              date.formatDate(
+                res.data.delete_AttendanceNonRegistrant_by_pk.d_date,
+                "YYYY-MM-DD"
+              ),
+          },
+        });
+
+        result.value
+          .then((r) => {
+            if (r.data) {
+              message.value =
+                "成功刪除了活動點名 - " +
+                res.data.delete_AttendanceNonRegistrant_by_pk.c_act_code.trim();
+            }
+          })
+          .catch((e) => {
+            console.log("error: ", e);
+            message.value = "刪除活動點名失敗";
+          });
+      }
+    }
+  });
+
+  // Handle error for addAttendance
+  onError_DelAttendance((error) => {
+    // Handle error
+    console.error("Adding attendance failed", error);
+  });
+
   // Function to add a new attendance
   const addAttendance = async (param) => {
     const { username, d_date, registrantsObjects, nonRegistrantsObjects } =
@@ -278,13 +384,13 @@ export function useAttendanceProvider(options = {}) {
           )
           .join(", "),
     });
-
-    // console.log("username: ", username.value);
-    // console.log("d_date: ", d_date.value);
-    // console.log("registrantsObjects: ", registrantsObjects.value);
-    // console.log("nonRegistrantsObjects: ", nonRegistrantsObjects.value);
-    // console.log("logObject: ", logObject.value);
-
+    /* 
+    console.log("username: ", username.value);
+    console.log("d_date: ", d_date.value);
+    console.log("registrantsObjects: ", registrantsObjects.value);
+    console.log("nonRegistrantsObjects: ", nonRegistrantsObjects.value);
+    console.log("logObject: ", logObject.value);
+    */
     // Increment the number of pending async operations
     awaitNumber.value++;
 
@@ -303,11 +409,45 @@ export function useAttendanceProvider(options = {}) {
     }
   };
 
-  // Handle error for addAttendance
-  onError_addAttendance((error) => {
-    // Handle error
-    console.error("Adding attendance failed", error);
-  });
+  // Function to delete a new attendance
+  const delAttendance = async (param) => {
+    const { username, d_date, c_act_code } = param;
+
+    let logObject = ref({
+      username: username.value,
+      datetime: date.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+      module: "活動系統",
+      action:
+        "刪除活動點名: " +
+        c_act_code.value +
+        "。日期：" +
+        date.formatDate(d_date.value, "YYYY-MM-DD") +
+        "。",
+    });
+    /* 
+    console.log("username: ", username.value);
+    console.log("d_date: ", d_date.value);
+    console.log("registrantsObjects: ", registrantsObjects.value);
+    console.log("nonRegistrantsObjects: ", nonRegistrantsObjects.value);
+    console.log("logObject: ", logObject.value);
+    */
+    // Increment the number of pending async operations
+    awaitNumber.value++;
+
+    try {
+      // Call the addAttendance mutation
+      await DelAttendance({
+        c_act_code: c_act_code.value,
+        d_date: d_date.value,
+        logObject: logObject.value,
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      // Decrement the number of pending async operations
+      awaitNumber.value--;
+    }
+  };
 
   // Function to execute the query
   const execute = async () => {
@@ -329,5 +469,5 @@ export function useAttendanceProvider(options = {}) {
 
   // Return the provided data and functions
   //return { result, loading, deleteGalleryById, toggleVisibilityById, refetch: execute, renameGalleryById, updateCoverById, addNewGallery };
-  return { result, loading, message, addAttendance };
+  return { result, loading, message, addAttendance, delAttendance };
 }

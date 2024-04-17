@@ -23,7 +23,6 @@ import { computed, ref } from "vue";
 import { openURL, date, useQuasar } from "quasar";
 import jspdf from "jspdf";
 import { font } from "/src/assets/NotoSansTC-Regular-normal.js";
-import logoImage from "../../assets/cciyc_logo.png";
 
 // get props
 const props = defineProps({
@@ -108,7 +107,6 @@ const showAccounts = (d) => {
 
 function drawContent(doc, reportData) {
   // title and logo
-  doc.addImage(logoImage, "PNG", 60, 7, 13, 12);
   doc.setFontSize(14);
   doc.text("長洲鄉事委員會青年綜合服務中心", 110, 10, "center");
   doc.text("每日收款摘要", 110, 17, "center");

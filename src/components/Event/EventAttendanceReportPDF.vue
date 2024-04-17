@@ -35,85 +35,55 @@ const src = ref(null);
 const attendanceRecord = computed(() => {
   let res = [];
   if (props.attendanceData && props.attendanceData.length > 0) {
-    props.attendanceData.forEach((att) => {
-      // add att.d_date to res if not exist
+    props.attendanceOthersData.forEach((att) => {
+      // add att.d_date to res if not exist (based on Others Data)
       if (!res.find((r) => r.d_date == att.d_date)) {
         res.push({
           d_date: att.d_date,
         });
       }
+    });
 
+    props.attendanceData.forEach((att) => {
       // count youth
-      res.find((r) => r.d_date == att.d_date).youthCount = props.attendanceData
+      let youthCount = props.attendanceData
         .filter(
           (rec) =>
             (rec.b_is_youth || rec.b_is_youth_family) &&
             rec.d_date == att.d_date
         )
         .reduce((a, b) => a + b.i_in_center_session, 0);
-    });
+      res.find((r) => r.d_date == att.d_date).youthCount = youthCount
+        ? youthCount
+        : 0;
 
-    // count session
-    if (props.attendanceOthersData) {
-      res.forEach((r) => {
-        let i = props.attendanceOthersData.findIndex(
-          (rec) => rec.d_date == r.d_date
-        );
-        r.sessionCount = props.attendanceOthersData[i].i_in_center_sessions;
-      });
-    }
+      // count session (only count youth and youth family)
+      let sessionCountArray = props.attendanceData
+        .filter(
+          (rec) =>
+            (rec.b_is_youth || rec.b_is_youth_family) &&
+            rec.d_date == att.d_date
+        )
+        .map((obj) => obj.i_in_center_session);
+
+      res.find((r) => r.d_date == att.d_date).sessionCount =
+        sessionCountArray.length > 0 ? Math.max(...sessionCountArray) : 0;
+    });
   }
 
   return res;
 });
 
-const attendanceMonthlyRecord = computed(() => {
-  // monthly attendance
-  if (
-    props.eventData.HTX_Event_by_pk &&
-    props.eventData.HTX_Event_by_pk.Event_to_Session &&
-    props.eventData.HTX_Event_by_pk.Event_to_Session.length > 0
-  ) {
+// daily attendance
+const attendanceDailyRecord = computed(() =>
+  props.attendanceOthersData.map((rec) => {
     return {
-      youthCount: props.eventData.HTX_Event_by_pk.Event_to_Session.filter(
-        (session) =>
-          session.d_act.trim() == date.formatDate(props.reportMonth, "MM/YYYY")
-      ).reduce((a, b) => a + b.i_people_count, 0),
-      session: props.eventData.HTX_Event_by_pk.Event_to_Session.filter(
-        (session) =>
-          session.d_act.trim() == date.formatDate(props.reportMonth, "MM/YYYY")
-      ).reduce((a, b) => a + b.i_number, 0),
+      date: rec.d_date,
+      youthCount: rec.i_youth_count + rec.i_youth_family_count,
+      session: Math.max(rec.i_youth_session, rec.i_youth_family_session),
     };
-  } else return {};
-  /*
-    props.eventData.HTX_Event_by_pk.Event_to_Session.forEach((session) => {
-      if (
-        session.d_act.trim() == date.formatDate(props.reportMonth, "MM/YYYY")
-      ) {
-        res.push({
-          d_date: session.d_act,
-          youthCount: session.i_people_count,
-          session: session.i_number,
-        });
-      }
-    });
-  }
-  */
-});
-
-const attendanceDailyRecord = computed(() => {
-  // daily attendance
-  return {
-    youthCount: props.attendanceOthersData.reduce(
-      (a, b) => a + b.i_youth_count + b.i_youth_family_count,
-      0
-    ),
-    session: props.attendanceOthersData.reduce(
-      (a, b) => a + b.i_youth_session + b.i_youth_family_session,
-      0
-    ),
-  };
-});
+  })
+);
 
 onMounted(() => {
   if (!props.reportMonth) return;
@@ -131,7 +101,6 @@ onMounted(() => {
     doc,
     props.eventData.HTX_Event_by_pk,
     attendanceRecord.value,
-    attendanceMonthlyRecord.value,
     attendanceDailyRecord.value,
     props.reportMonth
   );
@@ -163,15 +132,9 @@ async function drawContent(
   doc,
   event,
   attendance,
-  attendanceMonthly,
   attendanceDaily,
   reportMonth
 ) {
-  //const svgUrl = require('../../assets/cciyc_logo.svg'); // Adjust the path
-  //const svgResponse = await fetch(svgUrl);
-  //const svgText = await svgResponse.text();
-  //doc.addSvgAsImage(svgText, 50, 50, 20, 20, 'none', 'FAST', 0);
-
   doc.setFontSize(14);
   doc.text("長洲鄉事委員會青年綜合服務中心", 110, 5, "center");
   doc.text("每月服務統計表", 110, 12, "center");
@@ -282,6 +245,8 @@ async function drawContent(
   doc.text("活動節數", 163, line, "right");
   doc.line(30, line + 2, 170, line + 2);
   line += 6;
+  let countTotal = 0;
+  let sessionTotal = 0;
   for (let i = 0; i < attendance.length; i++) {
     doc.text(
       date.formatDate(attendance[i].d_date, "DD/MM/YYYY"),
@@ -289,72 +254,32 @@ async function drawContent(
       line,
       "center"
     );
+    let dailyIndex = attendanceDaily.findIndex(
+      (rec) => rec.date == attendance[i].d_date
+    );
+    let youthCount =
+      (attendance[i].youthCount ? attendance[i].youthCount : 0) +
+      (attendanceDaily[dailyIndex].youthCount
+        ? attendanceDaily[dailyIndex].youthCount
+        : 0);
+    countTotal += youthCount;
+    doc.text(youthCount.toString(), 110, line, "right");
 
-    doc.text(
-      attendance[i].youthCount ? attendance[i].youthCount.toString() : "0",
-      110,
-      line,
-      "right"
-    );
-    doc.text(
-      attendance[i].sessionCount ? attendance[i].sessionCount.toString() : "0",
-      157,
-      line,
-      "right"
-    );
+    let youthSession =
+      (attendance[i].sessionCount ? attendance[i].sessionCount : 0) +
+      (attendanceDaily[dailyIndex].session
+        ? attendanceDaily[dailyIndex].session
+        : 0);
+    sessionTotal += youthSession;
+    doc.text(youthSession.toString(), 157, line, "right");
     doc.line(30, line + 2, 170, line + 2);
     line += 6;
   }
 
-  // attendance other record (per month)
-  doc.text("非報名統計(每月)", 55, line, "center");
-  doc.text(
-    attendanceMonthly.youthCount
-      ? attendanceMonthly.youthCount.toString()
-      : "0",
-    110,
-    line,
-    "right"
-  );
-  doc.text(
-    attendanceMonthly.session ? attendanceMonthly.session.toString() : "0",
-    157,
-    line,
-    "right"
-  );
-  doc.line(30, line + 2, 170, line + 2);
-  line += 6;
-
-  // attendance other record (per date)
-  doc.text("非報名統計(每日)", 55, line, "center");
-  doc.text(attendanceDaily.youthCount.toString(), 110, line, "right");
-  doc.line(30, line + 2, 170, line + 2);
-  line += 6;
-
   // total
   doc.text("合計", 55, line, "center");
-  doc.text(
-    (
-      attendance.reduce((a, b) => a + (b.youthCount ? b.youthCount : 0), 0) +
-      attendanceMonthly.youthCount +
-      attendanceDaily.youthCount
-    ).toString(),
-    110,
-    line,
-    "right"
-  );
-
-  doc.text(
-    (
-      attendance.reduce(
-        (a, b) => a + (b.sessionCount ? b.sessionCount : 0),
-        0
-      ) + attendanceMonthly.session
-    ).toString(),
-    157,
-    line,
-    "right"
-  );
+  doc.text(countTotal.toString(), 110, line, "right");
+  doc.text(sessionTotal.toString(), 157, line, "right");
   doc.line(30, line + 2, 170, line + 2);
   doc.line(30, tableLineStart + 2, 30, line + 2);
   doc.line(80, tableLineStart + 2, 80, line + 2);

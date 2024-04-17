@@ -1,5 +1,11 @@
 <template>
   <q-page>
+    <q-dialog v-model="alSummaryPrint" full-height full-width>
+      <ALReportPDF
+        :key="JSON.stringify(ALReportParameters)"
+        v-model="ALReportParameters"
+      />
+    </q-dialog>
     <q-dialog v-model="alSummaryModalShow" full-height full-width>
       <q-card class="q-pa-md">
         <q-card-section class="text-h4 bg-primary text-white q-px-md row">
@@ -44,6 +50,15 @@
               v-print="printObj"
               >列印
             </q-btn>
+            <q-btn
+              v-if="isUAT"
+              class="q-mr-md q-pa-sm"
+              outline
+              color="primary"
+              icon="print"
+              label="列印"
+              @click="alSummaryPrint = !alSummaryPrint"
+            />
           </div>
           <q-space />
           <div class="col-2 col-md-2 col-sm-3 col-xs-4">
@@ -129,16 +144,18 @@
 <script setup>
 import AnnualLeave from "components/Holiday/AL";
 import ALReport from "components/Holiday/ALReport";
+import ALReportPDF from "components/Holiday/ALReportPDF";
 import { useStore } from "vuex";
 import { computed, ref } from "vue";
 import { usersCollection } from "boot/firebase";
 import { getDocs, query, where, orderBy } from "firebase/firestore";
 
+const alSummaryPrint = ref(false);
 const $store = useStore();
 const staffOption = ref({
   value: "",
   label: "",
-})
+});
 
 // default renderYear to this year
 const now = new Date();
@@ -146,28 +163,31 @@ const ALReportParameters = ref({
   reportUser: {},
   renderYearOffset: 0,
   renderYear: now.getFullYear(),
-})
-const renderDate = ref(now)
+});
+const renderDate = ref(now);
 
-const alSummaryModalShow = ref(false)
+const alSummaryModalShow = ref(false);
 
 const printObj = ref({
   id: "printMe",
   preview: true,
   previewTitle: "列印預覽",
   popTitle: "CCIYC 年假結餘總表",
-})
+});
 
 const userList = ref([
   {
     value: "",
     label: "",
   },
-])
+]);
 
 // computed
-const isLeaveManage = computed(() => $store.getters["userModule/getLeaveManage"])
-    
+const isLeaveManage = computed(
+  () => $store.getters["userModule/getLeaveManage"]
+);
+const isUAT = computed(() => $store.getters["userModule/getUAT"]);
+
 // functions
 function changeRenderYear(year) {
   if (
@@ -189,11 +209,12 @@ function changeRenderMonth(month) {
 }
 
 // query
-const userDocQuery = query(usersCollection,
+const userDocQuery = query(
+  usersCollection,
   where("enable", "==", true),
   where("rank", "!=", "tmp"),
   orderBy("rank")
-)
+);
 
 getDocs(userDocQuery).then((userDoc) => {
   userDoc.forEach((user) => {
@@ -204,15 +225,15 @@ getDocs(userDocQuery).then((userDoc) => {
       });
     }
   });
-})
+});
 </script>
 
 <script>
 import print from "vue3-print-nb";
-  
+
 export default {
   directives: {
     print,
-  }
-}
+  },
+};
 </script>

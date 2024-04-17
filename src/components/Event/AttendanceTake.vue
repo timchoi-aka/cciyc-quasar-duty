@@ -5,28 +5,6 @@
     message="處理中"
   />
   <div class="row items-center q-pa-md">
-    <div v-if="debug" class="row col-12">
-      <div class="col-12">attendanceResult: {{ attendanceResult }}</div>
-      <div class="col-12">original: {{ originalAttendanceList }}</div>
-      <div class="col-12">attendanceList: {{ attendanceList }}</div>
-      <div class="col-12">
-        inCenterAttendanceList {{ inCenterAttendanceList }}
-      </div>
-      <div class="col-12">
-        outCenterAttendanceList {{ outCenterAttendanceList }}
-      </div>
-      <div class="col-12">inCentreSession {{ inCenterSession }}</div>
-      <div class="col-12">outCenterSession {{ outCenterSession }}</div>
-      <div class="col-12">inCenterYouthSession{{ inCenterYouthSession }}</div>
-      <div class="col-12">
-        inCenterYouthFamilySession {{ inCenterYouthFamilySession }}
-      </div>
-      <div class="col-12">youthAttendance {{ youthAttendance }}</div>
-      <div class="col-12">
-        youthFamilyAttendance {{ youthFamilyAttendance }}
-      </div>
-      <div class="col-12">ApplicantsData {{ ApplicantsData }}</div>
-    </div>
     <!-- Event date selection -->
     <div class="col-md-3 col-sm-6 col-xs-6 row">
       <div class="text-h6 col-grow">活動點名日期</div>
@@ -198,17 +176,6 @@
         :options="inCenterOptions"
       />
     </div>
-    <!--
-    <div class="col-xs-2 col-sm-2 col-md-2 row justify-center">
-      <q-btn-toggle
-        color="purple-1"
-        toggle-color="purple-7"
-        text-color="black"
-        clearable
-        v-model="outCenterYouthSession"
-        :options="outCenterOptions"
-      />
-    </div>-->
   </div>
 
   <!-- other attendance - youth family -->
@@ -232,41 +199,51 @@
         :options="inCenterOptions"
       />
     </div>
-    <!--
-    <div class="col-xs-2 col-sm-2 col-md-2 row justify-center">
-      <q-btn-toggle
-        color="orange-1"
-        toggle-color="orange-7"
-        text-color="black"
-        clearable
-        v-model="outCenterYouthFamilySession"
-        :options="outCenterOptions"
-      />
-    </div>-->
   </div>
 
   <div class="q-pa-md">
-    <q-btn label="提交" class="bg-positive text-white" @click="save" flat />
+    <q-btn
+      :label="buttonLabel"
+      :class="[
+        buttonLabel == '新增' ? 'bg-primary' : 'bg-positive',
+        'text-white',
+      ]"
+      @click="save"
+      flat
+      :disable="addButtonDisabled"
+    />
+    <q-btn
+      v-if="delButtonDisplay"
+      label="刪除"
+      class="bg-negative text-white q-mx-md"
+      @click="del"
+      flat
+      :disable="addButtonDisabled"
+    />
+    <div v-if="addButtonDisabled">
+      <q-chip
+        color="negative"
+        text-color="white"
+        label="點名日期已過截止日期，請聯絡中心主任修改"
+      />
+    </div>
   </div>
 </template>
 
 <script setup>
 import { computed, ref, watch } from "vue";
 import { useStore } from "vuex";
-import { date as qdate, useQuasar, is } from "quasar";
+import { date as qdate, useQuasar } from "quasar";
 import { useAttendanceProvider } from "src/providers/attendance";
 import { useApplicantProvider } from "src/providers/applicant";
 import { useRoute } from "vue-router";
 import LoadingDialog from "components/LoadingDialog.vue";
 
 // variables
-const debug = ref(false);
 const route = useRoute();
 const c_act_code = ref(route.params.id);
 const $q = useQuasar();
 const $store = useStore();
-const attendanceList = ref({});
-const originalAttendanceList = ref({});
 const eventDateOptions = ref([]);
 const eventDate = ref(qdate.formatDate(new Date(), "YYYY-MM-DD"));
 const inCenterSession = ref();
@@ -285,6 +262,7 @@ const sessionOptions = [
   { label: "3節", value: 3 },
 ];
 
+// watch inCenterSession to update inCenterOptions
 watch(inCenterSession, (newValue) => {
   inCenterOptions.value = [];
   for (let i = 0; i < newValue; i++) {
@@ -298,6 +276,7 @@ watch(inCenterSession, (newValue) => {
   });
 });
 
+// watch outCenterSession to update outCenterOptions
 watch(outCenterSession, (newValue) => {
   outCenterOptions.value = [];
   for (let i = 0; i < newValue; i++) {
@@ -317,18 +296,14 @@ const {
   loading,
   message,
   addAttendance,
+  delAttendance,
 } = useAttendanceProvider({ c_act_code: c_act_code });
 
+// get applicant list from provider
 const { result: applicantResult, loading: loadApplicant } =
   useApplicantProvider({ c_act_code: c_act_code });
 
-const ApplicantsData = computed(() =>
-  applicantResult.value
-    ? applicantResult.value.sort((a, b) => a.c_mem_id - b.c_mem_id)
-    : []
-);
-
-// display result message
+// display result message to user
 watch(message, (newMessage) => {
   if (newMessage) {
     $q.notify({
@@ -353,13 +328,16 @@ watch(
 
     if (
       attendanceResult.value &&
-      attendanceResult.value.Attendance &&
-      attendanceResult.value.Attendance.filter(
+      attendanceResult.value.AttendanceNonRegistrant &&
+      attendanceResult.value.AttendanceNonRegistrant.filter(
         (attendance) =>
           qdate.formatDate(attendance.d_date, "YYYY-MM-DD") == newEventDate
       ).length > 0
     ) {
-      if (attendanceResult.value.Attendance) {
+      if (
+        attendanceResult.value.Attendance &&
+        attendanceResult.value.Attendance.length > 0
+      ) {
         attendanceResult.value.Attendance.forEach((att) => {
           if (qdate.formatDate(att.d_date, "YYYY-MM-DD") == newEventDate) {
             if (att.i_in_center_session) {
@@ -407,6 +385,7 @@ watch(
   { immediate: true }
 );
 
+// update UI display when attendance result changes
 watch(
   attendanceResult,
   (newResult) => {
@@ -419,6 +398,7 @@ watch(
       let i = newResult.AttendanceNonRegistrant.findIndex(
         (att) => qdate.formatDate(att.d_date, "YYYY-MM-DD") == eventDate.value
       );
+
       if (i >= 0) {
         // event related sessions
         inCenterSession.value =
@@ -438,8 +418,10 @@ watch(
         outCenterAttendanceList.value = {};
       }
 
-      // build up date options and attendance lists
-      newResult.Attendance.forEach((att) => {
+      // build up date options based on nonRegistrants
+      newResult.AttendanceNonRegistrant.filter(
+        (e) => e.c_act_code == c_act_code.value
+      ).forEach((att) => {
         // add att.d_date to eventDates if not exist
         if (
           !eventDateOptions.value.includes(
@@ -450,6 +432,10 @@ watch(
             qdate.formatDate(att.d_date, "YYYY-MM-DD")
           );
         }
+      });
+
+      // build up attendance list
+      newResult.Attendance.forEach((att) => {
         if (qdate.formatDate(att.d_date, "YYYY-MM-DD") == eventDate.value) {
           if (att.i_in_center_session)
             inCenterAttendanceList.value[att.c_mem_id] =
@@ -473,10 +459,63 @@ watch(
   { immediate: true }
 );
 
-// computed
+// computed properties
 const username = computed(() => $store.getters["userModule/getUsername"]);
+const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"]);
+const isEventManagement = computed(
+  () => $store.getters["userModule/getEventManagement"]
+);
+const buttonLabel = computed(() => {
+  if (
+    attendanceResult.value &&
+    attendanceResult.value.AttendanceNonRegistrant &&
+    attendanceResult.value.AttendanceNonRegistrant.filter(
+      (attendance) =>
+        qdate.formatDate(attendance.d_date, "YYYY-MM-DD") == eventDate.value
+    ).length > 0
+  ) {
+    return "修改";
+  } else {
+    return "新增";
+  }
+});
+// check if event date is before deadline
+const addButtonDisabled = computed(
+  () =>
+    !(isCenterIC.value || isEventManagement.value) &&
+    qdate.extractDate(eventDate.value, "YYYY-MM-DD") < deadline.value
+);
+const delButtonDisplay = computed(
+  () =>
+    attendanceResult.value &&
+    attendanceResult.value.AttendanceNonRegistrant &&
+    attendanceResult.value.AttendanceNonRegistrant.filter(
+      (attendance) =>
+        qdate.formatDate(attendance.d_date, "YYYY-MM-DD") == eventDate.value
+    ).length > 0
+);
+const ApplicantsData = computed(() =>
+  applicantResult.value
+    ? applicantResult.value.sort((a, b) => a.c_mem_id - b.c_mem_id)
+    : []
+);
+const deadline = computed(() => {
+  let d = qdate.addToDate(new Date(), { hours: 8 });
+  if (d.getDate() > 10) return qdate.startOfDate(d, "month");
+  else
+    return qdate.startOfDate(qdate.subtractFromDate(d, { month: 1 }), "month");
+});
 
 // functions
+function del() {
+  // delete attendance
+  delAttendance({
+    username: username,
+    c_act_code: c_act_code,
+    d_date: ref(qdate.formatDate(eventDate.value, "YYYY-MM-DDTHH:mm:ss")),
+  });
+}
+
 function save() {
   // build registrantsObjects
   let registrantsObjects = [];

@@ -1,7 +1,9 @@
 <template>
   <!-- loading dialog -->
-  <LoadingDialog :model-value="(loading || os2loading || os5loading)? 1: 0" message="處理中"/>
-
+  <LoadingDialog
+    :model-value="loading || os2loading || os5loading ? 1 : 0"
+    message="處理中"
+  />
   <!-- 開放節數記錄 -->
   <q-dialog
     v-model="openingModal"
@@ -10,19 +12,41 @@
     transition-hide="slide-down"
     class="q-pa-none"
   >
-    <OpeningSessions :data="dutyTable" :reportStartDate="qdate.extractDate(reportStartDate, 'YYYY/MM/DD')" :reportEndDate="qdate.extractDate(reportEndDate, 'YYYY/MM/DD')" :numberOfSessions="Object.values(dutyTable).reduce((x,v) => x + (v.slot_a?1:0) + (v.slot_b?1:0) + (v.slot_c?1:0), 0)" :numberOfOpeningDays="dutyTable.filter(x => Object.keys(x).length > 1).length" />
+    <OpeningSessions
+      :data="dutyTable"
+      :reportStartDate="qdate.extractDate(reportStartDate, 'YYYY/MM/DD')"
+      :reportEndDate="qdate.extractDate(reportEndDate, 'YYYY/MM/DD')"
+      :numberOfSessions="
+        Object.values(dutyTable).reduce(
+          (x, v) =>
+            x + (v.slot_a ? 1 : 0) + (v.slot_b ? 1 : 0) + (v.slot_c ? 1 : 0),
+          0
+        )
+      "
+      :numberOfOpeningDays="
+        dutyTable.filter((x) => Object.keys(x).length > 1).length
+      "
+    />
   </q-dialog>
 
   <div class="row justify-center">
     <!-- <div class="row items-center q-mx-md"><q-btn label="上月" @click="reportDate = qdate.formatDate(qdate.endOfDate(qdate.subtractFromDate(reportDate, {month: 1}), 'month'), 'YYYY/MM/DD')" class="bg-primary text-white items-center"/></div>-->
     <div>
-      <q-input filled debounce="1000" v-model="reportStartDate" mask="date" :rules="['date']">
-        <template v-slot:prepend>
-          開始日期：
-        </template>
+      <q-input
+        filled
+        debounce="1000"
+        v-model="reportStartDate"
+        mask="date"
+        :rules="['date']"
+      >
+        <template v-slot:prepend> 開始日期： </template>
         <template v-slot:append>
           <q-icon name="event" class="cursor-pointer">
-            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+            <q-popup-proxy
+              cover
+              transition-show="scale"
+              transition-hide="scale"
+            >
               <q-date v-model="reportStartDate">
                 <div class="row items-center justify-end">
                   <q-btn v-close-popup label="關閉" color="primary" flat />
@@ -34,15 +58,22 @@
       </q-input>
     </div>
 
-
     <div>
-      <q-input filled debounce="1000" v-model="reportEndDate" mask="date" :rules="['date']">
-        <template v-slot:prepend>
-          完結日期：
-        </template>
+      <q-input
+        filled
+        debounce="1000"
+        v-model="reportEndDate"
+        mask="date"
+        :rules="['date']"
+      >
+        <template v-slot:prepend> 完結日期： </template>
         <template v-slot:append>
           <q-icon name="event" class="cursor-pointer">
-            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+            <q-popup-proxy
+              cover
+              transition-show="scale"
+              transition-hide="scale"
+            >
               <q-date v-model="reportEndDate">
                 <div class="row items-center justify-end">
                   <q-btn v-close-popup label="關閉" color="primary" flat />
@@ -56,22 +87,33 @@
 
     <!-- <div class="row items-center q-mx-md"><q-btn label="下月" @click="reportDate = qdate.formatDate(qdate.endOfDate(qdate.addToDate(reportDate, {month: 1}), 'month'), 'YYYY/MM/DD')" class="bg-primary text-white items-center"/></div>-->
 
-    <div class="q-mx-md col-2"><StaffSelectionMultiple :multiple="true" v-model="staffSearchFilter"/></div>
+    <div class="q-mx-md col-2">
+      <StaffSelectionMultiple :multiple="true" v-model="staffSearchFilter" />
+    </div>
   </div>
 
   <!--<q-date v-model="reportDate" default-view="Months"/>-->
-  <q-tabs v-model="activeTab" inline-label align="left" class="desktop-only bg-primary text-white">
+  <q-tabs
+    v-model="activeTab"
+    inline-label
+    align="left"
+    class="desktop-only bg-primary text-white"
+  >
     <q-tab name="All" icon="source" :label="'全部活動'" />
     <q-tab name="OS2" icon="pin_drop" label="OS2" />
     <q-tab name="OS3" icon="pin_drop" label="OS3/4" />
     <q-tab name="OS5" icon="pin_drop" label="OS5" />
     <q-tab name="C(iii)" icon="pin_drop" label="C(iii)" />
     <q-tab name="MonthlyReport" icon="pin_drop" label="每月工作報告" />
-    <q-space/>
-    <q-btn align="right" icon="print" class="bg-primary text-white" flat v-print="printObj">
-      <q-tooltip class="bg-white text-primary">
-        列印報表
-      </q-tooltip>
+    <q-space />
+    <q-btn
+      align="right"
+      icon="print"
+      class="bg-primary text-white"
+      flat
+      v-print="printObj"
+    >
+      <q-tooltip class="bg-white text-primary"> 列印報表 </q-tooltip>
     </q-btn>
   </q-tabs>
 
@@ -85,8 +127,13 @@
     transition-next="jump-up"
   >
     <q-tab-panel name="All" class="q-ma-none q-pa-sm text-body1">
-      <div class="printOnly text-h5">長洲鄉事委員會青年綜合服務中心 - 活動報表</div>
-      <div class="printOnly text-h5">{{ qdate.formatDate(reportStartDate, 'YYYY年M月D日') }} -  {{ qdate.formatDate(reportEndDate, 'YYYY年M月D日')}}</div>
+      <div class="printOnly text-h5">
+        長洲鄉事委員會青年綜合服務中心 - 活動報表
+      </div>
+      <div class="printOnly text-h5">
+        {{ qdate.formatDate(reportStartDate, "YYYY年M月D日") }} -
+        {{ qdate.formatDate(reportEndDate, "YYYY年M月D日") }}
+      </div>
       <div class="printOnly text-h5">全部資料</div>
 
       <q-table
@@ -117,19 +164,71 @@
     </q-tab-panel>
 
     <q-tab-panel name="OS2" class="q-ma-none q-pa-sm text-body1">
-      <div class="printOnly text-h5">長洲鄉事委員會青年綜合服務中心 - 活動報表</div>
-      <div class="printOnly text-h5">{{ qdate.formatDate(reportStartDate, 'YYYY年M月D日') }} -  {{ qdate.formatDate(reportEndDate, 'YYYY年M月D日')}}</div>
+      <div class="printOnly text-h5">
+        長洲鄉事委員會青年綜合服務中心 - 活動報表
+      </div>
+      <div class="printOnly text-h5">
+        {{ qdate.formatDate(reportStartDate, "YYYY年M月D日") }} -
+        {{ qdate.formatDate(reportEndDate, "YYYY年M月D日") }}
+      </div>
       <div class="printOnly text-h5">OS2</div>
 
-      <div>i) Total number of attendance: {{ OS2Data.reduce((x,v) => x + v.i_people_count, 0) }}</div>
-      <div>ii) Total number of sessions: {{ Object.values(dutyTable).reduce((x,v) => x + (v.slot_a?1:0) + (v.slot_b?1:0) + (v.slot_c?1:0), 0) }} <q-btn class="bg-primary text-white screenOnly" flat @click="openingModal = true" label="開放節數"/></div>
-      <div>iii) Average attendance per session: {{ is.number((OS2Data.reduce((x,v) => x + v.i_people_count, 0) / Object.values(dutyTable).reduce((x,v) => x + (v.slot_a?1:0) + (v.slot_b?1:0) + (v.slot_c?1:0), 0)))? (OS2Data.reduce((x,v) => x + v.i_people_count, 0) / Object.values(dutyTable).reduce((x,v) => x + (v.slot_a?1:0) + (v.slot_b?1:0) + (v.slot_c?1:0), 0)).toFixed(2): 0 }}</div>
+      <div>
+        i) Total number of attendance:
+        {{ OS2Data.reduce((x, v) => x + v.i_people_count, 0) }}
+      </div>
+      <div>
+        ii) Total number of sessions:
+        {{
+          Object.values(dutyTable).reduce(
+            (x, v) =>
+              x + (v.slot_a ? 1 : 0) + (v.slot_b ? 1 : 0) + (v.slot_c ? 1 : 0),
+            0
+          )
+        }}
+        <q-btn
+          class="bg-primary text-white screenOnly"
+          flat
+          @click="openingModal = true"
+          label="開放節數"
+        />
+      </div>
+      <div>
+        iii) Average attendance per session:
+        {{
+          is.number(
+            OS2Data.reduce((x, v) => x + v.i_people_count, 0) /
+              Object.values(dutyTable).reduce(
+                (x, v) =>
+                  x +
+                  (v.slot_a ? 1 : 0) +
+                  (v.slot_b ? 1 : 0) +
+                  (v.slot_c ? 1 : 0),
+                0
+              )
+          )
+            ? (
+                OS2Data.reduce((x, v) => x + v.i_people_count, 0) /
+                Object.values(dutyTable).reduce(
+                  (x, v) =>
+                    x +
+                    (v.slot_a ? 1 : 0) +
+                    (v.slot_b ? 1 : 0) +
+                    (v.slot_c ? 1 : 0),
+                  0
+                )
+              ).toFixed(2)
+            : 0
+        }}
+      </div>
       <q-table
         dense
         flat
         wrap-cells
         title="在中心舉行的活動 - 核心"
-        :rows="OS2Data.filter(x => x.c_nature && x.c_nature.startsWith('核心'))"
+        :rows="
+          OS2Data.filter((x) => x.c_nature && x.c_nature.startsWith('核心'))
+        "
         :columns="os2Columns"
         :pagination="defaultPagination"
         color="primary"
@@ -147,7 +246,18 @@
             icon-right="archive"
             label="匯出Excel"
             no-caps
-            @click="exportExcel(OS2Data.filter(x => x.c_nature && x.c_nature.startsWith('核心')), os2Columns, 'OS2核心_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
+            @click="
+              exportExcel(
+                OS2Data.filter(
+                  (x) => x.c_nature && x.c_nature.startsWith('核心')
+                ),
+                os2Columns,
+                'OS2核心_' +
+                  qdate.formatDate(reportStartDate, 'YYYY-MM') +
+                  '-' +
+                  qdate.formatDate(reportEndDate, 'YYYY-MM')
+              )
+            "
           />
         </template>
 
@@ -159,7 +269,17 @@
               class="text-center bg-grey-2"
               style="font-size: 1vw"
             >
-              {{ OS2Data.filter(x => x.c_nature && x.c_nature.startsWith('核心')).reduce((x,v) => is.number(v[props.cols[index-1].name]) ? x + v[props.cols[index-1].name]: '', 0) }}
+              {{
+                OS2Data.filter(
+                  (x) => x.c_nature && x.c_nature.startsWith("核心")
+                ).reduce(
+                  (x, v) =>
+                    is.number(v[props.cols[index - 1].name])
+                      ? x + v[props.cols[index - 1].name]
+                      : "",
+                  0
+                )
+              }}
             </q-td>
           </q-tr>
         </template>
@@ -170,7 +290,9 @@
         flat
         wrap-cells
         title="在中心舉行的活動 - 非核心"
-        :rows="OS2Data.filter(x => x.c_nature && x.c_nature.startsWith('非核心'))"
+        :rows="
+          OS2Data.filter((x) => x.c_nature && x.c_nature.startsWith('非核心'))
+        "
         :columns="os2Columns"
         :pagination="defaultPagination"
         color="primary"
@@ -188,7 +310,18 @@
             icon-right="archive"
             label="匯出Excel"
             no-caps
-            @click="exportExcel(OS2Data.filter(x => x.c_nature && x.c_nature.startsWith('非核心')), os2Columns, 'OS2非核心_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
+            @click="
+              exportExcel(
+                OS2Data.filter(
+                  (x) => x.c_nature && x.c_nature.startsWith('非核心')
+                ),
+                os2Columns,
+                'OS2非核心_' +
+                  qdate.formatDate(reportStartDate, 'YYYY-MM') +
+                  '-' +
+                  qdate.formatDate(reportEndDate, 'YYYY-MM')
+              )
+            "
           />
         </template>
 
@@ -200,7 +333,17 @@
               class="text-center bg-grey-2"
               style="font-size: 1vw"
             >
-              {{ OS2Data.filter(x => x.c_nature && x.c_nature.startsWith('非核心')).reduce((x,v) => is.number(v[props.cols[index-1].name]) ? x + v[props.cols[index-1].name]: '', 0) }}
+              {{
+                OS2Data.filter(
+                  (x) => x.c_nature && x.c_nature.startsWith("非核心")
+                ).reduce(
+                  (x, v) =>
+                    is.number(v[props.cols[index - 1].name])
+                      ? x + v[props.cols[index - 1].name]
+                      : "",
+                  0
+                )
+              }}
             </q-td>
           </q-tr>
         </template>
@@ -208,28 +351,97 @@
     </q-tab-panel>
 
     <q-tab-panel name="OS3" class="q-ma-none q-pa-sm text-body1">
-      <div class="printOnly text-h5">長洲鄉事委員會青年綜合服務中心 - 活動報表</div>
-      <div class="printOnly text-h5">{{ qdate.formatDate(reportStartDate, 'YYYY年M月D日') }} -  {{ qdate.formatDate(reportEndDate, 'YYYY年M月D日')}}</div>
+      <div class="printOnly text-h5">
+        長洲鄉事委員會青年綜合服務中心 - 活動報表
+      </div>
+      <div class="printOnly text-h5">
+        {{ qdate.formatDate(reportStartDate, "YYYY年M月D日") }} -
+        {{ qdate.formatDate(reportEndDate, "YYYY年M月D日") }}
+      </div>
       <div class="printOnly text-h5">OS3/4</div>
 
       <div class="row">
         <div class="col-6">
           <div class="text-h6">OS3</div>
-          <div>ia) Guidance and counselling (group and activity): {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務A").reduce((x,v) => x + v.i_number, 0) }}</div>
+          <div>
+            ia) Guidance and counselling (group and activity):
+            {{
+              OS3Data.filter(
+                (x) => x.c_nature.trim() == "核心青年服務A"
+              ).reduce((x, v) => x + v.i_number, 0)
+            }}
+          </div>
           <div>ib) Guidance and counselling (case interview): 0</div>
-          <div>ii) Supportive service for young people in disadvantaged circumstances: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務B").reduce((x,v) => x + v.i_number, 0) }}</div>
-          <div>iii) Socialization programmes: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務C").reduce((x,v) => x + v.i_number, 0) }}</div>
-          <div>iv) Development of social responsibility and competence: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務D").reduce((x,v) => x + v.i_number, 0) }}</div>
-          <div>v) Total (Output Standard 3): {{ OS3Data.reduce((x,v) => x + v.i_number, 0) }}</div>
+          <div>
+            ii) Supportive service for young people in disadvantaged
+            circumstances:
+            {{
+              OS3Data.filter(
+                (x) => x.c_nature.trim() == "核心青年服務B"
+              ).reduce((x, v) => x + v.i_number, 0)
+            }}
+          </div>
+          <div>
+            iii) Socialization programmes:
+            {{
+              OS3Data.filter(
+                (x) => x.c_nature.trim() == "核心青年服務C"
+              ).reduce((x, v) => x + v.i_number, 0)
+            }}
+          </div>
+          <div>
+            iv) Development of social responsibility and competence:
+            {{
+              OS3Data.filter(
+                (x) => x.c_nature.trim() == "核心青年服務D"
+              ).reduce((x, v) => x + v.i_number, 0)
+            }}
+          </div>
+          <div>
+            v) Total (Output Standard 3):
+            {{ OS3Data.reduce((x, v) => x + v.i_number, 0) }}
+          </div>
         </div>
         <div class="col-6">
           <div class="text-h6">OS4</div>
-          <div>ia) Guidance and counselling (group and activity): {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務A").reduce((x,v) => x + v.i_people_count, 0) }}</div>
+          <div>
+            ia) Guidance and counselling (group and activity):
+            {{
+              OS3Data.filter(
+                (x) => x.c_nature.trim() == "核心青年服務A"
+              ).reduce((x, v) => x + v.i_people_count, 0)
+            }}
+          </div>
           <div>ib) Guidance and counselling (case interview): 0</div>
-          <div>ii) Supportive service for young people in disadvantaged circumstances: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務B").reduce((x,v) => x + v.i_people_count, 0) }}</div>
-          <div>iii) Socialization programmes: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務C").reduce((x,v) => x + v.i_people_count, 0) }}</div>
-          <div>iv) Development of social responsibility and competence: {{ OS3Data.filter((x) => x.c_nature.trim() == "核心青年服務D").reduce((x,v) => x + v.i_people_count, 0) }}</div>
-          <div>v) Total (Output Standard 4): {{ OS3Data.reduce((x,v) => x + v.i_people_count, 0) }}</div>
+          <div>
+            ii) Supportive service for young people in disadvantaged
+            circumstances:
+            {{
+              OS3Data.filter(
+                (x) => x.c_nature.trim() == "核心青年服務B"
+              ).reduce((x, v) => x + v.i_people_count, 0)
+            }}
+          </div>
+          <div>
+            iii) Socialization programmes:
+            {{
+              OS3Data.filter(
+                (x) => x.c_nature.trim() == "核心青年服務C"
+              ).reduce((x, v) => x + v.i_people_count, 0)
+            }}
+          </div>
+          <div>
+            iv) Development of social responsibility and competence:
+            {{
+              OS3Data.filter(
+                (x) => x.c_nature.trim() == "核心青年服務D"
+              ).reduce((x, v) => x + v.i_people_count, 0)
+            }}
+          </div>
+          <div>
+            v) Total (Output Standard 4):
+            {{ OS3Data.reduce((x, v) => x + v.i_people_count, 0) }}
+          </div>
         </div>
       </div>
       <div align="right">
@@ -239,7 +451,16 @@
           icon-right="archive"
           label="匯出Excel"
           no-caps
-          @click="exportExcel(OS3Data, os2Columns, 'OS34_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
+          @click="
+            exportExcel(
+              OS3Data,
+              os2Columns,
+              'OS34_' +
+                qdate.formatDate(reportStartDate, 'YYYY-MM') +
+                '-' +
+                qdate.formatDate(reportEndDate, 'YYYY-MM')
+            )
+          "
         />
       </div>
       <div v-for="nature in os3natures">
@@ -260,7 +481,6 @@
           no-data-label="沒有資料"
           @row-click="rowDetail"
         >
-
           <!-- bottom total row -->
           <template v-slot:bottom-row="props">
             <q-tr>
@@ -269,7 +489,15 @@
                 class="text-center bg-grey-2"
                 style="font-size: 1vw"
               >
-                {{ OS3Data.filter((x) => x.c_nature.trim() == nature).reduce((x,v) => is.number(v[props.cols[index-1].name]) ? x + v[props.cols[index-1].name]: '', 0) }}
+                {{
+                  OS3Data.filter((x) => x.c_nature.trim() == nature).reduce(
+                    (x, v) =>
+                      is.number(v[props.cols[index - 1].name])
+                        ? x + v[props.cols[index - 1].name]
+                        : "",
+                    0
+                  )
+                }}
               </q-td>
             </q-tr>
           </template>
@@ -278,25 +506,95 @@
     </q-tab-panel>
 
     <q-tab-panel name="OS5" class="q-ma-none q-pa-sm text-body1">
-      <div class="printOnly text-h5">長洲鄉事委員會青年綜合服務中心 - 活動報表</div>
-      <div class="printOnly text-h5">{{ qdate.formatDate(reportStartDate, 'YYYY年M月D日') }} -  {{ qdate.formatDate(reportEndDate, 'YYYY年M月D日')}}</div>
+      <div class="printOnly text-h5">
+        長洲鄉事委員會青年綜合服務中心 - 活動報表
+      </div>
+      <div class="printOnly text-h5">
+        {{ qdate.formatDate(reportStartDate, "YYYY年M月D日") }} -
+        {{ qdate.formatDate(reportEndDate, "YYYY年M月D日") }}
+      </div>
       <div class="printOnly text-h5">OS5</div>
 
       <ol type="i">
-        <li>Total number of core programmes completed/case closed in the quarter: {{ Object.keys(OS5Data).length }}
-          <div>(No. of Groups: {{OS5Data.filter(x => x.c_type && x.c_type.trim() == '小組').length}}, No. of Activities: {{ OS5Data.filter(x => x.c_type && x.c_type.trim() == '活動').length }}, No. of Cases: 0)</div>
+        <li>
+          Total number of core programmes completed/case closed in the quarter:
+          {{
+            OS5Data.filter(
+              (x) =>
+                x.c_type &&
+                (x.c_type.trim() == "小組" || x.c_type.trim() == "活動")
+            ).length
+          }}
+          <div>
+            (No. of Groups:
+            {{
+              OS5Data.filter((x) => x.c_type && x.c_type.trim() == "小組")
+                .length
+            }}, No. of Activities:
+            {{
+              OS5Data.filter((x) => x.c_type && x.c_type.trim() == "活動")
+                .length
+            }}, No. of Cases: 0)
+          </div>
         </li>
-        <li>Total number of core programmes completed/case closed with goals achieved in the quarter: {{ Object.keys(OS5Data.filter((x) => x.c_status.trim() == '完成達標')).length }}
-          <div>(No. of Groups: {{OS5Data.filter(x => x.c_type && x.c_type.trim() == '小組' && x.c_status && x.c_status.trim() == '完成達標').length}}, No. of Activities: {{ OS5Data.filter(x => x.c_type && x.c_type.trim() == '活動' && x.c_status && x.c_status.trim() == '完成達標').length }}, No. of Cases: 0)</div>
+        <li>
+          Total number of core programmes completed/case closed with goals
+          achieved in the quarter:
+          {{
+            OS5Data.filter(
+              (x) =>
+                x.c_status.trim() == "完成達標" &&
+                x.c_type &&
+                (x.c_type.trim() == "小組" || x.c_type.trim() == "活動")
+            ).length
+          }}
+          <div>
+            (No. of Groups:
+            {{
+              OS5Data.filter(
+                (x) =>
+                  x.c_type &&
+                  x.c_type.trim() == "小組" &&
+                  x.c_status &&
+                  x.c_status.trim() == "完成達標"
+              ).length
+            }}, No. of Activities:
+            {{
+              OS5Data.filter(
+                (x) =>
+                  x.c_type &&
+                  x.c_type.trim() == "活動" &&
+                  x.c_status &&
+                  x.c_status.trim() == "完成達標"
+              ).length
+            }}, No. of Cases: 0)
+          </div>
         </li>
-        <li>Rate of achieving core programme plan: {{ is.number((Object.keys(OS5Data.filter((x) => x.c_status.trim() == '完成達標')).length/Object.keys(OS5Data).length))? (Object.keys(OS5Data.filter((x) => x.c_status.trim() == '完成達標')).length*100/Object.keys(OS5Data).length).toFixed(2) + "%":0 }}</li>
+        <li>
+          Rate of achieving core programme plan:
+          {{
+            is.number(
+              Object.keys(
+                OS5Data.filter((x) => x.c_status.trim() == "完成達標")
+              ).length / Object.keys(OS5Data).length
+            )
+              ? (
+                  (Object.keys(
+                    OS5Data.filter((x) => x.c_status.trim() == "完成達標")
+                  ).length *
+                    100) /
+                  Object.keys(OS5Data).length
+                ).toFixed(2) + "%"
+              : 0
+          }}
+        </li>
       </ol>
 
       <q-table
         dense
         flat
         title="OS5 - 活動"
-        :rows="OS5Data.filter(x => x.c_type && x.c_type.trim() == '活動')"
+        :rows="OS5Data.filter((x) => x.c_type && x.c_type.trim() == '活動')"
         :columns="os5Columns"
         :pagination="defaultPagination"
         color="primary"
@@ -313,7 +611,16 @@
             icon-right="archive"
             label="匯出Excel"
             no-caps
-            @click="exportExcel(OS5Data.filter(x => x.c_type && x.c_type.trim() == '活動'), os5Columns, 'OS5活動_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
+            @click="
+              exportExcel(
+                OS5Data.filter((x) => x.c_type && x.c_type.trim() == '活動'),
+                os5Columns,
+                'OS5活動_' +
+                  qdate.formatDate(reportStartDate, 'YYYY-MM') +
+                  '-' +
+                  qdate.formatDate(reportEndDate, 'YYYY-MM')
+              )
+            "
           />
         </template>
 
@@ -325,7 +632,12 @@
               class="text-center bg-grey-2"
               style="font-size: 1vw"
             >
-              <div v-if="index == props.cols.length">活動總數：{{ OS5Data.filter(x => x.c_type && x.c_type.trim() == '活動').length }}</div>
+              <div v-if="index == props.cols.length">
+                活動總數：{{
+                  OS5Data.filter((x) => x.c_type && x.c_type.trim() == "活動")
+                    .length
+                }}
+              </div>
             </q-td>
           </q-tr>
         </template>
@@ -335,7 +647,7 @@
         dense
         flat
         title="OS5 - 小組"
-        :rows="OS5Data.filter(x => x.c_type && x.c_type.trim() == '小組')"
+        :rows="OS5Data.filter((x) => x.c_type && x.c_type.trim() == '小組')"
         :columns="os5Columns"
         :pagination="defaultPagination"
         color="primary"
@@ -352,7 +664,16 @@
             icon-right="archive"
             label="匯出Excel"
             no-caps
-            @click="exportExcel(OS5Data.filter(x => x.c_type && x.c_type.trim() == '小組'), os5Columns, 'OS5小組_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
+            @click="
+              exportExcel(
+                OS5Data.filter((x) => x.c_type && x.c_type.trim() == '小組'),
+                os5Columns,
+                'OS5小組_' +
+                  qdate.formatDate(reportStartDate, 'YYYY-MM') +
+                  '-' +
+                  qdate.formatDate(reportEndDate, 'YYYY-MM')
+              )
+            "
           />
         </template>
 
@@ -364,51 +685,148 @@
               class="text-center bg-grey-2"
               style="font-size: 1vw"
             >
-              <div v-if="index == props.cols.length">小組總數：{{ OS5Data.filter(x => x.c_type && x.c_type.trim() == '小組').length }}</div>
+              <div v-if="index == props.cols.length">
+                小組總數：{{
+                  OS5Data.filter((x) => x.c_type && x.c_type.trim() == "小組")
+                    .length
+                }}
+              </div>
             </q-td>
           </q-tr>
         </template>
       </q-table>
     </q-tab-panel>
 
-    <q-tab-panel name="C(iii)" class="q-ma-none q-pa-sm text-body1 row items-end">
-      <div class="printOnly text-h5">長洲鄉事委員會青年綜合服務中心 - 活動報表</div>
-      <div class="printOnly text-h5">{{ qdate.formatDate(reportStartDate, 'YYYY年M月D日') }} -  {{ qdate.formatDate(reportEndDate, 'YYYY年M月D日')}}</div>
+    <q-tab-panel
+      name="C(iii)"
+      class="q-ma-none q-pa-sm text-body1 row items-end"
+    >
+      <div class="printOnly text-h5">
+        長洲鄉事委員會青年綜合服務中心 - 活動報表
+      </div>
+      <div class="printOnly text-h5">
+        {{ qdate.formatDate(reportStartDate, "YYYY年M月D日") }} -
+        {{ qdate.formatDate(reportEndDate, "YYYY年M月D日") }}
+      </div>
       <div class="printOnly text-h5">c(iii)</div>
 
       <q-card class="col-3">
-        <q-card-section class="bg-yellow-2">Leadership training <br/>(領袖訓練)</q-card-section>
+        <q-card-section class="bg-yellow-2"
+          >Leadership training <br />(領袖訓練)</q-card-section
+        >
         <q-card-section class="bg-blue-2">
-          <div>Number of programme: {{C3Data.filter(x => x.c_group2 == "領袖訓練").length }} </div>
-          <div>Number of programme sessions: {{C3Data.filter(x => x.c_group2 == "領袖訓練").reduce((a,v) => a + v.i_number, 0) }}</div>
-          <div>Total number of attendance: {{C3Data.filter(x => x.c_group2 == "領袖訓練").reduce((a,v) => a + v.i_people_count, 0) }}</div>
+          <div>
+            Number of programme:
+            {{ C3Data.filter((x) => x.c_group2 == "領袖訓練").length }}
+          </div>
+          <div>
+            Number of programme sessions:
+            {{
+              C3Data.filter((x) => x.c_group2 == "領袖訓練").reduce(
+                (a, v) => a + v.i_number,
+                0
+              )
+            }}
+          </div>
+          <div>
+            Total number of attendance:
+            {{
+              C3Data.filter((x) => x.c_group2 == "領袖訓練").reduce(
+                (a, v) => a + v.i_people_count,
+                0
+              )
+            }}
+          </div>
         </q-card-section>
       </q-card>
 
       <q-card class="col-3">
-        <q-card-section class="bg-yellow-2">Volunteerism <br/>(青年義務工作)</q-card-section>
+        <q-card-section class="bg-yellow-2"
+          >Volunteerism <br />(青年義務工作)</q-card-section
+        >
         <q-card-section class="bg-blue-2">
-          <div>Number of programme: {{C3Data.filter(x => x.c_group2 == "青年義務工作").length }} </div>
-          <div>Number of programme sessions: {{C3Data.filter(x => x.c_group2 == "青年義務工作").reduce((a,v) => a + v.i_number, 0) }}</div>
-          <div>Total number of attendance: {{C3Data.filter(x => x.c_group2 == "青年義務工作").reduce((a,v) => a + v.i_people_count, 0) }}</div>
+          <div>
+            Number of programme:
+            {{ C3Data.filter((x) => x.c_group2 == "青年義務工作").length }}
+          </div>
+          <div>
+            Number of programme sessions:
+            {{
+              C3Data.filter((x) => x.c_group2 == "青年義務工作").reduce(
+                (a, v) => a + v.i_number,
+                0
+              )
+            }}
+          </div>
+          <div>
+            Total number of attendance:
+            {{
+              C3Data.filter((x) => x.c_group2 == "青年義務工作").reduce(
+                (a, v) => a + v.i_people_count,
+                0
+              )
+            }}
+          </div>
         </q-card-section>
       </q-card>
 
       <q-card class="col-3">
-        <q-card-section class="bg-yellow-2">Community participation <br/>(參與社區公民事務)</q-card-section>
+        <q-card-section class="bg-yellow-2"
+          >Community participation <br />(參與社區公民事務)</q-card-section
+        >
         <q-card-section class="bg-blue-2">
-          <div>Number of programme: {{C3Data.filter(x => x.c_group2 == "參與社區公民事務").length }} </div>
-          <div>Number of programme sessions: {{C3Data.filter(x => x.c_group2 == "參與社區公民事務").reduce((a,v) => a + v.i_number, 0) }}</div>
-          <div>Total number of attendance: {{C3Data.filter(x => x.c_group2 == "參與社區公民事務").reduce((a,v) => a + v.i_people_count, 0) }}</div>
+          <div>
+            Number of programme:
+            {{ C3Data.filter((x) => x.c_group2 == "參與社區公民事務").length }}
+          </div>
+          <div>
+            Number of programme sessions:
+            {{
+              C3Data.filter((x) => x.c_group2 == "參與社區公民事務").reduce(
+                (a, v) => a + v.i_number,
+                0
+              )
+            }}
+          </div>
+          <div>
+            Total number of attendance:
+            {{
+              C3Data.filter((x) => x.c_group2 == "參與社區公民事務").reduce(
+                (a, v) => a + v.i_people_count,
+                0
+              )
+            }}
+          </div>
         </q-card-section>
       </q-card>
 
       <q-card class="col-3">
-        <q-card-section class="bg-yellow-2">Study/exchange program <br/>(內地交流活動)</q-card-section>
+        <q-card-section class="bg-yellow-2"
+          >Study/exchange program <br />(內地交流活動)</q-card-section
+        >
         <q-card-section class="bg-blue-2">
-          <div>Number of programme: {{C3Data.filter(x => x.c_group2 == "內地交流活動").length }} </div>
-          <div>Number of programme sessions: {{C3Data.filter(x => x.c_group2 == "內地交流活動").reduce((a,v) => a + v.i_number, 0) }}</div>
-          <div>Total number of attendance: {{C3Data.filter(x => x.c_group2 == "內地交流活動").reduce((a,v) => a + v.i_people_count, 0) }}</div>
+          <div>
+            Number of programme:
+            {{ C3Data.filter((x) => x.c_group2 == "內地交流活動").length }}
+          </div>
+          <div>
+            Number of programme sessions:
+            {{
+              C3Data.filter((x) => x.c_group2 == "內地交流活動").reduce(
+                (a, v) => a + v.i_number,
+                0
+              )
+            }}
+          </div>
+          <div>
+            Total number of attendance:
+            {{
+              C3Data.filter((x) => x.c_group2 == "內地交流活動").reduce(
+                (a, v) => a + v.i_people_count,
+                0
+              )
+            }}
+          </div>
         </q-card-section>
       </q-card>
 
@@ -434,7 +852,16 @@
             icon-right="archive"
             label="匯出Excel"
             no-caps
-            @click="exportExcel(C3Data, c3Columns, 'Ciii_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
+            @click="
+              exportExcel(
+                C3Data,
+                c3Columns,
+                'Ciii_' +
+                  qdate.formatDate(reportStartDate, 'YYYY-MM') +
+                  '-' +
+                  qdate.formatDate(reportEndDate, 'YYYY-MM')
+              )
+            "
           />
         </template>
       </q-table>
@@ -442,8 +869,13 @@
 
     <!-- 每月工作報告 -->
     <q-tab-panel name="MonthlyReport" class="q-ma-none q-pa-sm text-body1">
-      <div class="printOnly text-h5">長洲鄉事委員會青年綜合服務中心 - 活動報表</div>
-      <div class="printOnly text-h5">{{ qdate.formatDate(reportStartDate, 'YYYY年M月D日') }} -  {{ qdate.formatDate(reportEndDate, 'YYYY年M月D日')}}</div>
+      <div class="printOnly text-h5">
+        長洲鄉事委員會青年綜合服務中心 - 活動報表
+      </div>
+      <div class="printOnly text-h5">
+        {{ qdate.formatDate(reportStartDate, "YYYY年M月D日") }} -
+        {{ qdate.formatDate(reportEndDate, "YYYY年M月D日") }}
+      </div>
       <div class="printOnly text-h5">每月工作報告</div>
 
       <q-table
@@ -468,7 +900,16 @@
             icon-right="archive"
             label="匯出Excel"
             no-caps
-            @click="exportExcel(AllDataWithSession, monthlyReportColumns, '每月工作報告_'+qdate.formatDate(reportStartDate, 'YYYY-MM')+'-'+qdate.formatDate(reportEndDate, 'YYYY-MM'))"
+            @click="
+              exportExcel(
+                AllDataWithSession,
+                monthlyReportColumns,
+                '每月工作報告_' +
+                  qdate.formatDate(reportStartDate, 'YYYY-MM') +
+                  '-' +
+                  qdate.formatDate(reportEndDate, 'YYYY-MM')
+              )
+            "
           />
         </template>
 
@@ -480,88 +921,119 @@
               class="text-center bg-grey-2"
               style="font-size: 1vw"
             >
-              總數：{{ AllDataWithSession.reduce((x,v) => is.number(v[props.cols[index-1].name]) ? x + v[props.cols[index-1].name]: x+1, 0) }}
+              總數：{{
+                AllDataWithSession.reduce(
+                  (x, v) =>
+                    is.number(v[props.cols[index - 1].name])
+                      ? x + v[props.cols[index - 1].name]
+                      : x + 1,
+                  0
+                )
+              }}
             </q-td>
           </q-tr>
         </template>
       </q-table>
     </q-tab-panel>
   </q-tab-panels>
-
 </template>
 
 <script setup>
 import { sessionCollection } from "boot/firebase";
 import { computed, ref, watch, onMounted, defineAsyncComponent } from "vue";
 import { exportFile, date as qdate, is } from "quasar";
-import { useQuery } from "@vue/apollo-composable"
-import { gql } from "graphql-tag"
-import LoadingDialog from "components/LoadingDialog.vue"
-import Excel from "src/lib/exportExcel"
+import { useQuery } from "@vue/apollo-composable";
+import { gql } from "graphql-tag";
+import LoadingDialog from "components/LoadingDialog.vue";
+import Excel from "src/lib/exportExcel";
 import { getDocs, query, where } from "firebase/firestore";
 import StaffSelectionMultiple from "components/Basic/StaffSelectionMultiple.vue";
-import { useRouter } from "vue-router"
+import { useRouter } from "vue-router";
 import print from "vue3-print-nb";
 
 onMounted(() => {
-  refreshSchedule(reportStartDate.value, reportEndDate.value)
-})
+  refreshSchedule(reportStartDate.value, reportEndDate.value);
+});
 
 const printObj = ref({
   id: "printReport",
   preview: false,
-})
+});
 
 // variables
 const OpeningSessions = defineAsyncComponent(() =>
-  import('components/Event/OpeningSessions.vue')
-)
+  import("components/Event/OpeningSessions.vue")
+);
 
-const router = useRouter()
-const reportStartDate = ref(qdate.formatDate(qdate.startOfDate(qdate.subtractFromDate(Date.now(), {month: 1}), 'month'), "YYYY/MM/DD"))
-const reportEndDate = ref(qdate.formatDate(qdate.endOfDate(qdate.subtractFromDate(Date.now(), {month: 1}), 'month'), "YYYY/MM/DD"))
-const detailModal = ref(false)
-const openingModal = ref(false)
-const showEventID = ref("")
-const search = ref({})
-const activeTab = ref("All")
-const staffSearchFilter = ref()
-const dutyTable = ref([])
+const router = useRouter();
+const reportStartDate = ref(
+  qdate.formatDate(
+    qdate.startOfDate(
+      qdate.subtractFromDate(Date.now(), { month: 1 }),
+      "month"
+    ),
+    "YYYY/MM/DD"
+  )
+);
+const reportEndDate = ref(
+  qdate.formatDate(
+    qdate.endOfDate(qdate.subtractFromDate(Date.now(), { month: 1 }), "month"),
+    "YYYY/MM/DD"
+  )
+);
+const detailModal = ref(false);
+const openingModal = ref(false);
+const showEventID = ref("");
+const search = ref({});
+const activeTab = ref("All");
+const staffSearchFilter = ref();
+const dutyTable = ref([]);
 const os3natures = [
-  '核心青年服務A','核心青年服務B','核心青年服務C','核心青年服務D'
-]
-const os5status = [
-  '完成達標', '完成不達標'
-]
+  "核心青年服務A",
+  "核心青年服務B",
+  "核心青年服務C",
+  "核心青年服務D",
+];
+const os5status = ["完成達標", "完成不達標"];
 const destInCenter = [
-  '本中心', '大堂', '活動室(一)', '活動室(二)', '舞蹈室', 'Band房', '電腦室', '會議室', '中心廣場', '星有利球場', '星有利籃球場'
-]
+  "本中心",
+  "大堂",
+  "活動室(一)",
+  "活動室(二)",
+  "舞蹈室",
+  "Band房",
+  "電腦室",
+  "會議室",
+  "中心廣場",
+  "星有利球場",
+  "星有利籃球場",
+];
 //const closeList = ref(["覆", "AL", "SL", "補", "長", "短"])
 const getDAct = computed(() => {
-  let res = []
-  for (let d = reportStartDate.value; qdate.getDateDiff(d, reportEndDate.value) <= 0; d = qdate.addToDate(d, {month: 1})) {
-    res.push(qdate.formatDate(d, "MM/YYYY"))
+  let res = [];
+  for (
+    let d = reportStartDate.value;
+    qdate.getDateDiff(d, reportEndDate.value) <= 0;
+    d = qdate.addToDate(d, { month: 1 })
+  ) {
+    res.push(qdate.formatDate(d, "MM/YYYY"));
   }
-  return res
-})
+  return res;
+});
 
-const scheduleSnapshot = ref()
-
-
+const scheduleSnapshot = ref();
 
 const defaultPagination = ref({
   rowsPerPage: 0,
   sortBy: "c_act_code",
   descending: true,
-})
+});
 
 const c3Pagination = ref({
   rowsPerPage: 40,
   sortBy: "c_group2",
   descending: true,
-})
-
-
+});
 
 const os5Columns = ref([
   {
@@ -619,9 +1091,9 @@ const os5Columns = ref([
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
-    format: (val) => qdate.formatDate(val, "YYYY年M月D日")
-  }
-])
+    format: (val) => qdate.formatDate(val, "YYYY年M月D日"),
+  },
+]);
 
 const eventListColumns = ref([
   {
@@ -705,7 +1177,7 @@ const eventListColumns = ref([
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
   },
-])
+]);
 
 const os2Columns = ref([
   {
@@ -721,7 +1193,8 @@ const os2Columns = ref([
     name: "c_act_name",
     label: "活動名稱",
     field: "c_act_name",
-    style: "border-top: 1px solid; text-align: center; width: 15%; max-width: 15%;",
+    style:
+      "border-top: 1px solid; text-align: center; width: 15%; max-width: 15%;",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
   },
@@ -729,7 +1202,8 @@ const os2Columns = ref([
     name: "c_dest",
     label: "地點",
     field: "c_dest",
-    style: "border-top: 1px solid; text-align: center; width: 15%; max-width: 15%",
+    style:
+      "border-top: 1px solid; text-align: center; width: 15%; max-width: 15%",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
   },
@@ -807,14 +1281,15 @@ const os2Columns = ref([
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
   },
-])
+]);
 
 const monthlyReportColumns = ref([
   {
     name: "c_act_name",
     label: "活動名稱",
     field: "c_act_name",
-    style: "border-top: 1px solid; text-align: center; width: 75%; max-width: 75%;",
+    style:
+      "border-top: 1px solid; text-align: center; width: 75%; max-width: 75%;",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
   },
@@ -826,7 +1301,7 @@ const monthlyReportColumns = ref([
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
   },
-])
+]);
 
 const c3Columns = ref([
   {
@@ -887,133 +1362,185 @@ const c3Columns = ref([
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
   },
-])
+]);
 
 // query - load graphql subscription on member list
-const { result, loading } = useQuery(gql`
-  query Event_getEvent {
-    HTX_Event(order_by: {c_act_code: desc}, offset: 1) {
-      c_act_code
-      c_act_name
-      c_nature
-      c_respon
-      c_type
-      c_status
-      c_group1
-      c_group2
-      c_acc_type
-      c_dest
+const { result, loading } = useQuery(
+  gql`
+    query Event_getEvent {
+      HTX_Event(order_by: { c_act_code: desc }, offset: 1) {
+        c_act_code
+        c_act_name
+        c_nature
+        c_respon
+        c_type
+        c_status
+        c_group1
+        c_group2
+        c_acc_type
+        c_dest
+      }
     }
-  }`, {}, {
-    pollInterval: 50000
-  });
+  `,
+  {},
+  {
+    pollInterval: 50000,
+  }
+);
 
-const { result: os2result, loading: os2loading } = useQuery(gql`
-query queryO2Result(
-  $d_act: [String] = []
-  ) {
-  tbl_act_session(where: {d_act: {_in: $d_act}}) {
-    c_act_code
-    d_act
-    i_number
-    i_people_count
-    inCenter
-    s_GUID
-    Session_to_Event {
-      c_act_code
-      c_act_name
-      c_dest
-      c_group1
-      c_group2
-      c_nature
-      c_respon
-      c_type
-      c_status
+const { result: os2result, loading: os2loading } = useQuery(
+  gql`
+    query queryO2Result($d_act: [String] = []) {
+      tbl_act_session(where: { d_act: { _in: $d_act } }) {
+        c_act_code
+        d_act
+        i_number
+        i_people_count
+        inCenter
+        s_GUID
+        Session_to_Event {
+          c_act_code
+          c_act_name
+          c_dest
+          c_group1
+          c_group2
+          c_nature
+          c_respon
+          c_type
+          c_status
+        }
+      }
     }
-  }
-}`, () => ({
-  d_act: getDAct.value
-}))
+  `,
+  () => ({
+    d_act: getDAct.value,
+  })
+);
 
-const { result: os5result, loading: os5loading } = useQuery(gql`
-query queryOS5Result(
-  $startDate: smalldatetime = "",
-  $endDate: smalldatetime = ""
-  ) {
-  HTX_Event(where: {_and: {d_finish_goal: {_gte: $startDate}}, d_finish_goal: {_lte: $endDate}}) {
-    c_act_code
-    c_act_name
-    c_nature
-    c_respon
-    c_status
-    c_type
-    d_finish_goal
-  }
-}`, () => ({
-  startDate: qdate.formatDate(quarterStartDate(qdate.startOfDate(reportStartDate.value, 'day')), "YYYY-MM-DD"),
-  endDate: qdate.formatDate(quarterEndDate(qdate.endOfDate(reportEndDate.value, 'day')), "YYYY-MM-DD")
-}))
+const { result: os5result, loading: os5loading } = useQuery(
+  gql`
+    query queryOS5Result(
+      $startDate: smalldatetime = ""
+      $endDate: smalldatetime = ""
+    ) {
+      HTX_Event(
+        where: {
+          _and: { d_finish_goal: { _gte: $startDate } }
+          d_finish_goal: { _lte: $endDate }
+        }
+      ) {
+        c_act_code
+        c_act_name
+        c_nature
+        c_respon
+        c_status
+        c_type
+        d_finish_goal
+      }
+    }
+  `,
+  () => ({
+    startDate: qdate.formatDate(
+      quarterStartDate(qdate.startOfDate(reportStartDate.value, "day")),
+      "YYYY-MM-DD"
+    ),
+    endDate: qdate.formatDate(
+      quarterEndDate(qdate.endOfDate(reportEndDate.value, "day")),
+      "YYYY-MM-DD"
+    ),
+  })
+);
 
 // watcher
-watch(reportStartDate, (newDate, oldDate)  => {
-  dutyTable.value = []
-  refreshSchedule(newDate, reportEndDate.value)
-})
+watch(reportStartDate, (newDate, oldDate) => {
+  dutyTable.value = [];
+  refreshSchedule(newDate, reportEndDate.value);
+});
 
-watch(reportEndDate, (newDate, oldDate)  => {
-  dutyTable.value = []
-  refreshSchedule(reportStartDate.value, newDate)
-})
+watch(reportEndDate, (newDate, oldDate) => {
+  dutyTable.value = [];
+  refreshSchedule(reportStartDate.value, newDate);
+});
 
 // computed
 const EventData = computed(() => {
-  let res = []
+  let res = [];
   if (result.value) {
     result.value.HTX_Event.forEach((x) => {
-      if (!staffSearchFilter.value ||
-        (staffSearchFilter.value && x.c_respon && staffSearchFilter.value.map(x => x.label).includes(x.c_respon.trim())) ||
-        (staffSearchFilter.value && x.c_respon && staffSearchFilter.value.map(x => x.label)) == '全部')
-        {
-          res.push(x)
-        }
-    })
+      if (
+        !staffSearchFilter.value ||
+        (staffSearchFilter.value &&
+          x.c_respon &&
+          staffSearchFilter.value
+            .map((x) => x.label)
+            .includes(x.c_respon.trim())) ||
+        (staffSearchFilter.value &&
+          x.c_respon &&
+          staffSearchFilter.value.map((x) => x.label)) == "全部"
+      ) {
+        res.push(x);
+      }
+    });
   }
-  return res
-})
+  return res;
+});
 
 const AllDataWithSession = computed(() => {
-  let res = []
+  let res = [];
   if (os2result.value) {
     os2result.value.tbl_act_session.forEach((x) => {
-      if ((!staffSearchFilter.value ||
-        (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label).includes(x.Session_to_Event.c_respon.trim())) ||
-        (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label)) == '全部')
-        ) {
+      if (
+        !staffSearchFilter.value ||
+        (staffSearchFilter.value &&
+          staffSearchFilter.value
+            .map((x) => x.label)
+            .includes(x.Session_to_Event.c_respon.trim())) ||
+        (staffSearchFilter.value &&
+          staffSearchFilter.value.map((x) => x.label)) == "全部"
+      ) {
         res.push({
           d_act: x.d_act,
           i_number: x.i_number,
           i_people_count: x.i_people_count,
-          c_act_code: x.Session_to_Event.c_act_code? x.Session_to_Event.c_act_code.trim(): "",
-          c_act_name: x.Session_to_Event.c_act_name? x.Session_to_Event.c_act_name.trim(): "",
-          c_dest: x.Session_to_Event.c_dest? x.Session_to_Event.c_dest.trim(): "",
-          c_group1: x.Session_to_Event.c_group1? x.Session_to_Event.c_group1.trim(): "",
-          c_group2: x.Session_to_Event.c_group2? x.Session_to_Event.c_group2.trim(): "",
-          c_naure: x.Session_to_Event.c_nature? x.Session_to_Event.c_nature.trim(): "",
-          c_respon: x.Session_to_Event.c_respon? x.Session_to_Event.c_respon.trim(): "",
-          c_type: x.Session_to_Event.c_type? x.Session_to_Event.c_type.trim(): "",
-          c_status: x.Session_to_Event.c_status? x.Session_to_Event.c_status.trim(): "",
-        })
+          c_act_code: x.Session_to_Event.c_act_code
+            ? x.Session_to_Event.c_act_code.trim()
+            : "",
+          c_act_name: x.Session_to_Event.c_act_name
+            ? x.Session_to_Event.c_act_name.trim()
+            : "",
+          c_dest: x.Session_to_Event.c_dest
+            ? x.Session_to_Event.c_dest.trim()
+            : "",
+          c_group1: x.Session_to_Event.c_group1
+            ? x.Session_to_Event.c_group1.trim()
+            : "",
+          c_group2: x.Session_to_Event.c_group2
+            ? x.Session_to_Event.c_group2.trim()
+            : "",
+          c_naure: x.Session_to_Event.c_nature
+            ? x.Session_to_Event.c_nature.trim()
+            : "",
+          c_respon: x.Session_to_Event.c_respon
+            ? x.Session_to_Event.c_respon.trim()
+            : "",
+          c_type: x.Session_to_Event.c_type
+            ? x.Session_to_Event.c_type.trim()
+            : "",
+          c_status: x.Session_to_Event.c_status
+            ? x.Session_to_Event.c_status.trim()
+            : "",
+        });
       }
-    })
+    });
   }
-  return res
-})
+  return res;
+});
 
 const OS2Data = computed(() => {
-  let res = []
+  let res = [];
   if (os2result.value) {
     os2result.value.tbl_act_session.forEach((x) => {
-      let result = false
+      let result = false;
       /* ignore location in event information because it may be changed later
       let locations = x.Session_to_Event.c_dest? x.Session_to_Event.c_dest.split(/[,、]+/): []
 
@@ -1026,162 +1553,203 @@ const OS2Data = computed(() => {
       if (x.Session_to_Event.c_type && x.Session_to_Event.c_type.trim().includes('偶到')) result = true
       */
       //if (result && x.inCenter &&
-      if (x.inCenter &&
+      if (
+        x.inCenter &&
         (!staffSearchFilter.value ||
-        (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label).includes(x.Session_to_Event.c_respon.trim())) ||
-        (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label)) == '全部')
-        ) {
+          (staffSearchFilter.value &&
+            staffSearchFilter.value
+              .map((x) => x.label)
+              .includes(x.Session_to_Event.c_respon.trim())) ||
+          (staffSearchFilter.value &&
+            staffSearchFilter.value.map((x) => x.label)) == "全部")
+      ) {
         res.push({
           d_act: x.d_act,
           i_number: x.i_number,
           i_people_count: x.i_people_count,
           ...x.Session_to_Event,
-        })
+        });
       }
-    })
+    });
   }
-  return res
-})
+  return res;
+});
 
-const OS3Data = computed(() => { //os2result.value? os2result.value.tbl_act_session.filter((x) => os3natures.includes(x.Session_to_Event.c_nature.trim())): [])
-  let res = []
+const OS3Data = computed(() => {
+  //os2result.value? os2result.value.tbl_act_session.filter((x) => os3natures.includes(x.Session_to_Event.c_nature.trim())): [])
+  let res = [];
   if (os2result.value) {
     os2result.value.tbl_act_session.forEach((x) => {
-      let result = os3natures.includes(x.Session_to_Event.c_nature.trim())
+      let result = os3natures.includes(x.Session_to_Event.c_nature.trim());
 
-      if (result &&
+      if (
+        result &&
         (!staffSearchFilter.value ||
-        (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label).includes(x.Session_to_Event.c_respon.trim())) ||
-        (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label)) == '全部')
-        ) {
+          (staffSearchFilter.value &&
+            staffSearchFilter.value
+              .map((x) => x.label)
+              .includes(x.Session_to_Event.c_respon.trim())) ||
+          (staffSearchFilter.value &&
+            staffSearchFilter.value.map((x) => x.label)) == "全部")
+      ) {
         res.push({
           d_act: x.d_act,
           i_number: x.i_number,
           i_people_count: x.i_people_count,
           ...x.Session_to_Event,
-        })
+        });
       }
-    })
+    });
   }
-  return res
-})
+  return res;
+});
 
 const OS5Data = computed(() => {
-  let res = []
+  let res = [];
   // console.log(JSON.stringify(os5result.value))
 
   if (os5result.value) {
     os5result.value.HTX_Event.forEach((x) => {
-      if (os5status.includes(x.c_status.trim()) &&
+      if (
+        os5status.includes(x.c_status.trim()) &&
         (!staffSearchFilter.value ||
-        (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label).includes(x.c_respon.trim())) ||
-        (staffSearchFilter.value && staffSearchFilter.value.map(x => x.label)) == '全部')
+          (staffSearchFilter.value &&
+            staffSearchFilter.value
+              .map((x) => x.label)
+              .includes(x.c_respon.trim())) ||
+          (staffSearchFilter.value &&
+            staffSearchFilter.value.map((x) => x.label)) == "全部")
       ) {
-        res.push(x)
+        res.push(x);
       }
-    })
+    });
   }
-  return res
-})
+  return res;
+});
 
 const C3Data = computed(() => {
-  let res = []
+  let res = [];
   if (os2result.value) {
     os2result.value.tbl_act_session.forEach((x) => {
       // debug
       // res.push(x)
-      if (x.Session_to_Event.c_nature.startsWith("核心") && (x.Session_to_Event.c_group2 && x.Session_to_Event.c_group2.trim() != "")) {
-        let i = res.findIndex((ele) => ele.s_GUID == x.s_GUID)
+      if (
+        x.Session_to_Event.c_nature.startsWith("核心") &&
+        x.Session_to_Event.c_group2 &&
+        x.Session_to_Event.c_group2.trim() != ""
+      ) {
+        let i = res.findIndex((ele) => ele.s_GUID == x.s_GUID);
         if (i == -1) {
           res.push({
-            s_GUID: x.s_GUID? x.s_GUID.trim(): "",
-            c_act_code: x.c_act_code? x.c_act_code.trim(): "",
-            d_act: x.d_act? x.d_act.trim(): "",
+            s_GUID: x.s_GUID ? x.s_GUID.trim() : "",
+            c_act_code: x.c_act_code ? x.c_act_code.trim() : "",
+            d_act: x.d_act ? x.d_act.trim() : "",
             i_number: x.i_number,
             i_people_count: x.i_people_count,
-            c_act_name: x.Session_to_Event.c_act_name? x.Session_to_Event.c_act_name.trim(): "",
-            c_dest: x.Session_to_Event.c_dest? x.Session_to_Event.c_dest.trim(): "",
-            c_group1: x.Session_to_Event.c_group1? x.Session_to_Event.c_group1.trim(): "",
-            c_group2: x.Session_to_Event.c_group2? x.Session_to_Event.c_group2.trim(): "",
-            c_nature: x.Session_to_Event.c_nature? x.Session_to_Event.c_nature.trim(): "",
-            c_respon: x.Session_to_Event.c_respon? x.Session_to_Event.c_respon.trim(): "",
-            c_type: x.Session_to_Event.c_type? x.Session_to_Event.c_type.trim(): "",
-            c_status: x.Session_to_Event.c_status? x.Session_to_Event.c_status: "",
-          })
+            c_act_name: x.Session_to_Event.c_act_name
+              ? x.Session_to_Event.c_act_name.trim()
+              : "",
+            c_dest: x.Session_to_Event.c_dest
+              ? x.Session_to_Event.c_dest.trim()
+              : "",
+            c_group1: x.Session_to_Event.c_group1
+              ? x.Session_to_Event.c_group1.trim()
+              : "",
+            c_group2: x.Session_to_Event.c_group2
+              ? x.Session_to_Event.c_group2.trim()
+              : "",
+            c_nature: x.Session_to_Event.c_nature
+              ? x.Session_to_Event.c_nature.trim()
+              : "",
+            c_respon: x.Session_to_Event.c_respon
+              ? x.Session_to_Event.c_respon.trim()
+              : "",
+            c_type: x.Session_to_Event.c_type
+              ? x.Session_to_Event.c_type.trim()
+              : "",
+            c_status: x.Session_to_Event.c_status
+              ? x.Session_to_Event.c_status
+              : "",
+          });
         } else {
-          res[i].i_number += x.i_number
-          res[i].i_people += x.i_people_count
+          res[i].i_number += x.i_number;
+          res[i].i_people += x.i_people_count;
         }
       }
-    })
+    });
   }
-  return res
-})
+  return res;
+});
 
 // functions
 function exportExcel(datasource, columns, filename) {
-  let content = Excel.jsonToXLS(datasource, columns)
+  let content = Excel.jsonToXLS(datasource, columns);
 
-  const status = exportFile(
-    filename + '.xls',
-    content,
-    'text/xls'
-  )
+  const status = exportFile(filename + ".xls", content, "text/xls");
 
   if (status !== true) {
     $q.notify({
-      message: '瀏覽器阻止下載檔案...',
-      color: 'negative',
-      icon: 'warning'
-    })
+      message: "瀏覽器阻止下載檔案...",
+      color: "negative",
+      icon: "warning",
+    });
   }
 }
 
 function quarterStartDate(date) {
-  let quarter = Math.floor(date.getMonth() / 3 + 1)
-  return new Date(date.getFullYear(), quarter*3-3, date.getDate())
+  let quarter = Math.floor(date.getMonth() / 3 + 1);
+  return new Date(date.getFullYear(), quarter * 3 - 3, date.getDate());
 }
 
 function quarterEndDate(date) {
-  let quarter = Math.floor(date.getMonth() / 3 + 1)
-  return new Date(date.getFullYear(), quarter*3, 0)
+  let quarter = Math.floor(date.getMonth() / 3 + 1);
+  return new Date(date.getFullYear(), quarter * 3, 0);
 }
 
 function refreshSchedule(startDate, endDate) {
   // build up dates in month
-  for (let day = qdate.startOfDate(startDate, 'day'); qdate.getDateDiff(day, endDate) <= 0; day = qdate.addToDate(day, { day: 1})) {
+  for (
+    let day = qdate.startOfDate(startDate, "day");
+    qdate.getDateDiff(day, endDate) <= 0;
+    day = qdate.addToDate(day, { day: 1 })
+  ) {
     dutyTable.value.push({
-      date: day
-    })
+      date: day,
+    });
   }
 
-  const sessionDocQuery = query(sessionCollection,
-    where("date", ">=", qdate.startOfDate(startDate, 'day')),
-    where("date", "<=", qdate.endOfDate(endDate, 'day'))
-  )
+  const sessionDocQuery = query(
+    sessionCollection,
+    where("date", ">=", qdate.startOfDate(startDate, "day")),
+    where("date", "<=", qdate.endOfDate(endDate, "day"))
+  );
 
   getDocs(sessionDocQuery).then((sessionDoc) => {
     sessionDoc.forEach((doc) => {
       // console.log(doc.data().date.toDate() + ":" + doc.data().slot)
-      let i = dutyTable.value.findIndex((element) => qdate.formatDate(element.date, "YYYY-MM-DD") == qdate.formatDate(doc.data().date.toDate(), "YYYY-MM-DD"))
-      dutyTable.value[i][doc.data().slot] = true
+      let i = dutyTable.value.findIndex(
+        (element) =>
+          qdate.formatDate(element.date, "YYYY-MM-DD") ==
+          qdate.formatDate(doc.data().date.toDate(), "YYYY-MM-DD")
+      );
+      dutyTable.value[i][doc.data().slot] = true;
     });
   });
 }
 
 function tableFilter(rows, terms) {
-  return rows.filter(
-    (row) => terms.c_nature? row.c_nature.trim() == terms.c_nature: true
+  return rows.filter((row) =>
+    terms.c_nature ? row.c_nature.trim() == terms.c_nature : true
   );
 }
 
 function rowDetail(evt, row, index) {
-  if (evt.target.nodeName === 'TD') {
+  if (evt.target.nodeName === "TD") {
     /* detailModal.value = true;
     showEventID.value = row.c_act_code; */
     router.push({
-      path: "/event/detail/" + row.c_act_code.trim() + "/content"
-    })
+      path: "/event/detail/" + row.c_act_code.trim() + "/content",
+    });
   }
 }
 </script>
@@ -1194,7 +1762,7 @@ export default {
   directives: {
     print,
   },
-}
+};
 </script>
 
 <style lang="scss" scoped>
@@ -1236,7 +1804,5 @@ export default {
     font-size: 0.5rem;
     line-height: 100%;
   }
-
-
 }
 </style>

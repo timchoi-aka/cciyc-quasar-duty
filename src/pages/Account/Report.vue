@@ -950,6 +950,103 @@
         </template>
       </q-table>
 
+      <!-- OF -->
+      <q-table
+        v-if="OFData.length > 0"
+        dense
+        flat
+        :rows="OFData"
+        :columns="accountReportColumns"
+        :pagination="accountReportPagination"
+        color="primary"
+        class="q-mt-md"
+        :loading="loading"
+        binary-state-sort
+        hide-pagination
+        :rows-per-page-options="[0]"
+        no-data-label="沒有資料"
+      >
+        <!-- loading -->
+        <template v-slot:loading>
+          <q-inner-loading showing color="primary" />
+        </template>
+
+        <!-- status -->
+        <template v-slot:body-cell-c_status="props">
+          <q-td :props="props">
+            <div v-if="props.row.b_refund">退款</div>
+            <div v-if="props.row.b_delete">刪除</div>
+          </q-td>
+        </template>
+
+        <!-- top -->
+        <template v-slot:top>
+          <div
+            class="q-my-none q-py-none row col-12 items-end"
+            style="line-height: 10px"
+          >
+            <div class="col-auto items-end text-bold">其他收入</div>
+            <q-space />
+            <q-btn
+              icon="print"
+              flat
+              class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end"
+              v-print="printObj"
+            >
+              <q-tooltip class="bg-white text-primary">列印</q-tooltip>
+            </q-btn>
+            <q-btn
+              color="primary"
+              class="hideOnPrint"
+              icon-right="archive"
+              label="匯出Excel"
+              no-caps
+              @click="
+                exportExcel(
+                  OFData,
+                  accountReportColumns,
+                  '其他收入-' + reportStartDate + '-' + reportEndDate
+                )
+              "
+            />
+          </div>
+        </template>
+
+        <!-- bottom total row -->
+        <template v-slot:bottom-row="props">
+          <q-tr>
+            <q-td
+              v-for="index in props.cols.length"
+              class="text-center"
+              style="line-height: 10px"
+            >
+              {{ props.cols[index - 1].name == "number" ? "總數: " : "" }}
+              {{
+                props.cols[index - 1].name == "number"
+                  ? NewMemberData.reduce(
+                      (x, v) => x + v[props.cols[index - 1].name],
+                      0
+                    )
+                  : ""
+              }}
+              {{
+                props.cols[index - 1].name == "total"
+                  ? "其他收入-總金額(HKD): "
+                  : ""
+              }}
+              {{
+                props.cols[index - 1].name == "total"
+                  ? OFData.reduce(
+                      (x, v) => x + v[props.cols[index - 1].name],
+                      0
+                    ).toLocaleString()
+                  : ""
+              }}
+            </q-td>
+          </q-tr>
+        </template>
+      </q-table>
+
       <!-- 續會員費 -->
       <q-table
         v-if="RenewMemberData.length > 0"
@@ -1057,6 +1154,7 @@
               SFData.reduce((a, v) => a + v.total, 0) +
               RFData.reduce((a, v) => a + v.total, 0) +
               CFData.reduce((a, v) => a + v.total, 0) +
+              OFData.reduce((a, v) => a + v.total, 0) +
               NewMemberData.reduce((a, v) => a + v.total, 0) +
               RenewMemberData.reduce((a, v) => a + v.total, 0)
             }}
@@ -1417,6 +1515,35 @@ const PFData = computed(() => {
   if (ReceiptData.value) {
     ReceiptData.value.forEach((rec) => {
       if (rec.c_type == "PF" && !rec.b_delete && !rec.b_refund) {
+        let i = res.findIndex(
+          (element) =>
+            element.c_act_code == rec.c_act_code &&
+            element.amount == rec.u_price_after_discount
+        );
+        if (i == -1) {
+          res.push({
+            c_act_code: rec.c_act_code,
+            c_desc: rec.c_desc,
+            c_type: rec.c_type,
+            amount: rec.u_price_after_discount,
+            number: 1,
+            total: rec.u_price_after_discount,
+          });
+        } else {
+          res[i].number = res[i].number + 1;
+          res[i].total = res[i].total + rec.u_price_after_discount;
+        }
+      }
+    });
+  }
+  return res;
+});
+
+const OFData = computed(() => {
+  let res = [];
+  if (ReceiptData.value) {
+    ReceiptData.value.forEach((rec) => {
+      if (rec.c_type == "OF" && !rec.b_delete && !rec.b_refund) {
         let i = res.findIndex(
           (element) =>
             element.c_act_code == rec.c_act_code &&
