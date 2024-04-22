@@ -100,8 +100,8 @@ onMounted(() => {
   drawContent(
     doc,
     props.eventData.HTX_Event_by_pk,
-    attendanceRecord.value,
-    attendanceDailyRecord.value,
+    attendanceRecord.value.sort((a, b) => a.d_date.localeCompare(b.d_date)),
+    attendanceDailyRecord.value.sort((a, b) => a.date.localeCompare(b.date)),
     props.reportMonth
   );
 
@@ -247,28 +247,29 @@ async function drawContent(
   line += 6;
   let countTotal = 0;
   let sessionTotal = 0;
-  for (let i = 0; i < attendance.length; i++) {
+
+  for (let i = 0; i < attendanceDaily.length; i++) {
     doc.text(
-      date.formatDate(attendance[i].d_date, "DD/MM/YYYY"),
+      date.formatDate(attendanceDaily[i].date, "DD/MM/YYYY"),
       55,
       line,
       "center"
     );
-    let dailyIndex = attendanceDaily.findIndex(
-      (rec) => rec.date == attendance[i].d_date
+    let index = attendance.findIndex(
+      (rec) => rec.d_date == attendanceDaily[i].date
     );
     let youthCount =
-      (attendance[i].youthCount ? attendance[i].youthCount : 0) +
-      (attendanceDaily[dailyIndex].youthCount
-        ? attendanceDaily[dailyIndex].youthCount
+      (attendanceDaily[i].youthCount ? attendanceDaily[i].youthCount : 0) +
+      (index >= 0 && attendance[index].youthCount
+        ? attendance[index].youthCount
         : 0);
     countTotal += youthCount;
     doc.text(youthCount.toString(), 110, line, "right");
 
     let youthSession =
-      (attendance[i].sessionCount ? attendance[i].sessionCount : 0) +
-      (attendanceDaily[dailyIndex].session
-        ? attendanceDaily[dailyIndex].session
+      (attendanceDaily[i].session ? attendanceDaily[i].session : 0) +
+      (index >= 0 && attendance[index].sessionCount
+        ? attendance[index].sessionCount
         : 0);
     sessionTotal += youthSession;
     doc.text(youthSession.toString(), 157, line, "right");

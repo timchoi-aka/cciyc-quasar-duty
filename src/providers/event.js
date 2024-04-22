@@ -247,6 +247,18 @@ export function useEventProvider(options = {}) {
     }
   `;
 
+  const GET_ALL_EVENT_ID = gql`
+    query GetEvent {
+      HTX_Event {
+        IsShow
+        c_act_code
+        c_act_name
+        c_act_nameen
+        c_status
+      }
+    }
+  `;
+
   // Mutation for submitting plan
   const SUBMIT_PLAN = gql`
     mutation submitPlanFromUUID(
@@ -1179,14 +1191,17 @@ export function useEventProvider(options = {}) {
   const execute = async () => {
     awaitNumber.value++;
 
-    const { onResult } = useQuery(GET_EVENT, () => ({
-      c_act_code: c_act_code.value,
-      loadEvaluation: loadEvaluation.value,
-      loadSession: loadSession.value,
-      loadFullDetail: loadFullDetail.value,
-      loadWeb: loadWeb.value,
-      loadFee: loadFee.value,
-    }));
+    const { onResult } = useQuery(
+      c_act_code.value ? GET_EVENT : GET_ALL_EVENT_ID,
+      () => ({
+        c_act_code: c_act_code.value,
+        loadEvaluation: loadEvaluation.value,
+        loadSession: loadSession.value,
+        loadFullDetail: loadFullDetail.value,
+        loadWeb: loadWeb.value,
+        loadFee: loadFee.value,
+      })
+    );
 
     onResult((res) => {
       if (res.data) {
