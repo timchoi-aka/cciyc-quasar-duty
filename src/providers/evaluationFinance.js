@@ -46,6 +46,9 @@ export function useEvaluationFinanceProvider(options = {}) {
     mutation addEvaluationAccountFromUUID(
       $objects: [Event_Evaluation_Account_insert_input!] = {}
       $logObject: Log_insert_input! = {}
+      $removeRecord: [uniqueidentifier!] = [
+        "00000000-0000-0000-0000-000000000000"
+      ]
     ) {
       insert_Event_Evaluation_Account(
         objects: $objects
@@ -63,6 +66,13 @@ export function useEvaluationFinanceProvider(options = {}) {
           planeval
           txn_date
           type
+        }
+      }
+      delete_Event_Evaluation_Account(
+        where: { account_uuid: { _in: $removeRecord } }
+      ) {
+        returning {
+          account_uuid
         }
       }
       insert_Log_one(object: $logObject) {
@@ -103,7 +113,25 @@ export function useEvaluationFinanceProvider(options = {}) {
     onError: onError_AddFinance,
     onDone: onDone_AddFinance,
   } = useMutation(ADD_EVALUATION_FINANCE_BY_UUID, {
-    update: (cache, { data: { insert_Event_Evaluation_Account } }) => {
+    update: (
+      cache,
+      {
+        data: {
+          insert_Event_Evaluation_Account,
+          delete_Event_Evaluation_Account,
+        },
+      }
+    ) => {
+      /* 
+      console.log(
+        "insert_Event_Evaluation_Account: ",
+        insert_Event_Evaluation_Account
+      );
+      console.log(
+        "delete_Event_Evaluation_Account: ",
+        delete_Event_Evaluation_Account
+      );
+      */
       const c_act_code =
         insert_Event_Evaluation_Account &&
         insert_Event_Evaluation_Account.returning &&
@@ -126,10 +154,28 @@ export function useEvaluationFinanceProvider(options = {}) {
 
       // Check if the data is in the cache
       if (existing) {
-        let updated = [
-          ...existing.Event_Evaluation_Account,
-          ...insert_Event_Evaluation_Account.returning,
-        ];
+        let updated = [...existing.Event_Evaluation_Account];
+
+        insert_Event_Evaluation_Account.returning.forEach((ele) => {
+          const index = updated.findIndex(
+            (item) => item.account_uuid === ele.account_uuid
+          );
+          if (index > -1) {
+            updated[index] = ele;
+          } else {
+            updated.push(ele);
+          }
+        });
+
+        // Create an array of account_uuids to delete
+        const uuidsToDelete = delete_Event_Evaluation_Account.returning.map(
+          (ele) => ele.account_uuid
+        );
+
+        // Filter out the records that should be deleted
+        updated = updated.filter(
+          (item) => !uuidsToDelete.includes(item.account_uuid)
+        );
 
         // Write our data back to the cache.
         cache.writeQuery({
@@ -137,7 +183,7 @@ export function useEvaluationFinanceProvider(options = {}) {
           variables: {
             eval_uuid: eval_uuid,
           },
-          data: { Event_Evaluation_Account: updated },
+          data: { ...existing, Event_Evaluation_Account: updated },
         });
       }
     },
@@ -212,19 +258,33 @@ export function useEvaluationFinanceProvider(options = {}) {
 
   // Function to submit event plan / evaluation by id
   const addFinance = async (payload) => {
-    const { objects, username, c_act_code } = payload;
+    const {
+      objects = ref(),
+      username = ref(),
+      c_act_code = ref(),
+      removeRecord = ref(["00000000-0000-0000-0000-000000000000"]),
+    } = payload;
 
+    // console.log("objects: ", objects.value);
+    // console.log("removeRecord: ", removeRecord.value);
     // Increment the number of pending async operations
     awaitNumber.value++;
     try {
       // Call the toggleVisibility mutation
       await AddFinance({
         objects: objects.value,
+        removeRecord: removeRecord.value,
         logObject: {
           username: username.value,
           datetime: date.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
           module: "活動系統",
-          action: "新增活動計劃檢討財務資料：" + c_act_code.value + "。",
+          action:
+            "修改活動計劃檢討財務資料：" +
+            c_act_code.value +
+            "。新增：" +
+            JSON.stringify(objects.value) +
+            "。刪除：" +
+            JSON.stringify(removeRecord.value),
         },
       });
     } catch (error) {

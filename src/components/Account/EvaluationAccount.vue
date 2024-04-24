@@ -120,7 +120,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useStore } from "vuex";
 import { ADD_EVALUATION_ACCOUNT_FROM_UUID } from "/src/graphQueries/Event/mutation.js";
 import { useMutation } from "@vue/apollo-composable";
@@ -157,20 +157,30 @@ const props = defineProps({
   respon: Array,
 });
 
-const { result } = useEvaluationFinanceProvider({
+const { result, message, addFinance } = useEvaluationFinanceProvider({
   eval_uuid: ref(props.eval_uuid),
 });
 
+// display result message to user
+watch(message, (newMessage) => {
+  if (newMessage) {
+    $q.notify({
+      message: newMessage,
+    });
+  }
+});
+/* 
 const {
   mutate: addEvaluationAccountFromUUID,
   onDone: addEvaluationAccountFromUUID_Completed,
   onError: addEvaluationAccountFromUUID_Error,
 } = useMutation(ADD_EVALUATION_ACCOUNT_FROM_UUID);
+*/
 
 // computed values
 const $store = useStore();
 const username = computed(() => $store.getters["userModule/getUsername"]);
-
+const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"]);
 const account = computed(() =>
   result.value &&
   result.value.Event_Evaluation_Account &&
@@ -186,8 +196,6 @@ const account = computed(() =>
 const total = computed(() =>
   account.value ? account.value.reduce((a, v) => a + v.amount, 0) : 0
 );
-
-const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"]);
 
 // functions
 function addObject() {
@@ -233,19 +241,6 @@ function newValue(value, done) {
 }
 
 function save() {
-  const logObject = ref({
-    username: username,
-    datetime: date.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-    module: "活動系統",
-    action:
-      "修改活動計劃/檢討: " +
-      props.c_act_code +
-      "的財務預算。新資料:" +
-      JSON.stringify(editObject.value, null, 2) +
-      " 刪除記錄: " +
-      JSON.stringify(removeRecord.value, null, 2),
-  });
-
   editObject.value.forEach((obj) => {
     obj.type = obj.type.trim();
     obj.amount = parseFloat(obj.amount);
@@ -256,19 +251,20 @@ function save() {
     obj.txn_date = date.formatDate(obj.txn_date, "YYYY-MM-DDTHH:mm:ss");
   });
 
-  loading.value++;
-  addEvaluationAccountFromUUID({
-    logObject: logObject.value,
-    objects: editObject.value,
+  // loading.value++;
+  addFinance({
+    objects: editObject,
+    username: username,
+    c_act_code: ref(props.c_act_code.trim()),
     removeRecord:
       removeRecord.value.length > 0
-        ? removeRecord.value
-        : ["00000000-0000-0000-0000-000000000000"], //use dummy uuid
+        ? removeRecord
+        : ref(["00000000-0000-0000-0000-000000000000"]), //use dummy uuid
   });
 
   edit.value = false;
 }
-
+/* 
 // UI functions
 function notifyClientSuccess(result) {
   refetch();
@@ -281,5 +277,5 @@ function notifyClientSuccess(result) {
 // callbacks
 addEvaluationAccountFromUUID_Completed((result) => {
   notifyClientSuccess(result);
-});
+}); */
 </script>

@@ -24,7 +24,11 @@ export function useApplicantProvider(options = {}) {
   let GET_APPLICANT = gql`
     query Event_ApplicantsByActCode($c_act_code: String! = "") {
       tbl_act_reg(
-        where: { c_act_code: { _eq: $c_act_code }, b_refund: { _eq: false } }
+        where: {
+          c_act_code: { _eq: $c_act_code }
+          b_refund: { _eq: false }
+          c_mem_id: { _neq: "9999" }
+        }
       ) {
         ID
         b_refund
