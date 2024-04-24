@@ -244,8 +244,7 @@ async function drawContent(doc, event, type) {
   if (EvalData.objective) {
     let objectiveContent = EvalData.objective.replace(/\s+/g, " ").trim();
     let lineOfContent = Math.ceil(objectiveContent.length / 40);
-    console.log(objectiveContent);
-    console.log(lineOfContent);
+
     doc.text(objectiveContent, 30, atLine(lineNo), {
       align: "left",
       maxWidth: 170,
@@ -265,8 +264,7 @@ async function drawContent(doc, event, type) {
   if (EvalData.objective_detail) {
     let detailContent = EvalData.objective_detail.replace(/\s+/g, " ").trim();
     let lineOfContent = Math.ceil(detailContent.length / 40);
-    console.log(detailContent);
-    console.log(lineOfContent);
+
     doc.text(detailContent, 30, atLine(lineNo), {
       align: "left",
       maxWidth: 170,
