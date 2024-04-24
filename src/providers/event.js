@@ -3,9 +3,9 @@ import { useQuery, useMutation } from "@vue/apollo-composable";
 import { gql } from "graphql-tag";
 import { date, extend } from "quasar";
 import { useNotifier } from "./notifier";
-import { apolloClient } from "src/boot/apollo";
-import { provideApolloClient } from "@vue/apollo-composable";
-provideApolloClient(apolloClient);
+import apolloClient from "src/boot/apollo";
+// import { provideApolloClient } from "@vue/apollo-composable";
+// provideApolloClient(apolloClient);
 
 // Function to provide event data
 export function useEventProvider(options = {}) {
@@ -282,6 +282,71 @@ export function useEventProvider(options = {}) {
       }
       insert_Log_one(object: $logObject) {
         log_id
+        username
+      }
+    }
+  `;
+
+  // Mutation for submitting evaluation
+  const SUBMIT_EVAL = gql`
+    mutation submitEvaluationFromUUID(
+      $uuid: uniqueidentifier = ""
+      $staff_name: String = ""
+      $submit_eval_date: smalldatetime = ""
+      $logObject: Log_insert_input! = {}
+    ) {
+      update_Event_Evaluation_by_pk(
+        pk_columns: { uuid: $uuid }
+        _set: {
+          staff_name: $staff_name
+          submit_eval_date: $submit_eval_date
+          ic_eval_date: null
+        }
+      ) {
+        uuid
+        c_act_code
+        submit_eval_date
+        ic_eval_date
+        staff_name
+      }
+      insert_Log_one(object: $logObject) {
+        log_id
+        username
+      }
+    }
+  `;
+
+  // Mutation for approving event plan
+  const APPROVE_PLAN = gql`
+    mutation approvePlanFromUUID(
+      $uuid: uniqueidentifier = ""
+      $c_act_code: String = ""
+      $ic: String = ""
+      $ic_plan_date: smalldatetime = ""
+      $ic_comment: String = ""
+      $logObject: Log_insert_input! = {}
+    ) {
+      update_Event_Evaluation_by_pk(
+        pk_columns: { uuid: $uuid }
+        _set: { ic: $ic, ic_plan_date: $ic_plan_date, ic_comment: $ic_comment }
+      ) {
+        uuid
+        c_act_code
+        staff_name
+        ic_plan_date
+        ic_eval_date
+        ic_comment
+      }
+      update_HTX_Event_by_pk(
+        pk_columns: { c_act_code: $c_act_code }
+        _set: { m_evaluation_rem: $ic_comment }
+      ) {
+        c_act_code
+        m_evaluation_rem
+      }
+      insert_Log_one(object: $logObject) {
+        log_id
+        username
       }
     }
   `;
@@ -293,6 +358,23 @@ export function useEventProvider(options = {}) {
       $c_act_code: String = ""
     ) {
       delete_HTX_Event_by_pk(c_act_code: $c_act_code) {
+        c_act_code
+      }
+      insert_Log_one(object: $logObject) {
+        log_id
+        username
+      }
+    }
+  `;
+
+  // mutation for deleteing a plan eval
+  const DELETE_PLANEVAL = gql`
+    mutation deletePlanEvalFromUUID(
+      $uuid: uniqueidentifier = ""
+      $logObject: Log_insert_input! = {}
+    ) {
+      delete_Event_Evaluation_by_pk(uuid: $uuid) {
+        uuid
         c_act_code
       }
       insert_Log_one(object: $logObject) {
@@ -506,6 +588,7 @@ export function useEventProvider(options = {}) {
       }
     }
   `;
+
   /***
    * submitPlan: Function to execute the SUBMIT_PLAN mutation.
    * onDone_submitPlan: Callback function that is called when the SUBMIT_PLAN mutation successfully completes.
@@ -603,6 +686,302 @@ export function useEventProvider(options = {}) {
   });
 
   onError_submitPlan((error) => {
+    message.value = "操作失敗，請聯絡系統管理員。";
+  });
+
+  /***
+   * deletePlanEval: Function to execute the DELETE_PLANEVAL mutation.
+   * onDone_deletePlanEval: Callback function that is called when the DELETE_PLANEVAL mutation successfully completes.
+   * onError_deletePlanEval: Callback function that is called when an error occurs while executing the DELETE_PLANEVAL mutation.
+   * ***/
+  const {
+    mutate: deletePlanEval,
+    onError: onError_deletePlanEval,
+    onDone: onDone_deletePlanEval,
+  } = useMutation(DELETE_PLANEVAL, {
+    update: (cache, { data: { delete_Event_Evaluation_by_pk } }) => {
+      const existingEvent = cache.readQuery({
+        query: GET_EVENT,
+        variables: {
+          c_act_code: delete_Event_Evaluation_by_pk.c_act_code.trim(),
+          loadEvaluation: true,
+        },
+      });
+      // Check if the data is in the cache
+      if (existingEvent) {
+        // Update its submit_plan_date
+        let updatedEvent = {};
+        extend(true, updatedEvent, existingEvent.HTX_Event_by_pk);
+        let index = updatedEvent.Event_to_Evaluation.findIndex(
+          (e) => e.uuid == delete_Event_Evaluation_by_pk.uuid
+        );
+        if (index > -1) updatedEvent.Event_to_Evaluation.splice(index, 1);
+
+        // Write our data back to the cache.
+        cache.writeQuery({
+          query: GET_EVENT,
+          variables: {
+            c_act_code: delete_Event_Evaluation_by_pk.c_act_code.trim(),
+            loadEvaluation: true,
+          },
+          data: { ...existingEvent, HTX_Event_by_pk: updatedEvent },
+        });
+      }
+    },
+  });
+
+  onDone_deletePlanEval((res) => {
+    if (res.data) {
+      let username = res.data.insert_Log_one.username.trim();
+      let c_act_code = res.data.delete_Event_Evaluation_by_pk.c_act_code.trim();
+
+      if (process.env.NODE_ENV != "development") {
+        const { result } = useNotifier({
+          topic: "eventApprove",
+          data: {
+            title: "刪除活動計劃檢討",
+            body: "[" + username + "]" + "刪除了活動計劃檢討" + c_act_code,
+          },
+        });
+
+        result.value
+          .then((r) => {
+            if (r.data) {
+              message.value = "成功刪除了活動計劃 - " + c_act_code;
+            }
+          })
+          .catch((error) => {
+            message.value = "刪除活動計劃失敗";
+          });
+      } else {
+        // development channel
+        const { result } = useNotifier({
+          topic: "uqhehdGADfWYglt9jDfaab0LGrC3",
+          data: {
+            title: "[DEV]刪除活動計劃",
+            body: "[" + username + "]" + "刪除了活動計劃" + c_act_code,
+          },
+        });
+
+        result.value
+          .then((r) => {
+            if (r.data) {
+              message.value = "成功刪除了活動計劃 - " + c_act_code;
+            }
+          })
+          .catch((e) => {
+            console.log("error: ", e);
+            message.value = "刪除活動計劃失敗";
+          });
+      }
+    }
+  });
+
+  onError_deletePlanEval((error) => {
+    message.value = "操作失敗，請聯絡系統管理員。";
+  });
+
+  /***
+   * approvePlan: Function to execute the APPROVE_PLAN mutation.
+   * onDone_approvePlan: Callback function that is called when the APPROVE_PLAN mutation successfully completes.
+   * onError_approvePlan: Callback function that is called when an error occurs while executing the APPROVE_PLAN mutation.
+   * ***/
+  const {
+    mutate: approvePlan,
+    onError: onError_approvePlan,
+    onDone: onDone_approvePlan,
+  } = useMutation(APPROVE_PLAN, {
+    update: (cache, { data: { update_Event_Evaluation_by_pk } }) => {
+      const existingEvent = cache.readQuery({
+        query: GET_EVENT,
+        variables: {
+          c_act_code: update_Event_Evaluation_by_pk.c_act_code.trim(),
+          loadEvaluation: true,
+        },
+      });
+      // Check if the data is in the cache
+      if (existingEvent) {
+        // Update its submit_plan_date
+        let updatedEvent = {};
+        extend(true, updatedEvent, existingEvent.HTX_Event_by_pk);
+        updatedEvent.Event_to_Evaluation[0].ic_plan_date =
+          update_Event_Evaluation_by_pk.ic_plan_date;
+        updatedEvent.Event_to_Evaluation[0].ic_eval_date =
+          update_Event_Evaluation_by_pk.ic_eval_date;
+        updatedEvent.Event_to_Evaluation[0].ic_comment =
+          update_Event_Evaluation_by_pk.ic_comment;
+        // Write our data back to the cache.
+        cache.writeQuery({
+          query: GET_EVENT,
+          variables: {
+            c_act_code: update_Event_Evaluation_by_pk.c_act_code.trim(),
+            loadEvaluation: true,
+          },
+          data: { ...existingEvent, HTX_Event_by_pk: updatedEvent },
+        });
+      }
+    },
+  });
+
+  onDone_approvePlan((res) => {
+    if (res.data) {
+      if (process.env.NODE_ENV != "development") {
+        const { result } = useNotifier({
+          // TODO change topic to uid
+          topic: "eventApprove",
+          data: {
+            title: "活動計劃",
+            body:
+              res.data.update_Event_Evaluation_by_pk.c_act_code +
+              "的計劃已被審批",
+          },
+        });
+
+        result.value
+          .then((r) => {
+            if (r.data) {
+              message.value =
+                "成功批准了活動計劃 - " +
+                res.data.update_Event_Evaluation_by_pk.c_act_code;
+            }
+          })
+          .catch((error) => {
+            message.value = "批准活動計劃失敗";
+          });
+      } else {
+        // development channel
+        const { result } = useNotifier({
+          topic: "uqhehdGADfWYglt9jDfaab0LGrC3",
+          data: {
+            title: "[DEV]批准活動計劃",
+            body:
+              "[" +
+              res.data.update_Event_Evaluation_by_pk.staff_name.trim() +
+              "]" +
+              "批准了活動計劃" +
+              res.data.update_Event_Evaluation_by_pk.c_act_code,
+          },
+        });
+
+        result.value
+          .then((r) => {
+            if (r.data) {
+              message.value =
+                "成功批准了活動計劃 - " +
+                res.data.update_Event_Evaluation_by_pk.c_act_code;
+            }
+          })
+          .catch((e) => {
+            console.log("error: ", e);
+            message.value = "批准活動計劃失敗";
+          });
+      }
+    }
+  });
+
+  onError_approvePlan((error) => {
+    message.value = "操作失敗，請聯絡系統管理員。";
+  });
+
+  /***
+   * submitEval: Function to execute the SUBMIT_EVAL mutation.
+   * onDone_submitEval: Callback function that is called when the SUBMIT_EVAL mutation successfully completes.
+   * onError_submitEval: Callback function that is called when an error occurs while executing the SUBMIT_EVAL mutation.
+   * ***/
+  const {
+    mutate: submitEval,
+    onError: onError_submitEval,
+    onDone: onDone_submitEval,
+  } = useMutation(SUBMIT_EVAL, {
+    update: (cache, { data: { update_Event_Evaluation_by_pk } }) => {
+      const existingEvent = cache.readQuery({
+        query: GET_EVENT,
+        variables: {
+          c_act_code: update_Event_Evaluation_by_pk.c_act_code.trim(),
+          loadEvaluation: true,
+        },
+      });
+      // Check if the data is in the cache
+      if (existingEvent) {
+        // Update its submit_plan_date
+        let updatedEvent = {};
+        extend(true, updatedEvent, existingEvent.HTX_Event_by_pk);
+        updatedEvent.Event_to_Evaluation[0].submit_eval_date =
+          update_Event_Evaluation_by_pk.submit_eval_date;
+        updatedEvent.Event_to_Evaluation[0].ic_eval_date =
+          update_Event_Evaluation_by_pk.ic_eval_date;
+        // Write our data back to the cache.
+        cache.writeQuery({
+          query: GET_EVENT,
+          variables: {
+            c_act_code: update_Event_Evaluation_by_pk.c_act_code.trim(),
+            loadEvaluation: true,
+          },
+          data: { ...existingEvent, HTX_Event_by_pk: updatedEvent },
+        });
+      }
+    },
+  });
+
+  onDone_submitEval((res) => {
+    if (res.data) {
+      if (process.env.NODE_ENV != "development") {
+        const { result } = useNotifier({
+          topic: "eventApprove",
+          data: {
+            title: "提交活動檢討",
+            body:
+              "[" +
+              res.data.update_Event_Evaluation_by_pk.staff_name.trim() +
+              "]" +
+              "提交了活動檢討" +
+              res.data.update_Event_Evaluation_by_pk.c_act_code,
+          },
+        });
+
+        result.value
+          .then((r) => {
+            if (r.data) {
+              message.value =
+                "成功提交了活動檢討 - " +
+                res.data.update_Event_Evaluation_by_pk.c_act_code;
+            }
+          })
+          .catch((error) => {
+            message.value = "提交活動檢討失敗";
+          });
+      } else {
+        // development channel
+        const { result } = useNotifier({
+          topic: "uqhehdGADfWYglt9jDfaab0LGrC3",
+          data: {
+            title: "[DEV]提交活動檢討",
+            body:
+              "[" +
+              res.data.update_Event_Evaluation_by_pk.staff_name.trim() +
+              "]" +
+              "提交了活動檢討" +
+              res.data.update_Event_Evaluation_by_pk.c_act_code,
+          },
+        });
+
+        result.value
+          .then((r) => {
+            if (r.data) {
+              message.value =
+                "成功提交了活動檢討 - " +
+                res.data.update_Event_Evaluation_by_pk.c_act_code;
+            }
+          })
+          .catch((e) => {
+            console.log("error: ", e);
+            message.value = "提交活動檢討失敗";
+          });
+      }
+    }
+  });
+
+  onError_submitEval((error) => {
     message.value = "操作失敗，請聯絡系統管理員。";
   });
 
@@ -751,6 +1130,9 @@ export function useEventProvider(options = {}) {
     }
   });
 
+  onError_updateEvent((error) => {
+    message.value = "操作失敗，請聯絡系統管理員。";
+  });
   /***
    * updateEventFee: Function to execute the UPDATE_EVENT_FEE mutation.
    * onDone_updateEventFee: Callback function that is called when the UPDATE_EVENT_FEE mutation successfully completes.
@@ -1070,6 +1452,62 @@ export function useEventProvider(options = {}) {
     }
   };
 
+  // Function to submit event plan / evaluation by id
+  const approvePlanById = async (payload) => {
+    const { uuid, staff_name, c_act_code, ic_comment } = payload;
+    // console.log("submitPlanById", payload)
+    // Increment the number of pending async operations
+    awaitNumber.value++;
+    try {
+      // Call the toggleVisibility mutation
+      await approvePlan({
+        uuid: uuid,
+        c_act_code: c_act_code,
+        ic: staff_name,
+        ic_plan_date: date.formatDate(new Date(), "YYYY-MM-DDTHH:mm:ss"),
+        ic_comment: ic_comment,
+        logObject: {
+          username: staff_name,
+          datetime: date.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+          module: "活動系統",
+          action: "批准活動計劃: " + c_act_code,
+        },
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      // Decrement the number of pending async operations
+      awaitNumber.value--;
+    }
+  };
+
+  // Function to submit event evaluation by id
+  const submitEvalById = async (payload) => {
+    const { uuid, staff_name, c_act_code } = payload;
+    // console.log("submitEvalById", payload)
+    // Increment the number of pending async operations
+    awaitNumber.value++;
+    try {
+      // Call the toggleVisibility mutation
+      await submitEval({
+        uuid: uuid,
+        staff_name: staff_name,
+        submit_eval_date: date.formatDate(new Date(), "YYYY-MM-DDTHH:mm:ss"),
+        logObject: {
+          username: staff_name,
+          datetime: date.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+          module: "活動系統",
+          action: "提交活動檢討: " + c_act_code,
+        },
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      // Decrement the number of pending async operations
+      awaitNumber.value--;
+    }
+  };
+
   // delete event
   const deleteEventById = async (payload) => {
     const { eventContent, staff_name, c_act_code } = payload;
@@ -1187,6 +1625,31 @@ export function useEventProvider(options = {}) {
     }
   };
 
+  // delete plan eval
+  const deletePlanEvalById = async (payload) => {
+    const { uuid, staff_name, c_act_code } = payload;
+    // console.log("payload", payload)
+    // Increment the number of pending async operations
+    awaitNumber.value++;
+    try {
+      // Call the deleteEvent mutation
+      await deletePlanEval({
+        uuid: uuid,
+        logObject: {
+          username: staff_name,
+          datetime: date.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+          module: "活動系統",
+          action: staff_name + "刪除活動計劃檢討" + c_act_code,
+        },
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      // Decrement the number of pending async operations
+      awaitNumber.value--;
+    }
+  };
+
   // Function to execute the query
   const execute = async () => {
     awaitNumber.value++;
@@ -1220,6 +1683,9 @@ export function useEventProvider(options = {}) {
     message,
     loading,
     submitPlanById,
+    submitEvalById,
+    approvePlanById,
+    deletePlanEvalById,
     refetch: execute,
     deleteEventById,
     updateEventById,

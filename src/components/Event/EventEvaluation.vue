@@ -286,6 +286,9 @@ const EventEvaluationContentEdit = defineAsyncComponent(() =>
 const {
   result: EventEvaluation,
   submitPlanById,
+  submitEvalById,
+  approvePlanById,
+  deletePlanEvalById,
   loading,
   message,
 } = useEventProvider({ c_act_code: c_act_code, loadEvaluation: ref(true) });
@@ -309,11 +312,7 @@ const {
   onDone: updateEvaluationFromActCode_Completed,
   onError: updateEvaluationFromActCode_Error,
 } = useMutation(UPDATE_EVALUATION_FROM_PK);
-const {
-  mutate: submitPlan,
-  onDone: submitPlan_Completed,
-  onError: submitPlan_Error,
-} = useMutation(SUBMIT_PLAN);
+
 const {
   mutate: submitEvaluation,
   onDone: submitEvaluation_Completed,
@@ -537,34 +536,6 @@ submitEvaluation_Completed((result) => {
   }
 });
 
-submitPlan_Completed((result) => {
-  if (result.data) {
-    const notifyUser = httpsCallable(
-      FirebaseFunctions,
-      "notification-notifyUser"
-    );
-
-    if (process.env.NODE_ENV != "development") {
-      notifyUser({
-        topic: "eventApprove",
-        data: {
-          title: "提交活動計劃",
-          body:
-            username.value +
-            "提交了活動計劃" +
-            result.data.update_Event_Evaluation_by_pk.c_act_code,
-        },
-      }).then(() => {
-        notifyClientSuccess(
-          result.data.update_Event_Evaluation_by_pk.c_act_code
-        );
-      });
-    } else {
-      notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code);
-    }
-  }
-});
-
 approvePlan_Completed((result) => {
   /*
   console.log("username: " + result.data.update_Event_Evaluation_by_pk.staff_name.trim())
@@ -705,14 +676,6 @@ updateEvaluationFromActCode_Error((error) => {
   notifyClientError(error);
 });
 
-/* EventEvaluationError((error) => {
-  notifyClientError(error)
-}) */
-
-submitPlan_Error((error) => {
-  notifyClientError(error);
-});
-
 submitEvaluation_Error((error) => {
   notifyClientError(error);
 });
@@ -759,14 +722,11 @@ function ApproveOK() {
 
     // loading.value++
     if (mode.value == "plan") {
-      approvePlan({
-        logObject: logObject.value,
-        ic: username.value,
-        ic_plan_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-        ic_eval_date: null,
-        ic_comment: EvaluationComment.value,
-        c_act_code: c_act_code.value.trim(),
+      approvePlanById({
         uuid: PlanEval.value.uuid,
+        staff_name: username.value,
+        c_act_code: c_act_code.value.trim(),
+        ic_comment: EvaluationComment.value,
       });
     } else {
       approveEvaluation({
@@ -826,63 +786,25 @@ function ApproveDeny() {
 
 // admin only - delete plan/eval
 function onOKDelete() {
-  const logObject = ref({
-    username: username.value,
-    datetime: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-    module: "活動系統",
-    action:
-      "刪除活動計劃: " +
-      c_act_code.value +
-      " 內容：" +
-      JSON.stringify(PlanEval.value, null, " "),
-  });
-  // loading.value++
-  deletePlanEval({
+  deletePlanEvalById({
     uuid: PlanEval.value.uuid,
-    logObject: logObject.value,
+    staff_name: username.value,
   });
 }
 
 function onOKClickPlan() {
-  const logObject = ref({
-    username: username.value,
-    datetime: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-    module: "活動系統",
-    action: "提交活動計劃: " + c_act_code.value,
-  });
-
-  /*
-  console.log(PlanEval.value.uuid)
-  console.log(username.value)
-  console.log(qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"))
-  console.log(logObject.value)
-  */
-
   submitPlanById({
     c_act_code: c_act_code.value,
     uuid: PlanEval.value.uuid,
     staff_name: username.value,
-    logObject: logObject.value,
   });
 }
 
 function onOKClickEval() {
-  const logObject = ref({
-    username: username.value,
-    datetime: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-    module: "活動系統",
-    action: "提交活動檢討: " + c_act_code.value,
-  });
-  //console.log(PlanEval.value.uuid)
-  //console.log(username.value)
-  //console.log(qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"))
-  //console.log(logObject.value)
-  // loading.value++
-  submitEvaluation({
+  submitEvalById({
     uuid: PlanEval.value.uuid,
     staff_name: username.value,
     submit_eval_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-    logObject: logObject.value,
   });
 }
 
