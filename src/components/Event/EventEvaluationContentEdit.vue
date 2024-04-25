@@ -34,7 +34,7 @@
       @click="loadDialog = true"
       color="positive"
       class="q-ma-md"
-      v-if="!planSubmitted && !evalSubmitted"
+      v-if="!isPlanSubmitted && !isEvalSubmitted"
     />
     <div class="row text-h6">
       <div
@@ -94,7 +94,7 @@
           PlanEval.remarks
         }}</span>
       </div>
-      <div v-if="planSubmitted" key="eval_remarks" class="row col-12">
+      <div v-if="isPlanSubmitted" key="eval_remarks" class="row col-12">
         <div class="col-2 q-my-sm">檢討備註:</div>
         <span class="col-10" v-if="edit" key="edit_eval_remarks"
           ><q-input
@@ -628,25 +628,27 @@ const isEventApprove = computed(
   () => $store.getters["userModule/getEventApprove"]
 );
 const isSubmitted = computed(() =>
-  PlanEval.value.submit_plan_date && PlanEval.value.submit_eval_date
+  PlanEval.value &&
+  PlanEval.value.submit_plan_date &&
+  PlanEval.value.submit_eval_date
     ? PlanEval.value.submit_plan_date.length > 0 &&
       PlanEval.value.submit_eval_date.length > 0
     : false
 );
-const planSubmitted = computed(() =>
-  PlanEval.value.submit_plan_date
+const isPlanSubmitted = computed(() =>
+  PlanEval.value && PlanEval.value.submit_plan_date
     ? PlanEval.value.submit_plan_date.length > 0
     : false
 );
-const evalSubmitted = computed(() =>
-  PlanEval.value.submit_eval_date
+const isEvalSubmitted = computed(() =>
+  PlanEval.value && PlanEval.value.submit_eval_date
     ? PlanEval.value.submit_eval_date.length > 0
     : false
 );
 const isEventApprover = computed(
   () => $store.getters["userModule/getEventApprove"]
 );
-const edit = computed(() => !evalSubmitted.value || isEventApprover.value);
+const edit = computed(() => !isEvalSubmitted.value || isEventApprover.value);
 
 // functions
 function saveEdit() {

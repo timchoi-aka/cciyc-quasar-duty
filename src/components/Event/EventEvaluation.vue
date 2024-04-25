@@ -195,12 +195,20 @@
         <q-tooltip class="bg-white text-primary">
           <div>
             提交：{{ PlanEval.staff_name }} @
-            {{ qdate.formatDate(PlanEval.submit_plan_date, "YYYY年M月D日") }}
+            {{
+              PlanEval.submit_plan_date
+                ? qdate.formatDate(PlanEval.submit_plan_date, "YYYY年M月D日")
+                : "未提交"
+            }}
           </div>
 
           <div v-if="isPlanApproved" key="plan_approved">
             審批：{{ PlanEval.ic }} @
-            {{ qdate.formatDate(PlanEval.ic_plan_date, "YYYY年M月D日") }}
+            {{
+              PlanEval.ic_plan_date
+                ? qdate.formatDate(PlanEval.ic_plan_date, "YYYY年M月D日")
+                : "未審批"
+            }}
           </div>
         </q-tooltip>
 
@@ -216,11 +224,19 @@
         <q-tooltip class="bg-white text-primary">
           <div>
             提交：{{ PlanEval.staff_name }} @
-            {{ qdate.formatDate(PlanEval.submit_eval_date, "YYYY年M月D日") }}
+            {{
+              PlanEval.submit_eval_date
+                ? qdate.formatDate(PlanEval.submit_eval_date, "YYYY年M月D日")
+                : "未提交"
+            }}
           </div>
           <div v-if="isEvalApproved" key="eval_approved">
             審批：{{ PlanEval.ic }} @
-            {{ qdate.formatDate(PlanEval.ic_eval_date, "YYYY年M月D日") }}
+            {{
+              PlanEval.ic_eval_date
+                ? qdate.formatDate(PlanEval.ic_eval_date, "YYYY年M月D日")
+                : "未審批"
+            }}
           </div>
         </q-tooltip>
 

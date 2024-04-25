@@ -59,8 +59,8 @@
       <span class="col-10 q-my-sm">{{ PlanEval && PlanEval.remarks }}</span>
 
       <!--檢討備註-->
-      <div class="col-2 q-my-sm" v-if="planSubmitted">檢討備註:</div>
-      <span class="col-10 q-my-sm" v-if="planSubmitted">{{
+      <div class="col-2 q-my-sm" v-if="isPlanSubmitted">檢討備註:</div>
+      <span class="col-10 q-my-sm" v-if="isPlanSubmitted">{{
         PlanEval && PlanEval.remarks_eval
       }}</span>
     </div>
@@ -477,13 +477,15 @@ const hasPlanEval = computed(
   () => PlanEval.value && Object.keys(PlanEval.value).length > 0
 );
 const isSubmitted = computed(() =>
-  PlanEval.value.submit_plan_date && PlanEval.value.submit_eval_date
+  PlanEval.value &&
+  PlanEval.value.submit_plan_date &&
+  PlanEval.value.submit_eval_date
     ? PlanEval.value.submit_plan_date.length > 0 &&
       PlanEval.value.submit_eval_date.length > 0
     : false
 );
-const planSubmitted = computed(() =>
-  PlanEval.value.submit_plan_date
+const isPlanSubmitted = computed(() =>
+  PlanEval.value && PlanEval.value.submit_plan_date
     ? PlanEval.value.submit_plan_date.length > 0
     : false
 );
