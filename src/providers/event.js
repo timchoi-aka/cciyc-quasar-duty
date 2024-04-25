@@ -80,6 +80,7 @@ export function useEventProvider(options = {}) {
       Event_to_Evaluation {
         attendance
         remarks
+        remarks_eval
         c_act_code
         eval_attend_headcount_children
         eval_attend_headcount_others
@@ -377,6 +378,140 @@ export function useEventProvider(options = {}) {
       delete_HTX_Event_by_pk(c_act_code: $c_act_code) {
         c_act_code
       }
+      insert_Log_one(object: $logObject) {
+        log_id
+        username
+      }
+    }
+  `;
+
+  // mutation for add/modify a plan eval
+  const UPSERT_PLAN_EVAL_BY_PK = gql`
+    mutation upsertEvaluationFromPK(
+      $evaluationObject: Event_Evaluation_insert_input = {}
+      $logObject: Log_insert_input! = {}
+    ) {
+      insert_Event_Evaluation_one(
+        object: $evaluationObject
+        if_matched: {
+          match_columns: uuid
+          update_columns: [
+            attendance
+            c_act_code
+            eval_attend_headcount_children
+            eval_attend_headcount_others
+            eval_attend_headcount_parent
+            eval_attend_headcount_youth
+            eval_attend_session_children
+            eval_attend_session_others
+            eval_attend_session_parent
+            eval_attend_session_youth
+            eval_end_date
+            eval_end_time
+            eval_start_date
+            eval_sessions
+            eval_start_time
+            eval_volunteer_count
+            ic_comment
+            objective
+            objective_achieved
+            objective_detail
+            objective_achieved_reason
+            objective_followup
+            objective_review_method
+            partner_agency
+            partner_name
+            partner_phone
+            plan_attend_headcount_children
+            plan_attend_headcount_others
+            plan_attend_headcount_parent
+            plan_attend_headcount_youth
+            plan_attend_session_others
+            plan_attend_session_children
+            plan_attend_session_parent
+            plan_attend_session_youth
+            plan_end_time
+            plan_end_date
+            plan_start_date
+            plan_sessions
+            plan_volunteer_count
+            plan_start_time
+            remarks
+            remarks_eval
+            staff_name
+            supervisor
+            supervisor_comment
+            tutor_name
+            tutor_phone
+          ]
+        }
+      ) {
+        attendance
+        c_act_code
+        eval_attend_headcount_children
+        eval_attend_headcount_others
+        eval_attend_headcount_parent
+        eval_attend_headcount_youth
+        eval_attend_session_children
+        eval_attend_session_others
+        eval_attend_session_parent
+        eval_attend_session_youth
+        eval_end_date
+        eval_end_time
+        eval_start_date
+        eval_sessions
+        eval_start_time
+        eval_volunteer_count
+        ic
+        ic_comment
+        ic_eval_date
+        ic_plan_date
+        objective
+        objective_achieved
+        objective_detail
+        objective_achieved_reason
+        objective_followup
+        objective_review_method
+        partner_agency
+        partner_name
+        partner_phone
+        plan_attend_headcount_children
+        plan_attend_headcount_others
+        plan_attend_headcount_parent
+        plan_attend_headcount_youth
+        plan_attend_session_others
+        plan_attend_session_children
+        plan_attend_session_parent
+        plan_attend_session_youth
+        plan_end_time
+        plan_end_date
+        plan_start_date
+        plan_sessions
+        plan_volunteer_count
+        plan_start_time
+        remarks
+        remarks_eval
+        staff_name
+        submit_eval_date
+        submit_plan_date
+        supervisor
+        supervisor_comment
+        supervisor_date
+        tutor_name
+        tutor_phone
+        uuid
+        Evaluation_to_Account {
+          account_uuid
+          amount
+          c_act_code
+          description
+          eval_uuid
+          planeval
+          txn_date
+          type
+        }
+      }
+
       insert_Log_one(object: $logObject) {
         log_id
         username
@@ -1179,6 +1314,12 @@ export function useEventProvider(options = {}) {
     message.value = "操作失敗，請聯絡系統管理員。";
   });
 
+  /***
+   * updateEvent: Function to execute the UPDATE_EVENT_BY_PK mutation.
+   * onDone_updateEvent: Callback function that is called when the UPDATE_EVENT_BY_PK mutation successfully completes.
+   * It modifies the cache to update event from the events list.
+   * onError_updateEvent: Callback function that is called when an error occurs while executing the UPDATE_EVENT_BY_PK mutation.
+   * ***/
   const {
     mutate: updateEvent,
     onError: onError_updateEvent,
@@ -1255,6 +1396,102 @@ export function useEventProvider(options = {}) {
   onError_updateEvent((error) => {
     message.value = "操作失敗，請聯絡系統管理員。";
   });
+
+  /***
+   * upsertPlanEval: Function to execute the UPDATE_EVENT_BY_PK mutation.
+   * onDone_updateEvent: Callback function that is called when the UPDATE_EVENT_BY_PK mutation successfully completes.
+   * It modifies the cache to update event from the events list.
+   * onError_updateEvent: Callback function that is called when an error occurs while executing the UPDATE_EVENT_BY_PK mutation.
+   * ***/
+  const {
+    mutate: upsertPlanEval,
+    onError: onError_upsertPlanEval,
+    onDone: onDone_upsertPlanEval,
+  } = useMutation(UPSERT_PLAN_EVAL_BY_PK, {
+    update: (cache, { data: { insert_Event_Evaluation_one } }) => {
+      let c_act_code = insert_Event_Evaluation_one.c_act_code.trim();
+      // console.log("update_HTX_Event_by_pk", update_HTX_Event_by_pk)
+      // update the cache
+      const existingEvent = cache.readQuery({
+        query: GET_EVENT,
+        variables: {
+          c_act_code: c_act_code,
+          loadEvaluation: true,
+        },
+      });
+      // Check if the data is in the cache
+      if (existingEvent) {
+        // Update its submit_plan_date
+        let updatedEvent = {};
+        extend(true, updatedEvent, existingEvent.HTX_Event_by_pk);
+        updatedEvent.Event_to_Evaluation[0] = {
+          ...insert_Event_Evaluation_one,
+        };
+        // Write our data back to the cache.
+        cache.writeQuery({
+          query: GET_EVENT,
+          variables: {
+            c_act_code: c_act_code,
+            loadEvaluation: true,
+          },
+          data: { ...existingEvent, HTX_Event_by_pk: updatedEvent },
+        });
+      }
+    },
+  });
+
+  onDone_upsertPlanEval((res) => {
+    if (res.data) {
+      if (process.env.NODE_ENV != "development") {
+        // no notification for delete event
+        // message return to client
+        message.value =
+          "成功更新活動計劃檢討 - " +
+          res.data.insert_Event_Evaluation_one.c_act_code.trim();
+      } else {
+        // development channel
+        const { result } = useNotifier({
+          topic: "uqhehdGADfWYglt9jDfaab0LGrC3",
+          data: {
+            title: "[DEV]更新活動計劃檢討",
+            body:
+              "[" +
+              res.data.insert_Log_one.username.trim() +
+              "]" +
+              "更新了活動計劃檢討" +
+              res.data.insert_Event_Evaluation_one.c_act_code.trim(),
+          },
+        });
+
+        result.value
+          .then((r) => {
+            if (r.data) {
+              message.value =
+                "成功更新活動計劃檢討 - " +
+                res.data.insert_Event_Evaluation_one.c_act_code.trim();
+            }
+          })
+          .catch((e) => {
+            console.log("error: ", e);
+            message.value =
+              "更新活動計劃檢討" +
+              res.data.insert_Event_Evaluation_one.c_act_code.trim() +
+              "失敗";
+          });
+      }
+    } else {
+      // error
+      message.value =
+        "更新活動計劃檢討" +
+        res.data.insert_Event_Evaluation_one.c_act_code.trim() +
+        "失敗";
+    }
+  });
+
+  onError_upsertPlanEval((error) => {
+    message.value = "操作失敗，請聯絡系統管理員。";
+  });
+
   /***
    * updateEventFee: Function to execute the UPDATE_EVENT_FEE mutation.
    * onDone_updateEventFee: Callback function that is called when the UPDATE_EVENT_FEE mutation successfully completes.
@@ -1801,6 +2038,36 @@ export function useEventProvider(options = {}) {
     }
   };
 
+  // Function to update event plan / evaluation by id
+  const upsertPlanEvalById = async (payload) => {
+    const { staff_name, isNew, c_act_code, object } = payload;
+
+    // Increment the number of pending async operations
+    awaitNumber.value++;
+    try {
+      // Call the toggleVisibility mutation
+      await upsertPlanEval({
+        evaluationObject: object,
+        logObject: {
+          username: staff_name,
+          datetime: date.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+          module: "活動系統",
+          action:
+            staff_name +
+            (isNew ? "修改" : "新增") +
+            "了活動計劃檢討: " +
+            c_act_code +
+            "。內容：" +
+            JSON.stringify(object, null, 2),
+        },
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      // Decrement the number of pending async operations
+      awaitNumber.value--;
+    }
+  };
   // Return the provided data and functions
   const {
     result,
@@ -1830,6 +2097,7 @@ export function useEventProvider(options = {}) {
     submitEvalById,
     approvePlanById,
     approveEvalById,
+    upsertPlanEvalById,
     deletePlanEvalById,
     deleteEventById,
     updateEventById,

@@ -52,6 +52,7 @@ function atLine(lineNo) {
 }
 
 function newLine(doc, lineNo) {
+  /* 
   if (atLine(lineNo) > 240) {
     doc.addPage();
     doc.text(
@@ -64,6 +65,8 @@ function newLine(doc, lineNo) {
     );
     return 1;
   } else return lineNo + 1;
+  */
+  return lineNo + 1;
 }
 
 function generatePDF(event, type) {
@@ -481,14 +484,17 @@ async function drawContent(doc, event, type) {
   lineNo += Math.max(incomeTableRows, expenseTableRows);
 
   // thirteenth line - 備註
-  if (type == "檢討") {
-    lineNo = newLine(doc, lineNo);
-    doc.setFontSize(12);
-    doc.text("備註：", 5, atLine(lineNo), "left");
+  lineNo = newLine(doc, lineNo);
+  doc.setFontSize(12);
+  doc.text("備註：", 5, atLine(lineNo), "left");
+  if (type == "計劃") {
     if (EvalData.remarks)
       doc.text(EvalData.remarks, 20, atLine(lineNo), "left");
-    doc.line(20, atLine(lineNo) + 1, 200, atLine(lineNo) + 1);
+  } else {
+    if (EvalData.remarks)
+      doc.text(EvalData.remarks_eval, 20, atLine(lineNo), "left");
   }
+  doc.line(20, atLine(lineNo) + 1, 200, atLine(lineNo) + 1);
 
   // footer - 簽署
   lineNo = newLine(doc, lineNo) + 1;

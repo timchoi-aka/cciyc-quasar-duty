@@ -1,10 +1,11 @@
 <template>
-  <q-page class="row" style="margin-top: 60px;">
+  <q-page class="row" style="margin-top: 60px">
     <!-- loading dialog -->
-    <LoadingDialog :model-value="loading? 1: 0" message="處理中"/>
+    <LoadingDialog :model-value="loading ? 1 : 0" message="處理中" />
 
     <!-- rowDetail modal -->
-    <q-dialog v-if="$q.screen.lt.md"
+    <q-dialog
+      v-if="$q.screen.lt.md"
       v-model="detailModal"
       persistent
       maximized
@@ -12,39 +13,77 @@
       transition-show="slide-up"
       transition-hide="slide-down"
     >
-      <Receipt :c_receipt_no="showReceiptNo"/>
+      <Receipt :c_receipt_no="showReceiptNo" />
     </q-dialog>
 
-    <q-dialog v-else
+    <q-dialog
+      v-else
       v-model="detailModal"
       persistent
       full-height
-      style="min-width: 40vw; width: 40vw; max-width: 40vw;"
+      style="min-width: 40vw; width: 40vw; max-width: 40vw"
       transition-show="slide-up"
       transition-hide="slide-down"
       class="q-pa-none"
     >
-      <Receipt :c_receipt_no="showReceiptNo"/>
+      <Receipt :c_receipt_no="showReceiptNo" />
     </q-dialog>
 
     <!-- search column-->
-    <div class="col-auto" style="border: 1px solid;">
-      <q-form
-        @submit="refetch"
-        @reset="clearSearch"
-      >
-      <div class="row">
-        <q-btn type="submit" class="col-6 bg-secondary text-white" square icon="search" label="搜尋" flat/>
-        <q-btn type="reset" class="col-6 bg-negative text-white" square icon="restart_alt" label="重設" flat @click="clearSearch"/>
-      </div>
-      <div class="column">
-        <div class="q-mx-sm"><q-input clearable label="收據編號" v-model="search_c_receipt_no"/></div>
-        <div class="q-mx-sm"><MemberSelection label="付款人會員編號" v-model="search_c_mem_id"/></div>
-        <div class="q-mx-sm"><q-select clearable label="種類" :options="receiptTypeOptions" v-model="search_i_receipt_type"/></div>
-        <div class="q-mx-sm"><q-select label="收據狀態" :options="statusOptions" v-model="search_status"/></div>
-        <div class="q-mx-sm"><DateComponent label="開始日期" v-model="search_startDate"/></div>
-        <div class="q-mx-sm"><DateComponent label="結束日期" v-model="search_endDate"/></div>
-      </div>
+    <div class="col-auto" style="border: 1px solid">
+      <q-form @submit="refetch" @reset="clearSearch">
+        <div class="row">
+          <q-btn
+            type="submit"
+            class="col-6 bg-secondary text-white"
+            square
+            icon="search"
+            label="搜尋"
+            flat
+          />
+          <q-btn
+            type="reset"
+            class="col-6 bg-negative text-white"
+            square
+            icon="restart_alt"
+            label="重設"
+            flat
+            @click="clearSearch"
+          />
+        </div>
+        <div class="column">
+          <div class="q-mx-sm">
+            <q-input clearable label="收據編號" v-model="search_c_receipt_no" />
+          </div>
+          <div class="q-mx-sm">
+            <MemberSelection
+              label="付款人會員編號"
+              v-model="search_c_mem_id"
+              :includeExpired="true"
+            />
+          </div>
+          <div class="q-mx-sm">
+            <q-select
+              clearable
+              label="種類"
+              :options="receiptTypeOptions"
+              v-model="search_i_receipt_type"
+            />
+          </div>
+          <div class="q-mx-sm">
+            <q-select
+              label="收據狀態"
+              :options="statusOptions"
+              v-model="search_status"
+            />
+          </div>
+          <div class="q-mx-sm">
+            <DateComponent label="開始日期" v-model="search_startDate" />
+          </div>
+          <div class="q-mx-sm">
+            <DateComponent label="結束日期" v-model="search_endDate" />
+          </div>
+        </div>
       </q-form>
     </div>
 
@@ -68,10 +107,20 @@
 
       <template v-slot:body-cell-c_status="props">
         <q-td :props="props">
-          <q-icon v-if="props.row.b_refund" size="sm" color="negative" name="currency_exchange">
+          <q-icon
+            v-if="props.row.b_refund"
+            size="sm"
+            color="negative"
+            name="currency_exchange"
+          >
             <q-tooltip>已退款</q-tooltip>
           </q-icon>
-          <q-icon v-if="props.row.b_delete" size="sm" color="negative" name="delete">
+          <q-icon
+            v-if="props.row.b_delete"
+            size="sm"
+            color="negative"
+            name="delete"
+          >
             <q-tooltip>已刪除</q-tooltip>
           </q-icon>
         </q-td>
@@ -84,43 +133,40 @@
 import { computed, ref } from "vue";
 import { useStore } from "vuex";
 import { date as qdate, useQuasar } from "quasar";
-import LoadingDialog from "components/LoadingDialog.vue"
-import Receipt from "components/Account/Receipt.vue"
+import LoadingDialog from "components/LoadingDialog.vue";
+import Receipt from "components/Account/Receipt.vue";
 import DateComponent from "src/components/Basic/DateComponent.vue";
-import MemberSelection from "src/components/Member/MemberSelection.vue"
+import MemberSelection from "src/components/Member/MemberSelection.vue";
 import { useAccountProvider } from "src/providers/account";
 
 // save current module
 const $store = useStore();
-const $q = useQuasar()
+const $q = useQuasar();
 // $q.localStorage.set("module", "account");
-const receiptTypeOptions =
-  [
-    { value: 1, label: '會員' },
-    { value: 2, label: '活動' },
-    { value: 3, label: '食堂' } ,
-    { value: 4, label: '洗衣' },
-    { value: 5, label: '罰款' },
-    { value: 6, label: '捐款' },
-    { value: 7, label: '雜項' },
-    { value: 51, label: '會員退款' },
-    { value: 52, label: '活動退款' },
-    { value: 53, label: '食堂退款' },
-    { value: 54, label: '洗衣退款' },
-    { value: 55, label: '罰款退款' },
-    { value: 56, label: '捐款退款' },
-    { value: 57, label: '雜項退款' },
-    { value: 20, label: '活動(重覆)' }
-  ]
+const receiptTypeOptions = [
+  { value: 1, label: "會員" },
+  { value: 2, label: "活動" },
+  { value: 3, label: "食堂" },
+  { value: 4, label: "洗衣" },
+  { value: 5, label: "罰款" },
+  { value: 6, label: "捐款" },
+  { value: 7, label: "雜項" },
+  { value: 51, label: "會員退款" },
+  { value: 52, label: "活動退款" },
+  { value: 53, label: "食堂退款" },
+  { value: 54, label: "洗衣退款" },
+  { value: 55, label: "罰款退款" },
+  { value: 56, label: "捐款退款" },
+  { value: 57, label: "雜項退款" },
+  { value: 20, label: "活動(重覆)" },
+];
 
 const statusOptions = ref([
   {
     value: "normal",
-    label: "正常收據"
+    label: "正常收據",
   },
-  { value: "delete",
-    label: "刪除收據",
-  },
+  { value: "delete", label: "刪除收據" },
   {
     value: "refund",
     label: "退款收據",
@@ -129,27 +175,26 @@ const statusOptions = ref([
     value: "all",
     label: "全部",
   },
-])
+]);
 
 // variables
-const detailModal = ref(false)
-const showReceiptNo = ref("")
+const detailModal = ref(false);
+const showReceiptNo = ref("");
 
 // search parameters
-const search_c_receipt_no = ref("")
-const search_c_mem_id = ref("")
-const search_i_receipt_type = ref("")
-const search_status = ref(statusOptions.value[0])
-const search_startDate = ref(null)
-const search_endDate = ref(null)
-
+const search_c_receipt_no = ref("");
+const search_c_mem_id = ref("");
+const search_i_receipt_type = ref("");
+const search_status = ref(statusOptions.value[0]);
+const search_startDate = ref(null);
+const search_endDate = ref(null);
 
 // table parameters
 const defaultPagination = ref({
   rowsPerPage: 30,
   sortBy: "c_receipt_no",
   descending: true,
-})
+});
 
 const receiptListColumns = ref([
   {
@@ -175,7 +220,7 @@ const receiptListColumns = ref([
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
     sortable: true,
-    format: (val) => qdate.formatDate(val, "YYYY年M月D日")
+    format: (val) => qdate.formatDate(val, "YYYY年M月D日"),
   },
   {
     name: "i_receipt_type",
@@ -184,7 +229,9 @@ const receiptListColumns = ref([
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
-    format: (val) => receiptTypeOptions[receiptTypeOptions.findIndex((x) => x.value == val)].label
+    format: (val) =>
+      receiptTypeOptions[receiptTypeOptions.findIndex((x) => x.value == val)]
+        .label,
   },
   {
     name: "c_type",
@@ -219,7 +266,7 @@ const receiptListColumns = ref([
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
   },
-])
+]);
 
 // fetch data
 const { result, refetch, loading } = useAccountProvider({
@@ -229,27 +276,29 @@ const { result, refetch, loading } = useAccountProvider({
   status: search_status,
   startDate: search_startDate,
   endDate: search_endDate,
-})
+});
 
 // computed
-const uid = computed(() => $store.getters["userModule/getUID"])
-const ReceiptData = computed(() => result.value? result.value.tbl_account: [])
+const uid = computed(() => $store.getters["userModule/getUID"]);
+const ReceiptData = computed(() =>
+  result.value ? result.value.tbl_account : []
+);
 
 // function
 function rowDetail(evt, row, index) {
-  if (evt.target.nodeName === 'TD') {
+  if (evt.target.nodeName === "TD") {
     detailModal.value = true;
     showReceiptNo.value = row.c_receipt_no.trim();
   }
 }
 
 function clearSearch() {
-  search_c_receipt_no.value = null
-  search_c_mem_id.value = null
-  search_i_receipt_type.value = null
-  search_status.value = statusOptions.value[0]
-  search_startDate.value = null
-  search_endDate.value = null
-  refetch()
+  search_c_receipt_no.value = null;
+  search_c_mem_id.value = null;
+  search_i_receipt_type.value = null;
+  search_status.value = statusOptions.value[0];
+  search_startDate.value = null;
+  search_endDate.value = null;
+  refetch();
 }
 </script>

@@ -532,13 +532,47 @@
           }}</span>
         </div>
         <div class="col-12 row">
-          <span class="col-md-2 col-sm-2 col-xs-4">屆滿日期:</span
-          ><span class="col-md-10 col-sm-10 col-xs-8">{{
-            qdate.formatDate(member.d_expired_1, "YYYY年MM月DD日") ==
-            "3000年01月01日"
-              ? "永久"
-              : qdate.formatDate(member.d_expired_1, "YYYY年MM月DD日")
-          }}</span>
+          <span class="col-md-2 col-sm-2 col-xs-4">屆滿日期:</span>
+          <span
+            v-if="editState && isCenterIC"
+            class="col-md-10 col-sm-10 col-xs-8"
+          >
+            <q-input
+              filled
+              v-model="edit_member.d_expired_1"
+              mask="date"
+              hint="YYYY/MM/DD"
+              :rules="['date']"
+            >
+              <template v-slot:append>
+                <q-icon name="event" class="cursor-pointer">
+                  <q-popup-proxy
+                    cover
+                    transition-show="scale"
+                    transition-hide="scale"
+                  >
+                    <q-date v-model="edit_member.d_expired_1">
+                      <div class="row items-center justify-end">
+                        <q-btn
+                          v-close-popup
+                          label="Close"
+                          color="primary"
+                          flat
+                        />
+                      </div>
+                    </q-date>
+                  </q-popup-proxy>
+                </q-icon>
+              </template>
+            </q-input>
+          </span>
+          <span class="col-md-10 col-sm-10 col-xs-8">
+            {{
+              qdate.getDateDiff(member.d_expired_1, new Date(3000, 0, 1)) >= 0
+                ? "永久"
+                : qdate.formatDate(member.d_expired_1, "YYYY年MM月DD日")
+            }}</span
+          >
           <span class="col-md-2 col-sm-2 col-xs-4">續會日期:</span
           ><span class="col-md-10 col-sm-10 col-xs-8">{{
             qdate.formatDate(member.d_renew_1, "YYYY年MM月DD日")

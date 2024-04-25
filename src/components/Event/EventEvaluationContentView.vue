@@ -54,10 +54,14 @@
       <div class="col-2 q-my-sm">導師電話:</div>
       <span class="col-4 q-my-sm">{{ PlanEval && PlanEval.tutor_phone }}</span>
 
-      <!--備註-->
-      <div class="col-2 q-my-sm" v-if="planSubmitted">備註:</div>
+      <!--計劃備註-->
+      <div class="col-2 q-my-sm">計劃備註:</div>
+      <span class="col-10 q-my-sm">{{ PlanEval && PlanEval.remarks }}</span>
+
+      <!--檢討備註-->
+      <div class="col-2 q-my-sm" v-if="planSubmitted">檢討備註:</div>
       <span class="col-10 q-my-sm" v-if="planSubmitted">{{
-        PlanEval && PlanEval.remarks
+        PlanEval && PlanEval.remarks_eval
       }}</span>
     </div>
 

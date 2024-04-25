@@ -3,6 +3,7 @@
 node_modules
 .yarnrc
 .yarn
+.VSCodeCounter
 
 # Quasar core related directories
 .quasar

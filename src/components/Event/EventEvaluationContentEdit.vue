@@ -86,12 +86,25 @@
       <span class="col-4" v-if="edit"
         ><q-input filled type="text" v-model="editObject.tutor_phone" /></span
       ><span class="col-4" v-else>{{ PlanEval.tutor_phone }}</span>
-      <div v-if="planSubmitted" class="col-2 q-my-sm">備註:</div>
-      <span class="col-10" v-if="edit && planSubmitted"
-        ><q-input filled type="text" v-model="editObject.remarks" /></span
-      ><span class="col-10" v-if="!edit && planSubmitted">{{
-        PlanEval.remarks
-      }}</span>
+      <div key="planning_remarks" class="row col-12">
+        <div class="col-2 q-my-sm">計劃備註:</div>
+        <span class="col-10" v-if="edit" key="edit_planning_remarks"
+          ><q-input filled type="text" v-model="editObject.remarks" /></span
+        ><span class="col-10" v-else key="display_planning_remarks">{{
+          PlanEval.remarks
+        }}</span>
+      </div>
+      <div v-if="planSubmitted" key="eval_remarks" class="row col-12">
+        <div class="col-2 q-my-sm">檢討備註:</div>
+        <span class="col-10" v-if="edit" key="edit_eval_remarks"
+          ><q-input
+            filled
+            type="text"
+            v-model="editObject.remarks_eval" /></span
+        ><span class="col-10" v-else key="display_eval_remarks">{{
+          PlanEval.remarks_eval
+        }}</span>
+      </div>
     </div>
     <q-splitter v-model="splitterModel" class="fit">
       <template v-slot:before>
@@ -551,26 +564,13 @@
 import DateComponent from "components/Basic/DateComponent.vue";
 import TimeComponent from "components/Basic/TimeComponent.vue";
 import EvaluationAccount from "components/Account/EvaluationAccount.vue";
-import { gql } from "graphql-tag";
-import { computed, ref, defineAsyncComponent, onMounted } from "vue";
+import { computed, ref, defineAsyncComponent, onMounted, watch } from "vue";
 import { useStore } from "vuex";
-import { EVENT_EVALUATION_BY_ACT_CODE } from "/src/graphQueries/Event/query.js";
-import {
-  ADD_EVALUATION_FROM_ACT_CODE,
-  UPDATE_EVALUATION_FROM_PK,
-  SUBMIT_EVALUATION,
-  SUBMIT_PLAN,
-  APPROVE_EVALUATION,
-  APPROVE_PLAN,
-} from "/src/graphQueries/Event/mutation.js";
-import { useQuery, useMutation } from "@vue/apollo-composable";
-import { date as qdate, useQuasar } from "quasar";
+import { date as qdate, useQuasar, uid } from "quasar";
 import { onBeforeRouteLeave } from "vue-router";
-import { httpsCallable } from "@firebase/functions";
-import { getDocs, where, query } from "firebase/firestore";
-import { FirebaseFunctions, usersCollection } from "boot/firebase";
 import { useRoute, useRouter } from "vue-router";
 import User from "src/components/class/user";
+import { useEventProvider } from "src/providers/event";
 
 // variables
 const route = useRoute();
@@ -582,16 +582,8 @@ const $q = useQuasar();
 const editObject = ref({});
 const $store = useStore();
 const loadDialog = ref(false);
-const confirmPlanDialog = ref(false);
-const confirmEvalDialog = ref(false);
-const confirmDeleteDialog = ref(false);
-const pdfModal = ref(false);
-const deleteCheck = ref("");
 const importFinanceModal = ref(false);
-const approvalDialog = ref(false);
-const EvaluationComment = ref("");
 const userMapping = ref({});
-const mode = ref("");
 const printPlan = ref(false);
 const printEvaluation = ref(false);
 const EventEvaluationPrint = defineAsyncComponent(() =>
@@ -610,137 +602,12 @@ const EventEvaluationImportFinanceModal = defineAsyncComponent(() =>
 // queries
 const {
   result: EventEvaluation,
-  onError: EventEvaluationError,
-  refetch,
-} = useQuery(EVENT_EVALUATION_BY_ACT_CODE, () => ({
-  c_act_code: c_act_code.value,
-}));
-const {
-  mutate: addEvaluationFromActCode,
-  onDone: addEvaluationFromActCode_Completed,
-  onError: addEvaluationFromActCode_Error,
-} = useMutation(ADD_EVALUATION_FROM_ACT_CODE);
-const {
-  mutate: updateEvaluationFromActCode,
-  onDone: updateEvaluationFromActCode_Completed,
-  onError: updateEvaluationFromActCode_Error,
-} = useMutation(UPDATE_EVALUATION_FROM_PK);
-const {
-  mutate: submitPlan,
-  onDone: submitPlan_Completed,
-  onError: submitPlan_Error,
-} = useMutation(SUBMIT_PLAN);
-const {
-  mutate: submitEvaluation,
-  onDone: submitEvaluation_Completed,
-  onError: submitEvaluation_Error,
-} = useMutation(SUBMIT_EVALUATION);
-const {
-  mutate: approvePlan,
-  onDone: approvePlan_Completed,
-  onError: approvePlan_Error,
-} = useMutation(APPROVE_PLAN);
-const {
-  mutate: approveEvaluation,
-  onDone: approveEvaluation_Completed,
-  onError: approveEvaluation_Error,
-} = useMutation(APPROVE_EVALUATION);
-const {
-  mutate: denyPlan,
-  onDone: denyPlan_Completed,
-  onError: denyPlan_Error,
-} = useMutation(gql`
-  mutation denyPlanFromUUID(
-    $uuid: uniqueidentifier = ""
-    $c_act_code: String = ""
-    $ic: String = ""
-    $ic_plan_date: smalldatetime = ""
-    $ic_comment: String = ""
-    $logObject: Log_insert_input! = {}
-  ) {
-    update_Event_Evaluation_by_pk(
-      pk_columns: { uuid: $uuid }
-      _set: {
-        ic: $ic
-        ic_plan_date: $ic_plan_date
-        ic_comment: $ic_comment
-        submit_plan_date: null
-      }
-    ) {
-      uuid
-      c_act_code
-      staff_name
-    }
-    update_HTX_Event_by_pk(
-      pk_columns: { c_act_code: $c_act_code }
-      _set: { m_evaluation_rem: $ic_comment }
-    ) {
-      c_act_code
-      m_evaluation_rem
-    }
-    insert_Log_one(object: $logObject) {
-      log_id
-    }
-  }
-`);
-
-const {
-  mutate: denyEvaluation,
-  onDone: denyEvaluation_Completed,
-  onError: denyEvaluation_Error,
-} = useMutation(gql`
-  mutation denyEvaluationFromUUID(
-    $uuid: uniqueidentifier = ""
-    $c_act_code: String = ""
-    $ic: String = ""
-    $ic_eval_date: smalldatetime = ""
-    $ic_comment: String = ""
-    $logObject: Log_insert_input! = {}
-  ) {
-    update_Event_Evaluation_by_pk(
-      pk_columns: { uuid: $uuid }
-      _set: {
-        ic: $ic
-        ic_eval_date: $ic_eval_date
-        ic_comment: $ic_comment
-        submit_eval_date: null
-      }
-    ) {
-      uuid
-      c_act_code
-      staff_name
-    }
-    update_HTX_Event_by_pk(
-      pk_columns: { c_act_code: $c_act_code }
-      _set: { m_evaluation_rem: $ic_comment }
-    ) {
-      c_act_code
-      m_evaluation_rem
-    }
-    insert_Log_one(object: $logObject) {
-      log_id
-    }
-  }
-`);
-
-const {
-  mutate: deletePlanEval,
-  onDone: deletePlanEval_Completed,
-  onError: deletePlanEval_Error,
-} = useMutation(gql`
-  mutation deletePlanEvalFromUUID(
-    $uuid: uniqueidentifier = ""
-    $logObject: Log_insert_input! = {}
-  ) {
-    delete_Event_Evaluation_by_pk(uuid: $uuid) {
-      uuid
-      c_act_code
-    }
-    insert_Log_one(object: $logObject) {
-      log_id
-    }
-  }
-`);
+  message,
+  upsertPlanEvalById,
+} = useEventProvider({
+  c_act_code: c_act_code,
+  loadEvaluation: ref(true),
+});
 
 onMounted(async () => {
   // load user name - uid mapping
@@ -748,9 +615,6 @@ onMounted(async () => {
   users.forEach((u) => {
     userMapping.value[u.name] = u.uid;
   });
-
-  // clone the value to edit object
-  clonePlanValue();
 });
 
 // computed
@@ -762,9 +626,6 @@ const PlanEval = computed(
 const username = computed(() => $store.getters["userModule/getUsername"]);
 const isEventApprove = computed(
   () => $store.getters["userModule/getEventApprove"]
-);
-const isSystemAdmin = computed(
-  () => $store.getters["userModule/getSystemAdmin"]
 );
 const isSubmitted = computed(() =>
   PlanEval.value.submit_plan_date && PlanEval.value.submit_eval_date
@@ -787,211 +648,9 @@ const isEventApprover = computed(
 );
 const edit = computed(() => !evalSubmitted.value || isEventApprover.value);
 
-// success callbacks
-updateEvaluationFromActCode_Completed((result) => {
-  notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code);
-});
-
-addEvaluationFromActCode_Completed((result) => {
-  notifyClientSuccess(result.data.insert_Event_Evaluation_one.c_act_code);
-});
-
-deletePlanEval_Completed((result) => {
-  notifyClientSuccess(result.data.delete_Event_Evaluation_by_pk.c_act_code);
-});
-
-submitEvaluation_Completed((result) => {
-  if (result.data) {
-    const notifyUser = httpsCallable(
-      FirebaseFunctions,
-      "notification-notifyUser"
-    );
-
-    notifyUser({
-      topic: "eventApprove",
-      data: {
-        title: "提交活動檢討",
-        body:
-          username.value +
-          "提交了活動計劃" +
-          result.data.update_Event_Evaluation_by_pk.c_act_code,
-      },
-    }).then(() => {
-      notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code);
-    });
-  }
-});
-
-submitPlan_Completed((result) => {
-  if (result.data) {
-    const notifyUser = httpsCallable(
-      FirebaseFunctions,
-      "notification-notifyUser"
-    );
-
-    notifyUser({
-      topic: "eventApprove",
-      data: {
-        title: "提交活動計劃",
-        body:
-          username.value +
-          "提交了活動計劃" +
-          result.data.update_Event_Evaluation_by_pk.c_act_code,
-      },
-    }).then(() => {
-      notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code);
-    });
-  }
-});
-
-approvePlan_Completed((result) => {
-  /*
-  console.log("username: " + result.data.update_Event_Evaluation_by_pk.staff_name.trim())
-  console.log("userMapping: " + JSON.stringify(userMapping.value))
-  console.log("uid:" + userMapping.value[result.data.update_Event_Evaluation_by_pk.staff_name.trim()])
-  */
-  if (result.data) {
-    const notifyUser = httpsCallable(
-      FirebaseFunctions,
-      "notification-notifyUser"
-    );
-
-    notifyUser({
-      topic:
-        userMapping.value[
-          result.data.update_Event_Evaluation_by_pk.staff_name.trim()
-        ],
-      data: {
-        title: "活動計劃",
-        body:
-          result.data.update_Event_Evaluation_by_pk.c_act_code +
-          "的計劃已被審批",
-      },
-    }).then(() => {
-      notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code);
-    });
-  }
-});
-
-approveEvaluation_Completed((result) => {
-  /*
-  console.log("username: " + result.data.update_Event_Evaluation_by_pk.staff_name.trim())
-  console.log("userMapping: " + JSON.stringify(userMapping.value))
-  console.log("uid:" + userMapping.value[result.data.update_Event_Evaluation_by_pk.staff_name.trim()])
-  */
-  if (result.data) {
-    const notifyUser = httpsCallable(
-      FirebaseFunctions,
-      "notification-notifyUser"
-    );
-
-    notifyUser({
-      topic:
-        userMapping.value[
-          result.data.update_Event_Evaluation_by_pk.staff_name.trim()
-        ],
-      data: {
-        title: "活動檢討",
-        body:
-          result.data.update_Event_Evaluation_by_pk.c_act_code +
-          "的檢討已被審批",
-      },
-    }).then(() => {
-      notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code);
-    });
-  }
-});
-
-denyEvaluation_Completed((result) => {
-  if (result.data) {
-    // console.log(JSON.stringify(result.data))
-    const notifyUser = httpsCallable(
-      FirebaseFunctions,
-      "notification-notifyUser"
-    );
-
-    notifyUser({
-      topic:
-        userMapping.value[
-          result.data.update_Event_Evaluation_by_pk.staff_name.trim()
-        ],
-      data: {
-        title: "活動檢討",
-        body:
-          result.data.update_Event_Evaluation_by_pk.c_act_code +
-          "的檢討已被發回",
-      },
-    }).then(() => {
-      notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code);
-    });
-  }
-});
-
-denyPlan_Completed((result) => {
-  if (result.data) {
-    const notifyUser = httpsCallable(
-      FirebaseFunctions,
-      "notification-notifyUser"
-    );
-
-    notifyUser({
-      topic:
-        userMapping.value[
-          result.data.update_Event_Evaluation_by_pk.staff_name.trim()
-        ],
-      data: {
-        title: "活動計劃",
-        body:
-          result.data.update_Event_Evaluation_by_pk.c_act_code +
-          "的計劃已被審批",
-      },
-    }).then(() => {
-      notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code);
-    });
-  }
-});
-
-// error callbacks
-addEvaluationFromActCode_Error((error) => {
-  notifyClientError(error);
-});
-
-updateEvaluationFromActCode_Error((error) => {
-  notifyClientError(error);
-});
-
-EventEvaluationError((error) => {
-  notifyClientError(error);
-});
-
-submitPlan_Error((error) => {
-  notifyClientError(error);
-});
-
-submitEvaluation_Error((error) => {
-  notifyClientError(error);
-});
-
-approveEvaluation_Error((error) => {
-  notifyClientError(error);
-});
-
-approvePlan_Error((error) => {
-  notifyClientError(error);
-});
-
-denyEvaluation_Error((error) => {
-  notifyClientError(error);
-});
-
-denyPlan_Error((error) => {
-  notifyClientError(error);
-});
-
 // functions
 function saveEdit() {
   saveRecord().then(() => {
-    edit.value = false;
     router.push({
       path: "/event/detail/" + route.params.id + "/evaluation/view",
     });
@@ -1064,92 +723,14 @@ function loadEventToEval() {
     : 0;
 }
 
-function ApproveOK() {
-  if (mode.value) {
-    const logObject = ref({
-      username: username.value,
-      datetime: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-      module: "活動系統",
-      action:
-        "批核活動" + mode.value == "plan"
-          ? "計劃: "
-          : "檢討: " +
-            c_act_code.value.trim() +
-            "。主管評語：" +
-            EvaluationComment.value,
-    });
-
-    loading.value++;
-    if (mode.value == "plan") {
-      approvePlan({
-        logObject: logObject.value,
-        ic: username.value,
-        ic_plan_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-        ic_eval_date: null,
-        ic_comment: EvaluationComment.value,
-        c_act_code: c_act_code.value.trim(),
-        uuid: PlanEval.value.uuid,
-      });
-    } else {
-      approveEvaluation({
-        logObject: logObject.value,
-        ic: username.value,
-        ic_eval_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-        ic_comment: EvaluationComment.value,
-        c_act_code: c_act_code.value.trim(),
-        uuid: PlanEval.value.uuid,
-      });
-    }
-  }
-  // update HTX_Event (m_evaluation_rem), Event_Evaluation (ic_comment, ic_plan_date)
-}
-
-function ApproveDeny() {
-  if (mode.value) {
-    const logObject = ref({
-      username: username.value,
-      datetime: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-      module: "活動系統",
-      action:
-        "發回活動" + mode.value == "plan"
-          ? "計劃: "
-          : "檢討: " +
-            c_act_code.value.trim() +
-            "。主管評語：" +
-            EvaluationComment.value,
-    });
-
-    loading.value++;
-    if (mode.value == "plan") {
-      denyPlan({
-        logObject: logObject.value,
-        ic: username.value,
-        ic_plan_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-        submit_plan_date: null,
-        ic_comment: EvaluationComment.value,
-        c_act_code: c_act_code.value.trim(),
-        uuid: PlanEval.value.uuid,
-      });
-    } else {
-      denyEvaluation({
-        logObject: logObject.value,
-        ic: username.value,
-        ic_eval_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-        submit_eval_date: null,
-        ic_comment: EvaluationComment.value,
-        c_act_code: c_act_code.value.trim(),
-        uuid: PlanEval.value.uuid,
-      });
-    }
-  }
-  // update HTX_Event (m_evaluation_rem), Event_Evaluation (ic_comment, ic_plan_date)
-  // delete Event_Evaluatoin(submit_plan_date)
-}
-
 // purify data before sending to server
 function purifyRecord(editObject) {
   let returnObject = ref(JSON.parse(JSON.stringify(editObject.value)));
+
   // basic
+  returnObject.value.objective = editObject.value.uuid
+    ? editObject.value.uuid.trim()
+    : uid();
   returnObject.value.objective = editObject.value.objective
     ? editObject.value.objective.trim()
     : null;
@@ -1173,6 +754,15 @@ function purifyRecord(editObject) {
     : null;
   returnObject.value.remarks = editObject.value.remarks
     ? editObject.value.remarks.trim()
+    : null;
+  returnObject.value.remarks_eval = editObject.value.remarks_eval
+    ? editObject.value.remarks_eval.trim()
+    : null;
+  returnObject.value.supervisor = editObject.value.supervisor
+    ? editObject.value.supervisor.trim()
+    : null;
+  returnObject.value.supervisor_comment = editObject.value.supervisor_comment
+    ? editObject.value.supervisor_comment.trim()
     : null;
 
   // plan
@@ -1300,329 +890,137 @@ function purifyRecord(editObject) {
   return returnObject.value;
 }
 
-// admin only - delete plan/eval
-function onOKDelete() {
-  const logObject = ref({
-    username: username.value,
-    datetime: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-    module: "活動系統",
-    action:
-      "刪除活動計劃: " +
-      c_act_code.value +
-      " 內容：" +
-      JSON.stringify(PlanEval.value, null, " "),
-  });
-  loading.value++;
-  deletePlanEval({
-    uuid: PlanEval.value.uuid,
-    logObject: logObject.value,
-  });
-}
-
-function onOKClickPlan() {
-  const logObject = ref({
-    username: username.value,
-    datetime: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-    module: "活動系統",
-    action: "提交活動計劃: " + c_act_code.value,
-  });
-  //console.log(PlanEval.value.uuid)
-  //console.log(username.value)
-  //console.log(qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"))
-  //console.log(logObject.value)
-  loading.value++;
-  submitPlan({
-    uuid: PlanEval.value.uuid,
-    staff_name: username.value,
-    submit_plan_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-    logObject: logObject.value,
-  });
-}
-
-function onOKClickEval() {
-  const logObject = ref({
-    username: username.value,
-    datetime: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-    module: "活動系統",
-    action: "提交活動檢討: " + c_act_code.value,
-  });
-  //console.log(PlanEval.value.uuid)
-  //console.log(username.value)
-  //console.log(qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"))
-  //console.log(logObject.value)
-  loading.value++;
-  submitEvaluation({
-    uuid: PlanEval.value.uuid,
-    staff_name: username.value,
-    submit_eval_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-    logObject: logObject.value,
-  });
-}
-
 // save the record
 async function saveRecord() {
   let purifiedRecord = purifyRecord(editObject);
 
-  if (PlanEval.value && PlanEval.value.uuid) {
-    const logObject = ref({
-      username: username.value,
-      datetime: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-      module: "活動系統",
-      action:
-        "修改活動計劃/檢討: " +
-        c_act_code.value.trim() +
-        " 內容：" +
-        JSON.stringify(purifiedRecord, null, ""),
-    });
-
-    loading.value++;
-    await updateEvaluationFromActCode({
-      uuid: PlanEval.value.uuid,
-      logObject: logObject.value,
-      evaluationObject: purifiedRecord,
-    });
-  } else {
-    const logObject = ref({
-      username: username.value,
-      datetime: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-      module: "活動系統",
-      action:
-        "新增活動計劃/檢討: " +
-        c_act_code.value.trim() +
-        " 內容：" +
-        JSON.stringify(purifiedRecord, null, " "),
-    });
-
-    loading.value++;
-    await addEvaluationFromActCode({
-      evaluationObject: purifiedRecord,
-      logObject: logObject.value,
-    });
-  }
-}
-
-// copy server data to editObject for modification
-function clonePlanValue() {
-  editObject.value = {
-    attendance:
-      PlanEval.value && PlanEval.value.attendance
-        ? PlanEval.value.attendance.trim()
-        : null,
-    c_act_code: c_act_code.value.trim(),
-    eval_attend_headcount_children:
-      PlanEval.value && PlanEval.value.eval_attend_headcount_children
-        ? PlanEval.value.eval_attend_headcount_children
-        : 0,
-    eval_attend_headcount_others:
-      PlanEval.value && PlanEval.value.eval_attend_headcount_others
-        ? PlanEval.value.eval_attend_headcount_others
-        : 0,
-    eval_attend_headcount_parent:
-      PlanEval.value && PlanEval.value.eval_attend_headcount_parent
-        ? PlanEval.value.eval_attend_headcount_parent
-        : 0,
-    eval_attend_headcount_youth:
-      PlanEval.value && PlanEval.value.eval_attend_headcount_youth
-        ? PlanEval.value.eval_attend_headcount_youth
-        : 0,
-    eval_attend_session_children:
-      PlanEval.value && PlanEval.value.eval_attend_session_children
-        ? PlanEval.value.eval_attend_session_children
-        : 0,
-    eval_attend_session_others:
-      PlanEval.value && PlanEval.value.eval_attend_session_others
-        ? PlanEval.value.eval_attend_session_others
-        : 0,
-    eval_attend_headcount_parent:
-      PlanEval.value && PlanEval.value.eval_attend_headcount_parent
-        ? PlanEval.value.eval_attend_headcount_parent
-        : 0,
-    eval_attend_session_youth:
-      PlanEval.value && PlanEval.value.eval_attend_session_youth
-        ? PlanEval.value.eval_attend_session_youth
-        : 0,
-    eval_end_date:
-      PlanEval.value && PlanEval.value.eval_end_date
-        ? PlanEval.value.eval_end_date
-        : null,
-    eval_end_time:
-      PlanEval.value && PlanEval.value.eval_end_time
-        ? PlanEval.value.eval_end_time
-        : null,
-    eval_sessions:
-      PlanEval.value && PlanEval.value.eval_sessions ? PlanEval.value : null,
-    eval_start_date:
-      PlanEval.value && PlanEval.value.eval_start_date
-        ? PlanEval.value.eval_start_date
-        : null,
-    eval_start_time:
-      PlanEval.value && PlanEval.value.eval_start_time
-        ? PlanEval.value.eval_start_time
-        : null,
-    eval_volunteer_count:
-      PlanEval.value && PlanEval.value.eval_volunteer_count
-        ? PlanEval.value.eval_volunteer_count
-        : 0,
-    ic: PlanEval.value && PlanEval.value.ic ? PlanEval.value.ic.trim() : null,
-    ic_plan_date:
-      PlanEval.value && PlanEval.value.ic_plan_date
-        ? PlanEval.value.ic_plan_date
-        : null,
-    ic_comment:
-      PlanEval.value && PlanEval.value.ic_comment
-        ? PlanEval.value.ic_comment.trim()
-        : null,
-    objective:
-      PlanEval.value && PlanEval.value.objective
-        ? PlanEval.value.objective.trim()
-        : null,
-    objective_achieved:
-      PlanEval.value && PlanEval.value.objective_achieved
-        ? PlanEval.value.objective_achieved.trim()
-        : null,
-    objective_achieved_reason:
-      PlanEval.value && PlanEval.value.objective_achieved_reason
-        ? PlanEval.value.objective_achieved_reason.trim()
-        : null,
-    objective_followup:
-      PlanEval.value && PlanEval.value.objective_followup
-        ? PlanEval.value.objective_followup.trim()
-        : null,
-    objective_detail:
-      PlanEval.value && PlanEval.value.objective_detail
-        ? PlanEval.value.objective_detail.trim()
-        : null,
-    objective_review_method:
-      PlanEval.value && PlanEval.value.objective_review_method
-        ? PlanEval.value.objective_review_method.trim()
-        : null,
-    partner_agency:
-      PlanEval.value && PlanEval.value.partner_agency
-        ? PlanEval.value.partner_agency.trim()
-        : null,
-    partner_name:
-      PlanEval.value && PlanEval.value.partner_name
-        ? PlanEval.value.partner_name.trim()
-        : null,
-    partner_phone:
-      PlanEval.value && PlanEval.value.partner_phone
-        ? PlanEval.value.partner_phone.trim()
-        : null,
-    tutor_name:
-      PlanEval.value && PlanEval.value.tutor_name
-        ? PlanEval.value.tutor_name.trim()
-        : null,
-    tutor_phone:
-      PlanEval.value && PlanEval.value.tutor_phone
-        ? PlanEval.value.tutor_phone.trim()
-        : null,
-    remarks:
-      PlanEval.value && PlanEval.value.remarks
-        ? PlanEval.value.remarks.trim()
-        : null,
-    plan_attend_headcount_children:
-      PlanEval.value && PlanEval.value.plan_attend_headcount_children
-        ? PlanEval.value.plan_attend_headcount_children
-        : 0,
-    plan_attend_headcount_others:
-      PlanEval.value && PlanEval.value.plan_attend_headcount_others
-        ? PlanEval.value.plan_attend_headcount_others
-        : 0,
-    plan_attend_headcount_parent:
-      PlanEval.value && PlanEval.value.plan_attend_headcount_parent
-        ? PlanEval.value.plan_attend_headcount_parent
-        : 0,
-    plan_attend_headcount_youth:
-      PlanEval.value && PlanEval.value.plan_attend_headcount_youth
-        ? PlanEval.value.plan_attend_headcount_youth
-        : 0,
-    plan_attend_session_children:
-      PlanEval.value && PlanEval.value.plan_attend_session_children
-        ? PlanEval.value.plan_attend_session_children
-        : 0,
-    plan_attend_session_others:
-      PlanEval.value && PlanEval.value.plan_attend_session_others
-        ? PlanEval.value.plan_attend_session_others
-        : 0,
-    plan_attend_session_parent:
-      PlanEval.value && PlanEval.value.plan_attend_session_parent
-        ? PlanEval.value.plan_attend_session_parent
-        : 0,
-    plan_attend_session_youth:
-      PlanEval.value && PlanEval.value.plan_attend_session_youth
-        ? PlanEval.value.plan_attend_session_youth
-        : 0,
-    plan_end_date:
-      PlanEval.value && PlanEval.value.plan_end_date
-        ? qdate.formatDate(PlanEval.value.plan_end_date, "YYYY/MM/DD")
-        : null,
-    plan_end_time:
-      PlanEval.value && PlanEval.value.plan_end_time
-        ? PlanEval.value.plan_end_time
-        : null,
-    plan_start_date:
-      PlanEval.value && PlanEval.value.plan_start_date
-        ? qdate.formatDate(PlanEval.value.plan_start_date, "YYYY/MM/DD")
-        : null,
-    plan_start_time:
-      PlanEval.value && PlanEval.value.plan_start_time
-        ? PlanEval.value.plan_start_time
-        : null,
-    plan_sessions:
-      PlanEval.value && PlanEval.value.plan_sessions
-        ? PlanEval.value.plan_sessions
-        : 0,
-    plan_volunteer_count:
-      PlanEval.value && PlanEval.value.plan_volunteer_count
-        ? PlanEval.value.plan_volunteer_count
-        : 0,
-    staff_name:
-      PlanEval.value && PlanEval.value.staff_name
-        ? PlanEval.value.staff_name.trim()
-        : null,
-    submit_plan_date:
-      PlanEval.value && PlanEval.value.submit_plan_date
-        ? PlanEval.value.submit_plan_date
-        : null,
-    supervisor:
-      PlanEval.value && PlanEval.value.supervisor
-        ? PlanEval.value.supervisor.trim()
-        : null,
-    supervisor_date:
-      PlanEval.value && PlanEval.value.supervisor_date
-        ? PlanEval.value.supervisor_date
-        : null,
-  };
-}
-
-// UI response
-function notifyClientError(error) {
-  // console.log(error)
-  if (
-    error.graphQLErrors &&
-    error.graphQLErrors[0].extensions.code == "invalid-jwt"
-  ) {
-    userProfileLogout()
-      .then(() => {
-        $q.notify({ message: "系統逾時，自動登出." });
-      })
-      .catch((error) => console.log("error", error));
-  } else {
-    $q.notify({ message: "系統錯誤，請重新載入頁面." });
-  }
-}
-
-function notifyClientSuccess(c_act_code) {
-  refetch();
-  loading.value--;
-  $q.notify({
-    message: "活動計劃" + c_act_code + "更新完成。",
+  upsertPlanEvalById({
+    c_act_code: c_act_code.value,
+    object: purifiedRecord,
+    isNew: purifiedRecord.uuid == PlanEval.value.uuid,
+    staff_name: username.value,
   });
 }
 
-function importFinance() {
-  console.log("click import");
-}
+// clone data object to edit object
+watch(PlanEval, (data) => {
+  // copy server data to editObject for modification
+  if (data) {
+    editObject.value = {
+      uuid: data.uuid ? data.uuid.trim() : null,
+      attendance: data.attendance ? data.attendance.trim() : null,
+      c_act_code: c_act_code.value.trim(),
+      eval_attend_headcount_children: data.eval_attend_headcount_children
+        ? data.eval_attend_headcount_children
+        : 0,
+      eval_attend_headcount_others: data.eval_attend_headcount_others
+        ? data.eval_attend_headcount_others
+        : 0,
+      eval_attend_headcount_parent: data.eval_attend_headcount_parent
+        ? data.eval_attend_headcount_parent
+        : 0,
+      eval_attend_headcount_youth: data.eval_attend_headcount_youth
+        ? data.eval_attend_headcount_youth
+        : 0,
+      eval_attend_session_children: data.eval_attend_session_children
+        ? data.eval_attend_session_children
+        : 0,
+      eval_attend_session_others: data.eval_attend_session_others
+        ? data.eval_attend_session_others
+        : 0,
+      eval_attend_headcount_parent: data.eval_attend_headcount_parent
+        ? data.eval_attend_headcount_parent
+        : 0,
+      eval_attend_session_youth: data.eval_attend_session_youth
+        ? data.eval_attend_session_youth
+        : 0,
+      eval_end_date: data.eval_end_date ? data.eval_end_date : null,
+      eval_end_time: data.eval_end_time ? data.eval_end_time : null,
+      eval_sessions: data.eval_sessions ? data.eval_sessions : null,
+      eval_start_date: data.eval_start_date ? data.eval_start_date : null,
+      eval_start_time: data.eval_start_time ? data.eval_start_time : null,
+      eval_volunteer_count: data.eval_volunteer_count
+        ? data.eval_volunteer_count
+        : 0,
+      ic: data.ic ? data.ic.trim() : null,
+      ic_plan_date: data.ic_plan_date ? data.ic_plan_date : null,
+      ic_comment: data.ic_comment ? data.ic_comment.trim() : null,
+      objective: data.objective ? data.objective.trim() : null,
+      objective_achieved: data.objective_achieved
+        ? data.objective_achieved.trim()
+        : null,
+      objective_achieved_reason: data.objective_achieved_reason
+        ? data.objective_achieved_reason.trim()
+        : null,
+      objective_followup: data.objective_followup
+        ? data.objective_followup.trim()
+        : null,
+      objective_detail: data.objective_detail
+        ? data.objective_detail.trim()
+        : null,
+      objective_review_method: data.objective_review_method
+        ? data.objective_review_method.trim()
+        : null,
+      partner_agency: data.partner_agency ? data.partner_agency.trim() : null,
+      partner_name: data.partner_name ? data.partner_name.trim() : null,
+      partner_phone: data.partner_phone ? data.partner_phone.trim() : null,
+      tutor_name: data.tutor_name ? data.tutor_name.trim() : null,
+      tutor_phone: data.tutor_phone ? data.tutor_phone.trim() : null,
+      remarks: data.remarks ? data.remarks.trim() : null,
+      remarks_eval: data.remarks_eval ? data.remarks_eval.trim() : null,
+      plan_attend_headcount_children: data.plan_attend_headcount_children
+        ? data.plan_attend_headcount_children
+        : 0,
+      plan_attend_headcount_others: data.plan_attend_headcount_others
+        ? data.plan_attend_headcount_others
+        : 0,
+      plan_attend_headcount_parent: data.plan_attend_headcount_parent
+        ? data.plan_attend_headcount_parent
+        : 0,
+      plan_attend_headcount_youth: data.plan_attend_headcount_youth
+        ? data.plan_attend_headcount_youth
+        : 0,
+      plan_attend_session_children: data.plan_attend_session_children
+        ? data.plan_attend_session_children
+        : 0,
+      plan_attend_session_others: data.plan_attend_session_others
+        ? data.plan_attend_session_others
+        : 0,
+      plan_attend_session_parent: data.plan_attend_session_parent
+        ? data.plan_attend_session_parent
+        : 0,
+      plan_attend_session_youth: data.plan_attend_session_youth
+        ? data.plan_attend_session_youth
+        : 0,
+      plan_end_date: data.plan_end_date
+        ? qdate.formatDate(data.plan_end_date, "YYYY/MM/DD")
+        : null,
+      plan_end_time: data.plan_end_time ? data.plan_end_time : null,
+      plan_start_date: data.plan_start_date
+        ? qdate.formatDate(data.plan_start_date, "YYYY/MM/DD")
+        : null,
+      plan_start_time: data.plan_start_time ? data.plan_start_time : null,
+      plan_sessions: data.plan_sessions ? data.plan_sessions : 0,
+      plan_volunteer_count: data.plan_volunteer_count
+        ? data.plan_volunteer_count
+        : 0,
+      staff_name: data.staff_name ? data.staff_name.trim() : null,
+      supervisor: data.supervisor ? data.supervisor.trim() : null,
+      supervisor_comment: data.supervisor_comment
+        ? data.supervisor_comment.trim()
+        : null,
+    };
+  }
+});
+
+// display result message to user
+watch(message, (newMessage) => {
+  if (newMessage) {
+    $q.notify({
+      message: newMessage,
+    });
+  }
+});
 
 onBeforeRouteLeave((to, from) => {
   if (edit.value) {
