@@ -55,8 +55,10 @@
       <span class="col-4 q-my-sm">{{ PlanEval && PlanEval.tutor_phone }}</span>
 
       <!--備註-->
-      <div class="col-2 q-my-sm">備註:</div>
-      <span class="col-10 q-my-sm">{{ PlanEval && PlanEval.remarks }}</span>
+      <div class="col-2 q-my-sm" v-if="planSubmitted">備註:</div>
+      <span class="col-10 q-my-sm" v-if="planSubmitted">{{
+        PlanEval && PlanEval.remarks
+      }}</span>
     </div>
 
     <!-- 計劃/檢討 -->
@@ -474,6 +476,11 @@ const isSubmitted = computed(() =>
   PlanEval.value.submit_plan_date && PlanEval.value.submit_eval_date
     ? PlanEval.value.submit_plan_date.length > 0 &&
       PlanEval.value.submit_eval_date.length > 0
+    : false
+);
+const planSubmitted = computed(() =>
+  PlanEval.value.submit_plan_date
+    ? PlanEval.value.submit_plan_date.length > 0
     : false
 );
 

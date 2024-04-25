@@ -3,9 +3,7 @@ import { useQuery, useMutation } from "@vue/apollo-composable";
 import { gql } from "graphql-tag";
 import { date, extend } from "quasar";
 import { useNotifier } from "./notifier";
-import apolloClient from "src/boot/apollo";
-// import { provideApolloClient } from "@vue/apollo-composable";
-// provideApolloClient(apolloClient);
+import User from "src/components/class/user";
 
 // Function to provide event data
 export function useEventProvider(options = {}) {
@@ -23,10 +21,7 @@ export function useEventProvider(options = {}) {
   const awaitNumber = ref(0);
 
   // Computed property that indicates whether there are any pending async operations
-  const loading = computed(() => awaitNumber.value > 0);
-
-  // Ref to store the result of the async operations
-  const result = ref([]);
+  const loading = computed(() => awaitNumber.value > 0 || loadingEvent);
 
   // returned message to be displayed to client
   const message = ref({});
@@ -179,7 +174,7 @@ export function useEventProvider(options = {}) {
       $loadWeb: Boolean! = false
       $loadAccount: Boolean! = false
       $loadFee: Boolean! = false
-    ) @cached {
+    ) {
       HTX_Event_by_pk(c_act_code: $c_act_code) {
         EventClassID
         Gen_m_remark
@@ -243,18 +238,6 @@ export function useEventProvider(options = {}) {
         ...IncludeEvaluation @include(if: $loadEvaluation)
         ...IncludeSession @include(if: $loadSession)
         ...IncludeFee @include(if: $loadFee)
-      }
-    }
-  `;
-
-  const GET_ALL_EVENT_ID = gql`
-    query GetEvent {
-      HTX_Event {
-        IsShow
-        c_act_code
-        c_act_name
-        c_act_nameen
-        c_status
       }
     }
   `;
@@ -334,6 +317,40 @@ export function useEventProvider(options = {}) {
         c_act_code
         staff_name
         ic_plan_date
+        ic_eval_date
+        ic_comment
+      }
+      update_HTX_Event_by_pk(
+        pk_columns: { c_act_code: $c_act_code }
+        _set: { m_evaluation_rem: $ic_comment }
+      ) {
+        c_act_code
+        m_evaluation_rem
+      }
+      insert_Log_one(object: $logObject) {
+        log_id
+        username
+      }
+    }
+  `;
+
+  // mutation for approve evaluation
+  const APPROVE_EVAL = gql`
+    mutation approveEvaluationFromUUID(
+      $uuid: uniqueidentifier = ""
+      $c_act_code: String = ""
+      $ic: String = ""
+      $ic_eval_date: smalldatetime = ""
+      $ic_comment: String = ""
+      $logObject: Log_insert_input! = {}
+    ) {
+      update_Event_Evaluation_by_pk(
+        pk_columns: { uuid: $uuid }
+        _set: { ic: $ic, ic_eval_date: $ic_eval_date, ic_comment: $ic_comment }
+      ) {
+        uuid
+        c_act_code
+        staff_name
         ic_eval_date
         ic_comment
       }
@@ -823,12 +840,14 @@ export function useEventProvider(options = {}) {
     },
   });
 
-  onDone_approvePlan((res) => {
+  onDone_approvePlan(async (res) => {
     if (res.data) {
       if (process.env.NODE_ENV != "development") {
+        let user = await User.loadUserByName(
+          res.data.update_Event_Evaluation_by_pk.staff_name.trim()
+        );
         const { result } = useNotifier({
-          // TODO change topic to uid
-          topic: "eventApprove",
+          topic: user.uid,
           data: {
             title: "活動計劃",
             body:
@@ -880,6 +899,109 @@ export function useEventProvider(options = {}) {
   });
 
   onError_approvePlan((error) => {
+    message.value = "操作失敗，請聯絡系統管理員。";
+  });
+
+  /***
+   * approveEval: Function to execute the APPROVE_EVAL mutation.
+   * onDone_approveEval: Callback function that is called when the APPROVE_EVAL mutation successfully completes.
+   * onError_approveEval: Callback function that is called when an error occurs while executing the APPROVE_EVAL mutation.
+   * ***/
+  const {
+    mutate: approveEval,
+    onError: onError_approveEval,
+    onDone: onDone_approveEval,
+  } = useMutation(APPROVE_EVAL, {
+    update: (cache, { data: { update_Event_Evaluation_by_pk } }) => {
+      let c_act_code = update_Event_Evaluation_by_pk.c_act_code.trim();
+      const existingEvent = cache.readQuery({
+        query: GET_EVENT,
+        variables: {
+          c_act_code: c_act_code,
+          loadEvaluation: true,
+        },
+      });
+      // Check if the data is in the cache
+      if (existingEvent) {
+        // Update its submit_plan_date
+        let updatedEvent = {};
+        extend(true, updatedEvent, existingEvent.HTX_Event_by_pk);
+        updatedEvent.Event_to_Evaluation[0].ic_eval_date =
+          update_Event_Evaluation_by_pk.ic_eval_date;
+        updatedEvent.Event_to_Evaluation[0].ic_comment =
+          update_Event_Evaluation_by_pk.ic_comment;
+        // Write our data back to the cache.
+        cache.writeQuery({
+          query: GET_EVENT,
+          variables: {
+            c_act_code: c_act_code,
+            loadEvaluation: true,
+          },
+          data: { ...existingEvent, HTX_Event_by_pk: updatedEvent },
+        });
+      }
+    },
+  });
+
+  onDone_approveEval(async (res) => {
+    if (res.data) {
+      if (process.env.NODE_ENV != "development") {
+        let user = await User.loadUserByName(
+          res.data.update_Event_Evaluation_by_pk.staff_name.trim()
+        );
+        const { result } = useNotifier({
+          topic: user.uid,
+          data: {
+            title: "活動計劃",
+            body:
+              res.data.update_Event_Evaluation_by_pk.c_act_code +
+              "的計劃已被審批",
+          },
+        });
+
+        result.value
+          .then((r) => {
+            if (r.data) {
+              message.value =
+                "成功批准了活動計劃 - " +
+                res.data.update_Event_Evaluation_by_pk.c_act_code;
+            }
+          })
+          .catch((error) => {
+            message.value = "批准活動計劃失敗";
+          });
+      } else {
+        // development channel
+        const { result } = useNotifier({
+          topic: "uqhehdGADfWYglt9jDfaab0LGrC3",
+          data: {
+            title: "[DEV]批准活動計劃",
+            body:
+              "[" +
+              res.data.update_Event_Evaluation_by_pk.staff_name.trim() +
+              "]" +
+              "批准了活動計劃" +
+              res.data.update_Event_Evaluation_by_pk.c_act_code,
+          },
+        });
+
+        result.value
+          .then((r) => {
+            if (r.data) {
+              message.value =
+                "成功批准了活動計劃 - " +
+                res.data.update_Event_Evaluation_by_pk.c_act_code;
+            }
+          })
+          .catch((e) => {
+            console.log("error: ", e);
+            message.value = "批准活動計劃失敗";
+          });
+      }
+    }
+  });
+
+  onError_approveEval((error) => {
     message.value = "操作失敗，請聯絡系統管理員。";
   });
 
@@ -1470,7 +1592,36 @@ export function useEventProvider(options = {}) {
           username: staff_name,
           datetime: date.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
           module: "活動系統",
-          action: "批准活動計劃: " + c_act_code,
+          action: staff_name + "批准活動計劃: " + c_act_code,
+        },
+      });
+    } catch (error) {
+      console.error(error);
+    } finally {
+      // Decrement the number of pending async operations
+      awaitNumber.value--;
+    }
+  };
+
+  // Function to submit event evaluation by id
+  const approveEvalById = async (payload) => {
+    const { uuid, staff_name, c_act_code, ic_comment } = payload;
+    // console.log("submitPlanById", payload)
+    // Increment the number of pending async operations
+    awaitNumber.value++;
+    try {
+      // Call the toggleVisibility mutation
+      await approveEval({
+        uuid: uuid,
+        c_act_code: c_act_code,
+        ic: staff_name,
+        ic_eval_date: date.formatDate(new Date(), "YYYY-MM-DDTHH:mm:ss"),
+        ic_comment: ic_comment,
+        logObject: {
+          username: staff_name,
+          datetime: date.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+          module: "活動系統",
+          action: staff_name + "批准活動檢討: " + c_act_code,
         },
       });
     } catch (error) {
@@ -1650,32 +1801,25 @@ export function useEventProvider(options = {}) {
     }
   };
 
-  // Function to execute the query
-  const execute = async () => {
-    awaitNumber.value++;
-
-    const { onResult } = useQuery(
-      c_act_code.value ? GET_EVENT : GET_ALL_EVENT_ID,
-      () => ({
-        c_act_code: c_act_code.value,
-        loadEvaluation: loadEvaluation.value,
-        loadSession: loadSession.value,
-        loadFullDetail: loadFullDetail.value,
-        loadWeb: loadWeb.value,
-        loadFee: loadFee.value,
-      })
-    );
-
-    onResult((res) => {
-      if (res.data) {
-        result.value = res.data;
-        awaitNumber.value--;
-      }
-    });
-  };
-
-  // Execute the query
-  execute();
+  // Return the provided data and functions
+  const {
+    result,
+    loading: loadingEvent,
+    refetch,
+  } = useQuery(
+    GET_EVENT,
+    () => ({
+      c_act_code: c_act_code.value,
+      loadEvaluation: loadEvaluation.value,
+      loadSession: loadSession.value,
+      loadFullDetail: loadFullDetail.value,
+      loadWeb: loadWeb.value,
+      loadFee: loadFee.value,
+    }),
+    {
+      enabled: computed(() => c_act_code.value != null),
+    }
+  );
 
   // Return the provided data and functions
   return {
@@ -1685,11 +1829,28 @@ export function useEventProvider(options = {}) {
     submitPlanById,
     submitEvalById,
     approvePlanById,
+    approveEvalById,
     deletePlanEvalById,
-    refetch: execute,
     deleteEventById,
     updateEventById,
     updateEventFeeById,
     deleteEventFeeById,
+    refetch,
   };
+}
+
+export function useEventIDProvider() {
+  const GET_ALL_EVENT_ID = gql`
+    query GetEvent {
+      HTX_Event {
+        IsShow
+        c_act_code
+        c_act_name
+        c_act_nameen
+        c_status
+      }
+    }
+  `;
+  const { result, loading } = useQuery(GET_ALL_EVENT_ID);
+  return { result, loading };
 }

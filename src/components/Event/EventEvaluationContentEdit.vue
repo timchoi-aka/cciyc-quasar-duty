@@ -11,7 +11,12 @@
     @close="importFinanceModal = false"
   />
   <!-- sticky button at bottom -->
-  <q-page-sticky position="bottom-right" :offset="[20, 20]" style="z-index: 1">
+  <q-page-sticky
+    v-if="edit"
+    position="bottom-right"
+    :offset="[20, 20]"
+    style="z-index: 1"
+  >
     <q-fab label="儲存" icon="save" color="primary" push @click="saveEdit" />
     <q-fab
       label="取消"
@@ -29,6 +34,7 @@
       @click="loadDialog = true"
       color="positive"
       class="q-ma-md"
+      v-if="!planSubmitted && !evalSubmitted"
     />
     <div class="row text-h6">
       <div
@@ -80,10 +86,12 @@
       <span class="col-4" v-if="edit"
         ><q-input filled type="text" v-model="editObject.tutor_phone" /></span
       ><span class="col-4" v-else>{{ PlanEval.tutor_phone }}</span>
-      <div class="col-2 q-my-sm">備註:</div>
-      <span class="col-10" v-if="edit"
+      <div v-if="planSubmitted" class="col-2 q-my-sm">備註:</div>
+      <span class="col-10" v-if="edit && planSubmitted"
         ><q-input filled type="text" v-model="editObject.remarks" /></span
-      ><span class="col-10" v-else>{{ PlanEval.remarks }}</span>
+      ><span class="col-10" v-if="!edit && planSubmitted">{{
+        PlanEval.remarks
+      }}</span>
     </div>
     <q-splitter v-model="splitterModel" class="fit">
       <template v-slot:before>
@@ -569,7 +577,6 @@ const route = useRoute();
 const router = useRouter();
 const c_act_code = ref(route.params.id);
 const splitterModel = ref(50); // default split at 50%
-const edit = ref(true);
 const loading = ref(0);
 const $q = useQuasar();
 const editObject = ref({});
@@ -775,6 +782,11 @@ const evalSubmitted = computed(() =>
     ? PlanEval.value.submit_eval_date.length > 0
     : false
 );
+const isEventApprover = computed(
+  () => $store.getters["userModule/getEventApprove"]
+);
+const edit = computed(() => !evalSubmitted.value || isEventApprover.value);
+
 // success callbacks
 updateEvaluationFromActCode_Completed((result) => {
   notifyClientSuccess(result.data.update_Event_Evaluation_by_pk.c_act_code);
@@ -975,22 +987,8 @@ denyEvaluation_Error((error) => {
 denyPlan_Error((error) => {
   notifyClientError(error);
 });
+
 // functions
-// start editing
-function startEdit() {
-  clonePlanValue();
-  edit.value = true;
-}
-
-function startApprove(m) {
-  mode.value = m;
-  EvaluationComment.value = PlanEval.value.ic_comment
-    ? PlanEval.value.ic_comment.trim()
-    : "";
-  approvalDialog.value = true;
-}
-
-// save
 function saveEdit() {
   saveRecord().then(() => {
     edit.value = false;
@@ -1001,7 +999,6 @@ function saveEdit() {
 }
 
 function cancelEdit() {
-  edit.value = false;
   router.push({
     path: "/event/detail/" + route.params.id + "/evaluation/view",
   });

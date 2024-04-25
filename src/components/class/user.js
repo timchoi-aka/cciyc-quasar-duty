@@ -280,6 +280,48 @@ class User {
       })
     );
   }
+
+  static async loadUserByName(name) {
+    const userQuery = query(usersCollection, where("name", "==", name));
+    let userDoc = await getDocs(userQuery);
+    let leaveConfigDoc = await getDoc(query(leaveConfig));
+
+    let result = [];
+    userDoc.forEach((user) => {
+      let d = user.data();
+      if (d.employment[0].dateOfEntry != undefined) {
+        d.employment[0].dateOfEntry = new Date(
+          d.employment[0].dateOfEntry.toDate()
+        );
+      } else {
+        d.employment[0].dateOfEntry = new Date();
+      }
+
+      if (d.employment[0].dateOfExit != undefined) {
+        d.employment[0].dateOfExit = new Date(
+          d.employment[0].dateOfExit.toDate()
+        );
+      } else {
+        d.employment[0].dateOfExit = "";
+      }
+
+      let leaveConfigData = {
+        rank: leaveConfigDoc.data()[d.rank],
+        initialHoliday: {
+          date: leaveConfigDoc.data()[d.uid][0].date.toDate(),
+          al: leaveConfigDoc.data()[d.uid][0].al,
+          sal: leaveConfigDoc.data()[d.uid][0].sal
+            ? leaveConfigDoc.data()[d.uid][0].sal
+            : undefined,
+        },
+      };
+      result.push(new User({ ...d, leaveConfig: leaveConfigData }));
+    });
+
+    if (result.length == 1) {
+      return Promise.resolve(result[0]);
+    } else return Promise.resolve(undefined);
+  }
 }
 
 export default User;

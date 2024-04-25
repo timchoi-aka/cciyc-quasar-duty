@@ -10,7 +10,7 @@
     :model-value="props.modelValue"
     @filter="eventFilter"
     @update:model-value="
-      (value) => emit('update:modelValue', value ? value.value : null)
+      (value) => emit('update:modelValue', value ? value.value.trim() : null)
     "
   >
     <template v-slot:option="scope">
@@ -54,12 +54,12 @@
     <template v-slot:selected>
       <div v-if="props.modelValue">
         {{ props.modelValue }} -
-        {{
-          EventOptions.filter((x) => x.value == props.modelValue).length
-            ? EventOptions.filter((x) => x.value == props.modelValue)[0]
-                .c_act_name
-            : ""
-        }}
+        <span v-if="EventOptions.length > 0">
+          {{
+            EventOptions.find((x) => x.value.trim() == props.modelValue)
+              .c_act_name
+          }}
+        </span>
       </div>
     </template>
     <template v-slot:no-option> 沒有結果 </template>
@@ -68,7 +68,7 @@
 
 <script setup>
 import { ref, watch } from "vue";
-import { useEventProvider } from "src/providers/event";
+import { useEventIDProvider } from "src/providers/event";
 
 // props & emits
 const props = defineProps({
@@ -81,7 +81,7 @@ const EventOptions = ref([]);
 const OriginalEventOptions = ref([]);
 
 // query
-const { result } = useEventProvider();
+const { result } = useEventIDProvider();
 
 watch(result, (newValue) => {
   if (newValue.HTX_Event) {

@@ -4,8 +4,8 @@ import { gql } from "graphql-tag";
 import { date, extend } from "quasar";
 import { useNotifier } from "./notifier";
 import apolloClient from "src/boot/apollo";
-//import { provideApolloClient } from "@vue/apollo-composable";
-//provideApolloClient(apolloClient);
+import { provideApolloClient } from "@vue/apollo-composable";
+provideApolloClient(apolloClient);
 
 // Function to provide event data
 export function useEvaluationFinanceProvider(options = {}) {

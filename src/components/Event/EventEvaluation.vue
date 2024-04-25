@@ -190,33 +190,47 @@
         @click="confirmEvalDialog = true"
       />
     </div>
-    <div class="col-xs-12 col-sm-4 col-md-4 text-right">
-      <div class="col-6">
-        <q-chip dense v-if="isPlanSubmitted"
-          >已提交計劃：{{ PlanEval.staff_name }} @
-          {{
-            qdate.formatDate(PlanEval.submit_plan_date, "YYYY年M月D日")
-          }}</q-chip
-        >
-        <q-chip dense v-if="isPlanApproved"
-          >已審批計劃：{{
-            qdate.formatDate(PlanEval.ic_plan_date, "YYYY年M月D日")
-          }}</q-chip
-        >
-      </div>
-      <div class="col-6">
-        <q-chip dense v-if="isEvalSubmitted"
-          >已提交檢討：{{ PlanEval.staff_name }} @
-          {{
-            qdate.formatDate(PlanEval.submit_eval_date, "YYYY年M月D日")
-          }}</q-chip
-        >
-        <q-chip dense v-if="isEvalApproved"
-          >已審批檢討：{{
-            qdate.formatDate(PlanEval.ic_eval_date, "YYYY年M月D日")
-          }}</q-chip
-        >
-      </div>
+    <div class="col-xs-12 col-sm-4 col-md-3 text-right q-mr-md">
+      <q-btn v-if="isPlanSubmitted" icon="event_note" label="計劃" flat>
+        <q-tooltip class="bg-white text-primary">
+          <div>
+            提交：{{ PlanEval.staff_name }} @
+            {{ qdate.formatDate(PlanEval.submit_plan_date, "YYYY年M月D日") }}
+          </div>
+
+          <div v-if="isPlanApproved" key="plan_approved">
+            審批：{{ PlanEval.ic }} @
+            {{ qdate.formatDate(PlanEval.ic_plan_date, "YYYY年M月D日") }}
+          </div>
+        </q-tooltip>
+
+        <q-badge v-if="isPlanApproved" key="plan_approved" transparent>
+          <q-icon name="check_circle" color="positive" />
+        </q-badge>
+        <q-badge v-else key="plan_not_approved" transparent>
+          <q-icon name="help" color="warning" />
+        </q-badge>
+      </q-btn>
+
+      <q-btn v-if="isEvalSubmitted" icon="assessment" label="檢討" flat>
+        <q-tooltip class="bg-white text-primary">
+          <div>
+            提交：{{ PlanEval.staff_name }} @
+            {{ qdate.formatDate(PlanEval.submit_eval_date, "YYYY年M月D日") }}
+          </div>
+          <div v-if="isEvalApproved" key="eval_approved">
+            審批：{{ PlanEval.ic }} @
+            {{ qdate.formatDate(PlanEval.ic_eval_date, "YYYY年M月D日") }}
+          </div>
+        </q-tooltip>
+
+        <q-badge v-if="isEvalApproved" key="eval_approved" transparent>
+          <q-icon name="check_circle" color="positive" />
+        </q-badge>
+        <q-badge v-else key="eval_not_approved" transparent>
+          <q-icon name="help" color="warning" />
+        </q-badge>
+      </q-btn>
     </div>
   </div>
 
@@ -288,6 +302,7 @@ const {
   submitPlanById,
   submitEvalById,
   approvePlanById,
+  approveEvalById,
   deletePlanEvalById,
   loading,
   message,
@@ -729,13 +744,11 @@ function ApproveOK() {
         ic_comment: EvaluationComment.value,
       });
     } else {
-      approveEvaluation({
-        logObject: logObject.value,
-        ic: username.value,
-        ic_eval_date: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-        ic_comment: EvaluationComment.value,
-        c_act_code: c_act_code.value.trim(),
+      approveEvalById({
         uuid: PlanEval.value.uuid,
+        staff_name: username.value,
+        c_act_code: c_act_code.value.trim(),
+        ic_comment: EvaluationComment.value,
       });
     }
   }

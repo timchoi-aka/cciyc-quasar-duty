@@ -481,11 +481,14 @@ async function drawContent(doc, event, type) {
   lineNo += Math.max(incomeTableRows, expenseTableRows);
 
   // thirteenth line - 備註
-  lineNo = newLine(doc, lineNo);
-  doc.setFontSize(12);
-  doc.text("備註：", 5, atLine(lineNo), "left");
-  if (EvalData.remarks) doc.text(EvalData.remarks, 20, atLine(lineNo), "left");
-  doc.line(20, atLine(lineNo) + 1, 200, atLine(lineNo) + 1);
+  if (type == "檢討") {
+    lineNo = newLine(doc, lineNo);
+    doc.setFontSize(12);
+    doc.text("備註：", 5, atLine(lineNo), "left");
+    if (EvalData.remarks)
+      doc.text(EvalData.remarks, 20, atLine(lineNo), "left");
+    doc.line(20, atLine(lineNo) + 1, 200, atLine(lineNo) + 1);
+  }
 
   // footer - 簽署
   lineNo = newLine(doc, lineNo) + 1;

@@ -16,6 +16,7 @@
           class="bg-positive text-white"
           @click="updateEvent"
           v-close-popup
+          :disable="Object.keys(EvalData).length == 0"
         />
         <q-btn
           icon="cancel"
@@ -33,7 +34,7 @@
 import EventEvaluationSelection from "components/Event/EventEvaluationSelection.vue";
 import EventEvaluationSelectionSummaryDisplay from "components/Event/EventEvaluationSelectionSummaryDisplay.vue";
 
-import { ref, watch, computed } from "vue";
+import { ref, computed } from "vue";
 import { useEventProvider } from "src/providers/event";
 
 const c_act_code = ref(null);
@@ -45,13 +46,9 @@ const props = defineProps({
 });
 const emit = defineEmits(["update:modelValue", ["close"]]);
 
-const { result, loading, refetch } = useEventProvider({
+const { result } = useEventProvider({
   c_act_code: c_act_code,
   loadEvaluation: ref(true),
-});
-
-watch(c_act_code, (newValue) => {
-  refetch();
 });
 
 const EvalData = computed(() =>
