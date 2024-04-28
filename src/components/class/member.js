@@ -1,4 +1,6 @@
 import { date } from "quasar";
+import { useMemberProvider } from "src/providers/member";
+import { ref, computed } from "vue";
 
 class Member {
   constructor(o = {}) {
@@ -240,6 +242,8 @@ class Member {
       this.u_rent = o.u_rent ? o.u_rent : "";
       this.u_udf_1 = o.u_udf_1 ? o.u_udf_1 : "";
       this.c_mem_id = o.c_mem_id ? o.c_mem_id : "";
+      this.MemberRelation1 = o.MemberRelation1 ? o.MemberRelation1 : [];
+      this.MemberRelation2 = o.MemberRelation2 ? o.MemberRelation2 : [];
     }
   }
 

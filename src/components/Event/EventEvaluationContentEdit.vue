@@ -730,9 +730,12 @@ function purifyRecord(editObject) {
   let returnObject = ref(JSON.parse(JSON.stringify(editObject.value)));
 
   // basic
-  returnObject.value.objective = editObject.value.uuid
+  returnObject.value.uuid = editObject.value.uuid
     ? editObject.value.uuid.trim()
     : uid();
+  returnObject.value.staff_name = editObject.value.staff_name
+    ? editObject.value.staff_name.trim()
+    : null;
   returnObject.value.objective = editObject.value.objective
     ? editObject.value.objective.trim()
     : null;
@@ -765,6 +768,9 @@ function purifyRecord(editObject) {
     : null;
   returnObject.value.supervisor_comment = editObject.value.supervisor_comment
     ? editObject.value.supervisor_comment.trim()
+    : null;
+  returnObject.value.ic_comment = editObject.value.ic_comment
+    ? editObject.value.ic_comment.trim()
     : null;
 
   // plan

@@ -33,7 +33,6 @@
 <script setup>
 import EventEvaluationSelection from "components/Event/EventEvaluationSelection.vue";
 import EventEvaluationSelectionSummaryDisplay from "components/Event/EventEvaluationSelectionSummaryDisplay.vue";
-
 import { ref, computed } from "vue";
 import { useEventProvider } from "src/providers/event";
 

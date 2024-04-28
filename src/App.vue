@@ -1,7 +1,7 @@
 <template>
   <q-layout id="q-app" view="hHh lpR lFf">
     <!-- loading dialog -->
-    <LoadingDialog v-model="loading" message="處理中"/>
+    <LoadingDialog v-model="loading" message="處理中" />
 
     <q-header elevated class="bg-primary text-white" height-hint="98">
       <q-dialog v-model="bugReportModal">
@@ -10,8 +10,14 @@
             <div class="text-h6">錯誤回報</div>
           </q-card-section>
           <q-card-section class="row">
-            <div class="col-3">錯誤發生日期：</div><div class="col-9"><DateComponent v-model="bugReportObject.date"/></div>
-            <div class="col-3">錯誤描述：</div><div class="col-9"><q-input type="text" v-model="bugReportObject.message"/></div>
+            <div class="col-3">錯誤發生日期：</div>
+            <div class="col-9">
+              <DateComponent v-model="bugReportObject.date" />
+            </div>
+            <div class="col-3">錯誤描述：</div>
+            <div class="col-9">
+              <q-input type="text" v-model="bugReportObject.message" />
+            </div>
             <div class="col-3">截圖（如有）：</div>
             <FileUpload
               class="col-9"
@@ -20,8 +26,12 @@
             />
           </q-card-section>
           <q-card-actions align="right">
-            <q-btn label="取消" class="bg-negative text-white" v-close-popup/>
-            <q-btn label="提交" class="bg-primary text-white" @click="submitBugReport"/>
+            <q-btn label="取消" class="bg-negative text-white" v-close-popup />
+            <q-btn
+              label="提交"
+              class="bg-primary text-white"
+              @click="submitBugReport"
+            />
           </q-card-actions>
         </q-card>
       </q-dialog>
@@ -44,8 +54,18 @@
         </q-toolbar-title>
 
         <!-- notifications -->
-        <div v-if="username && UAT" class="q-ml-sm bg-primary text-white"><q-btn flat class="desktop-only" icon="bug_report" label="錯誤回報" @click="bugReportModal = true"/></div>
-        <div v-if="username" class="q-mx-sm bg-primary text-white"><NotificationBell/></div>
+        <div v-if="username && UAT" class="q-ml-sm bg-primary text-white">
+          <q-btn
+            flat
+            class="desktop-only"
+            icon="bug_report"
+            label="錯誤回報"
+            @click="bugReportModal = true"
+          />
+        </div>
+        <div v-if="username" class="q-mx-sm bg-primary text-white">
+          <NotificationBell />
+        </div>
 
         <div v-if="username" class="desktop-only q-mr-md">
           <q-avatar rounded left v-if="photoURL" size="42px">
@@ -59,13 +79,21 @@
             :label="'登出: ' + username"
             icon="logout"
             @click="logout"
-            >
+          >
           </q-btn>
         </div>
-        <q-btn v-if="isLocal" class="desktop-only" dense flat round icon="menu" @click="toggleRightDrawer" />
+        <q-btn
+          v-if="isLocal"
+          class="desktop-only"
+          dense
+          flat
+          round
+          icon="menu"
+          @click="toggleRightDrawer"
+        />
       </q-toolbar>
 
-      <MenuBar :key="module"/>
+      <MenuBar :key="module" />
     </q-header>
 
     <q-drawer
@@ -79,34 +107,122 @@
       <q-list v-if="!uid">
         <EssentialLink title="登入" caption="請先登入" icon="login" link="/" />
       </q-list>
-      <q-list v-if="uid && (module == 'duty')">
-        <EssentialLink v-for="link in dutyList" :key="link.title" v-bind="link" />
+      <q-list v-if="uid && module == 'duty'">
+        <EssentialLink
+          v-for="link in dutyList"
+          :key="link.title"
+          v-bind="link"
+        />
       </q-list>
-      <q-list v-if="uid && (module == 'member')">
-        <EssentialLink v-for="link in memberList" :key="link.title" v-bind="link" />
+      <q-list v-if="uid && module == 'member'">
+        <EssentialLink
+          v-for="link in memberList"
+          :key="link.title"
+          v-bind="link"
+        />
       </q-list>
-      <q-list v-if="uid && (module == 'event')">
-        <EssentialLink v-for="link in eventList" :key="link.title" v-bind="link" />
+      <q-list v-if="uid && module == 'event'">
+        <EssentialLink
+          v-for="link in eventList"
+          :key="link.title"
+          v-bind="link"
+        />
       </q-list>
 
-      <q-space/>
+      <q-space />
 
       <div class="row col-*">
-        <q-btn class="col" name="duty" icon="event" label="編更" @click="setCurrentModule('duty')"/>
-        <q-btn v-if="!isTmp && isLocal" class="col" name="member" icon="public" label="會員" @click="setCurrentModule('member')"/>
-        <q-btn v-if="!isTmp && isLocal" class="col" name="event" icon="festival" label="活動" @click="setCurrentModule('event')"/>
-        <q-btn v-if="!isTmp && isLocal" class="col" name="finance" icon="money" label="財務" @click="setCurrentModule('account')"/>
+        <q-btn
+          class="col"
+          name="duty"
+          icon="event"
+          label="編更"
+          @click="setCurrentModule('duty')"
+        />
+        <q-btn
+          v-if="!isTmp && isLocal"
+          class="col"
+          name="member"
+          icon="public"
+          label="會員"
+          @click="setCurrentModule('member')"
+        />
+        <q-btn
+          v-if="!isTmp && isLocal"
+          class="col"
+          name="event"
+          icon="festival"
+          label="活動"
+          @click="setCurrentModule('event')"
+        />
+        <q-btn
+          v-if="!isTmp && isLocal"
+          class="col"
+          name="finance"
+          icon="money"
+          label="財務"
+          @click="setCurrentModule('account')"
+        />
       </div>
-      <div class="row text-h6 q-ml-md q-my-sm">{{ qdate.formatDate(new Date(), "YYYY年M月D日") }}</div>
+      <div class="row text-h6 q-ml-md q-my-sm">
+        {{ qdate.formatDate(new Date(), "YYYY年M月D日") }}
+      </div>
     </q-drawer>
 
     <!-- right drawer -->
-    <q-drawer :width="100" v-model="rightDrawerOpen" side="right" overlay elevated class="column justify-around" behavior="mobile">
-        <q-btn v-close-popup class="col-grow" name="duty" icon="event" label="編更" to="/duty/dutytable"/>
-        <q-btn v-if="!isTmp && isLocal" v-close-popup class="col-grow" name="member" icon="public" label="會員" to="/member/list"/>
-        <q-btn v-if="!isTmp && isLocal" v-close-popup class="col-grow" name="event" icon="festival" label="活動" to="/event/my-event"/>
-        <q-btn v-if="!isTmp && isLocal" v-close-popup class="col-grow" name="finance" icon="money" label="財務" to="/account/receipt/search"/>
-        <q-btn v-if="!isTmp && isLocal" v-close-popup class="col-grow" name="web" icon="home" label="網站" to="/website/gallery/list?type=event"/>
+    <q-drawer
+      :width="100"
+      v-model="rightDrawerOpen"
+      side="right"
+      overlay
+      elevated
+      class="column justify-around"
+      behavior="mobile"
+    >
+      <q-btn
+        v-close-popup
+        class="col-grow"
+        name="duty"
+        icon="event"
+        label="編更"
+        to="/duty/dutytable"
+      />
+      <q-btn
+        v-if="!isTmp && isLocal"
+        v-close-popup
+        class="col-grow"
+        name="member"
+        icon="public"
+        label="會員"
+        to="/member/list"
+      />
+      <q-btn
+        v-if="!isTmp && isLocal"
+        v-close-popup
+        class="col-grow"
+        name="event"
+        icon="festival"
+        label="活動"
+        to="/event/my-event"
+      />
+      <q-btn
+        v-if="!isTmp && isLocal"
+        v-close-popup
+        class="col-grow"
+        name="finance"
+        icon="money"
+        label="財務"
+        to="/account/receipt/search"
+      />
+      <q-btn
+        v-if="!isTmp && isLocal"
+        v-close-popup
+        class="col-grow"
+        name="web"
+        icon="home"
+        label="網站"
+        to="/website/gallery/list?type=event"
+      />
     </q-drawer>
 
     <q-page-container>
@@ -117,43 +233,45 @@
 
 <script setup>
 import EssentialLink from "components/EssentialLink.vue";
-import NotificationBell from "components/Basic/NotificationBell.vue"
+import NotificationBell from "components/Basic/NotificationBell.vue";
 import MenuBar from "components/MenuBar.vue";
 import { ref, computed, provide, onMounted } from "vue";
 import { useStore } from "vuex";
-import { useQuasar, date as qdate } from "quasar"
-import { FirebaseMessaging } from 'boot/firebase'
+import { useQuasar, date as qdate } from "quasar";
+import { FirebaseMessaging } from "boot/firebase";
 import { httpsCallable } from "@firebase/functions";
 import { FirebaseFunctions } from "boot/firebase";
 import DateComponent from "./components/Basic/DateComponent.vue";
-import LoadingDialog from "components/LoadingDialog.vue"
+import LoadingDialog from "components/LoadingDialog.vue";
 import { authenticator, uploader } from "./boot/axios";
-import { useRouter } from "vue-router"
+import { useRouter } from "vue-router";
 import FileUpload from "./components/Basic/FileUpload.vue";
-provide('messaging', FirebaseMessaging)
-
-
+provide("messaging", FirebaseMessaging);
 
 // variables
 const leftDrawerOpen = ref(false);
 const rightDrawerOpen = ref(false);
 const $store = useStore();
 const $q = useQuasar();
-const bugReportModal = ref(false)
-const loading = ref(0)
-const router = useRouter()
+const bugReportModal = ref(false);
+const loading = ref(0);
+const router = useRouter();
 
 // computed
 // userModule getters
-const uid = computed(() => $store.getters["userModule/getUID"])
-const username = computed(() => $store.getters["userModule/getUsername"])
-const photoURL = computed(() => $store.getters["userModule/getPhotoURL"])
-const UAT = computed(() => $store.getters["userModule/getUAT"])
-const isTmp = computed(() => $store.getters["userModule/getTmp"])
-const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"])
-const isUserManagement = computed(() => $store.getters["userModule/getUserManagement"])
+const uid = computed(() => $store.getters["userModule/getUID"]);
+const username = computed(() => $store.getters["userModule/getUsername"]);
+const photoURL = computed(() => $store.getters["userModule/getPhotoURL"]);
+const UAT = computed(() => $store.getters["userModule/getUAT"]);
+const isTmp = computed(() => $store.getters["userModule/getTmp"]);
+const isSystemAdmin = computed(
+  () => $store.getters["userModule/getSystemAdmin"]
+);
+const isUserManagement = computed(
+  () => $store.getters["userModule/getUserManagement"]
+);
 // currentModule getters
-const module = computed(() => $store.getters["userModule/getModule"])
+const module = computed(() => $store.getters["userModule/getModule"]);
 
 // bug report object
 const bugReportObject = ref({
@@ -164,8 +282,8 @@ const bugReportObject = ref({
   status: "未解決",
   path: "bug-report",
   filenames: [],
-  docid: qdate.formatDate(new Date(), "YYYYMMDDHHmmss")
-})
+  docid: qdate.formatDate(new Date(), "YYYYMMDDHHmmss"),
+});
 
 // menu items
 // links
@@ -212,66 +330,77 @@ const dutyList = computed(() => [
     link: "/system-admin",
     enable: isSystemAdmin.value && !isTmp.value,
   },
-])
-
+]);
 
 // dispatch
-const userProfileLogout = () => $store.dispatch("userModule/logout")
-const toggleLeftDrawer = () => leftDrawerOpen.value = !leftDrawerOpen.value
-const toggleRightDrawer = () => rightDrawerOpen.value = !rightDrawerOpen.value
-const setCurrentModule = (module) => $store.dispatch("userModule/switchModule", module)
+const userProfileLogout = () => $store.dispatch("userModule/logout");
+const toggleLeftDrawer = () => (leftDrawerOpen.value = !leftDrawerOpen.value);
+const toggleRightDrawer = () =>
+  (rightDrawerOpen.value = !rightDrawerOpen.value);
+const setCurrentModule = (module) =>
+  $store.dispatch("userModule/switchModule", module);
 
-const isLocal = ref(false)
+const isLocal = ref(false);
 
 async function keepAlive() {
+  if (process.env.NODE_ENV == "development") {
+    isLocal.value = true;
+    return;
+  }
   setTimeout(function () {
     authenticator({
-    timeout: 1000, // Set a timeout of 5 seconds
-    method: "get",
-    url: "https://192.168.2.44:3001",
-    responseType: "text",
-    headers: {
-      'Access-Control-Allow-Origin' : '*',
-      'Access-Control-Allow-Methods':'GET,PUT,POST,DELETE,PATCH,OPTIONS',
-    },
-  }).then((result) => {
-    if (result.status == 200) {
-      isLocal.value = true
-    }
-  }).catch((e) => {
-    // time out, out of center network
-    if (e.code == "ECONNABORTED") {
-      if (isSystemAdmin.value) { // enable all function for admin
-        isLocal.value = true
-      } else {
-        if (isLocal.value) {  // redirect if not in local network
-          $store.dispatch("userModule/switchModule", "duty");
-          router.push('/duty')
-          isLocal.value = false
+      timeout: 1000, // Set a timeout of 5 seconds
+      method: "get",
+      url: "https://192.168.2.44:3001",
+      responseType: "text",
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET,PUT,POST,DELETE,PATCH,OPTIONS",
+      },
+    })
+      .then((result) => {
+        if (result.status == 200) {
+          isLocal.value = true;
         }
-      }
-    } else if (e.code == "ERR_NETWORK") {
-      // cert invalid, means it's in center network
-      isLocal.value = true
-    }
-  })
-  keepAlive();
+      })
+      .catch((e) => {
+        // time out, out of center network
+        if (e.code == "ECONNABORTED") {
+          if (isSystemAdmin.value) {
+            // enable all function for admin
+            isLocal.value = true;
+          } else {
+            if (isLocal.value) {
+              // redirect if not in local network
+              $store.dispatch("userModule/switchModule", "duty");
+              router.push("/duty");
+              isLocal.value = false;
+            }
+          }
+        } else if (e.code == "ERR_NETWORK") {
+          // cert invalid, means it's in center network
+          isLocal.value = true;
+        }
+      });
+    keepAlive();
   }, 10000);
 }
 onMounted(() => {
-  keepAlive()
-})
+  keepAlive();
+});
 
 // functions
 function logout() {
-  userProfileLogout().then(() => {
-    $q.notify({ message: "登出成功." });
-  })
-  .catch((error) => console.log("error", error));
+  userProfileLogout()
+    .then(() => {
+      $q.notify({ message: "登出成功." });
+    })
+    .catch((error) => console.log("error", error));
 }
 
 async function submitBugReport() {
-  const addBugReport = httpsCallable(FirebaseFunctions,
+  const addBugReport = httpsCallable(
+    FirebaseFunctions,
     "systemAdmin-addBugReport"
   );
 
@@ -286,17 +415,17 @@ async function submitBugReport() {
       status: "未解決",
       path: "bug-report",
       filenames: [],
-      docid: qdate.formatDate(new Date(), "YYYYMMDDHHmmss")
-    }
-    bugReportModal.value = false
+      docid: qdate.formatDate(new Date(), "YYYYMMDDHHmmss"),
+    };
+    bugReportModal.value = false;
     $q.notify({
       message: "成功提交錯誤報告。",
-    })
+    });
   });
 }
 
 function updateFilenames(filename) {
-  bugReportObject.value.filenames.push(filename.files[0].name)
+  bugReportObject.value.filenames.push(filename.files[0].name);
 }
 
 const memberList = ref([
@@ -342,7 +471,7 @@ const memberList = ref([
     link: "/member/admin",
     enable: isSystemAdmin.value,
   },
-])
+]);
 
 const eventList = ref([
   {
@@ -380,5 +509,5 @@ const eventList = ref([
     link: "/event/log",
     enable: isSystemAdmin.value,
   },
-])
+]);
 </script>

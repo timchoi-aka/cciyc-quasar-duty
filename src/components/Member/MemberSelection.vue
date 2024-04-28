@@ -61,7 +61,7 @@
 
 <script setup>
 import { ref, watch } from "vue";
-import { useMemberProvider } from "src/providers/member.js";
+import { useAllMemberProvider } from "src/providers/member.js";
 
 // props & emits
 const props = defineProps({
@@ -91,7 +91,7 @@ const emit = defineEmits(["update:modelValue"]);
 const NameOptions = ref([]);
 const OriginalNameOptions = ref([]);
 
-const { result } = useMemberProvider();
+const { result } = useAllMemberProvider();
 
 watch(result, (data) => {
   let now = new Date();

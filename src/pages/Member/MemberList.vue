@@ -1,21 +1,22 @@
 <template>
   <!-- loading dialog -->
-  <LoadingDialog :model-value="loading? 1: 0" message="處理中"/>
-  
+  <LoadingDialog :model-value="loading ? 1 : 0" message="處理中" />
+
   <!-- print receipt modal -->
-  <q-dialog v-if="$q.screen.gt.md"
+  <q-dialog
+    v-if="$q.screen.gt.md"
     v-model="printReceiptModal"
     full-height
     full-width
     transition-show="slide-up"
     transition-hide="slide-down"
     class="q-pa-none"
-    >
-    
-    <PrintReceipt :MemberID="printReceiptMember"/>
+  >
+    <PrintReceipt :MemberID="printReceiptMember" />
   </q-dialog>
 
-  <q-dialog v-if="$q.screen.lt.md || $q.screen.md"
+  <q-dialog
+    v-if="$q.screen.lt.md || $q.screen.md"
     v-model="printReceiptModal"
     maximized
     full-width
@@ -23,12 +24,13 @@
     transition-show="slide-up"
     transition-hide="slide-down"
     class="q-pa-none"
-    >
-    <PrintReceipt :MemberID="printReceiptMember"/>
+  >
+    <PrintReceipt :MemberID="printReceiptMember" />
   </q-dialog>
 
   <!-- rowDetail modal -->
-  <q-dialog v-if="$q.screen.lt.md"
+  <q-dialog
+    v-if="$q.screen.lt.md"
     v-model="detailModal"
     persistent
     maximized
@@ -36,10 +38,11 @@
     transition-show="slide-up"
     transition-hide="slide-down"
   >
-    <MemberDetail v-model="showMemberID"/>
+    <MemberDetail v-model="showMemberID" :key="showMemberID" />
   </q-dialog>
 
-  <q-dialog v-else
+  <q-dialog
+    v-else
     v-model="detailModal"
     persistent
     full-height
@@ -47,11 +50,11 @@
     transition-hide="slide-down"
     class="q-pa-none"
   >
-    <q-card style="min-width: 70vw; width: 70vw; max-width: 70vw;">
-      <MemberDetail v-model="showMemberID"/>
+    <q-card style="min-width: 70vw; width: 70vw; max-width: 70vw">
+      <MemberDetail v-model="showMemberID" />
     </q-card>
   </q-dialog>
-  
+
   <q-table
     class="col"
     dense
@@ -74,7 +77,7 @@
 
     <template v-slot:top-row>
       <q-tr style="text-align: center">
-        <q-td/>
+        <q-td />
         <q-td>
           <q-input
             v-model="searchFilter.memberID"
@@ -122,9 +125,7 @@
             </template>
           </q-input>
         </q-td>
-        <q-td>
-
-        </q-td>
+        <q-td> </q-td>
         <q-td>
           <q-btn-toggle
             dense
@@ -191,7 +192,7 @@
         <q-icon v-else color="negative" name="cancel" />
       </q-td>
     </template>
-    
+
     <template v-slot:body-cell-b_mem_type10="props">
       <q-td :props="props">
         <q-icon v-if="props.value" color="positive" name="check" />
@@ -201,7 +202,15 @@
 
     <template v-slot:body-cell-MemberAccount="props">
       <q-td :props="props">
-        <q-btn v-if="props.row.MemberAccount.length > 0" icon="print" color="positive" @click="printReceipt(props.key)" size="md" padding="none" outline/>
+        <q-btn
+          v-if="props.row.MemberAccount.length > 0"
+          icon="print"
+          color="positive"
+          @click="printReceipt(props.key)"
+          size="md"
+          padding="none"
+          outline
+        />
       </q-td>
     </template>
   </q-table>
@@ -213,30 +222,29 @@ import { useStore } from "vuex";
 import { date as qdate, useQuasar } from "quasar";
 import MemberDetail from "components/Member/MemberDetail.vue";
 import { MEMBER_GET_ALL } from "/src/graphQueries/Member/query.js";
-import { useQuery } from "@vue/apollo-composable"
-import LoadingDialog from "components/LoadingDialog.vue"
-import PrintReceipt from "components/Account/PrintReceipt.vue"
-import useMember from "components/Member/MemberData"
-import dateUtil from "src/lib/calculateAge"
+import { useQuery } from "@vue/apollo-composable";
+import LoadingDialog from "components/LoadingDialog.vue";
+import PrintReceipt from "components/Account/PrintReceipt.vue";
+import dateUtil from "src/lib/calculateAge";
 
 // save current module
 const $store = useStore();
-const $q = useQuasar()
+const $q = useQuasar();
 
 // $q.localStorage.set("module", "member");
 
 // variables
-const detailModal = ref(false)
-const printReceiptModal = ref(false)
-const printReceiptMember = ref("")
-const showMemberID = ref("")
-const Member = ref([])
+const detailModal = ref(false);
+const printReceiptModal = ref(false);
+const printReceiptMember = ref("");
+const showMemberID = ref("");
+const Member = ref([]);
 const displayOptions = ref({
   loadReceipt: true,
   loadMembership: true,
   loadDetail: true,
-})
-const searchCriteria = ref({})
+});
+const searchCriteria = ref({});
 
 // table parameters
 const searchFilter = ref({
@@ -248,12 +256,12 @@ const searchFilter = ref({
   mem_type1: "true",
   mem_type10: "",
   udf_1: "",
-})
+});
 const defaultPagination = ref({
   rowsPerPage: 30,
   sortBy: "c_mem_id",
   descending: true,
-})
+});
 const memberListColumns = ref([
   {
     name: "MemberAccount",
@@ -295,7 +303,7 @@ const memberListColumns = ref([
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
-    format: (val) => dateUtil.calculateAge(val)
+    format: (val) => dateUtil.calculateAge(val),
   },
   {
     name: "c_sex",
@@ -357,7 +365,7 @@ const memberListColumns = ref([
         ? "永久"
         : qdate.formatDate(val, "YYYY年M月D日"),
   },
-])
+]);
 
 const udf1List = ref([
   {
@@ -380,10 +388,14 @@ const udf1List = ref([
     label: "家人義工25+",
     value: "家人義工",
   },
-])
+]);
 
- // query - load graphql subscription on member list
-const { onResult: MemberGetAll, loading } = useQuery(MEMBER_GET_ALL, {}, {pollInterval: 5000});
+// query - load graphql subscription on member list
+const { onResult: MemberGetAll, loading } = useQuery(
+  MEMBER_GET_ALL,
+  {},
+  { pollInterval: 5000 }
+);
 // const { members, loadMember, loading } = useMember(searchCriteria, displayOptions);
 
 /*
@@ -392,7 +404,7 @@ onMounted(async () => {
 })
 */
 
-// computed  
+// computed
 const filter = computed(() => ({
   memberIDFilter: searchFilter.value.memberID,
   nameFilter: searchFilter.value.name,
@@ -402,18 +414,18 @@ const filter = computed(() => ({
   memType1Filter: searchFilter.value.mem_type1,
   memType10Filter: searchFilter.value.mem_type10,
   udf1Filter: searchFilter.value.udf_1,
-}))
-const uid = computed(() => $store.getters["userModule/getUID"])
-const MemberData = ref([])
+}));
+const uid = computed(() => $store.getters["userModule/getUID"]);
+const MemberData = ref([]);
 // const MemberData = computed(() => members.value? members.value : [])
 
 MemberGetAll((result) => {
-  if (result.data) MemberData.value = result.data.Member
-})
+  if (result.data) MemberData.value = result.data.Member;
+});
 
 // function
 function rowDetail(evt, row, index) {
-  if (evt.target.nodeName === 'TD') {
+  if (evt.target.nodeName === "TD") {
     detailModal.value = true;
     showMemberID.value = row.c_mem_id;
   }
@@ -437,7 +449,6 @@ function resetFilter() {
   };
 }
 
-
 function tableFilter(rows, terms) {
   // rows contain the entire data
   // terms contains whatever you have as filter
@@ -447,17 +458,17 @@ function tableFilter(rows, terms) {
   const filteredRows = rows.filter((row, i) => {
     //assume row doesn't match
     let ans = false;
-    
+
     //Gather toggle conditions - on/off condition
-    let c1 = false
-    let c5 = false
+    let c1 = false;
+    let c5 = false;
 
     if (row.b_mem_type1) {
       c1 = true;
     } else {
       if (terms.memType1Filter == "") c1 = true;
     }
-    
+
     if (row.b_mem_type10) {
       c5 = true;
     } else {

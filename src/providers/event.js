@@ -78,7 +78,6 @@ export function useEventProvider(options = {}) {
     }
     fragment IncludeEvaluation on HTX_Event {
       Event_to_Evaluation {
-        attendance
         remarks
         remarks_eval
         c_act_code
@@ -396,7 +395,6 @@ export function useEventProvider(options = {}) {
         if_matched: {
           match_columns: uuid
           update_columns: [
-            attendance
             c_act_code
             eval_attend_headcount_children
             eval_attend_headcount_others
@@ -446,7 +444,6 @@ export function useEventProvider(options = {}) {
           ]
         }
       ) {
-        attendance
         c_act_code
         eval_attend_headcount_children
         eval_attend_headcount_others
