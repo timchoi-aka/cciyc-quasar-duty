@@ -10,7 +10,12 @@
       <q-card-section class="bg-blue-1 text-h6">
         <div>
           姓名: {{ renewObject.c_name
-          }}<span v-if="renewObject.c_name_other.length > 0"
+          }}<span
+            v-if="
+              renewObject &&
+              renewObject.c_name_other &&
+              renewObject.c_name_other.length > 0
+            "
             >({{ renewObject.c_name_other }})</span
           >
         </div>
@@ -623,6 +628,8 @@
               d_birth: '',
               b_mem_type1: false,
               uuid: '',
+              d_expired_1: '',
+              d_exit_1: '',
               delete: false,
             })
           "
@@ -665,7 +672,7 @@
             class="col-12 col-xs-12"
           >
             <q-btn
-              v-if="$q.screen.lt.sm && relation.b_mem_type1 && !relation.delete"
+              v-if="$q.screen.lt.sm && !relation.delete"
               outline
               class="q-mr-sm"
               icon="person_search"
@@ -678,7 +685,7 @@
               "
             />
             <q-btn
-              v-if="$q.screen.gt.sm && relation.b_mem_type1 && !relation.delete"
+              v-if="$q.screen.gt.sm && !relation.delete"
               outline
               class="q-mr-md"
               icon="person_search"
@@ -691,8 +698,21 @@
               "
               label="檢視會員"
             />
-            <span v-if="relation.b_mem_type1 && !relation.delete"
-              >[{{
+            <span v-if="!relation.delete">
+              <q-chip
+                v-if="relation.b_mem_type1"
+                key="membership_valid"
+                label="會藉有效"
+                color="positive"
+                text-color="white"
+              />
+              <q-chip
+                v-else
+                key="membership_invalid"
+                label="會藉無效"
+                color="negative"
+                text-color="white"
+              />[{{
                 relation.c_mem_id_1 == props.modelValue
                   ? relation.c_mem_id_2
                   : relation.c_mem_id_1
@@ -805,7 +825,7 @@ const udf1List = [
 // query
 const { latestReceiptNo } = useAccountProvider();
 
-const { result: member } = useMemberProvider({
+const { result: member, refetch } = useMemberProvider({
   c_mem_id: c_mem_id,
   loadDetailReceipt: ref(false),
   loadDetail: ref(true),
@@ -814,12 +834,16 @@ const { result: member } = useMemberProvider({
   loadRelation: ref(true),
 });
 
+const relationObjects = ref([]);
 // get updated expiry date
 watch(edit_relationTable, (newVal, oldVal) => {
+  //console.log("newVal:", newVal);
   if (newVal.length > 0) {
+    //console.log("newVal:", newVal);
     let newQueue = [];
     for (const rel of newVal) {
       if (rel.c_mem_id_2) {
+        //  console.log("rel:", rel);
         newQueue.push(rel.c_mem_id_2);
       }
     }
@@ -915,6 +939,7 @@ const relationTable = computed(() => {
             d_expired_1: rel.RelationMember2
               ? rel.RelationMember2.d_expired_1
               : "",
+            d_exit_1: rel.RelationMember2 ? rel.RelationMember2.d_exit_1 : "",
             uuid: rel.uuid,
             delete: false,
           });
@@ -943,6 +968,7 @@ const relationTable = computed(() => {
             d_expired_1: rel.RelationMember1
               ? rel.RelationMember1.d_expired_1
               : "",
+            d_exit_1: rel.RelationMember1 ? rel.RelationMember1.d_exit_1 : "",
             uuid: rel.uuid,
             delete: false,
           });
@@ -958,9 +984,6 @@ const relationTable = computed(() => {
 // functions
 function changeMember(mem_id) {
   emit("update:modelValue", mem_id);
-}
-function getNameFromMemberID(value, index) {
-  queryNameFromID.value = value;
 }
 
 function startEdit() {
@@ -1036,10 +1059,11 @@ async function saveRecord() {
   if (!recordValid) return;
 
   let now = new Date();
-
+  /*
+  console.log("edit_relationTable.value:", edit_relationTable.value);
   console.log(edit_member.value.d_expired_1);
   console.log(qdate.getDateDiff(edit_member.value.d_expired_1, now));
-
+  */
   const updateObject = ref({
     d_update: now,
     c_update_user: username.value,
@@ -1053,7 +1077,7 @@ async function saveRecord() {
     c_mobile: edit_member.value.c_mobile,
     d_birth: edit_member.value.d_birth,
     b_mem_type1: edit_member.value.b_mem_type1,
-    b_mem_type10: edit_member.value.b_mem_type10,
+    b_mem_type10: edit_member.value.b_mem_type10 ? true : false,
     d_enter_1: edit_member.value.d_enter_1,
     d_expired_1: edit_member.value.d_expired_1,
     m_addscom: edit_member.value.m_addscom,
@@ -1061,16 +1085,13 @@ async function saveRecord() {
     c_emer_name: edit_member.value.c_emer_name,
     c_emer_rel: edit_member.value.c_emer_rel,
     c_emer_tel1_1: edit_member.value.c_emer_tel1_1,
-    b_mem_1: edit_member.value.d_expired_1
+    b_mem_type1: edit_member.value.d_expired_1
       ? qdate.getDateDiff(edit_member.value.d_expired_1, now) >= 0
         ? true
         : false
       : true,
   });
-  console.log(updateObject.value);
-
-  /*
-
+  //console.log(updateObject.value);
 
   const logObject = ref({
     username: username.value,
@@ -1092,7 +1113,7 @@ async function saveRecord() {
       " 刪除關係:" +
       JSON.stringify(deleteRelation),
   });
-  */
+
   /*
   console.log("update:" + JSON.stringify(updateObject.value))
   console.log("log:" + JSON.stringify(logObject.value))
@@ -1102,7 +1123,6 @@ async function saveRecord() {
   console.log("upsert: " + JSON.stringify([...newRelation, ...changeRelation]))
   */
 
-  /*
   loading.value++;
 
   // determine if there's relation to delete and upsert
@@ -1116,7 +1136,6 @@ async function saveRecord() {
     parameters.upsertObjects = [...newRelation, ...changeRelation];
 
   UpdateMember(parameters);
-  */
 }
 
 function logErrorMessage(error) {

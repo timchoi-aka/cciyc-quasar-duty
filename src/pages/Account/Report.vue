@@ -115,11 +115,6 @@
   >
     <q-tab-panel name="All" class="q-ma-none q-pa-sm">
       <div class="col-12 row items-center hideOnScreen">
-        <img
-          src="~assets/cciyc_logo.svg"
-          style="width: 90px; height: 90px"
-          class="col-1"
-        />
         <div class="print-title col-7 row q-mx-md items-center">
           <div class="col-12">長洲鄉事委員會青年綜合服務中心</div>
           <div class="col-12">
@@ -239,11 +234,6 @@
 
     <q-tab-panel name="delete" class="q-ma-none q-pa-md">
       <div class="col-12 row items-center hideOnScreen">
-        <img
-          src="~assets/cciyc_logo.svg"
-          style="width: 90px; height: 90px"
-          class="col-1"
-        />
         <div class="print-title col-7 row q-mx-md items-center">
           <div class="col-12">長洲鄉事委員會青年綜合服務中心</div>
           <div class="col-12">
@@ -351,11 +341,6 @@
     <!-- 會計報表 -->
     <q-tab-panel name="accountReport" class="q-ma-none q-pa-sm">
       <div class="col-12 row items-center hideOnScreen">
-        <img
-          src="~assets/cciyc_logo.svg"
-          style="width: 90px; height: 90px"
-          class="col-1"
-        />
         <div class="print-title col-7 row q-mx-md items-center">
           <div class="col-12">長洲鄉事委員會青年綜合服務中心</div>
           <div class="col-12">
@@ -1260,7 +1245,7 @@ const receiptListColumns = ref([
       textAlign: "center",
       lineHeight: "10px",
     },
-    headerClasses: "bg-blue-2",
+    headerClasses: "bg-grey-2",
     style: {
       borderTop: "1px solid",
       textAlign: "center",
@@ -1276,7 +1261,7 @@ const receiptListColumns = ref([
       textAlign: "center",
       lineHeight: "10px",
     },
-    headerClasses: "bg-blue-2",
+    headerClasses: "bg-grey-2",
     style: {
       borderTop: "1px solid",
       textAlign: "center",
@@ -1293,7 +1278,7 @@ const receiptListColumns = ref([
       textAlign: "center",
       lineHeight: "10px",
     },
-    headerClasses: "bg-blue-2",
+    headerClasses: "bg-grey-2",
     style: {
       borderTop: "1px solid",
       textAlign: "center",
@@ -1308,7 +1293,7 @@ const receiptListColumns = ref([
       textAlign: "center",
       lineHeight: "10px",
     },
-    headerClasses: "bg-blue-2",
+    headerClasses: "bg-grey-2",
     style: {
       borderTop: "1px solid",
       textAlign: "center",
@@ -1323,7 +1308,7 @@ const receiptListColumns = ref([
       textAlign: "center",
       lineHeight: "10px",
     },
-    headerClasses: "bg-blue-2",
+    headerClasses: "bg-grey-2",
     style: {
       borderTop: "1px solid",
       textAlign: "center",
@@ -1338,7 +1323,7 @@ const receiptListColumns = ref([
       textAlign: "center",
       lineHeight: "10px",
     },
-    headerClasses: "bg-blue-2",
+    headerClasses: "bg-grey-2",
     style: {
       borderTop: "1px solid",
       textAlign: "center",
@@ -1356,7 +1341,7 @@ const accountReportColumns = ref([
       textAlign: "center",
       lineHeight: "10px",
     },
-    headerClasses: "bg-blue-2",
+    headerClasses: "bg-grey-2",
     style: {
       borderTop: "1px solid",
       textAlign: "center",
@@ -1372,7 +1357,7 @@ const accountReportColumns = ref([
       textAlign: "center",
       lineHeight: "10px",
     },
-    headerClasses: "bg-blue-2",
+    headerClasses: "bg-grey-2",
     style: {
       borderTop: "1px solid",
       textAlign: "center",
@@ -1388,7 +1373,7 @@ const accountReportColumns = ref([
       textAlign: "center",
       lineHeight: "10px",
     },
-    headerClasses: "bg-blue-2",
+    headerClasses: "bg-grey-2",
     style: {
       borderTop: "1px solid",
       textAlign: "center",
@@ -1403,7 +1388,7 @@ const accountReportColumns = ref([
       textAlign: "center",
       lineHeight: "10px",
     },
-    headerClasses: "bg-blue-2",
+    headerClasses: "bg-grey-2",
     style: {
       borderTop: "1px solid",
       textAlign: "center",
@@ -1418,7 +1403,7 @@ const accountReportColumns = ref([
       textAlign: "center",
       lineHeight: "10px",
     },
-    headerClasses: "bg-blue-2",
+    headerClasses: "bg-grey-2",
     style: {
       borderTop: "1px solid",
       textAlign: "center",

@@ -16,6 +16,7 @@ const props = defineProps({
   eventData: {
     type: Object,
     required: true,
+    default: {},
   },
   attendanceData: {
     type: Array,
@@ -52,7 +53,10 @@ const attendanceRecord = computed(() => {
             (rec.b_is_youth || rec.b_is_youth_family) &&
             rec.d_date == att.d_date
         )
-        .reduce((a, b) => a + b.i_in_center_session, 0);
+        .reduce(
+          (a, b) => a + b.i_in_center_session + b.i_out_center_session,
+          0
+        );
       res.find((r) => r.d_date == att.d_date).youthCount = youthCount
         ? youthCount
         : 0;
@@ -64,9 +68,9 @@ const attendanceRecord = computed(() => {
             (rec.b_is_youth || rec.b_is_youth_family) &&
             rec.d_date == att.d_date
         )
-        .map((obj) => obj.i_in_center_session);
+        .map((obj) => obj.i_in_center_session + obj.i_out_center_session);
 
-      res.find((r) => r.d_date == att.d_date).sessionCount =
+      res.find((r) => r.d_date == att.d_date).session =
         sessionCountArray.length > 0 ? Math.max(...sessionCountArray) : 0;
     });
   }
@@ -78,12 +82,50 @@ const attendanceRecord = computed(() => {
 const attendanceDailyRecord = computed(() =>
   props.attendanceOthersData.map((rec) => {
     return {
-      date: rec.d_date,
+      d_date: rec.d_date,
       youthCount: rec.i_youth_count + rec.i_youth_family_count,
-      session: Math.max(rec.i_youth_session, rec.i_youth_family_session),
+      session:
+        Math.max(rec.i_youth_session, rec.i_youth_family_session) +
+        Math.max(
+          rec.i_youth_session_out_center,
+          rec.i_youth_family_session_out_center
+        ),
     };
   })
 );
+
+const combinedRecord = computed(() => {
+  let res = [];
+  if (attendanceRecord.value && attendanceDailyRecord.value) {
+    attendanceDailyRecord.value.forEach((dRec) => {
+      let recordIndex = attendanceRecord.value.findIndex(
+        (record) => record.d_date == dRec.d_date
+      );
+
+      if (recordIndex < 0) {
+        res.push(dRec);
+      } else {
+        let recYouth = attendanceRecord.value[recordIndex].youthCount
+          ? attendanceRecord.value[recordIndex].youthCount
+          : 0;
+        let dRecYouth = dRec.youthCount ? dRec.youthCount : 0;
+        let recSession = attendanceRecord.value[recordIndex].session
+          ? attendanceRecord.value[recordIndex].session
+          : 0;
+        let dRecSession = dRec.session ? dRec.session : 0;
+
+        res.push({
+          d_date: dRec.d_date,
+          youthCount: recYouth + dRecYouth,
+          session: recSession + dRecSession,
+        });
+      }
+    });
+  }
+  return res
+    .filter((rec) => rec.youthCount > 0 || rec.session > 0)
+    .sort((a, b) => a.d_date.localeCompare(b.d_date));
+});
 
 onMounted(() => {
   if (!props.reportMonth) return;
@@ -100,8 +142,7 @@ onMounted(() => {
   drawContent(
     doc,
     props.eventData.HTX_Event_by_pk,
-    attendanceRecord.value.sort((a, b) => a.d_date.localeCompare(b.d_date)),
-    attendanceDailyRecord.value.sort((a, b) => a.date.localeCompare(b.date)),
+    combinedRecord.value,
     props.reportMonth
   );
 
@@ -128,13 +169,7 @@ onMounted(() => {
 });
 
 // PDF generation functions
-async function drawContent(
-  doc,
-  event,
-  attendance,
-  attendanceDaily,
-  reportMonth
-) {
+async function drawContent(doc, event, combinedRecord, reportMonth) {
   doc.setFontSize(14);
   doc.text("長洲鄉事委員會青年綜合服務中心", 110, 5, "center");
   doc.text("每月服務統計表", 110, 12, "center");
@@ -166,12 +201,15 @@ async function drawContent(
   // third line
   doc.text("日期：", 5, 42, "left");
   if (event.d_date_from)
-    doc.text(
-      event.d_date_from.trim() + " - " + event.d_date_to,
-      27,
-      42,
-      "left"
-    );
+    if (event.d_date_from == event.d_date_to)
+      doc.text(event.d_date_from.trim(), 27, 42, "left");
+    else
+      doc.text(
+        event.d_date_from.trim() + " - " + event.d_date_to,
+        27,
+        42,
+        "left"
+      );
   doc.line(27, 44, 99, 44);
   doc.text("時間：", 109, 42, "left");
   if (event.d_time_from)
@@ -245,42 +283,35 @@ async function drawContent(
   doc.text("活動節數", 163, line, "right");
   doc.line(30, line + 2, 170, line + 2);
   line += 6;
-  let countTotal = 0;
-  let sessionTotal = 0;
 
-  for (let i = 0; i < attendanceDaily.length; i++) {
+  for (let i = 0; i < combinedRecord.length; i++) {
     doc.text(
-      date.formatDate(attendanceDaily[i].date, "DD/MM/YYYY"),
+      date.formatDate(combinedRecord[i].d_date, "DD/MM/YYYY"),
       55,
       line,
       "center"
     );
-    let index = attendance.findIndex(
-      (rec) => rec.d_date == attendanceDaily[i].date
-    );
-    let youthCount =
-      (attendanceDaily[i].youthCount ? attendanceDaily[i].youthCount : 0) +
-      (index >= 0 && attendance[index].youthCount
-        ? attendance[index].youthCount
-        : 0);
-    countTotal += youthCount;
-    doc.text(youthCount.toString(), 110, line, "right");
 
-    let youthSession =
-      (attendanceDaily[i].session ? attendanceDaily[i].session : 0) +
-      (index >= 0 && attendance[index].sessionCount
-        ? attendance[index].sessionCount
-        : 0);
-    sessionTotal += youthSession;
-    doc.text(youthSession.toString(), 157, line, "right");
+    doc.text(combinedRecord[i].youthCount.toString(), 110, line, "right");
+    doc.text(combinedRecord[i].session.toString(), 157, line, "right");
     doc.line(30, line + 2, 170, line + 2);
     line += 6;
   }
 
   // total
   doc.text("合計", 55, line, "center");
-  doc.text(countTotal.toString(), 110, line, "right");
-  doc.text(sessionTotal.toString(), 157, line, "right");
+  doc.text(
+    combinedRecord.reduce((a, v) => a + v.youthCount, 0).toString(),
+    110,
+    line,
+    "right"
+  );
+  doc.text(
+    combinedRecord.reduce((a, v) => a + v.session, 0).toString(),
+    157,
+    line,
+    "right"
+  );
   doc.line(30, line + 2, 170, line + 2);
   doc.line(30, tableLineStart + 2, 30, line + 2);
   doc.line(80, tableLineStart + 2, 80, line + 2);

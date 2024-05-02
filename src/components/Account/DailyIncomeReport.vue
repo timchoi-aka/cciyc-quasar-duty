@@ -225,6 +225,7 @@ function drawContent(doc, reportData) {
   // footer
   lineNo += 2;
   doc.text("編製人員: ", 20, atLine(lineNo), "left");
+  doc.text("胡麗嫦", 60, atLine(lineNo), "center");
   doc.text("日期: ", 110, atLine(lineNo), "left");
   doc.line(40, atLine(lineNo) + 2, 105, atLine(lineNo) + 2);
   doc.line(125, atLine(lineNo) + 2, 175, atLine(lineNo) + 2);

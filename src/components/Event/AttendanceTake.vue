@@ -168,12 +168,22 @@
     </div>
     <div class="col-xs-2 col-sm-2 col-md-2 row justify-center">
       <q-btn-toggle
-        color="purple-1"
-        toggle-color="purple-7"
+        color="blue-1"
+        toggle-color="blue-7"
         text-color="black"
         clearable
         v-model="inCenterYouthSession"
         :options="inCenterOptions"
+      />
+    </div>
+    <div class="col-xs-2 col-sm-2 col-md-2 row justify-center">
+      <q-btn-toggle
+        color="red-1"
+        toggle-color="red-7"
+        text-color="black"
+        clearable
+        v-model="outCenterYouthSession"
+        :options="outCenterOptions"
       />
     </div>
   </div>
@@ -191,12 +201,22 @@
     </div>
     <div class="col-xs-2 col-sm-2 col-md-2 row justify-center">
       <q-btn-toggle
-        color="orange-1"
-        toggle-color="orange-7"
+        color="blue-1"
+        toggle-color="blue-7"
         text-color="black"
         clearable
         v-model="inCenterYouthFamilySession"
         :options="inCenterOptions"
+      />
+    </div>
+    <div class="col-xs-2 col-sm-2 col-md-2 row justify-center">
+      <q-btn-toggle
+        color="red-1"
+        toggle-color="red-7"
+        text-color="black"
+        clearable
+        v-model="outCenterYouthFamilySession"
+        :options="outCenterOptions"
       />
     </div>
   </div>
@@ -252,6 +272,8 @@ const inCenterAttendanceList = ref({});
 const outCenterAttendanceList = ref({});
 const inCenterYouthSession = ref({});
 const inCenterYouthFamilySession = ref({});
+const outCenterYouthSession = ref({});
+const outCenterYouthFamilySession = ref({});
 const youthAttendance = ref(0);
 const youthFamilyAttendance = ref(0);
 const inCenterOptions = ref([]);
@@ -271,9 +293,13 @@ watch(inCenterSession, (newValue) => {
   // loop through inCenterAttendanceList and remove those that exceed the new session
   Object.entries(inCenterAttendanceList.value).forEach(([c_mem_id, att]) => {
     if (newValue < att) {
-      delete inCenterAttendanceList.value[c_mem_id];
+      inCenterAttendanceList.value[c_mem_id] = 0;
     }
   });
+
+  if (newValue < inCenterYouthSession.value) {
+    inCenterYouthSession.value = 0;
+  }
 });
 
 // watch outCenterSession to update outCenterOptions
@@ -285,9 +311,13 @@ watch(outCenterSession, (newValue) => {
   // loop through outCenterAttendanceList and remove those that exceed the new session
   Object.entries(outCenterAttendanceList.value).forEach(([c_mem_id, att]) => {
     if (newValue < att) {
-      delete outCenterAttendanceList.value[c_mem_id];
+      outCenterAttendanceList.value[c_mem_id] = 0;
     }
   });
+
+  if (newValue < outCenterYouthSession.value) {
+    outCenterYouthSession.value = 0;
+  }
 });
 
 // queries
@@ -323,6 +353,8 @@ watch(
     outCenterSession.value = 0;
     inCenterYouthSession.value = 0;
     inCenterYouthFamilySession.value = 0;
+    outCenterYouthSession.value = 0;
+    outCenterYouthFamilySession.value = 0;
     youthAttendance.value = 0;
     youthFamilyAttendance.value = 0;
 
@@ -372,6 +404,14 @@ watch(
             attendanceResult.value.AttendanceNonRegistrant[
               i
             ].i_youth_family_session;
+          outCenterYouthSession.value =
+            attendanceResult.value.AttendanceNonRegistrant[
+              i
+            ].i_youth_session_out_center;
+          outCenterYouthFamilySession.value =
+            attendanceResult.value.AttendanceNonRegistrant[
+              i
+            ].i_youth_family_session_out_center;
           youthAttendance.value =
             attendanceResult.value.AttendanceNonRegistrant[i].i_youth_count;
           youthFamilyAttendance.value =
@@ -409,6 +449,12 @@ watch(
           newResult.AttendanceNonRegistrant[i].i_youth_session;
         inCenterYouthFamilySession.value =
           newResult.AttendanceNonRegistrant[i].i_youth_family_session;
+        outCenterYouthSession.value =
+          newResult.AttendanceNonRegistrant[i].i_youth_session_out_center;
+        outCenterYouthFamilySession.value =
+          newResult.AttendanceNonRegistrant[
+            i
+          ].i_youth_family_session_out_center;
         youthAttendance.value =
           newResult.AttendanceNonRegistrant[i].i_youth_count;
         youthFamilyAttendance.value =
@@ -615,8 +661,14 @@ function save() {
     i_youth_session: inCenterYouthSession.value
       ? parseInt(inCenterYouthSession.value)
       : 0,
+    i_youth_session_out_center: outCenterYouthSession.value
+      ? parseInt(outCenterYouthSession.value)
+      : 0,
     i_youth_family_session: inCenterYouthFamilySession.value
       ? parseInt(inCenterYouthFamilySession.value)
+      : 0,
+    i_youth_family_session_out_center: outCenterYouthFamilySession.value
+      ? parseInt(outCenterYouthFamilySession.value)
       : 0,
     i_youth_count: youthAttendance.value ? parseInt(youthAttendance.value) : 0,
     i_youth_family_count: youthFamilyAttendance.value

@@ -1,49 +1,92 @@
 <template>
-  <q-splitter
-    v-model="verticalModel"
-    class="fit">
+  <q-splitter v-model="verticalModel" class="fit">
     <template v-slot:before>
-      <div class="row items-center text-bold">
-        <MemberSelection v-model="MemberObject.c_mem_id"/>
-        <MemberInfoByID v-model="MemberObject"/>
-      </div>
-      <q-separator/>
-      <div class="row items-center">
-        <q-select
-          :options="EventOptions"
+      <div class="row">
+        <div class="row col-12 bg-blue-2 text-left q-pa-sm">
+          <div class="col-3">會員號碼</div>
+          <div class="col-2 q-pl-md">姓名</div>
+          <div class="col-2 q-pl-sm">年齡</div>
+          <div class="col-2">會藉</div>
+          <div class="col-3 q-pl-md">屆滿日期</div>
+        </div>
+        <div class="row col-12 items-center text-bold">
+          <MemberSelection v-model="MemberObject.c_mem_id" />
+          <MemberInfoByID v-model="MemberObject" />
+        </div>
+        <q-separator />
+        <div class="row col-12 items-center">
+          <q-btn
+            icon="add"
+            class="bg-primary text-white q-ma-sm"
+            @click="events.push({ c_act_code: '', fee: 0 })"
+            label="新增報名活動"
+          />
+        </div>
+        <div class="row col-12">
+          <div
+            v-for="(item, index) in events"
+            :key="item"
+            class="q-mx-xs row col-11 items-center"
+          >
+            <q-btn
+              icon="delete"
+              class="text-negative"
+              flat
+              @click="events.splice(index, 1)"
+            />
+            <div class="col-7">
+              <EventBatchApplySelection v-model="events[index]" />
+            </div>
+            <div class="col-2">
+              <EventBatchApplyFeeSelection
+                v-if="events[index]"
+                v-model="events[index].fee"
+                :event="events[index]"
+              />
+            </div>
+            <div class="col-2">
+              <EventBatchApplyQuotaDisplay
+                v-if="events[index]"
+                v-model="events[index].i_quota_left"
+                :event="events[index]"
+              />
+            </div>
+          </div>
+        </div>
+        <div class="row col-12 q-mt-md items-center">
+          <q-btn
+            class="q-mx-xs col-2 bg-negative text-white"
+            icon="cancel"
+            @click="
+              events = [];
+              MemberObject = {};
+            "
+            >重置</q-btn
+          >
+          <q-btn
+            class="q-mx-xs col-2 bg-positive text-white"
+            icon="check"
+            @click="save"
+            :disable="!validApplication"
+            >報名</q-btn
+          >
 
-          use-input
-          fill-input
-          menu-self="bottom end"
-          class="col-7"
-          @filter="eventFilter"
-          v-model="c_act_codes">
-          <template v-slot:option="scope">
-            <q-item v-bind="scope.itemProps">
-            {{ scope.opt.c_act_code }} - {{ scope.opt.c_act_name }}
-              <div v-if="scope.opt.b_freeofcharge">(免費)</div>
-            </q-item>
-          </template>
-          <template v-slot:selected>
-            <q-item class="q-mx-none q-my-none" v-for="item in c_act_codes"><q-chip class="q-mx-none q-my-none">{{ item.c_act_code }}</q-chip></q-item>
-          </template>
-        </q-select>
-        <q-space/>
-        <q-btn class="q-mx-xs col-2 bg-negative text-white" icon="cancel" @click="c_act_codes = []; MemberObject = {}">重置</q-btn>
-        <q-btn class="q-mx-xs col-2 bg-positive text-white" icon="check" @click="save">報名</q-btn>
+          <q-chip
+            v-if="warningMessage"
+            icon="warning"
+            :label="warningMessage"
+            class="bg-warning text-white text-bold"
+          />
+          <div class="col-2 text-negative text-bold">
+            {{ invalidMessage }}
+          </div>
+        </div>
       </div>
     </template>
     <template v-slot:after>
-      <q-splitter
-        horizontal
-        v-model="horizontalModel"
-        class="fit">
-          <template v-slot:before>
-            top right
-          </template>
-          <template v-slot:after>
-            bot right
-          </template>
+      <q-splitter horizontal v-model="horizontalModel" class="fit">
+        <template v-slot:before> top right </template>
+        <template v-slot:after> bot right </template>
       </q-splitter>
     </template>
   </q-splitter>
@@ -52,40 +95,45 @@
 <script setup>
 import { computed, ref } from "vue";
 import { useStore } from "vuex";
-import { useQuasar, date as qdate} from "quasar";
-import { EVENT_GET_ALL_ACTIVE, EVENT_APPLY_BY_ACT_CODE, EVENT_BY_PK, EVENT_FEE_BY_ACT_CODE } from "/src/graphQueries/Event/query.js"
-import { EVENT_REGISTRATION, FREE_EVENT_REGISTRATION, EVENT_UNREGISTRATION, FREE_EVENT_UNREGISTRATION } from "/src/graphQueries/Event/mutation.js"
-import { useQuery, useMutation } from "@vue/apollo-composable"
-import Receipt from "components/Account/Receipt.vue"
-import MemberInfoByID from "src/components/Member/MemberInfoByID.vue"
-import MemberSelection from "components/Member/MemberSelection.vue"
+import { useQuasar, date as qdate } from "quasar";
+import {
+  EVENT_GET_ALL_ACTIVE,
+  EVENT_APPLY_BY_ACT_CODE,
+  EVENT_BY_PK,
+  EVENT_FEE_BY_ACT_CODE,
+} from "/src/graphQueries/Event/query.js";
+import {
+  EVENT_REGISTRATION,
+  FREE_EVENT_REGISTRATION,
+  EVENT_UNREGISTRATION,
+  FREE_EVENT_UNREGISTRATION,
+} from "/src/graphQueries/Event/mutation.js";
+import { useQuery, useMutation } from "@vue/apollo-composable";
+import Receipt from "components/Account/Receipt.vue";
+import MemberInfoByID from "src/components/Member/MemberInfoByID.vue";
+import MemberSelection from "components/Member/MemberSelection.vue";
 import { useAccountProvider } from "src/providers/account";
+import EventBatchApplySelection from "components/Event/EventBatchApplySelection.vue";
+import EventBatchApplyFeeSelection from "components/Event/EventBatchApplyFeeSelection.vue";
+import EventBatchApplyQuotaDisplay from "components/Event/EventBatchApplyQuotaDisplay.vue";
 
 // variables
-const $q = useQuasar()
+const $q = useQuasar();
 const $store = useStore();
-const printReceiptDisplay = ref(false)
-const printReceiptNumber = ref("")
-const ApplicationQueue = ref([])
-const validateDisplay = ref(false)
-const unregisterDisplay = ref(false)
-const unregisterItem = ref({})
-const verticalModel = ref(50)
-const horizontalModel = ref(50)
-const MemberObject = ref({})
-const c_act_codes = ref([])
-const EventOptions = ref([])
-const OriginalEventOptions = ref([])
-
+const printReceiptDisplay = ref(false);
+const printReceiptNumber = ref("");
+const ApplicationQueue = ref([]);
+const validateDisplay = ref(false);
+const unregisterDisplay = ref(false);
+const unregisterItem = ref({});
+const verticalModel = ref(70);
+const horizontalModel = ref(50);
+const MemberObject = ref({});
+const events = ref([]);
+const EventOptions = ref([]);
+const OriginalEventOptions = ref([]);
+const now = new Date();
 // query
-const { onResult: activeEvents, loading: loadingEvents, onError: activeEventsError } = useQuery(EVENT_GET_ALL_ACTIVE, {}, {pollInterval: 3000});
-
-activeEvents((result) => {
-  if (result.data) {
-    EventOptions.value = result.data.HTX_Event
-    OriginalEventOptions.value = EventOptions.value
-  }
-})
 
 /*
 const { result: EventData, onError: EventDataError } = useQuery(
@@ -109,25 +157,95 @@ const { onResult: onApplyResult, onError: EventApplyError } = useQuery(
   });
 */
 
+const { latestReceiptNo } = useAccountProvider();
+const {
+  mutate: eventRegistration,
+  onDone: eventRegistration_Completed,
+  onError: eventRegistration_Error,
+} = useMutation(EVENT_REGISTRATION);
+const {
+  mutate: freeEventRegistration,
+  onDone: freeEventRegistration_Completed,
+  onError: freeEventRegistration_Error,
+} = useMutation(FREE_EVENT_REGISTRATION);
 
-const { latestReceiptNo } = useAccountProvider()
-const { mutate: eventRegistration, onDone: eventRegistration_Completed, onError: eventRegistration_Error } = useMutation(EVENT_REGISTRATION)
-const { mutate: freeEventRegistration, onDone: freeEventRegistration_Completed, onError: freeEventRegistration_Error } = useMutation(FREE_EVENT_REGISTRATION)
-
-const { mutate: eventUnregistration, onDone: eventUnregistration_Completed, onError: eventUnregistration_Error } = useMutation(EVENT_UNREGISTRATION)
-const { mutate: freeEventUnregistration, onDone: freeEventUnregistration_Completed, onError: freeEventUnregistration_Error } = useMutation(FREE_EVENT_UNREGISTRATION)
+const {
+  mutate: eventUnregistration,
+  onDone: eventUnregistration_Completed,
+  onError: eventUnregistration_Error,
+} = useMutation(EVENT_UNREGISTRATION);
+const {
+  mutate: freeEventUnregistration,
+  onDone: freeEventUnregistration_Completed,
+  onError: freeEventUnregistration_Error,
+} = useMutation(FREE_EVENT_UNREGISTRATION);
 
 // computed
-const username = computed(() => $store.getters["userModule/getUsername"])
-const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
-const isFinance = computed(() => $store.getters["userModule/getFinance"])
-const ApplyHistory = ref([])
+const username = computed(() => $store.getters["userModule/getUsername"]);
+const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"]);
+const isFinance = computed(() => $store.getters["userModule/getFinance"]);
+const ApplyHistory = ref([]);
 // const Event = computed(() => EventData.value?.HTX_Event_by_pk??[])
-const Fee = ref([])
-const userProfileLogout = () => $store.dispatch("userModule/logout")
+const Fee = ref([]);
+const userProfileLogout = () => $store.dispatch("userModule/logout");
 
+// validApplication return false if events is empty or duplicated c_act_code found in events
+const invalidMessage = ref();
+const warningMessage = ref();
+const validApplication = computed(() => {
+  warningMessage.value = "";
+  invalidMessage.value = "";
 
+  if (
+    MemberObject.value.c_mem_id == "" ||
+    MemberObject.value.c_mem_id == null
+  ) {
+    invalidMessage.value += "請輸入會員號碼";
+    return false;
+  }
 
+  if (qdate.getDateDiff(MemberObject.value.d_expired_1, now) < 0) {
+    warningMessage.value += "注意：會藉已過期";
+  }
+
+  // First, check if the events array is empty
+  if (events.value.length === 0) {
+    invalidMessage.value += "請新增報名活動";
+    return false; // Invalid if empty
+  }
+
+  // if user didn't input any c_act_code, don't allow application
+  if (events.value.filter((ele) => ele.c_act_code != "").length == 0) {
+    invalidMessage.value += "請選擇報名活動";
+    return false;
+  }
+
+  // Extract c_act_code values from events and create a Set to remove duplicates
+  const cActCodes = new Set(events.value.map((event) => event.c_act_code));
+
+  // Compare the length of the Set to the original events array
+  // If they are different, it means there were duplicates
+  if (cActCodes.size !== events.value.length) {
+    invalidMessage.value += "請勿重複報名活動";
+    return false; // Invalid if duplicates found
+  }
+
+  // return false if event is not free but didn't have a charge input
+  let validRecord = true;
+  events.value.forEach((e) => {
+    if (
+      e.c_act_code != "" &&
+      !e.b_freeofcharge &&
+      (e.fee <= 0 || e.fee == "" || e.fee == null)
+    ) {
+      invalidMessage.value += "請輸入正確收費";
+      validRecord = false;
+    }
+  });
+  if (!validRecord) return false;
+
+  return true;
+});
 
 const columns = ref([
   {
@@ -201,9 +319,10 @@ const columns = ref([
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
-    format: (val) => qdate.formatDate(val, "YYYY年M月D日", {
-                  daysShort: ['日', '一', '二', '三', '四', '五', '六'],
-                })
+    format: (val) =>
+      qdate.formatDate(val, "YYYY年M月D日", {
+        daysShort: ["日", "一", "二", "三", "四", "五", "六"],
+      }),
   },
   {
     name: "b_refund",
@@ -220,17 +339,18 @@ const columns = ref([
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
-    format: (val) => qdate.formatDate(val, "YYYY年M月D日", {
-                  daysShort: ['日', '一', '二', '三', '四', '五', '六'],
-                })
+    format: (val) =>
+      qdate.formatDate(val, "YYYY年M月D日", {
+        daysShort: ["日", "一", "二", "三", "四", "五", "六"],
+      }),
   },
-])
+]);
 
 const pagination = ref({
   rowsPerPage: 30,
   sortBy: "d_act",
   descending: true,
-})
+});
 
 // functions
 /*
@@ -299,13 +419,13 @@ function submitApplication() {
       c_tel: item.c_tel,
     })
     */
-    /*
+/*
     console.log("remark:" + remark)
     console.log("logObject:" + JSON.stringify(logObject.value))
     console.log("accountObject:" + JSON.stringify(accountObject.value))
     console.log("regObject: " + JSON.stringify(regObject.value))
     */
-   /*
+/*
     if (Event.value.b_freeofcharge) {
       freeEventRegistration({
         logObject: logObject.value,
@@ -324,75 +444,99 @@ function submitApplication() {
 
 function newFee(val, done) {
   if (val.length > 0) {
-    let i = Fee.value.findIndex((element) => element.value == val)
+    let i = Fee.value.findIndex((element) => element.value == val);
     if (i == -1) {
       if (val <= 0) {
-        $q.notify({message: "收費必須大於0！", icon: 'error', color: 'negative', textColor: 'white' })
+        $q.notify({
+          message: "收費必須大於0！",
+          icon: "error",
+          color: "negative",
+          textColor: "white",
+        });
       } else {
         Fee.value.push({
           label: "特別收費",
-          value: val
-        })
-        done(Fee.value[Fee.value.length -1], 'toggle')
+          value: val,
+        });
+        done(Fee.value[Fee.value.length - 1], "toggle");
       }
     } else {
-      done(Fee.value[i], 'toggle')
+      done(Fee.value[i], "toggle");
     }
-
   }
 }
 function startValidation() {
   if (!ApplicationQueue.value[0].c_mem_id) {
-    $q.notify({ message: "請輸入會員號碼！", icon: 'error', color: 'negative', textColor: 'white' })
-    return
+    $q.notify({
+      message: "請輸入會員號碼！",
+      icon: "error",
+      color: "negative",
+      textColor: "white",
+    });
+    return;
   }
 
   if (ApplicationQueue.value[0].c_name == "無此人") {
-    $q.notify({ message: "請輸入正確會員號碼！", icon: 'error', color: 'negative', textColor: 'white' })
-    return
+    $q.notify({
+      message: "請輸入正確會員號碼！",
+      icon: "error",
+      color: "negative",
+      textColor: "white",
+    });
+    return;
   }
 
   if (!Event.value.b_freeofcharge && !ApplicationQueue.value[0].u_fee.value) {
-    $q.notify({ message: "請輸入正確收費！", icon: 'error', color: 'negative', textColor: 'white' })
-    return
+    $q.notify({
+      message: "請輸入正確收費！",
+      icon: "error",
+      color: "negative",
+      textColor: "white",
+    });
+    return;
   }
 
-  validateDisplay.value = true
+  validateDisplay.value = true;
 }
 
 function confirmUnregister(object) {
-  unregisterItem.value = object
-  unregisterDisplay.value = true
+  unregisterItem.value = object;
+  unregisterDisplay.value = true;
 }
 
 function unregister() {
   const logObject = ref({
-    "username": username,
-    "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-    "module": "活動系統",
-    "action": "會員" + unregisterItem.value.c_mem_id + "(" + unregisterItem.value.c_name + ") 取消報名活動 " + unregisterItem.value.c_act_code
-  })
+    username: username,
+    datetime: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+    module: "活動系統",
+    action:
+      "會員" +
+      unregisterItem.value.c_mem_id +
+      "(" +
+      unregisterItem.value.c_name +
+      ") 取消報名活動 " +
+      unregisterItem.value.c_act_code,
+  });
 
   const unregObject = ref({
     b_refund: true,
-    d_refund: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss")
-  })
+    d_refund: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+  });
 
   if (Event.value.b_freeofcharge) {
-      freeEventUnregistration({
-        logObject: logObject.value,
-        unregObject: unregObject.value,
-        ID: unregisterItem.value.ID
-      })
-    } else {
-      eventUnregistration({
-        logObject: logObject.value,
-        unregObject: unregObject.value,
-        c_receipt_no: unregisterItem.value.c_receipt_no,
-        ID: unregisterItem.value.ID
-      })
-    }
-
+    freeEventUnregistration({
+      logObject: logObject.value,
+      unregObject: unregObject.value,
+      ID: unregisterItem.value.ID,
+    });
+  } else {
+    eventUnregistration({
+      logObject: logObject.value,
+      unregObject: unregObject.value,
+      c_receipt_no: unregisterItem.value.c_receipt_no,
+      ID: unregisterItem.value.ID,
+    });
+  }
 }
 
 function printReceipt(c_receipt_no) {
@@ -474,28 +618,31 @@ freeEventUnregistration_Error((error) => {
 // UI function
 function notifyClientError(error) {
   $q.notify({ message: "系統錯誤，請重新登入." });
-  console.log("error", error)
+  console.log("error", error);
 }
 
 function eventFilter(val, update) {
-  if (val === '') {
+  if (val === "") {
     update(() => {
-      EventOptions.value = OriginalEventOptions.value
-    })
-    return
+      EventOptions.value = OriginalEventOptions.value;
+    });
+    return;
   }
 
   update(() => {
-    EventOptions.value = OriginalEventOptions.value
-    EventOptions.value = EventOptions.value.filter(v =>
-      (v.c_act_code? v.c_act_code.indexOf(val) > -1 : false) ||
-      (v.c_act_name? v.c_act_name.toLowerCase().indexOf(val.toLowerCase()) > -1 : false)
-    )
-  })
+    EventOptions.value = OriginalEventOptions.value;
+    EventOptions.value = EventOptions.value.filter(
+      (v) =>
+        (v.c_act_code ? v.c_act_code.indexOf(val) > -1 : false) ||
+        (v.c_act_name
+          ? v.c_act_name.toLowerCase().indexOf(val.toLowerCase()) > -1
+          : false)
+    );
+  });
 }
 
 function save() {
-  console.log(JSON.stringify(MemberObject.value))
-  console.log(JSON.stringify(c_act_codes.value))
+  console.log(JSON.stringify(MemberObject.value));
+  console.log(JSON.stringify(events.value));
 }
 </script>

@@ -32,6 +32,8 @@ export function useAttendanceNonRegistrantProvider(options = {}) {
         i_youth_family_count
         c_updateuser
         d_updatetime
+        i_youth_session_out_center
+        i_youth_family_session_out_center
       }
     }
   `;
@@ -51,6 +53,8 @@ export function useAttendanceNonRegistrantProvider(options = {}) {
             i_youth_family_count
             c_updateuser
             d_updatetime
+            i_youth_session_out_center
+            i_youth_family_session_out_center
           ]
         }
       ) {
@@ -63,6 +67,8 @@ export function useAttendanceNonRegistrantProvider(options = {}) {
           i_youth_family_count
           c_updateuser
           d_updatetime
+          i_youth_session_out_center
+          i_youth_family_session_out_center
         }
       }
     }

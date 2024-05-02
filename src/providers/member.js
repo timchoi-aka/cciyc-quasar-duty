@@ -151,6 +151,7 @@ export function useMemberProvider(options = {}) {
           c_name
           c_name_other
           d_expired_1
+          d_exit_1
           c_udf_1
         }
         RelationMember2 {
@@ -160,6 +161,7 @@ export function useMemberProvider(options = {}) {
           c_name
           c_name_other
           d_expired_1
+          d_exit_1
           c_udf_1
         }
       }
@@ -175,6 +177,7 @@ export function useMemberProvider(options = {}) {
           c_name
           c_name_other
           d_expired_1
+          d_exit_1
           c_udf_1
         }
         RelationMember2 {
@@ -184,6 +187,7 @@ export function useMemberProvider(options = {}) {
           c_name
           c_name_other
           d_expired_1
+          d_exit_1
           c_udf_1
         }
       }

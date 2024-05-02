@@ -21,7 +21,7 @@ export function useEventProvider(options = {}) {
   const awaitNumber = ref(0);
 
   // Computed property that indicates whether there are any pending async operations
-  const loading = computed(() => awaitNumber.value > 0 || loadingEvent);
+  const loading = computed(() => awaitNumber.value > 0 || loadingEvent.value);
 
   // returned message to be displayed to client
   const message = ref({});

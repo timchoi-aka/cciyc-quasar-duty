@@ -202,11 +202,17 @@ async function drawContent(doc, event, type) {
   // third line
   lineNo = newLine(doc, lineNo);
   doc.text("舉辦日期：", 5, atLine(lineNo), "left");
+  let s_planDate =
+    EvalData.plan_start_date == EvalData.plan_end_date
+      ? EvalData.plan_start_date
+      : EvalData.plan_start_date + " 至 " + EvalData.plan_end_date;
+  let s_evalDate =
+    EvalData.eval_start_date == EvalData.eval_end_date
+      ? EvalData.eval_start_date
+      : EvalData.eval_start_date + " 至 " + EvalData.eval_end_date;
   let s_planDateTime = EvalData.plan_start_date
     ? "計劃： " +
-      EvalData.plan_start_date +
-      " 至 " +
-      EvalData.plan_end_date +
+      s_planDate +
       " " +
       EvalData.plan_start_time +
       " - " +
@@ -214,9 +220,7 @@ async function drawContent(doc, event, type) {
     : "";
   let s_evalDateTime = EvalData.eval_start_date
     ? "檢討： " +
-      EvalData.eval_start_date +
-      " 至 " +
-      EvalData.eval_end_date +
+      s_evalDate +
       " " +
       EvalData.eval_start_time +
       " - " +
@@ -491,7 +495,7 @@ async function drawContent(doc, event, type) {
     if (EvalData.remarks)
       doc.text(EvalData.remarks, 20, atLine(lineNo), "left");
   } else {
-    if (EvalData.remarks)
+    if (EvalData.remarks_eval)
       doc.text(EvalData.remarks_eval, 20, atLine(lineNo), "left");
   }
   doc.line(20, atLine(lineNo) + 1, 200, atLine(lineNo) + 1);

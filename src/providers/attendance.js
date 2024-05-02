@@ -49,6 +49,8 @@ export function useAttendanceProvider(options = {}) {
         d_updatetime
         i_in_center_sessions
         i_out_center_sessions
+        i_youth_session_out_center
+        i_youth_family_session_out_center
       }
     }
   `;
@@ -126,6 +128,8 @@ export function useAttendanceProvider(options = {}) {
             d_updatetime
             i_in_center_sessions
             i_out_center_sessions
+            i_youth_session_out_center
+            i_youth_family_session_out_center
           ]
         }
       ) {
@@ -140,6 +144,8 @@ export function useAttendanceProvider(options = {}) {
         d_updatetime
         i_in_center_sessions
         i_out_center_sessions
+        i_youth_session_out_center
+        i_youth_family_session_out_center
       }
       insert_Log_one(object: $logObject) {
         log_id

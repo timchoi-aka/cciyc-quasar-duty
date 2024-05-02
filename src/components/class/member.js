@@ -262,6 +262,26 @@ class Member {
     );
   }
 
+  isYouthFamily(asOfDate) {
+    let isYouthFamily = false;
+    let combinedRelation = [...this.MemberRelation1, ...this.MemberRelation2];
+    combinedRelation.forEach((relation) => {
+      let relatedMember = null;
+      if (this.c_mem_id == relation.c_mem_id_1) {
+        // if the member is the first person in the relation
+        relatedMember = new Member(relation.RelationMember2);
+      } else if (this.c_mem_id == relation.c_mem_id_2) {
+        // if the member is the second person in the relation
+        relatedMember = new Member(relation.RelationMember1);
+      }
+
+      if (relatedMember.isYouth(asOfDate) && relatedMember.isActive(asOfDate)) {
+        isYouthFamily = true;
+      }
+    });
+    return isYouthFamily;
+  }
+
   getAge(asOfDate) {
     return date.getDateDiff(
       asOfDate,
