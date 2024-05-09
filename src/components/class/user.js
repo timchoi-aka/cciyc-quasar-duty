@@ -54,20 +54,21 @@ class User {
     this.employment = [];
     if (o.employment) {
       o.employment.forEach((e) => {
+        let dateOfEntry, dateOfExit;
+
+        if (e.dateOfEntry instanceof Timestamp) {
+          dateOfEntry = e.dateOfEntry;
+          dateOfExit = e.dateOfExit instanceof Timestamp ? e.dateOfExit : null;
+        } else {
+          dateOfEntry = e.dateOfEntry
+            ? Timestamp.fromDate(e.dateOfEntry)
+            : new Timestamp();
+          dateOfExit = e.dateOfExit ? Timestamp.fromDate(e.dateOfExit) : null;
+        }
+
         this.employment.push({
-          dateOfEntry: e.dateOfEntry
-            ? e.dateOfEntry._seconds
-              ? new Timestamp(
-                  e.dateOfEntry._seconds,
-                  e.dateOfEntry._nanoseconds
-                )
-              : e.dateOfEntry
-            : new Timestamp(),
-          dateOfExit: e.dateOfExit
-            ? e.dateOfExit._seconds
-              ? new Timestamp(e.dateOfExit._seconds, e.dateOfExit._nanoseconds)
-              : e.dateOfExit
-            : null,
+          dateOfEntry: dateOfEntry,
+          dateOfExit: dateOfExit,
           rank: e.rank ? e.rank : "tmp",
         });
       });
@@ -100,19 +101,20 @@ class User {
     this.uid = o.uid ? o.uid : "";
   }
 
-  isValidEmployment() {
+  isValidEmployment(currentDate) {
     if (!this.enable) return false;
     if (!this.employment) return false;
+    if (
+      date.startOfDate(currentDate, "day") <
+      date.startOfDate(this.getDateOfEntry(), "day")
+    )
+      return false;
     if (!this.employment[this.employment.length - 1].dateOfExit) return true;
-
-    return (
-      this.employment[this.employment.length - 1].dateOfExit.toDate() >
-      new Date()
-    );
+    return date.getDateDiff(this.getDateOfExit(), currentDate, "day") > 0;
   }
 
   yearServed(currentDate) {
-    let dateOfEntry = this.employment[this.employment.length - 1].dateOfEntry;
+    let dateOfEntry = this.getDateOfEntry();
 
     return (
       date.getDateDiff(
@@ -124,13 +126,39 @@ class User {
   }
 
   getDateOfEntry() {
-    return this.employment[this.employment.length - 1].dateOfEntry.toDate();
+    return this.employment[0].dateOfEntry
+      ? this.employment[0].dateOfEntry.toDate()
+      : null;
   }
 
   getDateOfExit() {
     return this.employment[this.employment.length - 1].dateOfExit
       ? this.employment[this.employment.length - 1].dateOfExit.toDate()
-      : undefined;
+      : null;
+  }
+
+  getEmploymentStatus(currentDate) {
+    const isValidEmployment = this.isValidEmployment(currentDate);
+    const dateOfEntry = this.getDateOfEntry();
+    const dateOfExit = this.getDateOfExit();
+    const yearServed = this.yearServed(currentDate);
+    let rank;
+    this.employment.forEach((e) => {
+      if (
+        date.getDateDiff(e.dateOfEntry.toDate(), currentDate) <= 0 &&
+        (!e.dateOfExit ||
+          date.getDateDiff(e.dateOfExit.toDate(), currentDate) > 0)
+      ) {
+        rank = e.rank;
+      }
+    });
+    const status = {
+      dateOfEntry: dateOfEntry,
+      dateOfExit: dateOfExit,
+      yearServed: yearServed,
+      rank: rank,
+    };
+    return { isValidEmployment, status };
   }
 
   async setDateOfEntry(index, date) {
@@ -262,13 +290,20 @@ class User {
     }
 
     let leaveConfigDoc = await getDoc(query(leaveConfig));
+    const leaveData = leaveConfigDoc.data();
+    const newStaff = typeof leaveData[d.uid][0].date == "string";
+
     let leaveConfigData = {
-      rank: leaveConfigDoc.data()[d.rank],
+      rank: leaveData[d.rank],
       initialHoliday: {
-        date: leaveConfigDoc.data()[d.uid][0].date.toDate(),
-        al: leaveConfigDoc.data()[d.uid][0].al,
-        sal: leaveConfigDoc.data()[d.uid][0].sal
-          ? leaveConfigDoc.data()[d.uid][0].sal
+        date: newStaff
+          ? new Date(leaveData[d.uid][0].date)
+          : leaveData[d.uid][0].date.toDate(),
+        al: newStaff ? 0 : leaveData[d.uid][0].al,
+        sal: newStaff
+          ? 0
+          : leaveData[d.uid][0].sal
+          ? leaveData[d.uid][0].sal
           : undefined,
       },
     };

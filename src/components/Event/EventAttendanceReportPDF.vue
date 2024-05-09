@@ -117,7 +117,7 @@ const combinedRecord = computed(() => {
         res.push({
           d_date: dRec.d_date,
           youthCount: recYouth + dRecYouth,
-          session: recSession + dRecSession,
+          session: Math.max(recSession, dRecSession),
         });
       }
     });

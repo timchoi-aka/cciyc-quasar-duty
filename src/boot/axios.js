@@ -13,7 +13,10 @@ const api = axios.create({
   // baseURL: process.env.NODE_ENV == "development" ? "https://hasuradev.cciyc.com/v1/graphql/" : "https://hasura.cciyc.com:4430/v1/graphql/",
 
   // development endpoint
-  uri: process.env.NODE_ENV == "development" ? "https://hasuradev.aka-technology.com/v1/graphql/" : "https://hasura.cciyc.com:4430/v1/graphql/",
+  uri:
+    process.env.NODE_ENV == "development"
+      ? "https://hasuradev.aka-technology.com/v1/graphql/"
+      : "https://hasura.cciyc.com:4430/v1/graphql/",
 
   // azure endpoint
   // baseURL: "https://cciycgw.eastasia.cloudapp.azure.com/v1/graphql/",
@@ -24,13 +27,13 @@ const api = axios.create({
 
 api.interceptors.request.use(async (config) => {
   var token = await FirebaseAuth.currentUser.getIdToken();
-  config.headers["Authorization"] = `Bearer ${token}`
+  config.headers["Authorization"] = `Bearer ${token}`;
   config.params = config.params || {};
   // config.params["locale"] = api.defaults.locale;
   return config;
 });
 
-const API_URL = 'https://api.openai.com/v1/chat/completions';
+const API_URL = "https://api.openai.com/v1/chat/completions";
 const chatAPI = axios.create({
   baseURL: API_URL,
   headers: {
@@ -38,9 +41,9 @@ const chatAPI = axios.create({
       "content-type": "application/json",
     },
   },
-})
+});
 
-const AUTHENTICATOR_URL = 'http://192.168.2.44:3001';
+const AUTHENTICATOR_URL = "http://192.168.2.44:3001";
 const authenticator = axios.create({
   baseURL: AUTHENTICATOR_URL,
   headers: {
@@ -48,30 +51,32 @@ const authenticator = axios.create({
       "content-type": "text/plain",
     },
   },
-})
+});
 
 // const API_KEY = process.env.OPENAI_APIKEY;
-const API_KEY = ""
+const API_KEY = "";
 chatAPI.interceptors.request.use(async (config) => {
-  config.headers["Authorization"] = `Bearer ${API_KEY}`
+  config.headers["Authorization"] = `Bearer ${API_KEY}`;
   config.params = config.params || {};
   return config;
 });
 
 const uploader = axios.create({
   // development endpoint
-  baseURL: process.env.NODE_ENV == "development"? "http://localhost:5001/manage-hr/asia-east2/file-savefiletostorage" : "https://asia-east2-manage-hr.cloudfunctions.net/file-savefiletostorage",
+  baseURL:
+    process.env.NODE_ENV == "development"
+      ? "http://localhost:5001/manage-hr/asia-east2/file-savefiletostorage"
+      : "https://asia-east2-manage-hr.cloudfunctions.net/file-savefiletostorage",
   headers: {
     common: {
-      'Content-Type': 'multipart/form-data'
-    }
+      "Content-Type": "multipart/form-data",
+    },
   },
 });
 
-
 uploader.interceptors.request.use(async (config) => {
   var token = await FirebaseAuth.currentUser.getIdToken();
-  config.headers["Authorization"] = `Bearer ${token}`
+  config.headers["Authorization"] = `Bearer ${token}`;
   config.params = config.params || {};
   // config.params["locale"] = api.defaults.locale;
   return config;

@@ -8,46 +8,32 @@
     <!-- Event date selection -->
     <div class="col-md-3 col-sm-6 col-xs-6 row">
       <div class="text-h6 col-grow">活動點名日期</div>
-      <q-select
-        use-input
-        new-value-mode="add-unique"
-        v-model="eventDate"
-        @new-value="addDate"
-        :options="eventDateOptions"
-        class="col-auto text-h6"
-      >
-        <!-- Date picker icon and popup -->
-        <template v-slot:append>
-          <q-icon name="event" class="cursor-pointer">
-            <q-popup-proxy
-              cover
-              transition-show="scale"
-              transition-hide="scale"
+      <div class="row col-12 items-center">
+        <q-select
+          use-input
+          new-value-mode="add-unique"
+          v-model="eventDate"
+          @new-value="addDate"
+          :options="eventDateOptions"
+          class="col-9 text-h6"
+        />
+        <q-btn round flat icon="event" size="lg" color="primary">
+          <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+            <!-- Date picker -->
+            <q-date
+              :model-value="qdate.formatDate(eventDate, 'YYYY/MM/DD')"
+              v-on:update:model-value="
+                (val) => (eventDate = qdate.formatDate(val, 'YYYY-MM-DD'))
+              "
             >
-              <!-- Date picker -->
-              <q-date
-                :model-value="qdate.formatDate(eventDate, 'YYYY/MM/DD')"
-                v-on:update:model-value="
-                  (val) => (eventDate = qdate.formatDate(val, 'YYYY-MM-DD'))
-                "
-              >
-                <!-- Close button for date picker -->
-                <div class="row items-center justify-end">
-                  <q-btn v-close-popup label="關閉" color="primary" flat />
-                </div>
-              </q-date>
-            </q-popup-proxy>
-          </q-icon>
-        </template>
-      </q-select>
-      <!--
-      <q-input
-        type="number"
-        v-model="session"
-        label="活動節數"
-        class="col-auto text-h6"
-      />
-      -->
+              <!-- Close button for date picker -->
+              <div class="row items-center justify-end">
+                <q-btn v-close-popup label="關閉" color="primary" flat />
+              </div>
+            </q-date>
+          </q-popup-proxy>
+        </q-btn>
+      </div>
     </div>
 
     <!-- Print button -->
@@ -124,10 +110,12 @@
       <span
         >{{ app.c_name }}({{ app.c_mem_id }}) - {{ app.i_age }}歲
         <q-chip
+          size="sm"
           color="amber"
           v-if="app.MemberData.isYouth(eventDate)"
           label="青年" /><q-chip
           color="blue-3"
+          size="sm"
           v-if="app.MemberData.b_mem_type10"
           label="青年家人"
       /></span>
@@ -494,11 +482,11 @@ watch(
           else outCenterAttendanceList.value[att.c_mem_id] = 0;
         }
       });
-      // sort eventDateOptions in ascending order
+      // sort eventDateOptions in descending order
       eventDateOptions.value.sort(
         (a, b) =>
-          qdate.extractDate(a, "YYYY-MM-DD") -
-          qdate.extractDate(b, "YYYY-MM-DD")
+          qdate.extractDate(b, "YYYY-MM-DD") -
+          qdate.extractDate(a, "YYYY-MM-DD")
       );
     }
   },
@@ -540,11 +528,15 @@ const delButtonDisplay = computed(
         qdate.formatDate(attendance.d_date, "YYYY-MM-DD") == eventDate.value
     ).length > 0
 );
+
 const ApplicantsData = computed(() =>
   applicantResult.value
-    ? applicantResult.value.sort((a, b) => a.c_mem_id - b.c_mem_id)
+    ? applicantResult.value.sort(
+        (a, b) => new Date(a.d_reg) - new Date(b.d_reg)
+      )
     : []
 );
+
 const deadline = computed(() => {
   let d = qdate.addToDate(new Date(), { hours: 8 });
   if (d.getDate() > 10) return qdate.startOfDate(d, "month");
@@ -563,6 +555,29 @@ function del() {
 }
 
 function save() {
+  // check data validity
+  if (
+    youthAttendance.value > 0 &&
+    inCenterYouthSession.value == 0 &&
+    outCenterYouthSession.value == 0
+  ) {
+    $q.notify({
+      message: "請輸入15-24歲青年出席節數！",
+    });
+    return;
+  }
+
+  if (
+    youthFamilyAttendance.value > 0 &&
+    inCenterYouthFamilySession.value == 0 &&
+    outCenterYouthFamilySession.value == 0
+  ) {
+    $q.notify({
+      message: "請輸入15-24歲青年家屬出席節數！",
+    });
+    return;
+  }
+
   // build registrantsObjects
   let registrantsObjects = [];
   /** registrantsObjects data structure

@@ -1,14 +1,17 @@
 <template>
-  <q-select 
-    label="員工" 
+  <q-select
+    label="員工"
     clearable
-    input-debounce="0" 
-    filled 
+    input-debounce="0"
+    filled
     :bottom-slots="props.hint && props.hint.length > 0"
     multiple
-    :options="UserList" 
-    :model-value="props.modelValue" 
-    @update:model-value="(value) => emit('update:modelValue', value? value: null)">
+    :options="UserList"
+    :model-value="props.modelValue"
+    @update:model-value="
+      (value) => emit('update:modelValue', value ? value : null)
+    "
+  >
     <template v-slot:hint>
       {{ props.hint }}
     </template>
@@ -21,45 +24,46 @@ import User from "components/class/user";
 
 const props = defineProps({
   modelValue: {
-   Type: Array,
-   Default: []
+    Type: Array,
+    Default: [],
   },
   hint: {
     Type: String,
-    Default: ""
+    Default: "",
   },
   includeTemp: {
     Type: Boolean,
-    Default: false
-  }
-})
+    Default: false,
+  },
+});
 
-const emit = defineEmits(["update:modelValue"])
+const emit = defineEmits(["update:modelValue"]);
 const UserList = ref([
   {
-  value: '',
-  label: '全部'
-  }
-])
+    value: "",
+    label: "全部",
+  },
+]);
 
-onMounted(async() => {
-  let users = await User.loadPermUsers()
+onMounted(async () => {
+  let now = new Date();
+  let users = await User.loadPermUsers();
   users.forEach((u) => {
     UserList.value.push({
       value: u.uid,
-      label: u.name
-    })
-  })
+      label: u.name,
+    });
+  });
   if (props.includeTemp) {
-    users = await User.loadTempUsers()
+    users = await User.loadTempUsers();
     users.forEach((u) => {
-      if (u.isValidEmployment()) {
+      if (u.isValidEmployment(now)) {
         UserList.value.push({
           value: u.uid,
-          label: u.name
-        })
+          label: u.name,
+        });
       }
-    })
+    });
   }
-})
+});
 </script>

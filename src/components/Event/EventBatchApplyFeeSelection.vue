@@ -5,10 +5,15 @@
     use-input
     input-debounce="0"
     :options="feeList"
-    :modelValue="feeList[0].u_fee"
+    :model-value="event"
     @new-value="newFee"
     @update:model-value="
-      (value) => emit('update:modelValue', value ? parseInt(value.u_fee) : null)
+      (value) =>
+        emit('update:modelValue', {
+          ...event,
+          c_type: value.c_type,
+          u_fee: parseInt(value.u_fee),
+        })
     "
   >
     <template v-slot:option="scope">
@@ -20,7 +25,9 @@
         </q-item-section>
       </q-item>
     </template>
-    <template v-slot:selected> ${{ props.modelValue }} </template>
+    <template v-slot:selected>
+      <div v-if="event.c_type">{{ event.c_type }} - ${{ event.u_fee }}</div>
+    </template>
   </q-select>
   <div v-else><q-chip label="免費活動" /></div>
 </template>
@@ -34,16 +41,12 @@ import { useQuasar } from "quasar";
 const $q = useQuasar();
 const props = defineProps({
   modelValue: {
-    type: Number,
-    required: false,
-  },
-  event: {
     type: Object,
     required: true,
   },
 });
 const emit = defineEmits(["update:modelValue"]);
-const event = toRef(props, "event");
+const event = toRef(props, "modelValue");
 const feeList = ref([]);
 
 const EVENT_FEE_BY_ACT_CODE = gql`

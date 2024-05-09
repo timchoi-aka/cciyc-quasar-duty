@@ -1,10 +1,20 @@
 <template>
   <q-page>
     <q-dialog v-model="alSummaryPrint" full-height full-width>
-      <ALReportPDF
-        :key="JSON.stringify(ALReportParameters)"
-        v-model="ALReportParameters"
-      />
+      <q-card square>
+        <q-card-section class="bg-primary text-white row q-pa-xs">
+          <q-space />
+          <q-btn
+            flat
+            text-color="white"
+            icon="cancel"
+            @click="alSummaryPrint = !alSummaryPrint"
+          />
+        </q-card-section>
+        <q-card-section>
+          <ALReportPDF :key="ALReportParameters" v-model="ALReportParameters" />
+        </q-card-section>
+      </q-card>
     </q-dialog>
     <q-dialog v-model="alSummaryModalShow" full-height full-width>
       <q-card class="q-pa-md">
@@ -51,12 +61,12 @@
               >列印
             </q-btn>
             <q-btn
-              v-if="isUAT"
               class="q-mr-md q-pa-sm"
+              size="1.4vw"
               outline
               color="primary"
               icon="print"
-              label="列印"
+              label="列印PDF"
               @click="alSummaryPrint = !alSummaryPrint"
             />
           </div>

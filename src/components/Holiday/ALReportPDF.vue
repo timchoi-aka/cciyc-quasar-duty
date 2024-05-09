@@ -52,76 +52,22 @@ const reportUser = computed(() => {
   };
 });
 
-const queryStartDate = computed(() =>
-  date.startOfDate(new Date(reportYear.value - 1, 3, 1), "month")
-);
-
 const queryEndDate = computed(() =>
-  date.endOfDate(new Date(reportYear.value, 2, 31), "month")
+  date.endOfDate(new Date(reportYear.value + 1, 2, 31), "month")
 );
-/*
-const leaveRecordByMonth = computed(() => {
-  let res = [];
-  let monthLoop = systemStart;
 
-  // build month array
-  while (monthLoop <= queryEndDate.value) {
-    res.push({
-      date: date.formatDate(monthLoop, "MM/YYYY"),
-      monthlyRecord: [],
-    });
-    monthLoop = date.addToDate(monthLoop, { month: 1 });
-  }
-
-  // add leave record to month array
-  leaveData.value.forEach((leave) => {
-    let index = res.findIndex(
-      (x) => x.date == date.formatDate(leave.date, "MM/YYYY")
-    );
-    if (index >= 0) {
-      res[index].monthlyRecord.push({
-        date: leave.date,
-        slot: leave.slot,
-      });
-    }
-  });
-
-  console.log("res: ", res);
-
-  return res;
-});
-*/
-//const reportUID = computed(() => reportUser.value.uid);
-const { result: leaveData, user } = useAnnualLeaveProvider({
+const { result, user } = useAnnualLeaveProvider({
   userid: ref(reportUser.value.uid),
-  queryStartDate: queryStartDate,
   queryEndDate: queryEndDate,
 });
 
-/*
-const sortedTiers = computed(() =>
-  leaveConfigData.value && leaveConfigData.value.rank
-    ? Object.entries(leaveConfigData.value.rank).sort((a, b) =>
-        a[0].localeCompare(b[0])
-      )
-    : []
-); */
-
-watch(leaveData, (newValue, oldValue) => {
+watch(result, (newValue, oldValue) => {
   if (newValue.length > 0) {
-    generatePDF(
-      //leaveRecordByMonth.value,
-      leaveData.value,
-      user.value,
-      reportYear.value
-    );
+    generatePDF(newValue, user.value, reportYear.value);
   }
 });
 
 function generatePDF(data, reportUser, reportYear) {
-  console.log(data);
-  console.log(reportUser);
-  console.log(reportYear);
   var doc = new jspdf({
     orientation: "p",
     unit: "mm",
@@ -136,9 +82,9 @@ function generatePDF(data, reportUser, reportYear) {
     "職員放取年假紀錄-" +
     (reportUser.name ? reportUser.name : "") +
     "-" +
-    parseInt(reportYear - 1).toString() +
-    "-" +
     reportYear.toString() +
+    "-" +
+    parseInt(reportYear + 1).toString() +
     "年度";
 
   doc.setProperties({
@@ -149,9 +95,9 @@ function generatePDF(data, reportUser, reportYear) {
       "每月服務統計表, " +
       (reportUser.name ? reportUser.name : "") +
       ", " +
-      parseInt(reportYear - 1).toString() +
-      "-" +
       reportYear.toString() +
+      "-" +
+      parseInt(reportYear + 1).toString() +
       "年度, ",
     creator: "CCIYC",
     author: "CCIYC",
@@ -172,40 +118,73 @@ function generatePDF(data, reportUser, reportYear) {
 async function drawContent(doc, data, reportUser, reportYear) {
   // build month gain and leave record
   let monthLoop = systemStart;
-  /*
-  while (monthLoop <= queryEndDate.value) {
-    let monthIndex = data.findIndex(
-      (x) => x.date == date.formatDate(monthLoop, "MM/YYYY")
+  const noOfDatesPerLine = 5;
+
+  const slotMap = {
+    slot_a: "早",
+    slot_b: "午",
+    slot_c: "晚",
+  };
+
+  const periodStart = computed(() =>
+    date.startOfDate(new Date(reportYear, 3, 1), "month")
+  );
+  const periodEnd = computed(() => {
+    let reportYearEnd = date.endOfDate(
+      new Date(reportYear + 1, 2, 31),
+      "month"
     );
-    console.log("monthIndex: ", monthIndex);
-    if (monthIndex >= 0) {
-      // console.log("monthData: ", monthData);
-
-      let tierIndex = tiersConfig.reduce((acc, curr, i, arr) => {
-        return curr <= reportUser.yearServed(monthLoop) &&
-          (i === arr.length - 1 ||
-            arr[i + 1] > reportUser.yearServed(monthLoop))
-          ? i
-          : acc;
-      }, -1);
-
-      data[monthIndex].alGain = sortedTiers.value[tierIndex][1] / 12;
+    if (reportUser.getDateOfExit() != null) {
+      if (date.getDateDiff(reportYearEnd, reportUser.getDateOfExit()) <= 0) {
+        return reportYearEnd;
+      } else {
+        return date.endOfDate(reportUser.getDateOfExit(), "month");
+      }
     }
-    monthLoop = date.addToDate(monthLoop, { month: 1 });
+    return reportYearEnd;
+  });
+
+  let accumulatedLeave = [];
+  let alGain = 0;
+  let alTaken = 0;
+
+  for (let i = 0; i < data.length; i++) {
+    alGain += data[i].alGain;
+    alTaken += data[i].alTaken;
+    if (i % 12 == 0) {
+      accumulatedLeave.push({
+        date: data[i].date,
+        alGain: alGain,
+        alTaken: alTaken,
+      });
+      alGain = 0;
+      alTaken = 0;
+    }
   }
-  */
-  console.log(JSON.stringify(data));
+
   doc.setFontSize(14);
   doc.text("長洲鄉事委員會青年綜合服務中心", 110, 5, "center");
   doc.text("職員放取年假紀錄", 110, 12, "center");
-  doc.text("職員：" + reportUser.name, 5, 19, "left");
+
+  reportUser
+    ? doc.text(
+        "職員：" +
+          reportUser.name +
+          " （入職日期：" +
+          date.formatDate(reportUser.getDateOfEntry(), "YYYY年M月D日") +
+          "）",
+        5,
+        19,
+        "left"
+      )
+    : null;
   doc.text(
-    "年度：" + (reportYear - 1 + "-" + reportYear).toString(),
+    "年度：" + (reportYear + "-" + parseInt(reportYear + 1).toString()),
     165,
     19,
     "left"
   );
-  doc.setFontSize(12);
+  doc.setFontSize(10);
 
   // first line
   const horLine1 = 21;
@@ -215,7 +194,7 @@ async function drawContent(doc, data, reportUser, reportYear) {
   const verLine4 = 54;
   const verLine5 = 70;
   const verLine6 = 205;
-  const lastLine = 180;
+
   doc.line(4, 21, 205, 21);
   let lineNo = 1;
   doc.text("月份", 13, atLine(lineNo), "center");
@@ -226,21 +205,124 @@ async function drawContent(doc, data, reportUser, reportYear) {
   doc.line(verLine1, atLine(lineNo) + 2, verLine6, atLine(lineNo) + 2);
 
   lineNo++;
-  doc.text("上年度", 13, atLine(lineNo), "center");
-  doc.text("0", 31, atLine(lineNo), "center");
-  doc.text("0", 46, atLine(lineNo), "center");
-  doc.text("0", 61, atLine(lineNo), "center");
-  doc.text("0", 130, atLine(lineNo), "center");
-  doc.line(verLine1, atLine(lineNo) + 2, verLine6, atLine(lineNo) + 2);
+  let accumulatedGain = 0,
+    accumulatedTaken = 0,
+    accumulatedBalance = 0;
+
+  while (date.getDateDiff(monthLoop, periodEnd.value) <= 0) {
+    if (date.getDateDiff(monthLoop, periodStart.value, "months") == -1) {
+      let i = accumulatedLeave.findIndex((x) =>
+        date.isSameDate(x.date, monthLoop)
+      );
+      let j = data.findIndex((x) => date.isSameDate(x.date, monthLoop));
+      doc.text("上年度", 13, atLine(lineNo), "center");
+      doc.text(
+        accumulatedLeave[i].alGain.toString(),
+        31,
+        atLine(lineNo),
+        "center"
+      );
+      doc.text(
+        accumulatedLeave[i].alTaken.toString(),
+        46,
+        atLine(lineNo),
+        "center"
+      );
+      doc.text(data[j].balance.toString(), 61, atLine(lineNo), "center");
+      doc.line(verLine1, atLine(lineNo) + 2, verLine6, atLine(lineNo) + 2);
+      lineNo++;
+    }
+    if (date.getDateDiff(monthLoop, periodStart.value, "months") >= 0) {
+      let i = data.findIndex((x) => date.isSameDate(x.date, monthLoop));
+
+      if (i >= 0) {
+        doc.text(
+          date.formatDate(data[i].date, "MM/YYYY"),
+          13,
+          atLine(lineNo),
+          "center"
+        );
+
+        accumulatedGain += data[i].alGain;
+        accumulatedTaken += data[i].alTaken;
+        accumulatedBalance = data[i].balance;
+        doc.text(data[i].alGain.toString(), 31, atLine(lineNo), "center");
+        doc.text(data[i].alTaken.toString(), 46, atLine(lineNo), "center");
+        doc.text(data[i].balance.toString(), 61, atLine(lineNo), "center");
+        let monthlyRecordString = [];
+        let tempLine = [];
+        for (let j = 0; j < data[i].monthlyRecord.length; j++) {
+          tempLine.push(
+            date.formatDate(data[i].monthlyRecord[j].date, "M月D日") +
+              "(" +
+              slotMap[data[i].monthlyRecord[j].slot] +
+              ")"
+          );
+          if (tempLine.length == noOfDatesPerLine) {
+            monthlyRecordString.push(tempLine);
+            tempLine = [];
+          }
+        }
+
+        if (tempLine.length > 0) {
+          monthlyRecordString.push(tempLine);
+        }
+
+        for (let j = 0; j < monthlyRecordString.length; j++) {
+          doc.text(monthlyRecordString[j].join("  "), 75, atLine(lineNo), {
+            align: "left",
+            maxWidth: 120,
+          });
+          lineNo++;
+        }
+        if (monthlyRecordString.length > 0) lineNo -= 0.5;
+        doc.line(verLine1, atLine(lineNo) + 1, verLine6, atLine(lineNo) + 1);
+      }
+      lineNo += 1;
+    }
+    monthLoop = date.addToDate(monthLoop, { month: 1 });
+  }
+
+  doc.text("本年度", 13, atLine(lineNo), "center");
+  doc.text(accumulatedGain.toString(), 31, atLine(lineNo), "center");
+  doc.text(accumulatedTaken.toString(), 46, atLine(lineNo), "center");
+  doc.text(accumulatedBalance.toString(), 61, atLine(lineNo), "center");
+  doc.line(verLine1, atLine(lineNo) + 3, verLine6, atLine(lineNo) + 3);
 
   // vertical lines
-  doc.line(verLine1, horLine1, verLine1, lastLine);
-  doc.line(verLine2, horLine1, verLine2, lastLine);
-  doc.line(verLine3, horLine1, verLine3, lastLine);
-  doc.line(verLine4, horLine1, verLine4, lastLine);
-  doc.line(verLine5, horLine1, verLine5, lastLine);
-  doc.line(verLine6, horLine1, verLine6, lastLine);
+  doc.line(verLine1, horLine1, verLine1, atLine(lineNo) + 3);
+  doc.line(verLine2, horLine1, verLine2, atLine(lineNo) + 3);
+  doc.line(verLine3, horLine1, verLine3, atLine(lineNo) + 3);
+  doc.line(verLine4, horLine1, verLine4, atLine(lineNo) + 3);
+  doc.line(verLine5, horLine1, verLine5, atLine(lineNo) + 3);
+  doc.line(verLine6, horLine1, verLine6, atLine(lineNo) + 3);
+
+  if (
+    reportUser.getDateOfExit() &&
+    date.isSameDate(
+      date.endOfDate(date.subtractFromDate(monthLoop, { month: 1 }), "month"),
+      date.endOfDate(reportUser.getDateOfExit(), "month")
+    )
+  ) {
+    lineNo++;
+    doc.text(
+      "離職日期：" +
+        date.formatDate(reportUser.getDateOfExit(), "YYYY年M月D日"),
+      100,
+      atLine(lineNo),
+      "center"
+    );
+  }
+
+  lineNo += 2;
+  doc.text(
+    "員工簽署：____________________________   日期：________________________________",
+    13,
+    atLine(lineNo),
+    "left"
+  );
 }
+
 function atLine(lineNo) {
   return 19 + 7 * lineNo;
 }

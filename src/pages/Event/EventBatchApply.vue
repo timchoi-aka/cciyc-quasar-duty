@@ -1,99 +1,108 @@
 <template>
+  <LoadingDialog :model-value="loading ? 1 : 0" message="報名中" />
   <q-splitter v-model="verticalModel" class="fit">
     <template v-slot:before>
-      <div class="row">
-        <div class="row col-12 bg-blue-2 text-left q-pa-sm">
-          <div class="col-3">會員號碼</div>
-          <div class="col-2 q-pl-md">姓名</div>
-          <div class="col-2 q-pl-sm">年齡</div>
-          <div class="col-2">會藉</div>
-          <div class="col-3 q-pl-md">屆滿日期</div>
-        </div>
-        <div class="row col-12 items-center text-bold">
-          <MemberSelection v-model="MemberObject.c_mem_id" />
-          <MemberInfoByID v-model="MemberObject" />
-        </div>
-        <q-separator />
-        <div class="row col-12 items-center">
-          <q-btn
-            icon="add"
-            class="bg-primary text-white q-ma-sm"
-            @click="events.push({ c_act_code: '', fee: 0 })"
-            label="新增報名活動"
-          />
-        </div>
-        <div class="row col-12">
-          <div
-            v-for="(item, index) in events"
-            :key="item"
-            class="q-mx-xs row col-11 items-center"
-          >
-            <q-btn
-              icon="delete"
-              class="text-negative"
-              flat
-              @click="events.splice(index, 1)"
-            />
-            <div class="col-7">
-              <EventBatchApplySelection v-model="events[index]" />
-            </div>
-            <div class="col-2">
-              <EventBatchApplyFeeSelection
-                v-if="events[index]"
-                v-model="events[index].fee"
-                :event="events[index]"
-              />
-            </div>
-            <div class="col-2">
-              <EventBatchApplyQuotaDisplay
-                v-if="events[index]"
-                v-model="events[index].i_quota_left"
-                :event="events[index]"
-              />
-            </div>
-          </div>
-        </div>
-        <div class="row col-12 q-mt-md items-center">
-          <q-btn
-            class="q-mx-xs col-2 bg-negative text-white"
-            icon="cancel"
-            @click="
-              events = [];
-              MemberObject = {};
-            "
-            >重置</q-btn
-          >
-          <q-btn
-            class="q-mx-xs col-2 bg-positive text-white"
-            icon="check"
-            @click="save"
-            :disable="!validApplication"
-            >報名</q-btn
-          >
-
-          <q-chip
-            v-if="warningMessage"
-            icon="warning"
-            :label="warningMessage"
-            class="bg-warning text-white text-bold"
-          />
-          <div class="col-2 text-negative text-bold">
-            {{ invalidMessage }}
-          </div>
-        </div>
-      </div>
-    </template>
-    <template v-slot:after>
       <q-splitter horizontal v-model="horizontalModel" class="fit">
-        <template v-slot:before> top right </template>
-        <template v-slot:after> bot right </template>
+        <template v-slot:before>
+          <div class="row">
+            <div class="row col-12 bg-blue-2 text-left q-pa-sm">
+              <div class="col-3">會員號碼</div>
+              <div class="col-2 q-pl-md">姓名</div>
+              <div class="col-2 q-pl-sm">年齡</div>
+              <div class="col-2">會藉</div>
+              <div class="col-3 q-pl-md">屆滿日期</div>
+            </div>
+            <div class="row col-12 items-center text-bold">
+              <MemberSelection v-model="MemberObject.c_mem_id" />
+              <MemberInfoByID v-model="MemberObject" />
+            </div>
+            <q-separator />
+            <div class="row col-12 items-center">
+              <q-btn
+                icon="add"
+                class="bg-primary text-white q-ma-sm"
+                @click="events.push({ c_act_code: '', fee: 0 })"
+                label="新增報名活動"
+              />
+            </div>
+            <div class="row col-12">
+              <div
+                v-for="(item, index) in events"
+                :key="item"
+                class="q-mx-xs row col-11 items-center"
+              >
+                <q-btn
+                  icon="delete"
+                  class="text-negative"
+                  flat
+                  @click="events.splice(index, 1)"
+                />
+                <div class="col-7">
+                  <EventBatchApplySelection v-model="events[index]" />
+                </div>
+                <div class="col-2">
+                  <EventBatchApplyFeeSelection
+                    v-if="events[index]"
+                    v-model="events[index]"
+                  />
+                </div>
+                <div class="col-2">
+                  <EventBatchApplyQuotaDisplay
+                    v-if="events[index]"
+                    v-model="events[index].i_quota_left"
+                    :event="events[index]"
+                  />
+                </div>
+              </div>
+            </div>
+            <div class="row col-12 q-mt-md items-center">
+              <q-btn
+                class="q-mx-xs col-2 bg-negative text-white"
+                icon="cancel"
+                @click="
+                  events = [];
+                  MemberObject.c_mem_id = '';
+                  MemberObject = {};
+                "
+                >重置</q-btn
+              >
+              <q-btn
+                class="q-mx-xs col-2 bg-positive text-white"
+                icon="check"
+                @click="save"
+                :disable="!validApplication"
+                >報名</q-btn
+              >
+
+              <q-chip
+                v-if="warningMessage"
+                icon="warning"
+                :label="warningMessage"
+                class="bg-warning text-white text-bold"
+              />
+              <div class="col-2 text-negative text-bold">
+                {{ invalidMessage }}
+              </div>
+            </div>
+          </div>
+        </template>
+        <template v-slot:after>
+          <ReceiptListByMemberID_Multiple
+            :MemberID="MemberObject.c_mem_id"
+            :key="result + MemberObject.c_mem_id"
+            :selectedReceipts="result"
+            @updateReceiptNumber="(val) => (ReceiptNo = val)"
+          />
+        </template>
       </q-splitter>
     </template>
+
+    <template v-slot:after>Preview combined receipt {{ ReceiptNo }}</template>
   </q-splitter>
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useStore } from "vuex";
 import { useQuasar, date as qdate } from "quasar";
 import {
@@ -112,10 +121,12 @@ import { useQuery, useMutation } from "@vue/apollo-composable";
 import Receipt from "components/Account/Receipt.vue";
 import MemberInfoByID from "src/components/Member/MemberInfoByID.vue";
 import MemberSelection from "components/Member/MemberSelection.vue";
-import { useAccountProvider } from "src/providers/account";
+import { useBatchEventRegistrationProvider } from "src/providers/batchEventRegistration";
 import EventBatchApplySelection from "components/Event/EventBatchApplySelection.vue";
 import EventBatchApplyFeeSelection from "components/Event/EventBatchApplyFeeSelection.vue";
 import EventBatchApplyQuotaDisplay from "components/Event/EventBatchApplyQuotaDisplay.vue";
+import LoadingDialog from "components/LoadingDialog.vue";
+import ReceiptListByMemberID_Multiple from "components/Account/ReceiptListByMemberID_Multiple.vue";
 
 // variables
 const $q = useQuasar();
@@ -133,31 +144,11 @@ const events = ref([]);
 const EventOptions = ref([]);
 const OriginalEventOptions = ref([]);
 const now = new Date();
+const ReceiptNo = ref();
+
 // query
-
-/*
-const { result: EventData, onError: EventDataError } = useQuery(
-  EVENT_BY_PK,
-  () => ({
-    c_act_code: props.c_act_code
-  }));
-
-const { onResult: EventFee_Completed, onError: EventFeeError } = useQuery(
-  EVENT_FEE_BY_ACT_CODE,
-  () => ({
-    c_act_code: props.c_act_code
-  }));
-
-const { onResult: onApplyResult, onError: EventApplyError } = useQuery(
-  EVENT_APPLY_BY_ACT_CODE,
-  () => ({
-    c_act_code: props.c_act_code,
-  }), {
-    pollInterval: 5000
-  });
-*/
-
-const { latestReceiptNo } = useAccountProvider();
+const { latestReceiptNo, batchRegister, result, loading, message } =
+  useBatchEventRegistrationProvider();
 const {
   mutate: eventRegistration,
   onDone: eventRegistration_Completed,
@@ -168,6 +159,14 @@ const {
   onDone: freeEventRegistration_Completed,
   onError: freeEventRegistration_Error,
 } = useMutation(FREE_EVENT_REGISTRATION);
+
+watch(message, (val) => {
+  if (val) {
+    $q.notify({
+      message: val,
+    });
+  }
+});
 
 const {
   mutate: eventUnregistration,
@@ -236,7 +235,7 @@ const validApplication = computed(() => {
     if (
       e.c_act_code != "" &&
       !e.b_freeofcharge &&
-      (e.fee <= 0 || e.fee == "" || e.fee == null)
+      (e.u_fee <= 0 || e.u_fee == "" || e.u_fee == null)
     ) {
       invalidMessage.value += "請輸入正確收費";
       validRecord = false;
@@ -641,8 +640,40 @@ function eventFilter(val, update) {
   });
 }
 
-function save() {
-  console.log(JSON.stringify(MemberObject.value));
-  console.log(JSON.stringify(events.value));
+async function save() {
+  let regObject = ref([]);
+  let remark = "";
+  events.value.forEach((e) => {
+    remark = "服務資料 Service Detail\r\n";
+    if (e.d_date_from && e.d_date_to)
+      remark +=
+        "日期 Date：" +
+        qdate.formatDate(e.d_date_from, "YYYY年M月D日") +
+        " 至 " +
+        qdate.formatDate(e.d_date_to, "YYYY年M月D日");
+    if (e.c_week) remark += " 逢星期" + e.c_week;
+    remark += "\r\n";
+    if (e.d_time_from && e.d_time_to)
+      remark += "時間 Time：" + e.d_time_from + " - " + e.d_time_to;
+
+    regObject.value.push({
+      c_mem_id: MemberObject.value.c_mem_id,
+      c_name: MemberObject.value.c_name,
+      c_act_code: e.c_act_code,
+      c_act_name: e.c_act_name,
+      c_sex: MemberObject.value.c_sex,
+      i_age: MemberObject.value.i_age,
+      c_type: e.b_freeofcharge ? null : e.c_type,
+      u_fee: e.b_freeofcharge ? null : e.u_fee,
+      remark: remark,
+    });
+  });
+
+  batchRegister({
+    staff_name: username,
+    object: regObject,
+  });
+  //console.log(JSON.stringify(MemberObject.value));
+  // console.log(JSON.stringify(events.value));
 }
 </script>

@@ -477,3 +477,98 @@ export function useAttendanceProvider(options = {}) {
   //return { result, loading, deleteGalleryById, toggleVisibilityById, refetch: execute, renameGalleryById, updateCoverById, addNewGallery };
   return { result, loading, message, addAttendance, delAttendance };
 }
+
+// Function to provide attendance report data
+export function useAttendanceReportProvider(options = {}) {
+  // Destructure galleryID from options, default to a new ref if not provided
+  const { start_date = ref(), end_date = ref() } = options;
+
+  // Ref to keep track of the number of pending async operations
+  const awaitNumber = ref(0);
+
+  // Computed property that indicates whether there are any pending async operations
+  const loading = computed(() => awaitNumber.value > 0 || loadingReport.value);
+
+  // returned message to be displayed to client
+  const message = ref({});
+
+  // GraphQL query string
+  let GET_ATTENDANCE_BY_PERIOD = gql`
+    query GetAttendanceByPeriod(
+      $start_date: smalldatetime = ""
+      $end_date: smalldatetime = ""
+    ) {
+      Attendance(
+        where: {
+          _and: {
+            _or: [
+              { b_is_youth: { _eq: true } }
+              { b_is_youth_family: { _eq: true } }
+            ]
+            d_date: { _gte: $start_date, _lte: $end_date }
+          }
+        }
+      ) {
+        d_date
+        i_in_center_session
+        i_out_center_session
+        uuid
+        Attendance_to_Event {
+          c_act_name
+          c_act_code
+          c_nature
+          c_respon
+          c_type
+          c_dest
+          c_status
+          c_group1
+          c_group2
+          d_finish_goal
+        }
+      }
+      AttendanceNonRegistrant(
+        where: { d_date: { _gte: $start_date, _lte: $end_date } }
+      ) {
+        d_date
+        c_act_code
+        i_youth_session
+        i_youth_count
+        i_youth_family_session
+        i_youth_family_count
+        i_youth_session_out_center
+        i_youth_family_session_out_center
+        AttendanceNonRegistrant_to_Event {
+          c_act_name
+          c_act_code
+          c_nature
+          c_respon
+          c_type
+          c_dest
+          c_status
+          c_group1
+          c_group2
+          d_finish_goal
+        }
+      }
+    }
+  `;
+
+  // Return the provided data and functions
+  const {
+    result,
+    loading: loadingReport,
+    refetch,
+  } = useQuery(
+    GET_ATTENDANCE_BY_PERIOD,
+    () => ({
+      start_date: start_date.value,
+      end_date: end_date.value,
+    }),
+    {
+      enabled: computed(
+        () => start_date.value != null && end_date.value != null
+      ),
+    }
+  );
+  return { result, loading, refetch };
+}

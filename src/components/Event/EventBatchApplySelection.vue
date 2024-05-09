@@ -19,6 +19,12 @@
                 c_act_name: value.c_act_name.trim(),
                 b_freeofcharge: value.b_freeofcharge,
                 i_quota_max: value.i_quota_max,
+                d_date_from: value.d_date_from,
+                d_date_to: value.d_date_to,
+                c_week: value.c_week,
+                d_time_from: value.d_time_from,
+                d_time_to: value.d_time_to,
+                c_acc_type: value.c_acc_type,
               }
             : {
                 c_act_code: '',
@@ -92,6 +98,11 @@ const { onResult: NameResult } = useQuery(
         d_sale_start
         d_sale_end
         i_quota_max
+        d_date_from
+        d_date_to
+        d_time_from
+        d_time_to
+        c_week
       }
     }
   `,
@@ -126,6 +137,16 @@ NameResult((result) => {
           c_status: d.c_status,
           b_freeofcharge: d.b_freeofcharge,
           i_quota_max: d.i_quota_max,
+          d_date_from: d.d_date_from
+            ? date.extractDate(d.d_date_from.trim(), "D/M/YYYY")
+            : null,
+          d_date_to: d.d_date_to
+            ? date.extractDate(d.d_date_to.trim(), "D/M/YYYY")
+            : null,
+          c_week: d.c_week ? d.c_week.trim() : null,
+          d_time_from: d.d_time_from ? d.d_time_from.trim() : null,
+          d_time_to: d.d_time_from ? d.d_time_to.trim() : null,
+          c_acc_type: d.c_acc_type ? d.c_acc_type.trim() : null,
         });
       }
     });

@@ -291,7 +291,7 @@
         wrap-cells
         title="在中心舉行的活動 - 非核心"
         :rows="
-          OS2Data.filter((x) => x.c_nature && x.c_nature.startsWith('非核心'))
+          OS2Data.filter((x) => x.c_nature && !x.c_nature.startsWith('核心'))
         "
         :columns="os2Columns"
         :pagination="defaultPagination"
@@ -711,40 +711,42 @@
       <div class="printOnly text-h5">c(iii)</div>
 
       <q-card class="col-3">
-        <q-card-section class="bg-yellow-2"
+        <q-card-section class="bg-grey-2"
           >Leadership training <br />(領袖訓練)</q-card-section
         >
-        <q-card-section class="bg-blue-2">
+        <q-card-section class="bg-grey-4">
           <div>
             Number of programme:
-            {{ C3Data.filter((x) => x.c_group2 == "領袖訓練").length }}
+            {{
+              C3Data.filter(
+                (x) => x.c_group2 == "領袖訓練" || x.c_group2 == "領䄂訓練"
+              ).length
+            }}
           </div>
           <div>
             Number of programme sessions:
             {{
-              C3Data.filter((x) => x.c_group2 == "領袖訓練").reduce(
-                (a, v) => a + v.i_number,
-                0
-              )
+              C3Data.filter(
+                (x) => x.c_group2 == "領袖訓練" || x.c_group2 == "領䄂訓練"
+              ).reduce((a, v) => a + v.i_number, 0)
             }}
           </div>
           <div>
             Total number of attendance:
             {{
-              C3Data.filter((x) => x.c_group2 == "領袖訓練").reduce(
-                (a, v) => a + v.i_people_count,
-                0
-              )
+              C3Data.filter(
+                (x) => x.c_group2 == "領袖訓練" || x.c_group2 == "領䄂訓練"
+              ).reduce((a, v) => a + v.i_people_count, 0)
             }}
           </div>
         </q-card-section>
       </q-card>
 
       <q-card class="col-3">
-        <q-card-section class="bg-yellow-2"
+        <q-card-section class="bg-grey-2"
           >Volunteerism <br />(青年義務工作)</q-card-section
         >
-        <q-card-section class="bg-blue-2">
+        <q-card-section class="bg-grey-4">
           <div>
             Number of programme:
             {{ C3Data.filter((x) => x.c_group2 == "青年義務工作").length }}
@@ -771,10 +773,10 @@
       </q-card>
 
       <q-card class="col-3">
-        <q-card-section class="bg-yellow-2"
+        <q-card-section class="bg-grey-2"
           >Community participation <br />(參與社區公民事務)</q-card-section
         >
-        <q-card-section class="bg-blue-2">
+        <q-card-section class="bg-grey-4">
           <div>
             Number of programme:
             {{ C3Data.filter((x) => x.c_group2 == "參與社區公民事務").length }}
@@ -801,10 +803,10 @@
       </q-card>
 
       <q-card class="col-3">
-        <q-card-section class="bg-yellow-2"
+        <q-card-section class="bg-grey-2"
           >Study/exchange program <br />(內地交流活動)</q-card-section
         >
-        <q-card-section class="bg-blue-2">
+        <q-card-section class="bg-grey-4">
           <div>
             Number of programme:
             {{ C3Data.filter((x) => x.c_group2 == "內地交流活動").length }}
@@ -950,6 +952,8 @@ import { getDocs, query, where } from "firebase/firestore";
 import StaffSelectionMultiple from "components/Basic/StaffSelectionMultiple.vue";
 import { useRouter } from "vue-router";
 import print from "vue3-print-nb";
+import { useAttendanceNonRegistrantProvider } from "src/providers/attendanceNonRegistrant";
+import { useAttendanceReportProvider } from "src/providers/attendance";
 
 onMounted(() => {
   refreshSchedule(reportStartDate.value, reportEndDate.value);
@@ -981,6 +985,178 @@ const reportEndDate = ref(
     "YYYY/MM/DD"
   )
 );
+
+const { result: AttendanceReport, refetch: refetchAttendance } =
+  useAttendanceReportProvider({
+    start_date: ref(qdate.startOfDate(reportStartDate.value, "day")),
+    end_date: ref(qdate.endOfDate(reportEndDate.value, "day")),
+  });
+
+const AttendanceData = computed(() => {
+  let res = [];
+  if (AttendanceReport.value) {
+    AttendanceReport.value.Attendance.forEach((data) => {
+      let i = res.findIndex(
+        (x) =>
+          x.c_act_code == data.Attendance_to_Event.c_act_code.trim() &&
+          x.d_date == data.d_date
+      );
+      // if not found, insert new record
+      if (i <= -1) {
+        res.push({
+          c_act_code: data.Attendance_to_Event.c_act_code
+            ? data.Attendance_to_Event.c_act_code.trim()
+            : "",
+          c_act_name: data.Attendance_to_Event.c_act_name
+            ? data.Attendance_to_Event.c_act_name.trim()
+            : "",
+          c_dest: data.Attendance_to_Event.c_dest
+            ? data.Attendance_to_Event.c_dest.trim()
+            : "",
+          c_nature: data.Attendance_to_Event.c_nature
+            ? data.Attendance_to_Event.c_nature.trim()
+            : "",
+          c_respon: data.Attendance_to_Event.c_respon
+            ? data.Attendance_to_Event.c_respon.trim()
+            : "",
+          c_type: data.Attendance_to_Event.c_type
+            ? data.Attendance_to_Event.c_type.trim()
+            : "",
+          c_status: data.Attendance_to_Event.c_status
+            ? data.Attendance_to_Event.c_status.trim()
+            : "",
+          c_group1: data.Attendance_to_Event.c_group1
+            ? data.Attendance_to_Event.c_group1.trim()
+            : "",
+          c_group2: data.Attendance_to_Event.c_group2
+            ? data.Attendance_to_Event.c_group2.trim()
+            : "",
+          d_date: data.d_date,
+          d_finish_goal: data.Attendance_to_Event.d_finish_goal,
+          i_people_count_in_center: data.i_in_center_session,
+          i_people_count_out_center: data.i_out_center_session,
+          inSession: data.i_in_center_session,
+          outSession: data.i_out_center_session,
+        });
+      } else {
+        res[i].i_people_count_in_center += data.i_in_center_session;
+        res[i].i_people_count_out_center += data.i_out_center_session;
+        res[i].inSession = Math.max(res[i].inSession, data.i_in_center_session);
+        res[i].outSession = Math.max(
+          res[i].outSession,
+          data.i_out_center_session
+        );
+      }
+    });
+
+    AttendanceReport.value.AttendanceNonRegistrant.forEach((data) => {
+      let i_people_count_in_center = 0;
+      let i_people_count_out_center = 0;
+      i_people_count_in_center +=
+        data.i_youth_session > 0 ? data.i_youth_count : 0;
+      i_people_count_in_center +=
+        data.i_youth_family_session > 0 ? data.i_youth_family_count : 0;
+      i_people_count_out_center +=
+        data.i_youth_session_out_center > 0 ? data.i_youth_count : 0;
+      i_people_count_out_center +=
+        data.i_youth_family_session_out_center > 0
+          ? data.i_youth_family_count
+          : 0;
+      let i = res.findIndex(
+        (x) => x.c_act_code == data.c_act_code.trim() && x.d_date == data.d_date
+      );
+      if (i <= -1) {
+        res.push({
+          c_act_code: data.AttendanceNonRegistrant_to_Event.c_act_code
+            ? data.AttendanceNonRegistrant_to_Event.c_act_code.trim()
+            : "",
+          c_act_name: data.AttendanceNonRegistrant_to_Event.c_act_name
+            ? data.AttendanceNonRegistrant_to_Event.c_act_name.trim()
+            : "",
+          c_dest: data.AttendanceNonRegistrant_to_Event.c_dest
+            ? data.AttendanceNonRegistrant_to_Event.c_dest.trim()
+            : "",
+          c_nature: data.AttendanceNonRegistrant_to_Event.c_nature
+            ? data.AttendanceNonRegistrant_to_Event.c_nature.trim()
+            : "",
+          c_respon: data.AttendanceNonRegistrant_to_Event.c_respon
+            ? data.AttendanceNonRegistrant_to_Event.c_respon.trim()
+            : "",
+          c_type: data.AttendanceNonRegistrant_to_Event.c_type
+            ? data.AttendanceNonRegistrant_to_Event.c_type.trim()
+            : "",
+          c_status: data.AttendanceNonRegistrant_to_Event.c_status
+            ? data.AttendanceNonRegistrant_to_Event.c_status.trim()
+            : "",
+          c_group1: data.AttendanceNonRegistrant_to_Event.c_group1
+            ? data.AttendanceNonRegistrant_to_Event.c_group1.trim()
+            : "",
+          c_group2: data.AttendanceNonRegistrant_to_Event.c_group2
+            ? data.AttendanceNonRegistrant_to_Event.c_group2.trim()
+            : "",
+          d_date: data.d_date,
+          d_finish_goal: data.AttendanceNonRegistrant_to_Event.d_finish_goal,
+          i_people_count_in_center: i_people_count_in_center,
+          i_people_count_out_center: i_people_count_out_center,
+          inSession: Math.max(
+            data.i_youth_session + data.i_youth_family_session
+          ),
+          outSession: Math.max(
+            data.i_youth_session_out_center,
+            data.i_youth_family_session_out_center
+          ),
+        });
+      } else {
+        res[i].i_people_count_in_center += i_people_count_in_center;
+        res[i].i_people_count_out_center += i_people_count_out_center;
+        res[i].inSession = Math.max(
+          res[i].inSession,
+          data.i_youth_session,
+          data.i_youth_family_session
+        );
+        res[i].outSession = Math.max(
+          res[i].outSession,
+          data.i_youth_session_out_center,
+          data.i_youth_family_session_out_center
+        );
+      }
+    });
+  }
+
+  let result = [];
+  res.forEach((data) => {
+    let i = result.findIndex(
+      (x) =>
+        x.c_act_code == data.c_act_code &&
+        qdate.formatDate(data.d_date, "MM/YYYY") == x.d_date
+    );
+    if (i <= -1) {
+      result.push({
+        c_act_code: data.c_act_code,
+        c_act_name: data.c_act_name,
+        c_dest: data.c_dest,
+        c_nature: data.c_nature,
+        c_respon: data.c_respon,
+        c_type: data.c_type,
+        c_status: data.c_status,
+        c_group1: data.c_group1,
+        c_group2: data.c_group2,
+        d_date: qdate.formatDate(data.d_date, "MM/YYYY"),
+        d_finish_goal: data.d_finish_goal,
+        i_people_count_in_center: data.i_people_count_in_center,
+        i_people_count_out_center: data.i_people_count_out_center,
+        inSession: data.inSession,
+        outSession: data.outSession,
+      });
+    } else {
+      result[i].i_people_count_in_center += data.i_people_count_in_center;
+      result[i].i_people_count_out_center += data.i_people_count_out_center;
+      result[i].inSession += data.inSession;
+      result[i].outSession += data.outSession;
+    }
+  });
+  return result;
+});
 const detailModal = ref(false);
 const openingModal = ref(false);
 const showEventID = ref("");
@@ -1517,7 +1693,7 @@ const AllDataWithSession = computed(() => {
           c_group2: x.Session_to_Event.c_group2
             ? x.Session_to_Event.c_group2.trim()
             : "",
-          c_naure: x.Session_to_Event.c_nature
+          c_nature: x.Session_to_Event.c_nature
             ? x.Session_to_Event.c_nature.trim()
             : "",
           c_respon: x.Session_to_Event.c_respon
@@ -1533,26 +1709,51 @@ const AllDataWithSession = computed(() => {
       }
     });
   }
+
+  AttendanceData.value.forEach((ad) => {
+    if (
+      !staffSearchFilter.value ||
+      (staffSearchFilter.value &&
+        staffSearchFilter.value
+          .map((x) => x.label)
+          .includes(ad.c_respon.trim())) ||
+      (staffSearchFilter.value &&
+        staffSearchFilter.value.map((x) => x.label)) == "全部"
+    ) {
+      let i = res.findIndex(
+        (x) => x.c_act_code.trim() == ad.c_act_code && x.d_act == ad.d_date
+      );
+      if (i <= -1) {
+        res.push({
+          d_act: ad.d_date,
+          i_number: ad.inSession + ad.outSession,
+          i_people_count:
+            ad.i_people_count_in_center + ad.i_people_count_out_center,
+          c_act_code: ad.c_act_code,
+          c_act_name: ad.c_act_name,
+          c_dest: ad.c_dest,
+          c_group1: ad.c_group1,
+          c_group2: ad.c_group2,
+          c_nature: ad.c_nature,
+          c_respon: ad.c_respon,
+          c_type: ad.c_type,
+          c_status: ad.c_status,
+        });
+      } else {
+        res[i].i_number += ad.inSession + ad.outSession;
+        res[i].i_people_count +=
+          ad.i_people_count_in_center + ad.i_people_count_out_center;
+      }
+    }
+  });
   return res;
 });
 
+// OS2 - only count in center
 const OS2Data = computed(() => {
   let res = [];
   if (os2result.value) {
     os2result.value.tbl_act_session.forEach((x) => {
-      let result = false;
-      /* ignore location in event information because it may be changed later
-      let locations = x.Session_to_Event.c_dest? x.Session_to_Event.c_dest.split(/[,、]+/): []
-
-      locations.forEach((loc) => {
-        let res = destInCenter.includes(loc.trim())
-        if (res) result = true
-      })
-
-      if (x.Session_to_Event.c_group1 && x.Session_to_Event.c_group1.trim().includes('中心設施')) result = true
-      if (x.Session_to_Event.c_type && x.Session_to_Event.c_type.trim().includes('偶到')) result = true
-      */
-      //if (result && x.inCenter &&
       if (
         x.inCenter &&
         (!staffSearchFilter.value ||
@@ -1567,14 +1768,79 @@ const OS2Data = computed(() => {
           d_act: x.d_act,
           i_number: x.i_number,
           i_people_count: x.i_people_count,
-          ...x.Session_to_Event,
+          c_act_code: x.Session_to_Event.c_act_code
+            ? x.Session_to_Event.c_act_code.trim()
+            : "",
+          c_act_name: x.Session_to_Event.c_act_name
+            ? x.Session_to_Event.c_act_name.trim()
+            : "",
+          c_dest: x.Session_to_Event.c_dest
+            ? x.Session_to_Event.c_dest.trim()
+            : "",
+          c_group1: x.Session_to_Event.c_group1
+            ? x.Session_to_Event.c_group1.trim()
+            : "",
+          c_group2: x.Session_to_Event.c_group2
+            ? x.Session_to_Event.c_group2.trim()
+            : "",
+          c_nature: x.Session_to_Event.c_nature
+            ? x.Session_to_Event.c_nature.trim()
+            : "",
+          c_respon: x.Session_to_Event.c_respon
+            ? x.Session_to_Event.c_respon.trim()
+            : "",
+          c_type: x.Session_to_Event.c_type
+            ? x.Session_to_Event.c_type.trim()
+            : "",
+          c_status: x.Session_to_Event.c_status
+            ? x.Session_to_Event.c_status.trim()
+            : "",
         });
       }
     });
+
+    AttendanceData.value.forEach((ad) => {
+      if (
+        !staffSearchFilter.value ||
+        (staffSearchFilter.value &&
+          staffSearchFilter.value
+            .map((x) => x.label)
+            .includes(ad.c_respon.trim())) ||
+        (staffSearchFilter.value &&
+          staffSearchFilter.value.map((x) => x.label)) == "全部"
+      ) {
+        let i = res.findIndex(
+          (x) => x.c_act_code.trim() == ad.c_act_code && x.d_act == ad.d_date
+        );
+        if (i <= -1) {
+          if (ad.i_people_count_in_center > 0 || ad.inSession > 0) {
+            res.push({
+              d_act: ad.d_date,
+              i_number: ad.inSession,
+              i_people_count: ad.i_people_count_in_center,
+              c_act_code: ad.c_act_code,
+              c_act_name: ad.c_act_name,
+              c_dest: ad.c_dest,
+              c_group1: ad.c_group1,
+              c_group2: ad.c_group2,
+              c_nature: ad.c_nature,
+              c_respon: ad.c_respon,
+              c_type: ad.c_type,
+              c_status: ad.c_status,
+            });
+          }
+        } else {
+          res[i].i_number += ad.inSession;
+          res[i].i_people_count += ad.i_people_count_in_center;
+        }
+      }
+    });
   }
+
   return res;
 });
 
+// OS3 - 核心 only
 const OS3Data = computed(() => {
   //os2result.value? os2result.value.tbl_act_session.filter((x) => os3natures.includes(x.Session_to_Event.c_nature.trim())): [])
   let res = [];
@@ -1596,8 +1862,76 @@ const OS3Data = computed(() => {
           d_act: x.d_act,
           i_number: x.i_number,
           i_people_count: x.i_people_count,
-          ...x.Session_to_Event,
+          c_act_code: x.Session_to_Event.c_act_code
+            ? x.Session_to_Event.c_act_code.trim()
+            : "",
+          c_act_name: x.Session_to_Event.c_act_name
+            ? x.Session_to_Event.c_act_name.trim()
+            : "",
+          c_dest: x.Session_to_Event.c_dest
+            ? x.Session_to_Event.c_dest.trim()
+            : "",
+          c_group1: x.Session_to_Event.c_group1
+            ? x.Session_to_Event.c_group1.trim()
+            : "",
+          c_group2: x.Session_to_Event.c_group2
+            ? x.Session_to_Event.c_group2.trim()
+            : "",
+          c_nature: x.Session_to_Event.c_nature
+            ? x.Session_to_Event.c_nature.trim()
+            : "",
+          c_respon: x.Session_to_Event.c_respon
+            ? x.Session_to_Event.c_respon.trim()
+            : "",
+          c_type: x.Session_to_Event.c_type
+            ? x.Session_to_Event.c_type.trim()
+            : "",
+          c_status: x.Session_to_Event.c_status
+            ? x.Session_to_Event.c_status.trim()
+            : "",
         });
+      }
+    });
+
+    AttendanceData.value.forEach((ad) => {
+      if (
+        (os3natures.includes(ad.c_nature.trim()) && !staffSearchFilter.value) ||
+        (staffSearchFilter.value &&
+          staffSearchFilter.value
+            .map((x) => x.label)
+            .includes(ad.c_respon.trim())) ||
+        (staffSearchFilter.value &&
+          staffSearchFilter.value.map((x) => x.label)) == "全部"
+      ) {
+        let i = res.findIndex(
+          (x) => x.c_act_code.trim() == ad.c_act_code && x.d_act == ad.d_date
+        );
+        if (i <= -1) {
+          if (
+            ad.inSession + ad.outSession > 0 ||
+            ad.i_people_count_in_center + ad.i_people_count_out_center > 0
+          ) {
+            res.push({
+              d_act: ad.d_date,
+              i_number: ad.inSession + ad.outSession,
+              i_people_count:
+                ad.i_people_count_in_center + ad.i_people_count_out_center,
+              c_act_code: ad.c_act_code,
+              c_act_name: ad.c_act_name,
+              c_dest: ad.c_dest,
+              c_group1: ad.c_group1,
+              c_group2: ad.c_group2,
+              c_nature: ad.c_nature,
+              c_respon: ad.c_respon,
+              c_type: ad.c_type,
+              c_status: ad.c_status,
+            });
+          }
+        } else {
+          res[i].i_number += ad.inSession + ad.outSession;
+          res[i].i_people_count +=
+            ad.i_people_count_in_center + ad.i_people_count_out_center;
+        }
       }
     });
   }
@@ -1620,13 +1954,47 @@ const OS5Data = computed(() => {
           (staffSearchFilter.value &&
             staffSearchFilter.value.map((x) => x.label)) == "全部")
       ) {
-        res.push(x);
+        res.push({
+          c_act_code: x.c_act_code ? x.c_act_code.trim() : "",
+          c_act_name: x.c_act_name ? x.c_act_name.trim() : "",
+          c_nature: x.c_nature ? x.c_nature.trim() : "",
+          c_respon: x.c_respon ? x.c_respon.trim() : "",
+          c_type: x.c_type ? x.c_type.trim() : "",
+          c_status: x.c_status ? x.c_status : "",
+          d_finish_goal: x.d_finish_goal,
+        });
+      }
+    });
+
+    AttendanceData.value.forEach((x) => {
+      if (
+        os5status.includes(x.c_status.trim()) &&
+        (!staffSearchFilter.value ||
+          (staffSearchFilter.value &&
+            staffSearchFilter.value
+              .map((x) => x.label)
+              .includes(x.c_respon.trim())) ||
+          (staffSearchFilter.value &&
+            staffSearchFilter.value.map((x) => x.label)) == "全部")
+      ) {
+        let i = res.findIndex((ele) => ele.c_act_code == x.c_act_code);
+        if (i <= -1)
+          res.push({
+            c_act_code: x.c_act_code,
+            c_act_name: x.c_act_name,
+            c_nature: x.c_nature,
+            c_respon: x.c_respon,
+            c_type: x.c_type,
+            c_status: x.c_status,
+            d_finish_goal: x.d_finish_goal,
+          });
       }
     });
   }
   return res;
 });
 
+// ciii - 核心, by 細類
 const C3Data = computed(() => {
   let res = [];
   if (os2result.value) {
@@ -1638,10 +2006,9 @@ const C3Data = computed(() => {
         x.Session_to_Event.c_group2 &&
         x.Session_to_Event.c_group2.trim() != ""
       ) {
-        let i = res.findIndex((ele) => ele.s_GUID == x.s_GUID);
+        let i = res.findIndex((ele) => ele.c_act_code == x.c_act_code);
         if (i == -1) {
           res.push({
-            s_GUID: x.s_GUID ? x.s_GUID.trim() : "",
             c_act_code: x.c_act_code ? x.c_act_code.trim() : "",
             d_act: x.d_act ? x.d_act.trim() : "",
             i_number: x.i_number,
@@ -1674,6 +2041,39 @@ const C3Data = computed(() => {
         } else {
           res[i].i_number += x.i_number;
           res[i].i_people += x.i_people_count;
+        }
+      }
+    });
+
+    AttendanceData.value.forEach((x) => {
+      if (
+        x.c_nature.startsWith("核心") &&
+        x.c_group2 &&
+        x.c_group2.trim() != ""
+      ) {
+        let i = res.findIndex(
+          (ele) => ele.c_act_code == x.c_act_code && ele.d_act == x.d_date
+        );
+        if (i == -1) {
+          res.push({
+            c_act_code: x.c_act_code,
+            d_act: x.d_date,
+            i_number: x.inSession + x.outSession,
+            i_people_count:
+              x.i_people_count_in_center + x.i_people_count_out_center,
+            c_act_name: x.c_act_name,
+            c_dest: x.c_dest,
+            c_group1: x.c_group1,
+            c_group2: x.c_group2,
+            c_nature: x.c_nature,
+            c_respon: x.c_respon,
+            c_type: x.c_type,
+            c_status: x.c_status,
+          });
+        } else {
+          res[i].i_number += x.inSession + x.outSession;
+          res[i].i_people_count +=
+            x.i_people_count_in_center + x.i_people_count_out_center;
         }
       }
     });

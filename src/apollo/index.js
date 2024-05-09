@@ -99,17 +99,7 @@ export /* async */ function getClientOptions(/* {app, router, ...} */ options) {
   return Object.assign(
     // General options.
     {
-      /*
-      link: createHttpLink({
-        uri:
-          process.env.GRAPHQL_URI ||
-          // Change to your graphql endpoint.
-          //'https://cciycgw.eastasia.cloudapp.azure.com/v1/graphql/',
-          'https://hasura.cciyc.com:4430/v1/graphql/',
-      }),
-      */
       link: from([errorLink, link]),
-      //cache: new InMemoryCache(),
       cache: new InMemoryCache({
         typePolicies: {
           Member: {
