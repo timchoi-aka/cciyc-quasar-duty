@@ -25,8 +25,16 @@ import { date } from "quasar";
 import { computed, ref } from "vue";
 import EventAttendanceReportPDF from "./EventAttendanceReportPDF.vue";
 
+const props = defineProps({
+  c_act_code: {
+    type: String,
+    required: false,
+  },
+});
 const route = useRoute();
-const c_act_code = ref(route.params.id);
+const c_act_code = computed(() =>
+  route.params.id ? route.params.id : props.c_act_code
+);
 const reportMonth = ref();
 const { result: eventResult } = useEventProvider({
   c_act_code: c_act_code,

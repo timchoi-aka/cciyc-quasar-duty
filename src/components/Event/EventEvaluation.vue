@@ -283,9 +283,17 @@ import { useRoute, useRouter } from "vue-router";
 import { useEventProvider } from "src/providers/event";
 
 // variables
+const props = defineProps({
+  c_act_code: {
+    type: String,
+    required: false,
+  },
+});
 const route = useRoute();
 const router = useRouter();
-const c_act_code = ref(route.params.id);
+const c_act_code = computed(() =>
+  route.params.id ? route.params.id : props.c_act_code
+);
 const splitterModel = ref(50); // default split at 50%
 const edit = computed(
   () => route.path.split("/")[route.path.split("/").length - 1] == "edit"

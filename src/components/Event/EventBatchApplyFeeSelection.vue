@@ -1,11 +1,15 @@
 <template>
+  <div v-if="!props.modelValue.c_act_code || loading"></div>
   <q-select
-    v-if="feeList.length > 0"
+    v-else-if="feeList.length > 0"
     key="non-free-event"
     use-input
+    filled
+    dense
     input-debounce="0"
     :options="feeList"
     :model-value="event"
+    label="收費類型"
     @new-value="newFee"
     @update:model-value="
       (value) =>
@@ -58,7 +62,7 @@ const EVENT_FEE_BY_ACT_CODE = gql`
     }
   }
 `;
-const { onResult } = useQuery(
+const { onResult, loading } = useQuery(
   EVENT_FEE_BY_ACT_CODE,
   () => ({
     c_act_code: event.value && event.value.c_act_code,

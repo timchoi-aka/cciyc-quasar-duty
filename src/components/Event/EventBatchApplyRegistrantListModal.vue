@@ -1,23 +1,47 @@
 <template>
   <q-dialog ref="dialogRef" @hide="onDialogHide">
-    <q-card class="q-dialog-plugin">
+    <q-card
+      class="q-dialog-plugin"
+      style="min-width: 80vw; width: 80vw; max-width: 80vw"
+    >
       <q-card>
-        <q-card-section class="text-caption bg-primary text-white text-bold"
-          >已報名人士</q-card-section
-        >
+        <q-card-section
+          class="row text-caption bg-primary text-white text-bold items-center q-ma-none q-pa-sm"
+          >已報名人士
+          <q-space />
+          <q-input
+            v-model="search"
+            outlined
+            dense
+            input-debounce="300"
+            class="q-mr-sm text-white"
+          >
+            <template v-slot:prepend>
+              <q-icon name="search" color="white" />
+            </template>
+          </q-input>
+          <q-btn flat round dense icon="close" @click="onDialogHide" />
+        </q-card-section>
         <q-card-section>
-          <q-list dense>
-            <q-item
-              v-for="(r, index) in props.registrants"
-              :key="r.c_mem_id"
-              class="q-my-sm"
-            >
-              <q-item-section avatar> {{ index + 1 }}. </q-item-section>
-              <q-item-section>
-                <q-item-label>{{ r.c_mem_id }} - {{ r.c_name }}</q-item-label>
-              </q-item-section>
-            </q-item>
-          </q-list>
+          <q-btn
+            v-for="(r, index) in props.registrants.filter(
+              (x) => x.c_name.includes(search) || x.c_mem_id.includes(search)
+            )"
+            :key="index"
+            class="q-my-sm text-primary q-ma-sm"
+            @click="
+              showMemberID = r.c_mem_id;
+              memberDetailModal = true;
+            "
+            outline
+            >{{ index + 1 }}. ({{ r.c_mem_id }}) - {{ r.c_name }}
+          </q-btn>
+        </q-card-section>
+        <q-card-section v-if="memberDetailModal">
+          <!-- memberDetail modal -->
+          <q-card style="min-width: 70vw; width: 70vw; max-width: 70vw">
+            <MemberDetail v-model="showMemberID" />
+          </q-card>
         </q-card-section>
       </q-card>
       <q-card-actions align="right">
@@ -28,15 +52,18 @@
 </template>
 
 <script setup>
+import { ref } from "vue";
 import { useDialogPluginComponent } from "quasar";
-
+import MemberDetail from "../Member/MemberDetail.vue";
 const props = defineProps({
   registrants: {
     type: Object,
     required: true,
   },
 });
-
+const memberDetailModal = ref(false);
+const showMemberID = ref("");
+const search = ref("");
 defineEmits([
   // REQUIRED; need to specify some events that your
   // component will emit through useDialogPluginComponent()

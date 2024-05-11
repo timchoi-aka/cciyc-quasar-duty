@@ -1,5 +1,19 @@
 <template>
   <LoadingDialog :model-value="loading ? 1 : 0" message="報名中" />
+  <q-dialog
+    v-model="viewEventModal"
+    persistent
+    full-width
+    transition-show="slide-up"
+    transition-hide="slide-down"
+    class="q-pa-none"
+  >
+    <EventDetail
+      :EventID="viewEventID"
+      @hide-component="viewEventModal = false"
+    />
+  </q-dialog>
+
   <q-splitter v-model="verticalModel" class="fit">
     <template v-slot:before>
       <q-splitter horizontal v-model="horizontalModel" class="fit">
@@ -29,7 +43,7 @@
               <div
                 v-for="(item, index) in events"
                 :key="item"
-                class="q-mx-xs row col-11 items-center"
+                class="q-mx-xs row col-12 items-center q-mb-sm q-px-sm"
               >
                 <q-btn
                   icon="delete"
@@ -37,10 +51,24 @@
                   flat
                   @click="events.splice(index, 1)"
                 />
-                <div class="col-7">
+                <div class="col-5">
                   <EventBatchApplySelection v-model="events[index]" />
                 </div>
-                <div class="col-2">
+                <div class="q-mr-sm col-1">
+                  <q-btn
+                    label="詳情"
+                    icon="description"
+                    v-if="events[index].c_act_code"
+                    @click="
+                      viewEventModal = true;
+                      viewEventID = events[index].c_act_code;
+                    "
+                    outline
+                    dense
+                    class="text-primary fit"
+                  />
+                </div>
+                <div class="col-3">
                   <EventBatchApplyFeeSelection
                     v-if="events[index]"
                     v-model="events[index]"
@@ -51,6 +79,9 @@
                     v-if="events[index]"
                     v-model="events[index].i_quota_left"
                     :event="events[index]"
+                    @update-registrants="
+                      (val) => (events[index].registrants = val)
+                    "
                   />
                 </div>
               </div>
@@ -63,6 +94,7 @@
                   events = [];
                   MemberObject.c_mem_id = '';
                   MemberObject = {};
+                  ReceiptNo = [];
                 "
                 >重置</q-btn
               >
@@ -75,14 +107,13 @@
               >
 
               <q-chip
-                v-if="warningMessage"
-                icon="warning"
-                :label="warningMessage"
-                class="bg-warning text-white text-bold"
+                v-for="error in errorMessage"
+                :icon="error.level == 'error' ? 'error' : 'warning'"
+                :color="error.level == 'error' ? 'negative' : 'warning'"
+                text-color="white"
+                :label="error.message"
+                class="text-bold"
               />
-              <div class="col-2 text-negative text-bold">
-                {{ invalidMessage }}
-              </div>
             </div>
           </div>
         </template>
@@ -97,7 +128,11 @@
       </q-splitter>
     </template>
 
-    <template v-slot:after>Preview combined receipt {{ ReceiptNo }}</template>
+    <template v-slot:after>
+      <div>
+        <ReceiptBatch :c_receipt_no="ReceiptNo" :key="ReceiptNo" />
+      </div>
+    </template>
   </q-splitter>
 </template>
 
@@ -127,7 +162,8 @@ import EventBatchApplyFeeSelection from "components/Event/EventBatchApplyFeeSele
 import EventBatchApplyQuotaDisplay from "components/Event/EventBatchApplyQuotaDisplay.vue";
 import LoadingDialog from "components/LoadingDialog.vue";
 import ReceiptListByMemberID_Multiple from "components/Account/ReceiptListByMemberID_Multiple.vue";
-
+import ReceiptBatch from "components/Account/ReceiptBatch.vue";
+import EventDetail from "src/components/Event/EventDetail.vue";
 // variables
 const $q = useQuasar();
 const $store = useStore();
@@ -144,10 +180,12 @@ const events = ref([]);
 const EventOptions = ref([]);
 const OriginalEventOptions = ref([]);
 const now = new Date();
-const ReceiptNo = ref();
+const ReceiptNo = ref([]);
+const viewEventModal = ref(false);
+const viewEventID = ref("");
 
 // query
-const { latestReceiptNo, batchRegister, result, loading, message } =
+const { batchRegister, result, loading, message, updateQueue } =
   useBatchEventRegistrationProvider();
 const {
   mutate: eventRegistration,
@@ -181,42 +219,46 @@ const {
 
 // computed
 const username = computed(() => $store.getters["userModule/getUsername"]);
-const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"]);
-const isFinance = computed(() => $store.getters["userModule/getFinance"]);
-const ApplyHistory = ref([]);
-// const Event = computed(() => EventData.value?.HTX_Event_by_pk??[])
 const Fee = ref([]);
-const userProfileLogout = () => $store.dispatch("userModule/logout");
 
 // validApplication return false if events is empty or duplicated c_act_code found in events
-const invalidMessage = ref();
-const warningMessage = ref();
+const errorMessage = ref([]);
 const validApplication = computed(() => {
-  warningMessage.value = "";
-  invalidMessage.value = "";
+  errorMessage.value = [];
 
   if (
     MemberObject.value.c_mem_id == "" ||
     MemberObject.value.c_mem_id == null
   ) {
-    invalidMessage.value += "請輸入會員號碼";
+    errorMessage.value.push({
+      message: "請輸入會員號碼",
+      level: "error",
+    });
     return false;
   }
 
   if (qdate.getDateDiff(MemberObject.value.d_expired_1, now) < 0) {
-    warningMessage.value += "注意：會藉已過期";
+    errorMessage.value.push({
+      message: "注意：會藉已過期",
+      level: "warning",
+    });
   }
 
   // First, check if the events array is empty
   if (events.value.length === 0) {
-    invalidMessage.value += "請新增報名活動";
+    errorMessage.value.push({
+      message: "請新增報名活動",
+      level: "error",
+    });
     return false; // Invalid if empty
   }
 
   // if user didn't input any c_act_code, don't allow application
   if (events.value.filter((ele) => ele.c_act_code != "").length == 0) {
-    invalidMessage.value += "請選擇報名活動";
-    return false;
+    errorMessage.value.push({
+      message: "請輸入報名活動",
+      level: "error",
+    });
   }
 
   // Extract c_act_code values from events and create a Set to remove duplicates
@@ -225,8 +267,28 @@ const validApplication = computed(() => {
   // Compare the length of the Set to the original events array
   // If they are different, it means there were duplicates
   if (cActCodes.size !== events.value.length) {
-    invalidMessage.value += "請勿重複報名活動";
+    errorMessage.value.push({
+      message: "請勿重複報名活動",
+      level: "error",
+    });
     return false; // Invalid if duplicates found
+  }
+
+  // check if user has already registered before
+  if (events.value.length > 0) {
+    let alreadyExists = false;
+    events.value.forEach((e) => {
+      if (e.registrants && e.registrants.length > 0) {
+        if (e.registrants.includes(MemberObject.value.c_mem_id)) {
+          alreadyExists = true;
+          errorMessage.value.push({
+            message: `這會員已經報名活動 ${e.c_act_code}`,
+            level: "error",
+          });
+        }
+      }
+    });
+    if (alreadyExists) return false;
   }
 
   // return false if event is not free but didn't have a charge input
@@ -237,7 +299,18 @@ const validApplication = computed(() => {
       !e.b_freeofcharge &&
       (e.u_fee <= 0 || e.u_fee == "" || e.u_fee == null)
     ) {
-      invalidMessage.value += "請輸入正確收費";
+      errorMessage.value.push({
+        message: `請輸入正確收費`,
+        level: "error",
+      });
+      validRecord = false;
+    }
+
+    if (e.i_quota_left <= 0) {
+      errorMessage.value.push({
+        message: `${e.c_act_code} 報名人數已滿`,
+        level: "error",
+      });
       validRecord = false;
     }
   });

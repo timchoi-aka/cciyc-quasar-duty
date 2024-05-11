@@ -65,6 +65,16 @@ const isInitialized = ref(false);
 // variables
 const c_mem_id = toRef(props, "MemberID");
 const selectedReceipts = toRef(props, "selectedReceipts");
+const staffNameMapping = {
+  lswu: "胡小姐",
+  ywho: "何先生",
+  mwchan: "陳小姐",
+  lsfung: "馮小姐",
+  pswong: "黃小姐",
+  kyma: "馬姑娘",
+  hlng: "吳先生",
+  myli: "李姑娘",
+};
 
 watch(selected, (val) => {
   emit(
@@ -134,14 +144,15 @@ const columns = ref([
     field: "c_receipt_no",
   },
   {
+    name: "c_user_id",
+    label: "經手人",
+    field: "c_user_id",
+    format: (val) => (staffNameMapping[val] ? staffNameMapping[val] : val),
+  },
+  {
     name: "u_price_after_discount",
     label: "費用",
     field: "u_price_after_discount",
-  },
-  {
-    name: "i_prints",
-    label: "列印次數",
-    field: "i_prints",
   },
 ]);
 

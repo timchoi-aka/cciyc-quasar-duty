@@ -2,8 +2,9 @@
   <q-select
     dense
     filled
-    class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none"
+    class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none items-stretch content-stretch"
     use-input
+    :hide-bottom-space="true"
     label="活動編號"
     input-debounce="0"
     :options="EventOptions"

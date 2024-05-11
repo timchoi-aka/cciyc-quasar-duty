@@ -44,7 +44,7 @@ export function useBatchEventRegistrationProvider() {
     mutation EventRegistration(
       $logObject: [Log_insert_input!] = []
       $regObject: [tbl_act_reg_insert_input!] = []
-      $accountObject: [tbl_account_insert_input!] = []
+      $accountObject: [tbl_account_insert_input] = []
     ) {
       insert_tbl_act_reg(objects: $regObject) {
         returning {
@@ -170,19 +170,19 @@ export function useBatchEventRegistrationProvider() {
           element.c_name +
           " 報名活動 " +
           element.c_act_code +
-          (element.b_freeofcharge ? "" : " 費用: " + element.u_fee),
+          (element.u_fee && element.u_fee > 0 ? " 費用: " + element.u_fee : ""),
       };
 
       let regObj = {
         c_mem_id: element.c_mem_id,
         c_act_code: element.c_act_code,
-        c_type: element.b_freeofcharge ? null : element.c_type,
+        c_type: element.c_type ? element.c_type : null,
         c_name: element.c_name,
         c_sex: element.c_sex,
         i_age: element.i_age,
-        c_receipt_no: element.b_freeofcharge
-          ? null
-          : advanceReceiptNo(latestReceiptNo.value, increment),
+        c_receipt_no: element.u_fee
+          ? advanceReceiptNo(latestReceiptNo.value, increment)
+          : null,
         c_remarks: "",
         c_bus: null,
         i_bus_no: 0,
@@ -195,36 +195,40 @@ export function useBatchEventRegistrationProvider() {
         d_refund: null,
       };
 
-      let accountObject = {
-        c_receipt_no: advanceReceiptNo(latestReceiptNo.value, increment),
-        d_create: now,
-        i_receipt_type: 2, //type 2 = activity fee
-        c_desc: element.c_act_name,
-        c_act_code: element.c_act_code,
-        c_type: element.c_acc_type ? element.c_acc_type.trim() : "",
-        u_discount: 0,
-        u_price_after_discount: element.u_fee,
-        c_cash_type: "Cash",
-        c_cheque_no: "",
-        m_remark: element.remark,
-        c_mem_id: element.c_mem_id ? element.c_mem_id.trim() : "",
-        c_user_id: staffName.value,
-        c_name: element.c_name ? element.c_name.trim() : "",
-        b_cssa: false,
-        b_refund: false,
-        b_OtherIncome: false,
-        b_clear: false,
-        d_clear: now,
-        i_prints: 0,
-        b_delete: false,
-      };
+      let accountObject =
+        element.u_fee && element.u_fee > 0
+          ? {
+              c_receipt_no: advanceReceiptNo(latestReceiptNo.value, increment),
+              d_create: now,
+              i_receipt_type: 2, //type 2 = activity fee
+              c_desc: element.c_act_name,
+              c_act_code: element.c_act_code,
+              c_type: element.c_acc_type ? element.c_acc_type.trim() : "",
+              u_discount: 0,
+              u_price_after_discount: element.u_fee,
+              c_cash_type: "Cash",
+              c_cheque_no: "",
+              m_remark: element.remark,
+              c_mem_id: element.c_mem_id ? element.c_mem_id.trim() : "",
+              c_user_id: staffName.value,
+              c_name: element.c_name ? element.c_name.trim() : "",
+              b_cssa: false,
+              b_refund: false,
+              b_OtherIncome: false,
+              b_clear: false,
+              d_clear: now,
+              i_prints: 0,
+              b_delete: false,
+            }
+          : {};
 
       // add objects to queue
       queue.logObjectQueue.push(logObject);
       queue.regObjectQueue.push(regObj);
-      queue.accountObjectQueue.push(accountObject);
+      if (Object.keys(accountObject).length > 0)
+        queue.accountObjectQueue.push(accountObject);
       queue.length++;
-      if (!element.b_freeofcharge) increment++;
+      if (element.u_fee && element.u_fee > 0) increment++;
     });
 
     updateQueue.value = queue;
@@ -258,11 +262,18 @@ export function useBatchEventRegistrationProvider() {
         // Increment the number of pending async operations
         awaitNumber.value++;
         try {
-          await BatchRegister({
-            logObject: updateQueue.value.logObjectQueue,
-            regObject: updateQueue.value.regObjectQueue,
-            accountObject: updateQueue.value.accountObjectQueue,
-          });
+          if (updateQueue.value.accountObjectQueue.length > 0) {
+            await BatchRegister({
+              logObject: updateQueue.value.logObjectQueue,
+              regObject: updateQueue.value.regObjectQueue,
+              accountObject: updateQueue.value.accountObjectQueue,
+            });
+          } else {
+            await BatchRegister({
+              logObject: updateQueue.value.logObjectQueue,
+              regObject: updateQueue.value.regObjectQueue,
+            });
+          }
           awaitNumber.value--;
         } catch (error) {
           console.log("error", error);

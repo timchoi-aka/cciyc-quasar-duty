@@ -175,6 +175,15 @@ export /* async */ function getClientOptions(/* {app, router, ...} */ options) {
           HTX_About_Article: {
             keyFields: ["ArticleID"],
           },
+          Subscription: {
+            fields: {
+              tbl_act_reg: {
+                merge(existing = [], incoming) {
+                  return [...existing, ...incoming];
+                },
+              },
+            },
+          },
         },
       }),
       defaultOptions: {

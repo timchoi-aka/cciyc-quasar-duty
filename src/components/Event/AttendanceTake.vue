@@ -248,8 +248,16 @@ import { useRoute } from "vue-router";
 import LoadingDialog from "components/LoadingDialog.vue";
 
 // variables
+const props = defineProps({
+  c_act_code: {
+    type: String,
+    required: false,
+  },
+});
 const route = useRoute();
-const c_act_code = ref(route.params.id);
+const c_act_code = computed(() =>
+  route.params.id ? route.params.id : props.c_act_code
+);
 const $q = useQuasar();
 const $store = useStore();
 const eventDateOptions = ref([]);

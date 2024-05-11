@@ -99,9 +99,17 @@ import { useRoute } from "vue-router";
 import { useEventProvider } from "src/providers/event.js";
 
 // variables
+const props = defineProps({
+  c_act_code: {
+    type: String,
+    required: false,
+  },
+});
 const route = useRoute();
 const $q = useQuasar();
-const c_act_code = ref(route.params.id);
+const c_act_code = computed(() =>
+  route.params.id ? route.params.id : props.c_act_code
+);
 const $store = useStore();
 const edit = ref(false);
 const newitem = ref([]);

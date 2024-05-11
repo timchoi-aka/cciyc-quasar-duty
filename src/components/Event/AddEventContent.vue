@@ -267,7 +267,7 @@
           <q-select
             filled
             use-input
-            nput-debounce="300"
+            input-debounce="300"
             @filter="saveBuffer"
             @blur="
               textBuffer.length > 0 ? updateBuffer(editObject, 'c_whojoin') : ''

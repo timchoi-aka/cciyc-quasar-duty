@@ -199,6 +199,9 @@
           <q-select
             v-if="edit"
             filled
+            @new-value="newWhojoin"
+            use-input
+            clearable
             :options="whojoin"
             v-model="editObject.c_whojoin"
           /><span v-else>{{ Event.c_whojoin }}</span></span
@@ -535,7 +538,10 @@
           <q-select
             v-if="edit"
             filled
+            clearable
             :options="whojoin"
+            @new-value="newWhojoin"
+            use-input
             v-model="editObject.c_whojoin"
           /><span v-else>{{ Event.c_whojoin }}</span></span
         >
@@ -798,20 +804,12 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useStore } from "vuex";
 import { date as qdate, useQuasar } from "quasar";
-import { EVENT_BY_PK } from "/src/graphQueries/Event/query.js";
-import {
-  DELETE_EVENT_BY_PK,
-  UPDATE_EVENT_BY_PK,
-} from "/src/graphQueries/Event/mutation.js";
-import { useQuery, useMutation } from "@vue/apollo-composable";
 import DateComponent from "components/Basic/DateComponent.vue";
 import TimeComponent from "components/Basic/TimeComponent.vue";
 import LoadingDialog from "components/LoadingDialog.vue";
-import { usersCollection, FirebaseAuth } from "boot/firebase";
-import { getDocs, query, where } from "firebase/firestore";
 import StaffSelectionMultiple from "src/components/Basic/StaffSelectionMultiple.vue";
 import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router";
 import FileUpload from "src/components/Basic/FileUpload.vue";
@@ -820,9 +818,17 @@ import User from "src/components/class/user.js";
 import WeekSelection from "src/components/Basic/WeekSelection.vue";
 import DestSelection from "src/components/Basic/DestSelection.vue";
 
+const props = defineProps({
+  c_act_code: {
+    type: String,
+    required: false,
+  },
+});
 const route = useRoute();
 const router = useRouter();
-const c_act_code = ref(route.params.id);
+const c_act_code = computed(() =>
+  route.params.id ? route.params.id : props.c_act_code
+);
 
 // variables
 const $q = useQuasar();
@@ -1113,6 +1119,17 @@ function purityData(obj) {
   return returnObj;
 }
 
+function newWhojoin(val, done) {
+  if (val.length > 0) {
+    let i = whojoin.value.findIndex((element) => element.value == val);
+    if (i == -1) {
+      whojoin.value.push(val);
+      done(whojoin.value[whojoin.value.length - 1], "toggle");
+    }
+  } else {
+    done(whojoin.value[i], "toggle");
+  }
+}
 // route guard
 onBeforeRouteLeave((to, from, next) => {
   if (edit.value) {

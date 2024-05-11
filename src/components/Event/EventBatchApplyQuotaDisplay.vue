@@ -3,7 +3,14 @@
     <div class="col-6 row">
       <div class="col-12">剩餘名額</div>
       <div class="col-12">
-        {{ quotaLeft }}
+        <div v-if="!props.event.c_act_code">請選擇活動</div>
+        <div v-else-if="props.event.c_act_code && !props.event.i_quota_max">
+          無限制
+        </div>
+        <div v-else-if="loading">讀取中</div>
+        <div v-else>
+          {{ quotaLeft > 0 ? quotaLeft : "已滿" }}
+        </div>
       </div>
     </div>
     <div class="col-6 row">
@@ -21,15 +28,14 @@
             <div>已報名人士</div>
             <q-item v-for="r in registrants" :key="r.c_mem_id">
               <q-item-section class="text-caption"
-                >({{ r.c_mem_id }}) - {{ r.c_name }}</q-item-section
-              >
+                >({{ r.c_mem_id }}) - {{ r.c_name }}
+              </q-item-section>
             </q-item>
           </q-list>
         </q-tooltip>
       </q-btn>
     </div>
   </div>
-  {{ result && result.length }}
 </template>
 
 <script setup>
@@ -51,7 +57,7 @@ const props = defineProps({
     required: true,
   },
 });
-const emit = defineEmits(["update:modelValue"]);
+const emit = defineEmits(["update:modelValue", "updateRegistrants"]);
 const c_act_code = ref(props.event.c_act_code);
 
 const EVENT_APPLY_AND_RECEIPT_BY_ACT_CODE = gql`
@@ -94,18 +100,18 @@ const EVENT_APPLY_AND_RECEIPT_BY_ACT_CODE = gql`
   }
 `;
 
-const { result } = useQuery(
+const { result, loading } = useQuery(
   EVENT_APPLY_AND_RECEIPT_BY_ACT_CODE,
   () => ({
     c_act_code: c_act_code.value,
   }),
   {
-    pollInterval: 5000,
+    pollInterval: 1000,
   }
 );
 
 const registrants = computed(() =>
-  result.value
+  result.value && result.value.tbl_act_reg
     ? result.value.tbl_act_reg.map((r) => ({
         c_mem_id: r.c_mem_id,
         c_name: r.c_name,
@@ -121,9 +127,15 @@ const quotaLeft = computed(() => {
 
 watch(registrants, (newVal) => {
   if (newVal && newVal.length > 0) {
+    props.event.i_quota_max
+      ? emit(
+          "update:modelValue",
+          parseInt(props.event.i_quota_max) - newVal.length
+        )
+      : emit("update:modelValue", 9999);
     emit(
-      "update:modelValue",
-      parseInt(props.event.i_quota_max) - newVal.length
+      "updateRegistrants",
+      Array.from(new Set(newVal.map((r) => r.c_mem_id)))
     );
   }
 });
