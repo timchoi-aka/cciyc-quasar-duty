@@ -6,13 +6,20 @@
   "author": "Tim Choi <tim.c@aka-technology.com>",
   "private": true,
   "scripts": {
-    "test": "echo \"No test specified\" && exit 0",
     "emu": "firebase emulators:start --import ./functions/latest --export-on-exit ./functions/latest",
-    "build:dev": "quasar dev",
-    "build:prod": "NODE_ENV=production quasar dev",
+    "build": "ENV_FILE=production quasar build",
+    "build:dev": "ENV_FILE=development quasar dev",
+    "build:prod": "ENV_FILE=production quasar build",
+    "build:staging": "ENV_FILE=staging quasar build",
     "serve": "run-p emu build:dev",
-    "build": "quasar build",
-    "serve:prod": "run-p emu build:prod"
+    "serve:staging": "ENV_FILE=staging quasar dev",
+    "serve:prod": "ENV_FILE=production quasar dev",
+    "test:unit:ui": "vitest --ui",
+    "test:unit": "vitest",
+    "test:unit:ci": "vitest run",
+    "deploy:prod": "run-p build:prod firebase deploy --only hosting",
+    "deploy:staging": "run-p build:staging deploy:stage",
+    "deploy:stage": "firebase hosting:channel:deploy event_test"
   },
   "dependencies": {
     "@apollo/client": "^3.9.11",
@@ -56,10 +63,14 @@
     "@quasar/app-webpack": "^3.12.4",
     "@quasar/quasar-app-extension-apollo": "^2.2.0",
     "@quasar/quasar-app-extension-qpdfviewer": "^2.0.0-alpha.6",
+    "@vitest/ui": "^1.3.1",
+    "@vue/test-utils": "^2.4.4",
+    "dotenv": "^16.4.5",
     "electron": "^29.3.0",
     "electron-packager": "^17.1.1",
     "firebase": "^10.11.0",
-    "strip-ansi": "^7.1.0"
+    "strip-ansi": "^7.1.0",
+    "vitest": "^1.3.1"
   },
   "browserslist": [
     "last 10 Chrome versions",

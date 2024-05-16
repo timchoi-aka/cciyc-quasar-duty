@@ -1,16 +1,15 @@
 import { ref, computed } from "vue";
 import { useQuery, useMutation } from "@vue/apollo-composable";
-import { gql } from "graphql-tag"
-import axios from 'axios';
+import { gql } from "graphql-tag";
+import axios from "axios";
 
 // Server paths for event and class galleries
-const eventGalleryServerPath = "https://www2.cciyc.com/UPFile/Gallery/CoverPic/";
-//const baseURL = process.env.NODE_ENV == "development"? "http://localhost:5001/manage-hr/asia-east2/file-deleteFolderFromStorage" : "https://asia-east2-manage-hr.cloudfunctions.net/file-deleteFolderFromStorage";
-const baseURL = "https://asia-east2-manage-hr.cloudfunctions.net/file-deleteFolderFromStorage";
+const eventGalleryServerPath = process.env.EVENT_GALLERY_SERVER_PATH;
+const deleteFolderAPI = process.env.DELETE_FOLDER_API;
 // Function to provide gallery data
 export function useGalleryProvider(options = {}) {
   // Destructure galleryID from options, default to a new ref if not provided
-  const { galleryID = ref() } = options
+  const { galleryID = ref() } = options;
 
   // Ref to keep track of the number of pending async operations
   const awaitNumber = ref(0);
@@ -27,42 +26,56 @@ export function useGalleryProvider(options = {}) {
   // Mutation for toggling visibility
   const TOGGLE_VISIBILITY_MUTATION = gql`
     mutation toggleVisibility($IsShow: Int!, $GalleryID: Int!) {
-      update_HTX_Gallery_by_pk(pk_columns: { GalleryID: $GalleryID }, _set: { IsShow: $IsShow }) {
+      update_HTX_Gallery_by_pk(
+        pk_columns: { GalleryID: $GalleryID }
+        _set: { IsShow: $IsShow }
+      ) {
         GalleryID
         IsShow
       }
-    }`;
+    }
+  `;
 
   const DELETE_GALLERY_MUTATION = gql`
     mutation delGallery($GalleryID: Int!) {
       delete_HTX_Gallery_by_pk(GalleryID: $GalleryID) {
         GalleryID
       }
-    }`
+    }
+  `;
 
   // Define the renameGallery mutation
   const RENAME_GALLERY_MUTATION = gql`
     mutation RenameGallery($GalleryID: Int!, $GalleryName: String!) {
-      update_HTX_Gallery_by_pk(pk_columns: {GalleryID: $GalleryID}, _set: {GalleryName: $GalleryName}) {
+      update_HTX_Gallery_by_pk(
+        pk_columns: { GalleryID: $GalleryID }
+        _set: { GalleryName: $GalleryName }
+      ) {
         GalleryID
         GalleryName
       }
     }
-    `;
+  `;
 
   // Define the updateCover mutation
   const UPDATE_COVER_MUTATION = gql`
     mutation UpdateCover($GalleryID: Int!, $CoverPic: String!) {
-      update_HTX_Gallery_by_pk(pk_columns: {GalleryID: $GalleryID}, _set: {CoverPic: $CoverPic}) {
+      update_HTX_Gallery_by_pk(
+        pk_columns: { GalleryID: $GalleryID }
+        _set: { CoverPic: $CoverPic }
+      ) {
         GalleryID
         CoverPic
       }
-    }`;
+    }
+  `;
 
   // Define the addGallery mutation
   const ADD_GALLERY = gql`
     mutation AddGallery($GalleryName: String!, $GalleryNameEN: String!) {
-      insert_HTX_Gallery_one(object: { GalleryName: $GalleryName, GalleryNameEN: $GalleryNameEN }) {
+      insert_HTX_Gallery_one(
+        object: { GalleryName: $GalleryName, GalleryNameEN: $GalleryNameEN }
+      ) {
         GalleryID
         GalleryName
       }
@@ -70,159 +83,188 @@ export function useGalleryProvider(options = {}) {
   `;
 
   // If a galleryID is provided, construct a GraphQL query to fetch the gallery with that ID
-  galleryID.value?
-    GET_GALLERIES = gql`
-      query getGallery($galleryID: Int) {
-        HTX_Gallery(where: {GalleryID: {_eq: $galleryID}}) {
-          AddTime
-          ClassID
-          CoverPic
-          CoverPic2
-          GalleryDetail
-          GalleryDetailEN
-          GalleryName
-          GalleryNameEN
-          IsShow
-          GalleryID
+  galleryID.value
+    ? (GET_GALLERIES = gql`
+        query getGallery($galleryID: Int) {
+          HTX_Gallery(where: { GalleryID: { _eq: $galleryID } }) {
+            AddTime
+            ClassID
+            CoverPic
+            CoverPic2
+            GalleryDetail
+            GalleryDetailEN
+            GalleryName
+            GalleryNameEN
+            IsShow
+            GalleryID
+          }
         }
-      }`
-    :
-    GET_GALLERIES = gql`
-      query getGallery {
-        HTX_Gallery {
-          AddTime
-          ClassID
-          CoverPic
-          CoverPic2
-          GalleryDetail
-          GalleryDetailEN
-          GalleryName
-          GalleryNameEN
-          IsShow
-          GalleryID
+      `)
+    : (GET_GALLERIES = gql`
+        query getGallery {
+          HTX_Gallery {
+            AddTime
+            ClassID
+            CoverPic
+            CoverPic2
+            GalleryDetail
+            GalleryDetailEN
+            GalleryName
+            GalleryNameEN
+            IsShow
+            GalleryID
+          }
         }
-      }
-      `
+      `);
 
   // Use the useMutation hook to create a deleteGallery mutation
-  const { mutate: deleteGallery, onError: onError_deleteGallery } = useMutation(DELETE_GALLERY_MUTATION, {
-    update: (cache, { data: { delete_HTX_Gallery_by_pk } }) => {
-      // Read the data from our cache for this query.
-      const existingData = cache.readQuery({
-        query: GET_GALLERIES,
-        variables: galleryID.value ? { galleryID: galleryID.value } : {}
-      });
-
-      if (existingData) {
-        // Filter out the deleted gallery
-        const updatedGalleries = existingData.HTX_Gallery.filter(
-          gallery => gallery.GalleryID !== delete_HTX_Gallery_by_pk.GalleryID
-        );
-
-        // Write our data back to the cache.
-        cache.writeQuery({
+  const { mutate: deleteGallery, onError: onError_deleteGallery } = useMutation(
+    DELETE_GALLERY_MUTATION,
+    {
+      update: (cache, { data: { delete_HTX_Gallery_by_pk } }) => {
+        // Read the data from our cache for this query.
+        const existingData = cache.readQuery({
           query: GET_GALLERIES,
           variables: galleryID.value ? { galleryID: galleryID.value } : {},
-          data: {
-            ...existingData,
-            HTX_Gallery: updatedGalleries
-          },
         });
-      }
-    },
-  });
+
+        if (existingData) {
+          // Filter out the deleted gallery
+          const updatedGalleries = existingData.HTX_Gallery.filter(
+            (gallery) =>
+              gallery.GalleryID !== delete_HTX_Gallery_by_pk.GalleryID
+          );
+
+          // Write our data back to the cache.
+          cache.writeQuery({
+            query: GET_GALLERIES,
+            variables: galleryID.value ? { galleryID: galleryID.value } : {},
+            data: {
+              ...existingData,
+              HTX_Gallery: updatedGalleries,
+            },
+          });
+        }
+      },
+    }
+  );
 
   // Use the useMutation hook to create an addGallery mutation
-  const { mutate: addGallery, onError: onError_addGallery } = useMutation(ADD_GALLERY, {
-    // Update function to modify the cache after the mutation
-    update: (cache, { data: { insert_HTX_Gallery_one } }) => {
-      // Read the data from our cache for this query.
-      const existingGalleries = cache.readQuery({ query: GET_GALLERIES });
+  const { mutate: addGallery, onError: onError_addGallery } = useMutation(
+    ADD_GALLERY,
+    {
+      // Update function to modify the cache after the mutation
+      update: (cache, { data: { insert_HTX_Gallery_one } }) => {
+        // Read the data from our cache for this query.
+        const existingGalleries = cache.readQuery({ query: GET_GALLERIES });
 
-      // Check if the data is in the cache
-      if (existingGalleries) {
-        // Add the new gallery to the cache
-        const updatedGalleries = [...existingGalleries.HTX_Gallery, insert_HTX_Gallery_one];
+        // Check if the data is in the cache
+        if (existingGalleries) {
+          // Add the new gallery to the cache
+          const updatedGalleries = [
+            ...existingGalleries.HTX_Gallery,
+            insert_HTX_Gallery_one,
+          ];
 
-        // Write our data back to the cache.
-        cache.writeQuery({
-          query: GET_GALLERIES,
-          data: {
-            HTX_Gallery: updatedGalleries
-          },
-        });
-      }
-    },
-  });
+          // Write our data back to the cache.
+          cache.writeQuery({
+            query: GET_GALLERIES,
+            data: {
+              HTX_Gallery: updatedGalleries,
+            },
+          });
+        }
+      },
+    }
+  );
 
   // Use the useMutation hook to create an updateCover mutation
-  const { mutate: updateCover, onError: onError_updateCover } = useMutation(UPDATE_COVER_MUTATION, {
-    // Update function to modify the cache after the mutation
-    update: (cache, { data: { update_HTX_Gallery_by_pk } }) => {
-      // Read the data from our cache for this query.
-      const existingGalleries = cache.readQuery({ query: GET_GALLERIES });
+  const { mutate: updateCover, onError: onError_updateCover } = useMutation(
+    UPDATE_COVER_MUTATION,
+    {
+      // Update function to modify the cache after the mutation
+      update: (cache, { data: { update_HTX_Gallery_by_pk } }) => {
+        // Read the data from our cache for this query.
+        const existingGalleries = cache.readQuery({ query: GET_GALLERIES });
 
-      // Check if the data is in the cache
-      if (existingGalleries) {
-        // Find the gallery we just updated
-        const galleryIndex = existingGalleries.HTX_Gallery.findIndex(gallery => gallery.GalleryID === update_HTX_Gallery_by_pk.GalleryID);
+        // Check if the data is in the cache
+        if (existingGalleries) {
+          // Find the gallery we just updated
+          const galleryIndex = existingGalleries.HTX_Gallery.findIndex(
+            (gallery) =>
+              gallery.GalleryID === update_HTX_Gallery_by_pk.GalleryID
+          );
 
-        if (galleryIndex > -1) {
-          // Update its CoverPic property
-          const updatedGalleries = [...existingGalleries.HTX_Gallery];
-          updatedGalleries[galleryIndex].CoverPic = update_HTX_Gallery_by_pk.CoverPic;
+          if (galleryIndex > -1) {
+            // Update its CoverPic property
+            const updatedGalleries = [...existingGalleries.HTX_Gallery];
+            updatedGalleries[galleryIndex].CoverPic =
+              update_HTX_Gallery_by_pk.CoverPic;
 
-          // Write our data back to the cache.
-          cache.writeQuery({
-            query: GET_GALLERIES,
-            data: { ...existingGalleries, HTX_Gallery: updatedGalleries },
-          });
+            // Write our data back to the cache.
+            cache.writeQuery({
+              query: GET_GALLERIES,
+              data: { ...existingGalleries, HTX_Gallery: updatedGalleries },
+            });
+          }
         }
-      }
-    },
-  });
+      },
+    }
+  );
 
   // Use the useMutation hook to create a renameGallery mutation
-  const { mutate: renameGallery, onError: onError_renameGallery } = useMutation(RENAME_GALLERY_MUTATION, {
-    // Update function to modify the cache after the mutation
-    update: (cache, { data: { update_HTX_Gallery_by_pk } }) => {
-      // Read the data from our cache for this query.
-      const existingGalleries = cache.readQuery({ query: GET_GALLERIES });
+  const { mutate: renameGallery, onError: onError_renameGallery } = useMutation(
+    RENAME_GALLERY_MUTATION,
+    {
+      // Update function to modify the cache after the mutation
+      update: (cache, { data: { update_HTX_Gallery_by_pk } }) => {
+        // Read the data from our cache for this query.
+        const existingGalleries = cache.readQuery({ query: GET_GALLERIES });
 
-      // Check if the data is in the cache
-      if (existingGalleries) {
-        // Find the gallery we just updated
-        const galleryIndex = existingGalleries.HTX_Gallery.findIndex(gallery => gallery.GalleryID === update_HTX_Gallery_by_pk.GalleryID);
+        // Check if the data is in the cache
+        if (existingGalleries) {
+          // Find the gallery we just updated
+          const galleryIndex = existingGalleries.HTX_Gallery.findIndex(
+            (gallery) =>
+              gallery.GalleryID === update_HTX_Gallery_by_pk.GalleryID
+          );
 
-        if (galleryIndex > -1) {
-          // Update its GalleryName property
-          const updatedGalleries = [...existingGalleries.HTX_Gallery];
-          updatedGalleries[galleryIndex].GalleryName = update_HTX_Gallery_by_pk.GalleryName;
+          if (galleryIndex > -1) {
+            // Update its GalleryName property
+            const updatedGalleries = [...existingGalleries.HTX_Gallery];
+            updatedGalleries[galleryIndex].GalleryName =
+              update_HTX_Gallery_by_pk.GalleryName;
 
-          // Write our data back to the cache.
-          cache.writeQuery({
-            query: GET_GALLERIES,
-            data: { ...existingGalleries, HTX_Gallery: updatedGalleries },
-          });
+            // Write our data back to the cache.
+            cache.writeQuery({
+              query: GET_GALLERIES,
+              data: { ...existingGalleries, HTX_Gallery: updatedGalleries },
+            });
+          }
         }
-      }
-    },
-  });
+      },
+    }
+  );
 
   // Update function to modify the cache after the mutation
-  const { mutate: toggleVisibility, onError: onError_toggleVisibility } = useMutation(TOGGLE_VISIBILITY_MUTATION, {
+  const { mutate: toggleVisibility, onError: onError_toggleVisibility } =
+    useMutation(TOGGLE_VISIBILITY_MUTATION, {
       update: (cache, { data: { update_HTX_Gallery_by_pk } }) => {
         const existingGalleries = cache.readQuery({ query: GET_GALLERIES });
 
         // Check if the data is in the cache
         if (existingGalleries) {
           // Find the gallery we just updated
-          const galleryIndex = existingGalleries.HTX_Gallery.findIndex(gallery => gallery.GalleryID === update_HTX_Gallery_by_pk.GalleryID);
+          const galleryIndex = existingGalleries.HTX_Gallery.findIndex(
+            (gallery) =>
+              gallery.GalleryID === update_HTX_Gallery_by_pk.GalleryID
+          );
 
           if (galleryIndex > -1) {
             // Update its IsShow property
             const updatedGalleries = [...existingGalleries.HTX_Gallery];
-            updatedGalleries[galleryIndex].IsShow = update_HTX_Gallery_by_pk.IsShow;
+            updatedGalleries[galleryIndex].IsShow =
+              update_HTX_Gallery_by_pk.IsShow;
 
             // Write our data back to the cache.
             cache.writeQuery({
@@ -239,24 +281,26 @@ export function useGalleryProvider(options = {}) {
     // Increment the number of pending async operations
     awaitNumber.value++;
     try {
-      const coverResponse = await axios.delete(baseURL, {
-        method: 'DELETE',
+      const coverResponse = await axios.delete(deleteFolderAPI, {
+        method: "DELETE",
         headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          'path': 'GalleryCover/'+galleryID
-        }})
-      const response = await axios.delete(baseURL, {
-        method: 'DELETE',
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+          path: "GalleryCover/" + galleryID,
+        },
+      });
+      const response = await axios.delete(deleteFolderAPI, {
+        method: "DELETE",
         headers: {
-          'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
-          path: 'GalleryPhotos/'+galleryID
-        }})
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+          path: "GalleryPhotos/" + galleryID,
+        },
+      });
 
       // Call the deleteGallery mutation
       await deleteGallery({
-        GalleryID: galleryID
+        GalleryID: galleryID,
       });
     } catch (error) {
       console.error(error);
@@ -274,7 +318,11 @@ export function useGalleryProvider(options = {}) {
       // Call the toggleVisibility mutation
       await toggleVisibility({
         GalleryID: galleryID,
-        IsShow: result.value.find((element) => element.GalleryID == galleryID).IsShow == 1? 0: 1
+        IsShow:
+          result.value.find((element) => element.GalleryID == galleryID)
+            .IsShow == 1
+            ? 0
+            : 1,
       });
     } catch (error) {
       console.error(error);
@@ -293,7 +341,7 @@ export function useGalleryProvider(options = {}) {
       // Call the toggleVisibility mutation
       await renameGallery({
         GalleryID: GalleryID,
-        GalleryName: GalleryName
+        GalleryName: GalleryName,
       });
     } catch (error) {
       console.error(error);
@@ -312,7 +360,7 @@ export function useGalleryProvider(options = {}) {
       // Call the toggleVisibility mutation
       await updateCover({
         GalleryID: GalleryID,
-        CoverPic: CoverPic
+        CoverPic: CoverPic,
       });
     } catch (error) {
       console.error(error);
@@ -342,39 +390,42 @@ export function useGalleryProvider(options = {}) {
 
   onError_deleteGallery((error) => {
     // Handle error
-    console.error("刪除相薄失敗", error)
+    console.error("刪除相薄失敗", error);
   });
 
   onError_toggleVisibility((error) => {
     // Handle error
-    console.error("隱藏顯示相簿失敗", error)
+    console.error("隱藏顯示相簿失敗", error);
   });
 
   // Handle error for renameGallery
   onError_renameGallery((error) => {
     // Handle error
-    console.error("Renaming gallery failed", error)
+    console.error("Renaming gallery failed", error);
   });
 
   // Handle error for updateCover
   onError_updateCover((error) => {
     // Handle error
-    console.error("Updating cover failed", error)
+    console.error("Updating cover failed", error);
   });
 
   // Handle error for addGallery
   onError_addGallery((error) => {
     // Handle error
-    console.error("Adding gallery failed", error)
+    console.error("Adding gallery failed", error);
   });
 
   // Function to execute the query
   const execute = async () => {
     awaitNumber.value++;
-    const { onResult } = useQuery(GET_GALLERIES,
-      () => (galleryID.value?{
-        galleryID: galleryID.value,
-      }: {}));
+    const { onResult } = useQuery(GET_GALLERIES, () =>
+      galleryID.value
+        ? {
+            galleryID: galleryID.value,
+          }
+        : {}
+    );
 
     onResult((res) => {
       if (res.data) {
@@ -382,22 +433,37 @@ export function useGalleryProvider(options = {}) {
         res.data.HTX_Gallery.forEach((data) => {
           result.value.push({
             AddTime: new Date(data.AddTime),
-            CoverPic: data.CoverPic? (data.CoverPic.includes("googleapis")? data.CoverPic: eventGalleryServerPath + data.CoverPic): null,
+            CoverPic: data.CoverPic
+              ? data.CoverPic.includes("googleapis")
+                ? data.CoverPic
+                : eventGalleryServerPath + data.CoverPic
+              : null,
             GalleryName: data.GalleryName,
             GalleryNameEN: data.GalleryNameEN,
             IsShow: data.IsShow,
-            Obsolete: data.CoverPic? !data.CoverPic.includes("googleapis"): false,
+            Obsolete: data.CoverPic
+              ? !data.CoverPic.includes("googleapis")
+              : false,
             GalleryID: data.GalleryID,
-          })
-        })
+          });
+        });
       }
       awaitNumber.value--;
-    })
-  }
+    });
+  };
 
   // Execute the query
   execute();
 
   // Return the provided data and functions
-  return { result, loading, deleteGalleryById, toggleVisibilityById, refetch: execute, renameGalleryById, updateCoverById, addNewGallery };
+  return {
+    result,
+    loading,
+    deleteGalleryById,
+    toggleVisibilityById,
+    refetch: execute,
+    renameGalleryById,
+    updateCoverById,
+    addNewGallery,
+  };
 }

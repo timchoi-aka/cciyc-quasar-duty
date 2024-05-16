@@ -1,7 +1,18 @@
-import { initializeApp, getApp } from 'firebase/app';
+import { initializeApp, getApp } from "firebase/app";
 import { getMessaging } from "firebase/messaging";
-import { getAuth, onAuthStateChanged, onIdTokenChanged, getIdToken, connectAuthEmulator } from "firebase/auth";
-import { getFirestore, connectFirestoreEmulator, collection, doc } from "firebase/firestore";
+import {
+  getAuth,
+  onAuthStateChanged,
+  onIdTokenChanged,
+  getIdToken,
+  connectAuthEmulator,
+} from "firebase/auth";
+import {
+  getFirestore,
+  connectFirestoreEmulator,
+  collection,
+  doc,
+} from "firebase/firestore";
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 //import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
@@ -12,36 +23,33 @@ const firebaseConfig = {
   projectId: "manage-hr",
   storageBucket: "manage-hr.appspot.com",
   messagingSenderId: "40845111899",
-  appId: "1:40845111899:web:f5110e9801b0c21704457e"
+  appId: "1:40845111899:web:f5110e9801b0c21704457e",
 };
 
-
-const app = initializeApp(firebaseConfig)
+const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
 
 const auth = getAuth(app);
 const db = getFirestore(app);
 const functions = getFunctions(getApp(), "asia-east2");
 
-if (process.env.NODE_ENV === "development") {
-//if(window.location.hostname === 'localhost') {
-  // connect to real firebase auth for token test
+if (process.env.DEV_MODE === "development") {
+  // disable the following line if test in emulator
   //connectAuthEmulator(auth, "http://127.0.0.1:9099");
-  connectFirestoreEmulator(db, '127.0.0.1', 8081);
+  connectFirestoreEmulator(db, "127.0.0.1", 8081);
   connectFunctionsEmulator(functions, "127.0.0.1", 5001);
 
-  self.FIREBASE_APPCHECK_DEBUG_TOKEN = "D0934CAD-09BB-46E6-ABCD-EB7BD32B9365";
-  console.log("Debug Mode Enabled")
+  self.FIREBASE_APPCHECK_DEBUG_TOKEN =
+    process.env.FIREBASE_APPCHECK_DEBUG_TOKEN;
+  console.log("Development Mode Enabled");
 }
 
-  // Pass your reCAPTCHA v3 site key (public key) to activate(). Make sure this
-  // key is the counterpart to the secret key you set in the Firebase console.
-  const appCheck = initializeAppCheck(app, {
-  //initializeAppCheck(app, {
-    //provider: new ReCaptchaEnterpriseProvider('6Ldn54UiAAAAAHwOOAqgnuVJ78Mgs2f6D-VfiB6H'),
-    provider: new ReCaptchaV3Provider('6LcY4A8pAAAAAPKS-5ub40OlfgRftoZwKM_XmX4N'),
-    isTokenAutoRefreshEnabled: true
-  });
+// Pass your reCAPTCHA v3 site key (public key) to activate(). Make sure this
+// key is the counterpart to the secret key you set in the Firebase console.
+const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider(process.env.RECAPCHA_SITE_KEY),
+  isTokenAutoRefreshEnabled: true,
+});
 
 /*
 import { getIdToken, onAuthStateChanged } from "firebase/auth";
@@ -53,57 +61,65 @@ onAuthStateChanged(auth, async (user) => {
 });
 */
 export async function requestPermission() {
-  console.log('Requesting permission...');
+  console.log("Requesting permission...");
   Notification.requestPermission().then((permission) => {
-    if (permission === 'granted') {
-      console.log('Notification permission granted.');
+    if (permission === "granted") {
+      console.log("Notification permission granted.");
     }
-  })
+  });
 }
 
 export async function getCurrentUser() {
   // after login, get the messaging token
   return new Promise((resolve, reject) => {
-    const unsubscribe = onAuthStateChanged(auth, user => {
-      unsubscribe();
-      resolve(user);
-    }, reject);
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      (user) => {
+        unsubscribe();
+        resolve(user);
+      },
+      reject
+    );
 
-    const refreshToken = onIdTokenChanged(auth, user => {
-      refreshToken();
-      if (user) {
-        getIdToken(user).then((token) => {
-          sessionStorage.setItem("access-token", token)
-          //console.log("token:" + token)
-        })
-      }
-      resolve(user);
-    }, reject);
+    const refreshToken = onIdTokenChanged(
+      auth,
+      (user) => {
+        refreshToken();
+        if (user) {
+          getIdToken(user).then((token) => {
+            sessionStorage.setItem("access-token", token);
+            //console.log("token:" + token)
+          });
+        }
+        resolve(user);
+      },
+      reject
+    );
 
     /*
     if (sessionStorage.getItem("vuex")) resolve
     else reject
     */
-  })
+  });
 }
 
-export const FirebaseAuth = auth
-export const FireDB = db
-export const FirebaseFunctions = functions
-export const FirebaseMessaging = messaging
+export const FirebaseAuth = auth;
+export const FireDB = db;
+export const FirebaseFunctions = functions;
+export const FirebaseMessaging = messaging;
 
 // collection references
-export const usersCollection = collection(db, 'users')
-export const scheduleCollection = collection(db, 'schedule')
-export const sessionCollection = collection(db, 'session')
-export const activityCollection = collection(db, 'activity')
-export const leaveCollection = collection(db, 'leave')
-export const OTCollection = collection(db, 'ot')
-export const bugsCollection = collection(db, 'bugs')
-export const activityOverviewCollection = collection(db, 'activityOverview')
-export const dashboardCollection = collection(db, 'dashboard')
-export const healthcareCollection = collection(db, 'healthcare')
-export const leaveConfig = doc(db, 'dashboard', "leaveConfig")
-export const OTConfig = doc(db, 'dashboard', "otConfig")
-export const Notification = doc(db, 'dashboard', "notification")
-export const healthcareConfig = doc(db, 'healthcare', "config")
+export const usersCollection = collection(db, "users");
+export const scheduleCollection = collection(db, "schedule");
+export const sessionCollection = collection(db, "session");
+export const activityCollection = collection(db, "activity");
+export const leaveCollection = collection(db, "leave");
+export const OTCollection = collection(db, "ot");
+export const bugsCollection = collection(db, "bugs");
+export const activityOverviewCollection = collection(db, "activityOverview");
+export const dashboardCollection = collection(db, "dashboard");
+export const healthcareCollection = collection(db, "healthcare");
+export const leaveConfig = doc(db, "dashboard", "leaveConfig");
+export const OTConfig = doc(db, "dashboard", "otConfig");
+export const Notification = doc(db, "dashboard", "notification");
+export const healthcareConfig = doc(db, "healthcare", "config");

@@ -138,7 +138,9 @@
           icon="event"
           label="編更"
           @click="setCurrentModule('duty')"
-        />
+          :disable="isStaging"
+          ><q-tooltip v-if="isStaging"> 測試環境不能使用編更系統。 </q-tooltip>
+        </q-btn>
         <q-btn
           v-if="!isTmp && isLocal"
           class="col"
@@ -186,7 +188,9 @@
         icon="event"
         label="編更"
         to="/duty/dutytable"
-      />
+        :disable="isStaging"
+        ><q-tooltip v-if="isStaging"> 測試環境不能使用編更系統。 </q-tooltip>
+      </q-btn>
       <q-btn
         v-if="!isTmp && isLocal"
         v-close-popup
@@ -264,6 +268,7 @@ const username = computed(() => $store.getters["userModule/getUsername"]);
 const photoURL = computed(() => $store.getters["userModule/getPhotoURL"]);
 const UAT = computed(() => $store.getters["userModule/getUAT"]);
 const isTmp = computed(() => $store.getters["userModule/getTmp"]);
+const isStaging = computed(() => process.env.DEV_MODE == "staging");
 const isSystemAdmin = computed(
   () => $store.getters["userModule/getSystemAdmin"]
 );
@@ -343,7 +348,7 @@ const setCurrentModule = (module) =>
 const isLocal = ref(false);
 
 async function keepAlive() {
-  if (process.env.NODE_ENV == "development") {
+  if (process.env.DEV_MODE == "development") {
     isLocal.value = true;
     return;
   }

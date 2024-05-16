@@ -242,7 +242,7 @@ export function useAttendanceProvider(options = {}) {
 
   onDone_AddAttendance((res) => {
     if (res.data) {
-      if (process.env.NODE_ENV != "development") {
+      if (process.env.DEV_MODE != "development") {
         // no notification for delete event
         // message return to client
         message.value =
@@ -311,7 +311,7 @@ export function useAttendanceProvider(options = {}) {
 
   onDone_DelAttendance((res) => {
     if (res.data) {
-      if (process.env.NODE_ENV != "development") {
+      if (process.env.DEV_MODE != "development") {
         // no notification for delete event
         // message return to client
         (message.value =

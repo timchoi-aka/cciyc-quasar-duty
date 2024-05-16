@@ -31,20 +31,7 @@ export /* async */ function getClientOptions(/* {app, router, ...} */ options) {
   // new graphql-ws link (for subscription)
   const wsLink = new GraphQLWsLink(
     createClient({
-      // azure endpoint
-      //url: "wss://cciycgw.eastasia.cloudapp.azure.com/v1/graphql",
-
-      // production endpoint
-      // url: "wss://hasura.cciyc.com:4430/v1/graphql",
-
-      // offline development endpoint
-      // url: process.env.NODE_ENV == "development" ? "wss://hasuradev.cciyc.com/v1/graphql" : "wss://hasura.cciyc.com:4430/v1/graphql",
-
-      // development endpoint
-      url:
-        process.env.NODE_ENV == "development"
-          ? "wss://hasuradev.aka-technology.com/v1/graphql"
-          : "wss://hasura.cciyc.com:4430/v1/graphql",
+      url: process.env.HASURA_SUBSCRIPTION,
       connectionParams: async () => {
         //const token = sessionStorage.getItem("access-token")
         const token = FirebaseAuth.currentUser
@@ -61,25 +48,12 @@ export /* async */ function getClientOptions(/* {app, router, ...} */ options) {
 
   // http link
   const apiLink = createHttpLink({
-    // azure endpoint
-    //uri: 'https://cciycgw.eastasia.cloudapp.azure.com/v1/graphql/',
-
-    // production endpoint
-    // uri: 'https://hasura.cciyc.com:4430/v1/graphql/'
-
-    // offline development endpoint
-    // uri: process.env.NODE_ENV == "development" ? "https://hasuradev.cciyc.com/v1/graphql/" : "https://hasura.cciyc.com:4430/v1/graphql/",
-
-    // development endpoint
-    uri:
-      process.env.NODE_ENV == "development"
-        ? "https://hasuradev.aka-technology.com/v1/graphql/"
-        : "https://hasura.cciyc.com:4430/v1/graphql/",
+    uri: process.env.HASURA_API,
   });
 
   // error link
   const errorLink = onError((error) => {
-    if (process.env.NODE_ENV !== "production") {
+    if (process.env.DEV_MODE !== "production") {
       logErrorMessages(error);
     }
   });

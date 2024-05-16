@@ -739,6 +739,7 @@ async function save() {
       c_type: e.b_freeofcharge ? null : e.c_type,
       u_fee: e.b_freeofcharge ? null : e.u_fee,
       remark: remark,
+      c_acc_type: e.c_acc_type,
     });
   });
 

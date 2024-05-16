@@ -191,7 +191,7 @@ export function useEvaluationFinanceProvider(options = {}) {
 
   onDone_AddFinance((res) => {
     if (res.data) {
-      if (process.env.NODE_ENV != "development") {
+      if (process.env.DEV_MODE != "development") {
         // no notification for delete event
         // message return to client
         message.value =

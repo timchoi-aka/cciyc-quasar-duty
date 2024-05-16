@@ -69,7 +69,7 @@
         label="Copy+1"
         flat
         class="bg-primary text-white col-shrink"
-        v-print="printObj"
+        @click="rePrint(Receipt.c_receipt_no, Receipt.i_prints)"
       >
         <q-tooltip class="bg-white text-primary">列印</q-tooltip>
       </q-btn>
@@ -112,7 +112,6 @@
         v-if="src != null"
         type="html5"
         class="fit"
-        ref="printbox"
         :src="src"
         style="height: 100%; min-height: 100%"
       />
@@ -134,7 +133,6 @@ import jspdf from "jspdf";
 import { font } from "/src/assets/NotoSansTC-Regular-normal.js";
 import { useAccountProvider } from "src/providers/account.js";
 const src = ref(null);
-const printbox = ref(null);
 
 // props
 const props = defineProps({
@@ -160,28 +158,6 @@ const deleteCheck = ref("");
 const deleteDialog = ref(false);
 const refundCheck = ref("");
 const refundDialog = ref(false);
-const printObj = ref({
-  id: "printReceipt",
-  preview: false,
-  previewTitle: "列印預覽", // The title of the preview window. The default is 打印预览
-  popTitle: "收據",
-  openCallback(vue) {
-    const logObject = ref({
-      username: username,
-      datetime: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-      module: "會計系統",
-      action: "重新列印收據 " + Receipt.value.c_receipt_no,
-    });
-
-    addReceiptPrintCount({
-      logObject: logObject.value,
-      c_receipt_no: Receipt.value.c_receipt_no,
-      i_prints: parseInt(Receipt.value.i_prints) + 1,
-    });
-
-    refetch();
-  },
-});
 
 onMounted(async () => {
   refetch();
@@ -216,6 +192,29 @@ watch(Receipt, (newVal, oldVal) => {
     displayPDF(newVal);
   }
 });
+
+/**
+ * Reprint receipt
+ * @param {string} c_receipt_no
+ * @param {number} i_prints
+ * @returns {void}
+ */
+function rePrint(c_receipt_no, i_prints) {
+  const logObject = ref({
+    username: username,
+    datetime: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+    module: "會計系統",
+    action: "重新列印收據 " + c_receipt_no,
+  });
+
+  addReceiptPrintCount({
+    logObject: logObject.value,
+    c_receipt_no: c_receipt_no,
+    i_prints: parseInt(i_prints) + 1,
+  }).then(() => {
+    refetch();
+  });
+}
 
 function displayPDF(data) {
   var doc = new jspdf({
@@ -356,7 +355,7 @@ function displayPDF(data) {
     filename: data.c_receipt_no + ".pdf",
   });
 
-  src.value = doc.output("datauristring", {
+  src.value = doc.output("bloburi", {
     filename: data.c_receipt_no + ".pdf",
   });
 }
@@ -462,73 +461,3 @@ function atLine(lineNo) {
   return 31 + 3.5 * lineNo;
 }
 </script>
-
-<script>
-import print from "vue3-print-nb";
-import { reload } from "firebase/auth";
-
-export default {
-  name: "PrintReceipt",
-  directives: {
-    print,
-  },
-};
-</script>
-
-<style lang="scss" scoped>
-@media screen {
-  .print-area {
-    width: 68mm;
-    height: auto;
-    margin: none;
-    border: 1px solid;
-    overflow: auto;
-    border: 1px solid;
-    scale: 180%;
-    transform-origin: top;
-  }
-  .highlight_1 {
-    font-size: 0.8rem;
-  }
-
-  .highlight_2 {
-    font-size: 0.7rem;
-  }
-
-  .highlight_3 {
-    font-size: 0.5rem;
-  }
-
-  .highlight_4 {
-    font-size: 0.4rem;
-  }
-}
-
-@media print {
-  @page {
-    size: landscape !important;
-    width: 68mm;
-    margin: none;
-  }
-
-  .print-area {
-    border: none;
-  }
-
-  .highlight_1 {
-    font-size: 1.2rem;
-  }
-
-  .highlight_2 {
-    font-size: 1rem;
-  }
-
-  .highlight_3 {
-    font-size: 0.8rem;
-  }
-
-  .highlight_4 {
-    font-size: 0.5rem;
-  }
-}
-</style>

@@ -9,9 +9,12 @@ node_modules
 .quasar
 .firebase
 
+.env.*
+
 .editorconfig
 app
 /dist
+test
 
 # Cordova related directories and files
 /src-cordova/node_modules
@@ -65,3 +68,6 @@ build
 # firestore data dump
 firebase-export-*
 
+# environments
+.github
+.vscode

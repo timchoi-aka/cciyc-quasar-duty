@@ -1,6 +1,6 @@
 <template>
   <!-- loading dialog -->
-  <LoadingDialog message="儲存中" v-model="awaitServerResponse"/>
+  <LoadingDialog message="儲存中" v-model="awaitServerResponse" />
 
   <!-- dutycalender table -->
   <q-table
@@ -26,16 +26,30 @@
           :key="col.name"
           :props="props"
         >
-          <q-th v-if="index == 0" rowspan="2" class="vertical-bottom nameColumn">
+          <q-th
+            v-if="index == 0"
+            rowspan="2"
+            class="vertical-bottom nameColumn"
+          >
             <div v-html="qdate.formatDate(renderDate, 'YYYY年')" />
             {{ col.label }}
           </q-th>
-          <q-th v-if="index % 3 == 1" colspan="3" :class="[
+          <q-th
+            v-if="index % 3 == 1"
+            colspan="3"
+            :class="[
               'q-px-md',
-              getHoliday(dateUtil.splitDateSlot(col.label)[0]) != '' ? 'bg-red-2' : '',
-            ]">
+              getHoliday(dateUtil.splitDateSlot(col.label)[0]) != ''
+                ? 'bg-red-2'
+                : '',
+            ]"
+          >
             <span>
-              {{ qdate.formatDate(dateUtil.splitDateSlot(col.label)[0], "M月D日")
+              {{
+                qdate.formatDate(
+                  dateUtil.splitDateSlot(col.label)[0],
+                  "M月D日"
+                )
               }}{{ dateUtil.daysOfWeek(dateUtil.splitDateSlot(col.label)[0]) }}
               <q-tooltip
                 v-if="getHoliday(dateUtil.splitDateSlot(col.label)[0]) != ''"
@@ -58,7 +72,15 @@
           :key="col.name"
           :props="props"
         >
-          <q-th v-if="index > 0" :class="['dataColumn', 'pointer', openSessions.includes(col.name)? 'bg-blue-2': 'bg-yellow-1']" @click="toggleOpeningSession(col.name)">
+          <q-th
+            v-if="index > 0"
+            :class="[
+              'dataColumn',
+              'pointer',
+              openSessions.includes(col.name) ? 'bg-blue-2' : 'bg-yellow-1',
+            ]"
+            @click="toggleOpeningSession(col.name)"
+          >
             {{ slotMap[dateUtil.splitDateSlot(col.label)[1]] }}
           </q-th>
         </template>
@@ -94,7 +116,8 @@
             icon="save"
             :disabled="validateEditingRow"
             v-if="
-              canModifyTable(props.row.uid) && rowUnderModification == props.row.uid
+              canModifyTable(props.row.uid) &&
+              rowUnderModification == props.row.uid
             "
             @click="updateTable()"
             >儲存
@@ -107,7 +130,8 @@
             outline
             icon="input"
             v-if="
-              canModifyTable(props.row.uid) && rowUnderModification == props.row.uid
+              canModifyTable(props.row.uid) &&
+              rowUnderModification == props.row.uid
             "
             @click="loadDefault(props.row)"
             >預設
@@ -118,7 +142,16 @@
 
     <!-- all cell template -->
     <template v-slot:body-cell="props">
-      <q-td :props="props" :class="['q-pa-none', 'dataColumn', Object.keys(props.row).includes(props.col.name + '.approved')? 'approved': '']">
+      <q-td
+        :props="props"
+        :class="[
+          'q-pa-none',
+          'dataColumn',
+          Object.keys(props.row).includes(props.col.name + '.approved')
+            ? 'approved'
+            : '',
+        ]"
+      >
         <template
           v-if="
             rowUnderModification == props.row.uid &&
@@ -161,7 +194,7 @@
           </q-select>
         </template>
         <div class="q-my-none q-py-none">
-          {{ props.value? props.value : '&nbsp' }}
+          {{ props.value ? props.value : "&nbsp" }}
         </div>
       </q-td>
     </template>
@@ -170,16 +203,37 @@
     <template v-slot:top v-if="$q.screen.lt.sm && !printOnly">
       <div class="text-h5 text-bold">
         <span
-          v-html="qdate.formatDate(dateUtil.splitDateSlot(Object(columns[1]).name)[0], 'YYYY年')"
+          v-html="
+            qdate.formatDate(
+              dateUtil.splitDateSlot(Object(columns[1]).name)[0],
+              'YYYY年'
+            )
+          "
         />
-        {{ qdate.formatDate(dateUtil.splitDateSlot(Object(columns[1]).name)[0], "M月D日") }} 至
-        {{ qdate.formatDate(dateUtil.splitDateSlot(Object(columns[21]).name)[0], "M月D日") }}
+        {{
+          qdate.formatDate(
+            dateUtil.splitDateSlot(Object(columns[1]).name)[0],
+            "M月D日"
+          )
+        }}
+        至
+        {{
+          qdate.formatDate(
+            dateUtil.splitDateSlot(Object(columns[21]).name)[0],
+            "M月D日"
+          )
+        }}
       </div>
     </template>
 
     <!-- bottom button template -->
     <template v-slot:bottom-row="props" v-if="isScheduleModify && !printOnly">
-      <q-btn flat class="bg-primary text-white" label="預設開放節數" @click="defaultOpeningSession(props)"/>
+      <q-btn
+        flat
+        class="bg-primary text-white"
+        label="預設開放節數"
+        @click="defaultOpeningSession(props)"
+      />
     </template>
 
     <!-- grid template -->
@@ -207,7 +261,8 @@
             dense
             :disabled="validateEditingRow"
             v-if="
-              canModifyTable(props.row.uid) && rowUnderModification == props.row.uid
+              canModifyTable(props.row.uid) &&
+              rowUnderModification == props.row.uid
             "
             @click="updateTable()"
             label="儲存"
@@ -220,7 +275,8 @@
             outline
             dense
             v-if="
-              canModifyTable(props.row.uid) && rowUnderModification == props.row.uid
+              canModifyTable(props.row.uid) &&
+              rowUnderModification == props.row.uid
             "
             @click="loadDefault(props.row)"
             label="預設"
@@ -233,18 +289,30 @@
             flat
             dense
             :icon="
-              qcardExpanded[props.row.uid] ? 'keyboard_arrow_up' : 'keyboard_arrow_down'
+              qcardExpanded[props.row.uid]
+                ? 'keyboard_arrow_up'
+                : 'keyboard_arrow_down'
             "
-            @click="qcardExpanded[props.row.uid] = !qcardExpanded[props.row.uid]"
+            @click="
+              qcardExpanded[props.row.uid] = !qcardExpanded[props.row.uid]
+            "
           />
         </q-card-section>
         <q-slide-transition v-show="qcardExpanded[props.row.uid]">
           <q-card-section>
             <div v-for="(col, index) in props.cols" class="text-h6">
               <template v-if="col.label != '員工'">
-                <div style="border-bottom: 1px solid black" class="row justify-around">
+                <div
+                  style="border-bottom: 1px solid black"
+                  class="row justify-around"
+                >
                   <div class="col-auto text-left q-ml-sm">
-                    {{ qdate.formatDate(dateUtil.splitDateSlot(col.label)[0], "M月D日") }}
+                    {{
+                      qdate.formatDate(
+                        dateUtil.splitDateSlot(col.label)[0],
+                        "M月D日"
+                      )
+                    }}
                     {{ slotMap[dateUtil.splitDateSlot(col.label)[1]] }}
                   </div>
                   <q-space />
@@ -317,7 +385,7 @@ import { onMounted, ref, computed, onUnmounted } from "vue";
 import dateUtil from "src/lib/date.js";
 import holiday from "assets/holiday.json";
 import { date as qdate, useQuasar } from "quasar";
-import LoadingDialog from "components/LoadingDialog.vue"
+import LoadingDialog from "components/LoadingDialog.vue";
 import { getDocs, query, where, orderBy, onSnapshot } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 
@@ -333,81 +401,116 @@ const props = defineProps({
   renderDate: Date,
   allowModify: Boolean,
   printOnly: Boolean,
-})
+});
 
 // variables
-const $q = useQuasar()
-const tempInputValue = ref("")
-const qcardExpanded = ref([])
-const queryStartDate = props.renderDate? ref(qdate.startOfDate( qdate.subtractFromDate(props.renderDate, { days: qdate.formatDate(props.renderDate, "d")}), 'day')): ""
-const queryEndDate = props.renderDate? ref(qdate.endOfDate( qdate.addToDate(props.renderDate, { days: 6 - qdate.formatDate(props.renderDate, "d")}), 'day')): ""
-const awaitServerResponse = ref(0)
-const rowUnderModification = ref("")
+const $q = useQuasar();
+const tempInputValue = ref("");
+const qcardExpanded = ref([]);
+const queryStartDate = props.renderDate
+  ? ref(
+      qdate.startOfDate(
+        qdate.subtractFromDate(props.renderDate, {
+          days: qdate.formatDate(props.renderDate, "d"),
+        }),
+        "day"
+      )
+    )
+  : "";
+const queryEndDate = props.renderDate
+  ? ref(
+      qdate.endOfDate(
+        qdate.addToDate(props.renderDate, {
+          days: 6 - qdate.formatDate(props.renderDate, "d"),
+        }),
+        "day"
+      )
+    )
+  : "";
+const awaitServerResponse = ref(0);
+const rowUnderModification = ref("");
 const $store = useStore();
-const scheduleSnapshot = ref()
-const sessionSnapshot = ref()
-const leaveSnapshot = ref()
-const editingRow = ref([])
-const openSessions = ref([])
+const scheduleSnapshot = ref();
+const sessionSnapshot = ref();
+const leaveSnapshot = ref();
+const editingRow = ref([]);
+const openSessions = ref([]);
 
 // options
-const dutyInputOptions = ref(["覆", "O", "M", "補", "長", "短"])
+const dutyInputOptions = ref(["覆", "O", "M", "補", "長", "短"]);
 const slotMap = ref({
   slot_a: "早",
   slot_b: "午",
   slot_c: "晚",
-})
+});
 
 // computed
-const publicHoliday = computed(() => holiday? holiday.vcalendar[0].vevent.map(({dtstart, summary}) => ({date: dtstart[0], summary: summary})): [])
-const myUID = computed(() => $store.getters["userModule/getUID"])
-const isSystemAdmin = computed(() => $store.getters["userModule/getSystemAdmin"])
-const isScheduleModify = computed(() => $store.getters["userModule/getScheduleModify"])
-const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"])
+const publicHoliday = computed(() =>
+  holiday
+    ? holiday.vcalendar[0].vevent.map(({ dtstart, summary }) => ({
+        date: dtstart[0],
+        summary: summary,
+      }))
+    : []
+);
+const myUID = computed(() => $store.getters["userModule/getUID"]);
+const isSystemAdmin = computed(
+  () => $store.getters["userModule/getSystemAdmin"]
+);
+const isScheduleModify = computed(
+  () => $store.getters["userModule/getScheduleModify"]
+);
+const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"]);
 
 // table parameters
 const defaultPagination = ref({
   rowsPerPage: 20,
-})
+});
 
-const rows = ref([])
+const rows = ref([]);
 const columns = computed(() => [
   {
     name: "name",
     label: "員工",
     field: "name",
-  }, ...dateUtil.generateTableColumns(props.renderDate) ]
-)
+  },
+  ...dateUtil.generateTableColumns(props.renderDate),
+]);
 
-const colString = computed(() => columns.value.reduce(function (previousValue, currentValue) {
-  let res = currentValue.name.split("|");
-  if (res[0] != "name") {
-    let d = new Date(res[0]);
-    let dateString = d.toISOString();
-    let i = previousValue.findIndex((element) => element == dateString);
-    if (i == -1 && dateString != "Invalid Date") {
-      previousValue.push(dateString);
+const colString = computed(() =>
+  columns.value.reduce(function (previousValue, currentValue) {
+    let res = currentValue.name.split("|");
+    if (res[0] != "name") {
+      let d = new Date(res[0]);
+      let dateString = d.toISOString();
+      let i = previousValue.findIndex((element) => element == dateString);
+      if (i == -1 && dateString != "Invalid Date") {
+        previousValue.push(dateString);
+      }
     }
-  }
-  return previousValue;
-}, []))
+    return previousValue;
+  }, [])
+);
 
 // functions
 function defaultOpeningSession(props) {
-  const defaultSessions = [6,8,9,12,14,15,17,18,19,20,21]
+  const defaultSessions = [6, 8, 9, 12, 14, 15, 17, 18, 19, 20, 21];
   defaultSessions.forEach((session) => {
-    toggleOpeningSession(props.cols[session].name)
-  })
+    toggleOpeningSession(props.cols[session].name);
+  });
 }
 
 function toggleOpeningSession(dateSlot) {
   if (isScheduleModify.value) {
-    const [date, slot] = dateUtil.splitDateSlot(dateSlot)
-    const changeOpeningSession = httpsCallable(FirebaseFunctions, "schedule-changeOpeningSession");
+    const [date, slot] = dateUtil.splitDateSlot(dateSlot);
+    const changeOpeningSession = httpsCallable(
+      FirebaseFunctions,
+      "schedule-changeOpeningSession"
+    );
     awaitServerResponse.value++;
     changeOpeningSession({
       date: date,
-      slot: slot
+      slot: slot,
     })
       .then((response) => {
         awaitServerResponse.value--;
@@ -438,7 +541,9 @@ function getHoliday(date) {
 
 function loadDefault(row) {
   for (const [index, item] of Object.entries(row.defaultSchedule)) {
-    if (!(columns.value[Number(index) + 1].name + ".approved" in editingRow.value)) {
+    if (
+      !(columns.value[Number(index) + 1].name + ".approved" in editingRow.value)
+    ) {
       // change to default if not approved
       editingRow.value[columns.value[Number(index) + 1].name] = item; // index + 1 for skipping first name column
     }
@@ -447,7 +552,9 @@ function loadDefault(row) {
 
 async function updateTable() {
   // sort differences between original data and editingRow
-  let i = rows.value.findIndex((element) => element.uid == editingRow.value.uid);
+  let i = rows.value.findIndex(
+    (element) => element.uid == editingRow.value.uid
+  );
   let changeRequest = [];
   for (const [key, obj] of Object.entries(columns.value)) {
     if (obj.name != "name") {
@@ -473,7 +580,10 @@ async function updateTable() {
 
   if (changeRequest.length > 0) {
     // modify database if there's any change
-    const updateSchedule = httpsCallable(FirebaseFunctions, "schedule-updateSchedule");
+    const updateSchedule = httpsCallable(
+      FirebaseFunctions,
+      "schedule-updateSchedule"
+    );
     awaitServerResponse.value++;
     updateSchedule(changeRequest)
       .then((response) => {
@@ -493,7 +603,8 @@ async function updateTable() {
 
 const validateEditingRow = computed(() => {
   if (Object.keys(editingRow.value).length == 0) return false;
-  if (isSystemAdmin.value || isCenterIC.value) return false;
+  if (isSystemAdmin.value || isCenterIC.value || isScheduleModify.value)
+    return false;
   const constrains = ["al", "sal", "sl", "ssl"];
   for (const [key, value] of Object.entries(editingRow.value)) {
     if (
@@ -512,7 +623,7 @@ const validateEditingRow = computed(() => {
     }
   }
   return false;
-})
+});
 
 function toggleModifyTable(row) {
   const index = rows.value.indexOf(row);
@@ -523,7 +634,8 @@ function toggleModifyTable(row) {
 
 function validateInput(item) {
   if (!item) return true;
-  if (isSystemAdmin || isCenterIC) return true;
+  if (isSystemAdmin.value || isCenterIC.value || isScheduleModify.value)
+    return true;
   const contrains = ["al", "sal", "sl", "ssl"];
   if (contrains.includes(item.toLowerCase())) {
     return false;
@@ -542,26 +654,30 @@ function canModifyTable(uid) {
 }
 
 // query definition and start querying
-const userDocQuery = query(usersCollection,
+const userDocQuery = query(
+  usersCollection,
   where("enable", "==", true),
   where("privilege.systemAdmin", "==", false),
   orderBy("order")
-)
+);
 
-const scheduleDocQuery = query(scheduleCollection,
+const scheduleDocQuery = query(
+  scheduleCollection,
   where("date", ">=", queryStartDate.value),
   where("date", "<=", queryEndDate.value)
-)
+);
 
-const sessionDocQuery = query(sessionCollection,
+const sessionDocQuery = query(
+  sessionCollection,
   where("date", ">=", queryStartDate.value),
   where("date", "<=", queryEndDate.value)
-)
+);
 
-const leaveDocQuery = query(leaveCollection,
+const leaveDocQuery = query(
+  leaveCollection,
   where("date", "in", colString.value),
   where("status", "==", "批准")
-)
+);
 
 sessionSnapshot.value = onSnapshot(sessionDocQuery, (snapshot) => {
   snapshot.docChanges().forEach((change) => {
@@ -569,24 +685,36 @@ sessionSnapshot.value = onSnapshot(sessionDocQuery, (snapshot) => {
 
     if (change.type == "added") {
       // console.log("added: " + d.uid + ":" + dateSlot + "[" + d.type + "]")
-      let i = openSessions.value.findIndex((element) => element == (qdate.formatDate(d.date.toDate(), "YYYY-MM-DD") + "|" + d.slot));
+      let i = openSessions.value.findIndex(
+        (element) =>
+          element ==
+          qdate.formatDate(d.date.toDate(), "YYYY-MM-DD") + "|" + d.slot
+      );
       if (i == -1) {
         openSessions.value.push(
           qdate.formatDate(d.date.toDate(), "YYYY-MM-DD") + "|" + d.slot
-        )
+        );
       }
     } else if (change.type === "removed") {
       // console.log("deleted: " + d.uid + ":" + dateSlot)
-      let i = openSessions.value.findIndex((element) => element == (qdate.formatDate(d.date.toDate(), "YYYY-MM-DD") + "|" + d.slot));
-      if (i != -1) openSessions.value.splice(i, 1)
+      let i = openSessions.value.findIndex(
+        (element) =>
+          element ==
+          qdate.formatDate(d.date.toDate(), "YYYY-MM-DD") + "|" + d.slot
+      );
+      if (i != -1) openSessions.value.splice(i, 1);
     }
-  })
-})
+  });
+});
 
 getDocs(userDocQuery).then((userDoc) => {
   userDoc.forEach((doc) => {
-    const dateOfEntry = doc.data().employment[0].dateOfEntry?.toDate()??''
-    const dateOfExit = doc.data().employment[doc.data().employment.length-1].dateOfExit?.toDate()??new Date("9999/12/31")
+    const dateOfEntry = doc.data().employment[0].dateOfEntry?.toDate() ?? "";
+    const dateOfExit =
+      doc
+        .data()
+        .employment[doc.data().employment.length - 1].dateOfExit?.toDate() ??
+      new Date("9999/12/31");
     if (
       qdate.isBetweenDates(queryStartDate.value, dateOfEntry, dateOfExit, {
         inclusiveFrom: true,
@@ -606,7 +734,7 @@ getDocs(userDocQuery).then((userDoc) => {
         uid: false,
       });
     }
-  })
+  });
 
   scheduleSnapshot.value = onSnapshot(scheduleDocQuery, (snapshot) => {
     snapshot.docChanges().forEach((change) => {
@@ -656,7 +784,7 @@ onUnmounted(() => {
   leaveSnapshot.value();
   scheduleSnapshot.value();
   sessionSnapshot.value();
-})
+});
 </script>
 
 <style lang="scss" scoped>

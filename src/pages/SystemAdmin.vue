@@ -5,7 +5,11 @@
   <q-btn @click="updateLeaveBalance" label="updateLeaveBalance"></q-btn>
   <q-btn @click="housekeepSchedule" label="housekeepSchedule"></q-btn>
   <q-btn @click="findDanglingHoliday" label="findDanglingHoliday"></q-btn>
-  <q-btn disabled @click="getApprovedHoliday" label="getApprovedHoliday"></q-btn>
+  <q-btn
+    disabled
+    @click="getApprovedHoliday"
+    label="getApprovedHoliday"
+  ></q-btn>
   <q-btn @click="calculateLeaveBalance" label="calculateLeaveBalance"></q-btn>
   <q-btn @click="addSALDeadline" label="addSALDeadline"></q-btn>
   <q-btn @click="addCustomClaims" label="Add Custom Claims"></q-btn>
@@ -34,62 +38,68 @@ import { getDocs, query, where, orderBy } from "firebase/firestore";
 const $store = useStore();
 
 // computed
-const hasuraClaim = computed(() => $store.getters["userModule/getHasuraClaim"])
-const uid = computed(() => $store.getters["userModule/getUID"])
+const hasuraClaim = computed(() => $store.getters["userModule/getHasuraClaim"]);
+const uid = computed(() => $store.getters["userModule/getUID"]);
 
 function subscribeAllUserTopics() {
-  const userDocQuery = query(usersCollection,
+  const userDocQuery = query(
+    usersCollection,
     where("enable", "==", true),
     where("rank", "!=", "tmp"),
     orderBy("rank")
-  )
-  const userList = []
+  );
+  const userList = [];
   getDocs(userDocQuery).then((userDoc) => {
     userDoc.forEach((user) => {
       if (!user.data().privilege.systemAdmin) {
-        userList.push(
-          user.data().uid,
-        );
+        userList.push(user.data().uid);
       }
     });
 
     // subscribe also to the special topic "holidayApprove"
-    userList.push("holidayApprove")
-    getToken(FirebaseMessaging, {vapidKey: "BFu5VzDUwOVWSQ--MUDmSEPt9AYN9QlTPIzijXKzQVqrIdpKi1goG9l3L8_fDJFr5mojwX5Eo2tDC1XiMmIfSXA"}).then((currentToken) => {
-      if (currentToken) {
-        const subscribeTopic = httpsCallable(FirebaseFunctions, "notification-subscribeTopic");
-        userList.forEach((user) => {
-          console.log("registering to topic " + user)
-          subscribeTopic({
-            topic: user,
-            token: currentToken,
-          })
-        })
-      } else {
-        // Show permission request UI
-        console.log('No registration token available. Request permission to generate one.');
-      }
-    }).catch((err) => {
-      console.log('An error occurred while retrieving token. ', err);
-    });
-  })
+    userList.push("holidayApprove");
+    console.log(process.env.VAPIDKEY);
+    getToken(FirebaseMessaging, { vapidKey: process.env.VAPIDKEY })
+      .then((currentToken) => {
+        if (currentToken) {
+          const subscribeTopic = httpsCallable(
+            FirebaseFunctions,
+            "notification-subscribeTopic"
+          );
+          userList.forEach((user) => {
+            console.log("registering to topic " + user);
+            subscribeTopic({
+              topic: user,
+              token: currentToken,
+            });
+          });
+        } else {
+          // Show permission request UI
+          console.log(
+            "No registration token available. Request permission to generate one."
+          );
+        }
+      })
+      .catch((err) => {
+        console.log("An error occurred while retrieving token. ", err);
+      });
+  });
 }
 
 async function testNotify() {
-  const testNoti = httpsCallable(FirebaseFunctions,
-    "systemAdmin-testNotify"
-  );
-  await new Promise(callback => setTimeout(callback, 5000))
+  const testNoti = httpsCallable(FirebaseFunctions, "systemAdmin-testNotify");
+  await new Promise((callback) => setTimeout(callback, 5000));
   testNoti({
     title: "a test title",
     body: "the test body",
   }).then((result) => {
     console.log(JSON.stringify(result));
-  })
+  });
 }
 
 function addSALDeadline() {
-  const addSALDL = httpsCallable(FirebaseFunctions,
+  const addSALDL = httpsCallable(
+    FirebaseFunctions,
     "systemAdmin-addSALDeadline"
   );
   addSALDL()
@@ -102,7 +112,8 @@ function addSALDeadline() {
 }
 
 function calculateLeaveBalance() {
-  const calculate = httpsCallable(FirebaseFunctions,
+  const calculate = httpsCallable(
+    FirebaseFunctions,
     "systemAdmin-calculateLeaveBalance"
   );
   calculate()
@@ -115,7 +126,10 @@ function calculateLeaveBalance() {
 }
 
 function migrateOTBalance() {
-  const migrate = httpsCallable(FirebaseFunctions, "systemAdmin-migrateOTBalance");
+  const migrate = httpsCallable(
+    FirebaseFunctions,
+    "systemAdmin-migrateOTBalance"
+  );
   migrate()
     .then((result) => {
       console.log(JSON.stringify(result));
@@ -126,7 +140,10 @@ function migrateOTBalance() {
 }
 
 function upgradeUserProfile() {
-  const upgrade = httpsCallable(FirebaseFunctions, "systemAdmin-upgradeUserObject");
+  const upgrade = httpsCallable(
+    FirebaseFunctions,
+    "systemAdmin-upgradeUserObject"
+  );
   upgrade()
     .then((result) => {
       console.log(JSON.stringify(result));
@@ -137,7 +154,10 @@ function upgradeUserProfile() {
 }
 
 function updateLeaveBalance() {
-  const update = httpsCallable(FirebaseFunctions, "systemAdmin-updateLeaveBalance");
+  const update = httpsCallable(
+    FirebaseFunctions,
+    "systemAdmin-updateLeaveBalance"
+  );
   update()
     .then((result) => {
       console.log(JSON.stringify(result));
@@ -148,7 +168,10 @@ function updateLeaveBalance() {
 }
 
 function housekeepSchedule() {
-  const housekeep = httpsCallable(FirebaseFunctions, "systemAdmin-housekeepSchedule");
+  const housekeep = httpsCallable(
+    FirebaseFunctions,
+    "systemAdmin-housekeepSchedule"
+  );
   housekeep()
     .then((result) => {
       console.log(JSON.stringify(result));
@@ -192,7 +215,8 @@ function addNewRank() {
 }
 
 function findDanglingHoliday() {
-  const findDangling = httpsCallable(FirebaseFunctions,
+  const findDangling = httpsCallable(
+    FirebaseFunctions,
     "systemAdmin-findDanglingHoliday"
   );
   findDangling()
@@ -205,18 +229,22 @@ function findDanglingHoliday() {
 }
 
 async function getApprovedHoliday() {
-  const leaveDocQuery = query(leaveCollection,
+  const leaveDocQuery = query(
+    leaveCollection,
     where("status", "==", "批准"),
     where("uid", "==", "egoz4VCb3kSA2NwwT8CyiVSYkv83"),
     where("type", "==", "AL"),
     orderBy("date")
-  )
+  );
 
-  const leaveDoc = await getDocs(leaveDocQuery)
+  const leaveDoc = await getDocs(leaveDocQuery);
 
   leaveDoc.forEach((doc) => {
     console.log(
-      qdate.formatDate(doc.data().date, "YYYY-MM-DD") + "[" + doc.data().slot + "]"
+      qdate.formatDate(doc.data().date, "YYYY-MM-DD") +
+        "[" +
+        doc.data().slot +
+        "]"
     );
     console.log(JSON.stringify(doc.data()));
   });
@@ -224,10 +252,13 @@ async function getApprovedHoliday() {
 }
 
 async function addCustomClaims() {
-  const setCustomClaims = httpsCallable(FirebaseFunctions, "systemAdmin-setCustomClaims");
+  const setCustomClaims = httpsCallable(
+    FirebaseFunctions,
+    "systemAdmin-setCustomClaims"
+  );
   setCustomClaims().then((result) => {
-      console.log(result);
-  })
+    console.log(result);
+  });
 }
 
 function migrateALBalance() {

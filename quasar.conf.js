@@ -8,6 +8,9 @@
 
 const { configure } = require("quasar/wrappers");
 var path = require("path");
+const environmentConfig = require("dotenv").config({
+  path: `.env.${process.env.ENV_FILE}`,
+});
 
 module.exports = configure(function (ctx) {
   return {
@@ -40,6 +43,7 @@ module.exports = configure(function (ctx) {
 
     // Full list of options: https://v2.quasar.dev/quasar-cli/quasar-conf-js#Property%3A-build
     build: {
+      env: environmentConfig.parsed,
       vueRouterMode: "history", // available values: 'hash', 'history'
 
       // transpile: false,

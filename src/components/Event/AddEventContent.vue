@@ -221,10 +221,8 @@
     <q-card-section class="row bg-yellow-2 q-px-none q-pt-none q-pb-lg">
       <div class="col-12 bg-yellow-4 q-pa-md q-mb-sm">類別</div>
       <div class="row col-12 q-gutter-lg q-ml-sm">
-        <span class="col-3"
-          >會計類別：
-          <q-select :options="acc_type" v-model="editObject.c_acc_type"
-        /></span>
+        <AccountTypeSelection class="col-3" v-model="editObject.c_acc_type" />
+
         <span class="col-3"
           >狀況: <q-select :options="status" v-model="editObject.c_status"
         /></span>
@@ -451,6 +449,7 @@ import LoadingDialog from "components/LoadingDialog.vue";
 import dateUtil from "/src/lib/date.js";
 import { getDocs, query, where } from "firebase/firestore";
 import EventSelection from "components/Event/EventSelection.vue";
+import AccountTypeSelection from "../Account/AccountTypeSelection.vue";
 import { onBeforeRouteLeave, useRouter } from "vue-router";
 import FileUpload from "src/components/Basic/FileUpload.vue";
 
@@ -477,14 +476,7 @@ const loadEventID = ref("");
 const activeTab = ref("EventInfo");
 const textBuffer = ref("");
 const EventData = ref();
-const upload_API =
-  process.env.NODE_ENV === "development"
-    ? "http://localhost:5001/manage-hr/asia-east2"
-    : "https://asia-east2-manage-hr.cloudfunctions.net";
-const WEB_IMG_PREFIX =
-  process.env.NODE_ENV === "development"
-    ? "http://localhost:9199/cciyc-web/"
-    : "https://storage.googleapis.com/cciyc-web/";
+const WEB_IMG_PREFIX = process.env.WEB_IMG_PREFIX;
 
 const acc_type = ref(["PF", "OF", "MF", "SF"]);
 

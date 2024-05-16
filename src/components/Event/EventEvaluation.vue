@@ -556,7 +556,7 @@ submitEvaluation_Completed((result) => {
       "notification-notifyUser"
     );
 
-    if (process.env.NODE_ENV != "development") {
+    if (process.env.DEV_MODE != "development") {
       notifyUser({
         topic: "eventApprove",
         data: {
@@ -587,7 +587,7 @@ approvePlan_Completed((result) => {
       "notification-notifyUser"
     );
 
-    if (process.env.NODE_ENV != "development") {
+    if (process.env.DEV_MODE != "development") {
       notifyUser({
         topic:
           userMapping.value[
@@ -622,7 +622,7 @@ approveEvaluation_Completed((result) => {
       "notification-notifyUser"
     );
 
-    if (process.env.NODE_ENV != "development") {
+    if (process.env.DEV_MODE != "development") {
       notifyUser({
         topic:
           userMapping.value[
@@ -653,7 +653,7 @@ denyEvaluation_Completed((result) => {
       "notification-notifyUser"
     );
 
-    if (process.env.NODE_ENV != "development") {
+    if (process.env.DEV_MODE != "development") {
       notifyUser({
         topic:
           userMapping.value[
@@ -683,7 +683,7 @@ denyPlan_Completed((result) => {
       "notification-notifyUser"
     );
 
-    if (process.env.NODE_ENV != "development") {
+    if (process.env.DEV_MODE != "development") {
       notifyUser({
         topic:
           userMapping.value[

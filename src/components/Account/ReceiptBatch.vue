@@ -256,7 +256,7 @@ function displayPDF(data) {
     filename: data.map((x) => x.c_receipt_no).join("_") + ".pdf",
   });
 
-  src.value = doc.output("datauristring", {
+  src.value = doc.output("bloburi", {
     filename: data.map((x) => x.c_receipt_no).join("_") + ".pdf",
   });
 }

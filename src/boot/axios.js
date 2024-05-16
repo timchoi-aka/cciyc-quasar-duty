@@ -9,20 +9,7 @@ import { FirebaseAuth } from "boot/firebase";
 // "export default () => {}" function below (which runs individually
 // for each client)
 const api = axios.create({
-  // offline development endpoint
-  // baseURL: process.env.NODE_ENV == "development" ? "https://hasuradev.cciyc.com/v1/graphql/" : "https://hasura.cciyc.com:4430/v1/graphql/",
-
-  // development endpoint
-  uri:
-    process.env.NODE_ENV == "development"
-      ? "https://hasuradev.aka-technology.com/v1/graphql/"
-      : "https://hasura.cciyc.com:4430/v1/graphql/",
-
-  // azure endpoint
-  // baseURL: "https://cciycgw.eastasia.cloudapp.azure.com/v1/graphql/",
-
-  // production endpoint
-  // baseURL: "https://hasura.cciyc.com:4430/v1/graphql/",
+  uri: process.env.HASURA_API,
 });
 
 api.interceptors.request.use(async (config) => {
@@ -43,7 +30,7 @@ const chatAPI = axios.create({
   },
 });
 
-const AUTHENTICATOR_URL = "http://192.168.2.44:3001";
+const AUTHENTICATOR_URL = process.env.AUTHENTICATOR_URL;
 const authenticator = axios.create({
   baseURL: AUTHENTICATOR_URL,
   headers: {
@@ -63,10 +50,7 @@ chatAPI.interceptors.request.use(async (config) => {
 
 const uploader = axios.create({
   // development endpoint
-  baseURL:
-    process.env.NODE_ENV == "development"
-      ? "http://localhost:5001/manage-hr/asia-east2/file-savefiletostorage"
-      : "https://asia-east2-manage-hr.cloudfunctions.net/file-savefiletostorage",
+  baseURL: process.env.UPLOAD_URL,
   headers: {
     common: {
       "Content-Type": "multipart/form-data",

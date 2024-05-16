@@ -778,7 +778,7 @@ export function useEventProvider(options = {}) {
 
   onDone_submitPlan((res) => {
     if (res.data) {
-      if (process.env.NODE_ENV != "development") {
+      if (process.env.DEV_MODE != "development") {
         const { result } = useNotifier({
           topic: "eventApprove",
           data: {
@@ -884,7 +884,7 @@ export function useEventProvider(options = {}) {
       let username = res.data.insert_Log_one.username.trim();
       let c_act_code = res.data.delete_Event_Evaluation_by_pk.c_act_code.trim();
 
-      if (process.env.NODE_ENV != "development") {
+      if (process.env.DEV_MODE != "development") {
         const { result } = useNotifier({
           topic: "eventApprove",
           data: {
@@ -974,7 +974,7 @@ export function useEventProvider(options = {}) {
 
   onDone_approvePlan(async (res) => {
     if (res.data) {
-      if (process.env.NODE_ENV != "development") {
+      if (process.env.DEV_MODE != "development") {
         let user = await User.loadUserByName(
           res.data.update_Event_Evaluation_by_pk.staff_name.trim()
         );
@@ -1077,7 +1077,7 @@ export function useEventProvider(options = {}) {
 
   onDone_approveEval(async (res) => {
     if (res.data) {
-      if (process.env.NODE_ENV != "development") {
+      if (process.env.DEV_MODE != "development") {
         let user = await User.loadUserByName(
           res.data.update_Event_Evaluation_by_pk.staff_name.trim()
         );
@@ -1179,7 +1179,7 @@ export function useEventProvider(options = {}) {
 
   onDone_submitEval((res) => {
     if (res.data) {
-      if (process.env.NODE_ENV != "development") {
+      if (process.env.DEV_MODE != "development") {
         const { result } = useNotifier({
           topic: "eventApprove",
           data: {
@@ -1264,7 +1264,7 @@ export function useEventProvider(options = {}) {
 
   onDone_deleteEvent((res) => {
     if (res.data) {
-      if (process.env.NODE_ENV != "development") {
+      if (process.env.DEV_MODE != "development") {
         // no notification for delete event
         // message return to client
         message.value =
@@ -1347,7 +1347,7 @@ export function useEventProvider(options = {}) {
 
   onDone_updateEvent((res) => {
     if (res.data) {
-      if (process.env.NODE_ENV != "development") {
+      if (process.env.DEV_MODE != "development") {
         // no notification for delete event
         // message return to client
         message.value =
@@ -1439,7 +1439,7 @@ export function useEventProvider(options = {}) {
 
   onDone_upsertPlanEval((res) => {
     if (res.data) {
-      if (process.env.NODE_ENV != "development") {
+      if (process.env.DEV_MODE != "development") {
         // no notification for delete event
         // message return to client
         message.value =
@@ -1548,7 +1548,7 @@ export function useEventProvider(options = {}) {
 
   onDone_updateEventFee((res) => {
     if (res.data) {
-      if (process.env.NODE_ENV != "development") {
+      if (process.env.DEV_MODE != "development") {
         // no notification for delete event
         // message return to client
         message.value =
@@ -1640,7 +1640,7 @@ export function useEventProvider(options = {}) {
 
   onDone_deleteEventFee((res) => {
     if (res.data) {
-      if (process.env.NODE_ENV != "development") {
+      if (process.env.DEV_MODE != "development") {
         // no notification for delete event
         // message return to client
         message.value =
@@ -1731,7 +1731,7 @@ export function useEventProvider(options = {}) {
 
   onDone_updateEventStat((res) => {
     if (res.data) {
-      if (process.env.NODE_ENV != "development") {
+      if (process.env.DEV_MODE != "development") {
         // no notification for delete event
         // message return to client
         message.value =
