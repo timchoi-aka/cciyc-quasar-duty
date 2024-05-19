@@ -1,5 +1,5 @@
 import { ref, computed } from "vue";
-import { useQuery, useMutation } from "@vue/apollo-composable";
+import { useQuery, useLazyQuery, useMutation } from "@vue/apollo-composable";
 import { gql } from "graphql-tag";
 import { date, extend } from "quasar";
 import { useNotifier } from "./notifier";
@@ -1711,7 +1711,7 @@ export function useEventProvider(options = {}) {
       if (existingEvent) {
         console.log("existingEvent", existingEvent);
         // Update its submit_plan_date
-        /* 
+        /*
         let updatedEvent = {};
         extend(true, updatedEvent, existingEvent.HTX_Event_by_pk);
         updatedEvent.Event_to_Evaluation[0].submit_plan_date =
@@ -2118,4 +2118,72 @@ export function useEventIDProvider() {
   `;
   const { result, loading } = useQuery(GET_ALL_EVENT_ID);
   return { result, loading };
+}
+
+export function useSummerEventProvider(options = {}) {
+  const { d_sale_start = ref() } = options;
+
+  const GET_SUMMER_EVENT = gql`
+    query GetEvent {
+      HTX_Event {
+        b_freeofcharge
+        c_act_code
+        c_acc_type
+        c_act_name
+        c_act_nameen
+        c_dest
+        c_end_collect
+        c_finish_goal
+        c_group1
+        c_group2
+        c_nature
+        c_remind_header
+        c_respon
+        c_status
+        c_type
+        c_week
+        c_whojoin
+        c_worker
+        d_date_from
+        d_date_to
+        d_sale_end
+        d_sale_start
+        d_time_from
+        d_time_to
+        i_lessons
+        i_quota_max
+        Event_to_Fee {
+          c_act_code
+          c_type
+          u_fee
+        }
+      }
+    }
+  `;
+
+  const result = ref([]);
+  const { onResult, load, refetch, loading } = useLazyQuery(
+    GET_SUMMER_EVENT,
+    {},
+    { enabled: computed(() => d_sale_start.value != null) }
+  );
+
+  onResult((res) => {
+    if (res.data && res.data.HTX_Event && res.data.HTX_Event.length > 0) {
+      result.value = [];
+      res.data.HTX_Event.forEach((event) => {
+        if (
+          event.d_sale_start &&
+          date.getDateDiff(
+            date.extractDate(event.d_sale_start, "D/M/YYYY"),
+            date.extractDate(d_sale_start.value, "YYYY/MM/DD")
+          ) >= 0
+        ) {
+          result.value.push(event);
+        }
+      });
+    }
+  });
+
+  return { result, loading, load, refetch };
 }

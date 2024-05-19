@@ -89,7 +89,7 @@
 import { computed, ref } from "vue";
 import { useQuery } from "@vue/apollo-composable";
 import { useStore } from "vuex";
-import { EVENT_SEARCH } from "/src/graphQueries/Event/query.js";
+import { EVENT_SEARCH } from "src/graphQueries/Event/query.js";
 import { useQuasar } from "quasar";
 import { useRouter, useRoute } from "vue-router";
 import StaffSelection from "src/components/Basic/StaffSelection.vue";

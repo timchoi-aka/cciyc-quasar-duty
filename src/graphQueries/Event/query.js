@@ -84,6 +84,7 @@ export const EVENT_SEARCH = gql`
       c_group1
       c_group2
       c_acc_type
+      d_sale_start
     }
   }
 `;
