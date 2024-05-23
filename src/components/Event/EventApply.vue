@@ -124,19 +124,19 @@
         <q-space />
         <q-btn
           v-close-popup
-          @click="unregister"
-          label="儲存"
-          dense
-          icon="save"
-          class="q-ml-md bg-primary text-white"
-          size="lg"
-        />
-        <q-btn
-          v-close-popup
           label="取消"
           dense
           icon="replay"
           class="q-ml-md bg-negative text-white"
+          size="lg"
+        />
+        <q-btn
+          v-close-popup
+          @click="unregister"
+          label="儲存"
+          dense
+          icon="save"
+          class="q-ml-md bg-positive text-white"
           size="lg"
         />
       </q-card-actions>
@@ -292,12 +292,24 @@
     </div>
   </q-form>
   <q-table
-    :rows="ApplyHistory"
+    :rows="ApplyHistory.filter((v) => (displayRefund ? true : !v.b_refund))"
     :columns="columns"
     :pagination="pagination"
     :wrap-cells="true"
     :visible-columns="visibleColumns"
+    :loading="loading"
   >
+    <template v-slot:top>
+      <div class="q-ma-none q-pa-none row col-12">
+        <q-space />
+        <q-toggle
+          flat
+          label="顯示已取消報名會員"
+          v-model="displayRefund"
+          class="bg-white text-primary"
+        />
+      </div>
+    </template>
     <template v-slot:body-cell-c_receipt_no="props">
       <q-td :props="props">
         <div v-for="data in props.row.c_receipt_no">
@@ -358,7 +370,7 @@
       <q-td :props="props">
         {{ props.row.c_name }}
         <EventReregistration
-          v-if="!Event.b_freeofcharge"
+          v-if="!Event.b_freeofcharge && !props.row.b_refund"
           :c_act_code="Event.c_act_code ? Event.c_act_code.trim() : ''"
           :c_act_name="Event.c_act_name ? Event.c_act_name.trim() : ''"
           :c_acc_type="Event.c_acc_type ? Event.c_acc_type.trim() : ''"
@@ -424,6 +436,7 @@ const EventReregistration = defineAsyncComponent(() =>
 );
 
 // variables
+const displayRefund = ref(false);
 const props = defineProps({
   c_act_code: {
     type: String,
@@ -445,6 +458,7 @@ const validateDisplay = ref(false);
 const unregisterDisplay = ref(false);
 const unregisterItem = ref({});
 const printParticipantModel = ref(false);
+const loading = ref(false);
 
 // query
 const { result: EventData, onError: EventDataError } = useQuery(
@@ -890,17 +904,45 @@ onApplyResult((result) => {
     ApplyHistory.value = [];
     result.data.tbl_act_reg.forEach((d) => {
       if (!d.b_refund) {
-        ApplyHistory.value.push({
-          ...d,
-          c_receipt_no: d.EventRegistration_to_Account_by_MID.map(
-            ({ c_receipt_no, i_receipt_type, b_refund }) => ({
-              c_receipt_no: c_receipt_no,
-              reregister: i_receipt_type == 20,
-              b_refund: b_refund,
-            })
-          ),
-        });
+        let autoUnregisterEvent = false;
+        d.EventRegistration_to_Account_by_MID.filter((x) => !x.b_refund)
+          .length == 0
+          ? (autoUnregisterEvent = true)
+          : (autoUnregisterEvent = false);
+        if (autoUnregisterEvent) {
+          loading.value = true;
+          eventUnregistration({
+            logObject: {
+              username: username.value,
+              datetime: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+              module: "活動系統",
+              action:
+                "會員" +
+                d.c_mem_id +
+                "(" +
+                d.c_name +
+                ") 因退款取消報名活動 " +
+                d.c_act_code,
+            },
+            unregObject: {
+              b_refund: true,
+              d_refund: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+            },
+            ID: d.ID,
+          });
+        }
       }
+
+      ApplyHistory.value.push({
+        ...d,
+        c_receipt_no: d.EventRegistration_to_Account_by_MID.map(
+          ({ c_receipt_no, i_receipt_type, b_refund }) => ({
+            c_receipt_no: c_receipt_no,
+            reregister: i_receipt_type == 20,
+            b_refund: b_refund,
+          })
+        ),
+      });
     });
   }
 
@@ -937,6 +979,7 @@ freeEventRegistration_Completed((result) => {
 });
 
 eventUnregistration_Completed((result) => {
+  loading.value = false;
   unregisterItem.value = {};
   $q.notify({
     message:

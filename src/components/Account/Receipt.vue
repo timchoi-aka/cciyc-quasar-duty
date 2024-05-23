@@ -8,7 +8,7 @@
       <q-card-section class="text-h6">
         <div>確定退款？</div>
         <div>請在以下輸入收據編號{{ Receipt.c_receipt_no }}</div>
-        <q-input type="text" v-model="refundCheck" />
+        <q-input type="text" :autofucus="true" v-model="refundCheck" />
       </q-card-section>
       <q-card-actions align="right">
         <q-btn
@@ -426,13 +426,13 @@ addReceiptPrintCount_Completed((result) => {
 });
 
 refund_Completed((result) => {
-  refetch();
   $q.notify({
     message:
       "收據編號：" +
       result.data.update_tbl_account_by_pk.c_receipt_no +
       "退款成功。",
   });
+  refetch();
 });
 
 refund_Error((error) => {

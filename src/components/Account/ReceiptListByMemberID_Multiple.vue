@@ -1,5 +1,18 @@
 <template>
   <div>
+    <q-dialog
+      v-model="viewEventModal"
+      persistent
+      full-width
+      transition-show="slide-up"
+      transition-hide="slide-down"
+      class="q-pa-none"
+    >
+      <EventDetail
+        :EventID="viewEventID"
+        @hide-component="viewEventModal = false"
+      />
+    </q-dialog>
     <q-table
       :rows="tableData"
       :loading="loading"
@@ -33,7 +46,15 @@
             <q-checkbox v-model="props.selected" dense size="sm" />
           </q-td>
 
-          <q-td v-for="col in props.cols" :key="col.name" :props="props">
+          <q-td
+            v-for="col in props.cols"
+            :key="col.name"
+            :props="props"
+            @click="
+              viewEventModal = true;
+              viewEventID = props.row.c_act_code;
+            "
+          >
             {{ col.value }}
           </q-td>
         </q-tr>
@@ -48,7 +69,10 @@ import { computed, ref, toRef, watch } from "vue";
 import { GET_MEMBER_RECEIPTS_BY_PK } from "src/graphQueries/Member/query";
 import { date as qdate } from "quasar";
 import { useMemoProvider } from "src/providers/memo";
+import EventDetail from "src/components/Event/EventDetail.vue";
 
+const viewEventModal = ref(false);
+const viewEventID = ref(null);
 const props = defineProps({
   MemberID: {
     type: String,
@@ -156,6 +180,7 @@ const tableData = computed(() => {
   memo.value.forEach((v) => {
     res.push({
       id: v.ID,
+      c_act_code: v.c_act_code,
       d_create: v.d_reg,
       c_desc: v.EventRegistration_to_Event.c_act_name,
       c_receipt_no: null,
@@ -193,6 +218,11 @@ const columns = ref([
     field: "d_create",
     sortable: true,
     format: (val) => qdate.formatDate(val, "YYYY年M月D日"),
+  },
+  {
+    name: "c_act_code",
+    label: "活動編號",
+    field: "c_act_code",
   },
   {
     name: "c_desc",

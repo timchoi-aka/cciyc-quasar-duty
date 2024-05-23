@@ -121,8 +121,8 @@ function displayPDF(data, memoData) {
     format: [
       68,
       80 +
-        20 * data.filter((x) => x.m_remark.length > 0).length +
-        20 * memoData.length,
+        25 * data.filter((x) => x.m_remark.length > 0).length +
+        25 * memoData.length,
     ],
   });
   doc.addFileToVFS("NotoSansTC-Regular.ttf", font);
@@ -288,7 +288,7 @@ function displayPDF(data, memoData) {
       maxWidth: 60,
     });
     lines = doc.splitTextToSize(d.m_remark.trim(), 60);
-    lineNo += (lines.length + 1) * 0.8;
+    lineNo += (lines.length + 2) * 0.8;
   });
 
   memoData.forEach((data) => {
@@ -386,7 +386,7 @@ function displayPDF(data, memoData) {
       lineNo++;
     }
 
-    lineNo += 0.5;
+    //lineNo += 0.5;
 
     if (
       (data.EventRegistration_to_Event.m_remark &&
@@ -395,7 +395,7 @@ function displayPDF(data, memoData) {
         data.EventRegistration_to_Event.m_remind_content.length > 0)
     ) {
       doc.setFontSize(7);
-      doc.text("活動備註", 5, atLine(lineNo));
+      doc.text("備註 Remark:", 5, atLine(lineNo));
       lineNo += 0.8;
       let remarkText = data.EventRegistration_to_Event.m_remark
         ? data.EventRegistration_to_Event.m_remark.trim()
@@ -405,7 +405,7 @@ function displayPDF(data, memoData) {
         maxWidth: 50,
       });
       let lines = doc.splitTextToSize(remarkText, 50);
-      lineNo += lines.length * 0.8;
+      lineNo += (lines.length + 1) * 0.8;
     }
   });
 
