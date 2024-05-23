@@ -1,3 +1,6 @@
+<!-- TODO
+  add grid view
+-->
 <template>
   <q-table
     dense
@@ -14,10 +17,25 @@
     @row-click="showDetail"
   >
     <template v-slot:top-left>
-      <div class="row items-center items-stretch">
-        <DateComponent label="開始報名日期" v-model="d_sale_start" />
+      <div class="row items-center">
+        <DateComponent
+          class="col-sm-5 col-xs-5 col-md-3"
+          label="開始報名日期"
+          v-model="d_sale_start"
+        />
+        <DateComponent
+          class="col-sm-5 col-xs-5 col-md-3"
+          label="活動開始日期"
+          v-model="d_date_from"
+        />
+        <DateComponent
+          class="col-sm-5 col-xs-5 col-md-3"
+          label="活動結束日期"
+          v-model="d_date_to"
+        />
         <q-btn
           label="搜尋"
+          icon="search"
           color="primary"
           @click="load() || refetch()"
           class="q-mx-md"
@@ -34,7 +52,7 @@
           exportExcel(
             result,
             columns,
-            '暑期活動-' + date.formatDate(d_sale_start, 'YYYY-MM-DD')
+            '活動查詢-' + date.formatDate(d_sale_start, 'YYYY-MM-DD')
           )
         "
       />
@@ -51,9 +69,13 @@ import { date, exportFile } from "quasar";
 import Excel from "src/lib/exportExcel";
 
 const router = useRouter();
-const d_sale_start = ref("2024/06/01");
+const d_sale_start = ref("");
+const d_date_from = ref(""),
+  d_date_to = ref("");
 const { result, loading, load, refetch } = useSummerEventProvider({
   d_sale_start: d_sale_start,
+  d_date_from: d_date_from,
+  d_date_to: d_date_to,
 });
 
 const pagination = ref({
@@ -81,9 +103,69 @@ const columns = ref([
     headerClasses: "bg-grey-2",
   },
   {
-    name: "c_nature",
-    label: "性質",
-    field: "c_nature",
+    name: "c_whojoin",
+    label: "對象",
+    field: "c_whojoin",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "d_date_from",
+    label: "開始日期",
+    field: "d_date_from",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "d_date_to",
+    label: "結束日期",
+    field: "d_date_to",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "c_week",
+    label: "逢星期",
+    field: "c_week",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "d_time_from",
+    label: "開始時間",
+    field: "d_time_from",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "d_time_to",
+    label: "結束時間",
+    field: "d_time_to",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "Fee",
+    label: "收費",
+    field: "Event_to_Fee",
+    style:
+      "border-top: 1px solid; text-align: center; width: 10%; max-width: 10%;",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+    format: (val) => {
+      return val.map((obj) => `${obj.c_type}: ${obj.u_fee}`).join(", ");
+    },
+  },
+  {
+    name: "i_lessons",
+    label: "堂數",
+    field: "i_lessons",
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
@@ -92,6 +174,30 @@ const columns = ref([
     name: "c_respon",
     label: "負責人",
     field: "c_respon",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "d_sale_start",
+    label: "開始報名日期",
+    field: "d_sale_start",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "d_sale_end",
+    label: "結束報名日期",
+    field: "d_sale_end",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "c_nature",
+    label: "性質",
+    field: "c_nature",
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
@@ -127,74 +233,6 @@ const columns = ref([
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
-  },
-  {
-    name: "d_date_from",
-    label: "開始日期",
-    field: "d_date_from",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "d_date_to",
-    label: "結束日期",
-    field: "d_date_to",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "d_time_from",
-    label: "開始時間",
-    field: "d_time_from",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "d_time_to",
-    label: "結束時間",
-    field: "d_time_to",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "c_week",
-    label: "逢星期",
-    field: "c_week",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "i_lessons",
-    label: "堂數",
-    field: "i_lessons",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "c_whojoin",
-    label: "對象",
-    field: "c_whojoin",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "Fee",
-    label: "收費",
-    field: "Event_to_Fee",
-    style:
-      "border-top: 1px solid; text-align: center; width: 10%; max-width: 10%;",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-    format: (val) => {
-      return val.map((obj) => `${obj.c_type}: ${obj.u_fee}`).join(", ");
-    },
   },
 ]);
 

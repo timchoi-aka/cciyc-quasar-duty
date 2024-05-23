@@ -62,7 +62,14 @@ const c_act_code = ref(props.event.c_act_code);
 
 const EVENT_APPLY_AND_RECEIPT_BY_ACT_CODE = gql`
   query EVENT_APPLY_BY_ACT_CODE($c_act_code: String = "") {
-    tbl_act_reg(where: { c_act_code: { _eq: $c_act_code } }) {
+    tbl_act_reg(
+      where: {
+        _and: [
+          { c_act_code: { _eq: $c_act_code } }
+          { b_refund: { _eq: false } }
+        ]
+      }
+    ) {
       i_age
       d_reg
       d_refund

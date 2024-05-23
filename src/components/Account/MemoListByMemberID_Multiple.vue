@@ -1,12 +1,12 @@
 <template>
   <div>
     <q-table
-      :rows="tableData"
+      :rows="account"
       :loading="loading"
       :columns="columns"
       :pagination="defaultPagination"
       color="primary"
-      row-key="id"
+      row-key="c_receipt_no"
       selection="multiple"
       v-model:selected="selected"
     >
@@ -47,7 +47,6 @@ import { useQuery } from "@vue/apollo-composable";
 import { computed, ref, toRef, watch } from "vue";
 import { GET_MEMBER_RECEIPTS_BY_PK } from "src/graphQueries/Member/query";
 import { date as qdate } from "quasar";
-import { useMemoProvider } from "src/providers/memo";
 
 const props = defineProps({
   MemberID: {
@@ -58,20 +57,14 @@ const props = defineProps({
     type: Array,
     required: false,
   },
-  selectedMemo: {
-    type: Array,
-    required: false,
-  },
 });
 
-const emit = defineEmits(["updateReceiptNumber", "updateMemoID"]);
+const emit = defineEmits(["updateReceiptNumber"]);
 const selected = ref([]);
-const isInitializedReceipt = ref(false);
-const isInitializedMemo = ref(false);
+const isInitialized = ref(false);
 // variables
 const c_mem_id = toRef(props, "MemberID");
 const selectedReceipts = toRef(props, "selectedReceipts");
-const selectedMemo = toRef(props, "selectedMemo");
 const staffNameMapping = {
   lswu: "胡小姐",
   ywho: "何先生",
@@ -86,42 +79,20 @@ const staffNameMapping = {
 watch(selected, (val) => {
   emit(
     "updateReceiptNumber",
-    Array.from(
-      new Set(
-        val.filter((x) => x.c_receipt_no != null).map((x) => x.c_receipt_no)
-      )
-    )
-  );
-  emit(
-    "updateMemoID",
-    Array.from(
-      new Set(val.filter((x) => x.c_receipt_no == null).map((x) => x.id))
-    )
+    Array.from(new Set(val.map((x) => x.c_receipt_no)))
   );
 });
 
 watch(selectedReceipts, (val) => {
-  if (tableData.value.length === 0) return;
-  if (isInitializedReceipt.value) return;
+  if (account.value.length === 0) return;
+  if (isInitialized.value) return;
   val.forEach((v) => {
-    let i = tableData.value.findIndex((x) => x.c_receipt_no === v);
+    let i = account.value.findIndex((x) => x.c_receipt_no === v);
     if (i >= 0) {
-      selected.value.push(tableData.value[i]);
+      selected.value.push(account.value[i]);
     }
   });
-  isInitializedReceipt.value = true;
-});
-
-watch(selectedMemo, (val) => {
-  if (tableData.value.length === 0) return;
-  if (isInitializedMemo.value) return;
-  val.forEach((v) => {
-    let i = tableData.value.findIndex((x) => x.id === v);
-    if (i >= 0) {
-      selected.value.push(tableData.value[i]);
-    }
-  });
-  isInitializedMemo.value = true;
+  isInitialized.value = true;
 });
 
 // query
@@ -135,49 +106,17 @@ const { result, loading, refetch } = useQuery(
   }
 );
 
-const { result: memoResult } = useMemoProvider({
-  c_mem_id: c_mem_id,
-});
 // computed
 const account = computed(
   () =>
     result.value?.Member_by_pk.MemberAccount.filter((x) => !x.b_delete) ?? []
 );
 
-const memo = computed(() => memoResult.value?.tbl_act_reg ?? []);
-const tableData = computed(() => {
-  let res = [];
-  account.value.forEach((v) => {
-    res.push({
-      id: v.c_receipt_no,
-      ...v,
-    });
-  });
-  memo.value.forEach((v) => {
-    res.push({
-      id: v.ID,
-      d_create: v.d_reg,
-      c_desc: v.EventRegistration_to_Event.c_act_name,
-      c_receipt_no: null,
-      c_user_id: v.c_user_id,
-      u_price_after_discount: 0,
-      m_remark: v.EventRegistration_to_Event.m_remark,
-    });
-  });
-  return res;
-});
-
-watch(tableData, (val) => {
+watch(account, (val) => {
   if (val.length > 0) {
     selected.value = [];
-    selectedReceipts.value.forEach((v) => {
+    props.selectedReceipts.forEach((v) => {
       let i = val.findIndex((x) => x.c_receipt_no === v);
-      if (i >= 0) {
-        selected.value.push(val[i]);
-      }
-    });
-    selectedMemo.value.forEach((v) => {
-      let i = val.findIndex((x) => x.id === v);
       if (i >= 0) {
         selected.value.push(val[i]);
       }

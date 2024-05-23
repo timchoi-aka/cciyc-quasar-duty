@@ -52,7 +52,21 @@
                   @click="events.splice(index, 1)"
                 />
                 <div class="col-5">
-                  <EventBatchApplySelection v-model="events[index]" />
+                  <div>
+                    <EventBatchApplySelection
+                      v-model="events[index]"
+                      :class="checkAgeRange(MemberObject, events[index])"
+                    />
+                    <q-tooltip
+                      v-if="checkAgeRange(MemberObject, events[index]) != ''"
+                    >
+                      {{
+                        checkAgeRange(MemberObject, events[index]) != "ageMatch"
+                          ? "年齡不符合"
+                          : "年齡符合"
+                      }}
+                    </q-tooltip>
+                  </div>
                 </div>
                 <div class="q-mr-sm col-1">
                   <q-btn
@@ -88,7 +102,7 @@
             </div>
             <div class="row col-12 q-mt-md items-center">
               <q-btn
-                class="q-mx-xs col-2 bg-negative text-white"
+                class="q-mx-xs col-2 bg-grey text-white"
                 icon="cancel"
                 @click="
                   events = [];
@@ -120,9 +134,11 @@
         <template v-slot:after>
           <ReceiptListByMemberID_Multiple
             :MemberID="MemberObject.c_mem_id"
-            :key="result + MemberObject.c_mem_id"
-            :selectedReceipts="result"
+            :key="JSON.stringify(result) + MemberObject.c_mem_id"
+            :selectedReceipts="result?.c_receipt_no ?? []"
+            :selectedMemo="result?.id ?? []"
             @updateReceiptNumber="(val) => (ReceiptNo = val)"
+            @updateMemoID="(val) => (MemoID = val)"
           />
         </template>
       </q-splitter>
@@ -130,7 +146,11 @@
 
     <template v-slot:after>
       <div>
-        <ReceiptBatch :c_receipt_no="ReceiptNo" :key="ReceiptNo" />
+        <ReceiptBatch
+          :c_receipt_no="ReceiptNo"
+          :memoID="MemoID"
+          :key="ReceiptNo + MemoID"
+        />
       </div>
     </template>
   </q-splitter>
@@ -140,20 +160,6 @@
 import { computed, ref, watch } from "vue";
 import { useStore } from "vuex";
 import { useQuasar, date as qdate } from "quasar";
-import {
-  EVENT_GET_ALL_ACTIVE,
-  EVENT_APPLY_BY_ACT_CODE,
-  EVENT_BY_PK,
-  EVENT_FEE_BY_ACT_CODE,
-} from "/src/graphQueries/Event/query.js";
-import {
-  EVENT_REGISTRATION,
-  FREE_EVENT_REGISTRATION,
-  EVENT_UNREGISTRATION,
-  FREE_EVENT_UNREGISTRATION,
-} from "/src/graphQueries/Event/mutation.js";
-import { useQuery, useMutation } from "@vue/apollo-composable";
-import Receipt from "components/Account/Receipt.vue";
 import MemberInfoByID from "src/components/Member/MemberInfoByID.vue";
 import MemberSelection from "components/Member/MemberSelection.vue";
 import { useBatchEventRegistrationProvider } from "src/providers/batchEventRegistration";
@@ -167,36 +173,19 @@ import EventDetail from "src/components/Event/EventDetail.vue";
 // variables
 const $q = useQuasar();
 const $store = useStore();
-const printReceiptDisplay = ref(false);
-const printReceiptNumber = ref("");
-const ApplicationQueue = ref([]);
-const validateDisplay = ref(false);
-const unregisterDisplay = ref(false);
-const unregisterItem = ref({});
 const verticalModel = ref(70);
 const horizontalModel = ref(50);
 const MemberObject = ref({});
 const events = ref([]);
-const EventOptions = ref([]);
-const OriginalEventOptions = ref([]);
 const now = new Date();
 const ReceiptNo = ref([]);
+const MemoID = ref([]);
 const viewEventModal = ref(false);
 const viewEventID = ref("");
 
 // query
 const { batchRegister, result, loading, message, updateQueue } =
   useBatchEventRegistrationProvider();
-const {
-  mutate: eventRegistration,
-  onDone: eventRegistration_Completed,
-  onError: eventRegistration_Error,
-} = useMutation(EVENT_REGISTRATION);
-const {
-  mutate: freeEventRegistration,
-  onDone: freeEventRegistration_Completed,
-  onError: freeEventRegistration_Error,
-} = useMutation(FREE_EVENT_REGISTRATION);
 
 watch(message, (val) => {
   if (val) {
@@ -206,20 +195,8 @@ watch(message, (val) => {
   }
 });
 
-const {
-  mutate: eventUnregistration,
-  onDone: eventUnregistration_Completed,
-  onError: eventUnregistration_Error,
-} = useMutation(EVENT_UNREGISTRATION);
-const {
-  mutate: freeEventUnregistration,
-  onDone: freeEventUnregistration_Completed,
-  onError: freeEventUnregistration_Error,
-} = useMutation(FREE_EVENT_UNREGISTRATION);
-
 // computed
 const username = computed(() => $store.getters["userModule/getUsername"]);
-const Fee = ref([]);
 
 // validApplication return false if events is empty or duplicated c_act_code found in events
 const errorMessage = ref([]);
@@ -319,400 +296,7 @@ const validApplication = computed(() => {
   return true;
 });
 
-const columns = ref([
-  {
-    name: "c_receipt_no",
-    label: "收據",
-    field: "c_receipt_no",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "c_mem_id",
-    label: "會員號碼",
-    field: "c_mem_id",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "c_name",
-    label: "姓名",
-    field: "c_name",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "c_sex",
-    label: "性別",
-    field: "c_sex",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "c_tel",
-    label: "電話",
-    field: "c_tel",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "i_age",
-    label: "年齡",
-    field: "i_age",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "c_type",
-    label: "收費類別",
-    field: "c_type",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "c_user_id",
-    label: "經手人",
-    field: "c_user_id",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "d_reg",
-    label: "報名日期",
-    field: "d_reg",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-    format: (val) =>
-      qdate.formatDate(val, "YYYY年M月D日", {
-        daysShort: ["日", "一", "二", "三", "四", "五", "六"],
-      }),
-  },
-  {
-    name: "b_refund",
-    label: "取消報名",
-    field: "b_refund",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-  },
-  {
-    name: "d_refund",
-    label: "取消日期",
-    field: "d_refund",
-    style: "border-top: 1px solid; text-align: center",
-    headerStyle: "text-align: center;",
-    headerClasses: "bg-grey-2",
-    format: (val) =>
-      qdate.formatDate(val, "YYYY年M月D日", {
-        daysShort: ["日", "一", "二", "三", "四", "五", "六"],
-      }),
-  },
-]);
-
-const pagination = ref({
-  rowsPerPage: 30,
-  sortBy: "d_act",
-  descending: true,
-});
-
 // functions
-/*
-服務資料 Service Detail
-日期 Date：24/08/2022
-時間 Time：18:15 - 19:15
-*/
-/*
-function submitApplication() {
-  let remark = ""
-  ApplicationQueue.value.forEach((item) => {
-    remark = "服務資料 Service Detail\r\n"
-    if (Event.value.d_date_from && Event.value.d_date_to) remark += "日期 Date：" + qdate.formatDate(qdate.extractDate(Event.value.d_date_from, "D/M/YYYY"), "YYYY年M月D日") + " 至 " + qdate.formatDate(qdate.extractDate(Event.value.d_date_to, "D/M/YYYY"), "YYYY年M月D日")
-    if (Event.value.c_week) remark += " 逢星期" + Event.value.c_week
-    remark += "\r\n"
-    if (Event.value.d_time_from && Event.value.d_time_to) remark += "時間 Time：" + Event.value.d_time_from.trim() + " - " + Event.value.d_time_to.trim()
-
-    const logObject = ref({
-      "username": username,
-      "datetime": qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-      "module": "活動系統",
-      "action": "會員" + item.c_mem_id + " 報名活動 " + props.c_act_code.trim() + Event.value.b_freeofcharge? "": " 費用: " + item.u_fee.value,
-    })
-
-    const accountObject = ref({
-      c_receipt_no: latestReceiptNo.value,
-      d_create: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-      i_receipt_type: 2, //type 2 = activity fee
-      c_desc: Event.value.c_act_name? Event.value.c_act_name.trim() :"",
-      c_act_code: props.c_act_code.trim(),
-      c_type: Event.value.c_type? Event.value.c_type.trim(): "",
-      u_discount: 0,
-      u_price_after_discount: parseFloat(item.u_fee.value),
-      c_cash_type: "Cash",
-      c_cheque_no: "",
-      m_remark: remark,
-      c_mem_id: item.c_mem_id? item.c_mem_id.trim(): "",
-      c_user_id: username,
-      c_name: item.c_name? item.c_name.trim(): "",
-      b_cssa: false,
-      b_refund: false,
-      b_OtherIncome: false,
-      b_clear: false,
-      d_clear: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-      i_prints: 0,
-      b_delete: false,
-    })
-    const regObject = ref({
-      c_mem_id: item.c_mem_id,
-      c_act_code: props.c_act_code.trim(),
-      c_receipt_no: Event.value.b_freeofcharge? null: latestReceiptNo.value,
-      c_type: Event.value.b_freeofcharge? null: item.u_fee.label,
-      c_remarks: item.remarks,
-      c_bus: null,
-      i_bus_no: 0,
-      c_tbl: null,
-      i_tbl_no: 0,
-      d_reg: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-      c_period: null,
-      c_user_id: username,
-      b_refund: false,
-      d_refund: null,
-      c_name: item.c_name,
-      c_sex: item.c_sex,
-      i_age: item.i_age,
-      c_tel: item.c_tel,
-    })
-    */
-/*
-    console.log("remark:" + remark)
-    console.log("logObject:" + JSON.stringify(logObject.value))
-    console.log("accountObject:" + JSON.stringify(accountObject.value))
-    console.log("regObject: " + JSON.stringify(regObject.value))
-    */
-/*
-    if (Event.value.b_freeofcharge) {
-      freeEventRegistration({
-        logObject: logObject.value,
-        regObject: regObject.value,
-      })
-    } else {
-      eventRegistration({
-        logObject: logObject.value,
-        regObject: regObject.value,
-        accountObject: accountObject.value
-      })
-    }
-  })
-}
-*/
-
-function newFee(val, done) {
-  if (val.length > 0) {
-    let i = Fee.value.findIndex((element) => element.value == val);
-    if (i == -1) {
-      if (val <= 0) {
-        $q.notify({
-          message: "收費必須大於0！",
-          icon: "error",
-          color: "negative",
-          textColor: "white",
-        });
-      } else {
-        Fee.value.push({
-          label: "特別收費",
-          value: val,
-        });
-        done(Fee.value[Fee.value.length - 1], "toggle");
-      }
-    } else {
-      done(Fee.value[i], "toggle");
-    }
-  }
-}
-function startValidation() {
-  if (!ApplicationQueue.value[0].c_mem_id) {
-    $q.notify({
-      message: "請輸入會員號碼！",
-      icon: "error",
-      color: "negative",
-      textColor: "white",
-    });
-    return;
-  }
-
-  if (ApplicationQueue.value[0].c_name == "無此人") {
-    $q.notify({
-      message: "請輸入正確會員號碼！",
-      icon: "error",
-      color: "negative",
-      textColor: "white",
-    });
-    return;
-  }
-
-  if (!Event.value.b_freeofcharge && !ApplicationQueue.value[0].u_fee.value) {
-    $q.notify({
-      message: "請輸入正確收費！",
-      icon: "error",
-      color: "negative",
-      textColor: "white",
-    });
-    return;
-  }
-
-  validateDisplay.value = true;
-}
-
-function confirmUnregister(object) {
-  unregisterItem.value = object;
-  unregisterDisplay.value = true;
-}
-
-function unregister() {
-  const logObject = ref({
-    username: username,
-    datetime: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-    module: "活動系統",
-    action:
-      "會員" +
-      unregisterItem.value.c_mem_id +
-      "(" +
-      unregisterItem.value.c_name +
-      ") 取消報名活動 " +
-      unregisterItem.value.c_act_code,
-  });
-
-  const unregObject = ref({
-    b_refund: true,
-    d_refund: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-  });
-
-  if (Event.value.b_freeofcharge) {
-    freeEventUnregistration({
-      logObject: logObject.value,
-      unregObject: unregObject.value,
-      ID: unregisterItem.value.ID,
-    });
-  } else {
-    eventUnregistration({
-      logObject: logObject.value,
-      unregObject: unregObject.value,
-      c_receipt_no: unregisterItem.value.c_receipt_no,
-      ID: unregisterItem.value.ID,
-    });
-  }
-}
-
-function printReceipt(c_receipt_no) {
-  printReceiptDisplay.value = true;
-  printReceiptNumber.value = c_receipt_no;
-}
-// callbacks success
-/*
-EventFee_Completed((result) => {
-  if (result.data) {
-    result.data.tbl_act_fee.forEach((item) => {
-      Fee.value.push({
-        label: item.c_type,
-        value: parseInt(item.u_fee)
-      })
-    })
-  }
-})
-*/
-/*
-
-onApplyResult((result) => {
-  // hide refunded record
-  if (result.data) ApplyHistory.value = result.data.tbl_act_reg.filter(x => !x.b_refund)
-
-  // all record including those refund
-  // if (result.data) ApplyHistory.value = result.data.tbl_act_reg
-})
-
-eventRegistration_Completed((result) => {
-  $q.notify({ message: "會員: " + result.data.insert_tbl_act_reg_one.c_name + "報名活動" + result.data.insert_tbl_act_reg_one.c_act_code + "成功。收費 HK$" + result.data.insert_tbl_account_one.u_price_after_discount });
-  ApplicationQueue.value.splice(0,1)
-})
-
-freeEventRegistration_Completed((result) => {
-  $q.notify({ message: "會員: " + result.data.insert_tbl_act_reg_one.c_name + "報名活動" + result.data.insert_tbl_act_reg_one.c_act_code + "成功。" });
-  ApplicationQueue.value.splice(0,1)
-})
-
-eventUnregistration_Completed((result) => {
-  unregisterItem.value = {}
-  $q.notify({ message: "會員: " + result.data.update_tbl_act_reg_by_pk.c_mem_id + "(" + result.data.update_tbl_act_reg_by_pk.c_name + ")" + "取消報名活動" + result.data.update_tbl_act_reg_by_pk.c_act_code + "成功。"})
-})
-
-freeEventUnregistration_Completed((result) => {
-  unregisterItem.value = {}
-  $q.notify({ message: "會員: " + result.data.update_tbl_act_reg_by_pk.c_mem_id + "(" + result.data.update_tbl_act_reg_by_pk.c_name + ")" + "取消報名活動" + result.data.update_tbl_act_reg_by_pk.c_act_code + "成功。"})
-})
-
-// callbacks error
-EventFeeError((error) => {
-  notifyClientError(error)
-})
-
-EventDataError((error) => {
-  notifyClientError(error)
-})
-
-EventApplyError((error) => {
-  notifyClientError(error)
-})
-
-eventUnregistration_Error((error) => {
-  notifyClientError(error)
-})
-
-eventRegistration_Error((error) => {
-  notifyClientError(error)
-})
-
-freeEventRegistration_Error((error) => {
-  notifyClientError(error)
-})
-
-freeEventUnregistration_Error((error) => {
-  notifyClientError(error)
-})
-*/
-// UI function
-function notifyClientError(error) {
-  $q.notify({ message: "系統錯誤，請重新登入." });
-  console.log("error", error);
-}
-
-function eventFilter(val, update) {
-  if (val === "") {
-    update(() => {
-      EventOptions.value = OriginalEventOptions.value;
-    });
-    return;
-  }
-
-  update(() => {
-    EventOptions.value = OriginalEventOptions.value;
-    EventOptions.value = EventOptions.value.filter(
-      (v) =>
-        (v.c_act_code ? v.c_act_code.indexOf(val) > -1 : false) ||
-        (v.c_act_name
-          ? v.c_act_name.toLowerCase().indexOf(val.toLowerCase()) > -1
-          : false)
-    );
-  });
-}
-
 async function save() {
   let regObject = ref([]);
   let remark = "";
@@ -726,8 +310,25 @@ async function save() {
         qdate.formatDate(e.d_date_to, "YYYY年M月D日");
     if (e.c_week) remark += " 逢星期" + e.c_week;
     remark += "\r\n";
-    if (e.d_time_from && e.d_time_to)
-      remark += "時間 Time：" + e.d_time_from + " - " + e.d_time_to;
+    if (e.d_time_from && e.d_time_to) {
+      let startDatetime = qdate.extractDate(
+        qdate.formatDate(e.d_date_from, "D/M/YYYY") +
+          " " +
+          e.d_time_from.trim(),
+        "D/M/YYYY h:mm:ss A"
+      );
+
+      let endDatetime = qdate.extractDate(
+        qdate.formatDate(e.d_date_to, "D/M/YYYY") + " " + e.d_time_to.trim(),
+        "D/M/YYYY h:mm:ss A"
+      );
+
+      remark +=
+        "時間 Time：" +
+        qdate.formatDate(startDatetime, "h:mm A") +
+        " - " +
+        qdate.formatDate(endDatetime, "h:mm A");
+    }
 
     regObject.value.push({
       c_mem_id: MemberObject.value.c_mem_id,
@@ -746,8 +347,44 @@ async function save() {
   batchRegister({
     staff_name: username,
     object: regObject,
+  }).then(() => {
+    events.value = [];
   });
-  //console.log(JSON.stringify(MemberObject.value));
-  // console.log(JSON.stringify(events.value));
+}
+
+function checkAgeRange(person, event) {
+  if (!person.c_mem_id || !event.c_act_code) return "";
+  let mismatch = false;
+  if (event.c_act_code && event.c_age_control) {
+    if (
+      (event.i_year_from && person.i_age < event.i_year_from) ||
+      (event.i_year_to && person.i_age > event.i_year_to)
+    ) {
+      mismatch = true;
+    }
+    if (mismatch) {
+      return event.c_age_control.trim() == "才可報名"
+        ? "ageMismatchError"
+        : "ageMismatchWarning";
+    }
+  }
+  return "ageMatch";
 }
 </script>
+
+<style lang="scss" scoped>
+.ageMismatchWarning {
+  display: block;
+  background-color: $yellow;
+}
+
+.ageMismatchError {
+  display: block;
+  background-color: rgb(246, 198, 198);
+}
+
+.ageMatch {
+  display: block;
+  background-color: rgb(193, 245, 193);
+}
+</style>

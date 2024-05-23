@@ -35,8 +35,6 @@ export function useEventProvider(options = {}) {
       u_income
       u_tutor_pay
       i_success_percent
-      i_year_from
-      i_year_to
       c_vol_level_1
       c_vol_level_2
       c_vol_level_3
@@ -62,7 +60,6 @@ export function useEventProvider(options = {}) {
       c_course_level
       c_acttype_control
       c_acttype_together
-      c_age_control
       c_apply_code
       c_appraises
       b_print_age
@@ -190,6 +187,7 @@ export function useEventProvider(options = {}) {
         c_acc_type
         c_act_name
         c_act_nameen
+        c_age_control
         c_course_no
         c_course_tutor
         c_course_type
@@ -226,6 +224,8 @@ export function useEventProvider(options = {}) {
         i_lessons
         i_quota_cssa_max
         i_quota_max
+        i_year_from
+        i_year_to
         m_appraises_rem
         m_content
         m_evaluation_rem
@@ -2121,7 +2121,11 @@ export function useEventIDProvider() {
 }
 
 export function useSummerEventProvider(options = {}) {
-  const { d_sale_start = ref() } = options;
+  const {
+    d_sale_start = ref(),
+    d_date_from = ref(),
+    d_date_to = ref(),
+  } = options;
 
   const GET_SUMMER_EVENT = gql`
     query GetEvent {
@@ -2165,20 +2169,60 @@ export function useSummerEventProvider(options = {}) {
   const { onResult, load, refetch, loading } = useLazyQuery(
     GET_SUMMER_EVENT,
     {},
-    { enabled: computed(() => d_sale_start.value != null) }
+    {
+      enabled: computed(
+        () =>
+          d_sale_start.value != null ||
+          d_date_from.value != null ||
+          d_date_to.value != null
+      ),
+    }
   );
 
   onResult((res) => {
     if (res.data && res.data.HTX_Event && res.data.HTX_Event.length > 0) {
       result.value = [];
       res.data.HTX_Event.forEach((event) => {
-        if (
-          event.d_sale_start &&
-          date.getDateDiff(
-            date.extractDate(event.d_sale_start, "D/M/YYYY"),
-            date.extractDate(d_sale_start.value, "YYYY/MM/DD")
-          ) >= 0
-        ) {
+        let valid_sale = true,
+          valid_start = true,
+          valid_end = true;
+        if (d_sale_start.value) {
+          if (
+            event.d_sale_start &&
+            date.getDateDiff(
+              date.extractDate(event.d_sale_start, "D/M/YYYY"),
+              date.extractDate(d_sale_start.value, "YYYY/MM/DD")
+            ) >= 0
+          ) {
+            valid_sale = true;
+          } else valid_sale = false;
+        }
+
+        if (d_date_from.value) {
+          if (
+            event.d_date_from &&
+            date.getDateDiff(
+              date.extractDate(event.d_date_from, "D/M/YYYY"),
+              date.extractDate(d_date_from.value, "YYYY/MM/DD")
+            ) >= 0
+          ) {
+            valid_start = true;
+          } else valid_start = false;
+        }
+
+        if (d_date_to.value) {
+          if (
+            event.d_date_to &&
+            date.getDateDiff(
+              date.extractDate(event.d_date_to, "D/M/YYYY"),
+              date.extractDate(d_date_to.value, "YYYY/MM/DD")
+            ) <= 0
+          ) {
+            valid_end = true;
+          } else valid_end = false;
+        }
+
+        if (valid_sale && valid_start && valid_end) {
           result.value.push(event);
         }
       });

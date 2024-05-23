@@ -26,6 +26,13 @@
     <!--</q-card>-->
   </q-dialog>
 
+  <!-- print memo modal -->
+  <PrintMemo
+    :model-value="printMemoModal"
+    :printMemo="printMemoData"
+    @update:model-value="(val) => (printMemoModal = val)"
+  />
+
   <!-- print participant model -->
   <q-dialog
     v-model="printParticipantModel"
@@ -83,7 +90,8 @@
           icon="save"
           class="q-ml-md bg-primary text-white"
           size="lg"
-        />
+        >
+        </q-btn>
         <q-btn
           v-close-popup
           label="取消"
@@ -166,6 +174,7 @@
         icon="celebration"
         class="q-ml-md bg-positive text-white"
         size="lg"
+        :disable="quotaLeft <= 0"
         v-if="
           qdate.isBetweenDates(
             Date.now(),
@@ -174,7 +183,9 @@
             { inclusiveFrom: true, inclusiveTo: true }
           ) && ApplicationQueue.length == 0
         "
-      />
+      >
+        <q-tooltip v-if="quotaLeft <= 0">已滿額</q-tooltip>
+      </q-btn>
       <q-btn
         type="submit"
         label="儲存"
@@ -193,12 +204,7 @@
         size="lg"
         v-if="ApplicationQueue.length > 0"
       />
-      <div class="q-ml-md">
-        剩餘名額：{{
-          parseInt(Event.i_quota_max) -
-          ApplyHistory.filter((v) => !v.b_refund).length
-        }}
-      </div>
+      <div class="q-ml-md">剩餘名額：{{ quotaLeft }}</div>
       <q-btn
         flat
         icon="print"
@@ -209,6 +215,40 @@
           <div class="text-white">列印參加者名單</div>
         </q-tooltip>
       </q-btn>
+      <q-chip
+        v-if="Event.c_age_control"
+        :class="
+          Event.c_age_control && Event.c_age_control.trim() == '報名提示'
+            ? ['bg-warning', 'text-black']
+            : ['bg-negative', 'text-white']
+        "
+      >
+        <q-icon
+          :name="
+            Event.c_age_control && Event.c_age_control.trim() == '報名提示'
+              ? 'warning'
+              : 'error'
+          "
+        />
+        報名限制：
+        <span v-if="Event.i_year_from && Event.i_year_to" class="text-bold"
+          >{{ Event.i_year_from }}歲至{{ Event.i_year_to }}歲</span
+        >
+        <span
+          v-else-if="Event.i_year_from && !Event.i_year_to"
+          class="text-bold"
+          >{{ Event.i_year_from }}歲以上</span
+        >
+        <span
+          v-else-if="!Event.i_year_from && Event.i_year_to"
+          class="text-bold"
+          >{{ Event.i_year_to }}歲以下</span
+        >
+        <span
+          v-if="Event.c_age_control && Event.c_age_control.trim() == '才可報名'"
+          >才可報名</span
+        >
+      </q-chip>
     </div>
     <div v-if="ApplicationQueue.length > 0">
       <div class="row bg-blue-2">
@@ -245,7 +285,9 @@
           </template>
         </q-select>
         <q-input class="col-3" type="text" v-model="item.remark" />
-        <MemberInfoByID v-model="ApplicationQueue[index]" />
+        <div :class="highlightAge(ApplicationQueue[index])">
+          <MemberInfoByID v-model="ApplicationQueue[index]" />
+        </div>
       </div>
     </div>
   </q-form>
@@ -254,6 +296,7 @@
     :columns="columns"
     :pagination="pagination"
     :wrap-cells="true"
+    :visible-columns="visibleColumns"
   >
     <template v-slot:body-cell-c_receipt_no="props">
       <q-td :props="props">
@@ -297,10 +340,25 @@
         </div>
       </q-td>
     </template>
+    <template v-slot:body-cell-event_memo="props">
+      <q-td :props="props">
+        <q-btn
+          icon="receipt_long"
+          color="positive"
+          @click="printMemo(props.row.c_mem_id, props.row.c_act_code)"
+          size="md"
+          padding="none"
+          outline
+        >
+          <q-tooltip class="bg-white text-positive">列印備忘</q-tooltip>
+        </q-btn>
+      </q-td>
+    </template>
     <template v-slot:body-cell-c_name="props">
       <q-td :props="props">
         {{ props.row.c_name }}
         <EventReregistration
+          v-if="!Event.b_freeofcharge"
           :c_act_code="Event.c_act_code ? Event.c_act_code.trim() : ''"
           :c_act_name="Event.c_act_name ? Event.c_act_name.trim() : ''"
           :c_acc_type="Event.c_acc_type ? Event.c_acc_type.trim() : ''"
@@ -355,6 +413,7 @@ import Receipt from "components/Account/Receipt.vue";
 import MemberInfoByID from "src/components/Member/MemberInfoByID.vue";
 import MemberSelection from "components/Member/MemberSelection.vue";
 import { useRoute } from "vue-router";
+import PrintMemo from "components/Event/Modals/PrintMemo.vue";
 
 const EventParticipantPrint = defineAsyncComponent(() =>
   import("components/Event/Participants.vue")
@@ -379,6 +438,8 @@ const $q = useQuasar();
 const $store = useStore();
 const printReceiptDisplay = ref(false);
 const printReceiptNumber = ref("");
+const printMemoModal = ref(false);
+const printMemoData = ref({});
 const ApplicationQueue = ref([]);
 const validateDisplay = ref(false);
 const unregisterDisplay = ref(false);
@@ -447,12 +508,23 @@ const ApplyHistory = ref([]);
 const Event = computed(() => EventData.value?.HTX_Event_by_pk ?? []);
 const Fee = ref([]);
 const userProfileLogout = () => $store.dispatch("userModule/logout");
-
+const quotaLeft = computed(
+  () =>
+    parseInt(Event.value.i_quota_max) -
+    ApplyHistory.value.filter((v) => !v.b_refund).length
+);
 const columns = ref([
   {
     name: "c_receipt_no",
     label: "收據",
     field: "c_receipt_no",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "event_memo",
+    label: "備忘",
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
@@ -554,6 +626,15 @@ const pagination = ref({
   descending: true,
 });
 
+const visibleColumns = computed(() =>
+  Event.value.b_freeofcharge
+    ? columns.value
+        .filter((col) => col.name !== "c_receipt_no")
+        .map((x) => x.name)
+    : columns.value
+        .filter((col) => col.name !== "event_memo")
+        .map((x) => x.name)
+);
 // functions
 /*
 服務資料 Service Detail
@@ -578,12 +659,22 @@ function submitApplication() {
         );
     if (Event.value.c_week) remark += " 逢星期" + Event.value.c_week;
     remark += "\r\n";
-    if (Event.value.d_time_from && Event.value.d_time_to)
+    if (Event.value.d_time_from && Event.value.d_time_to) {
+      let startDatetime = qdate.extractDate(
+        Event.value.d_date_from.trim() + " " + Event.value.d_time_from.trim(),
+        "D/M/YYYY h:mm:ss A"
+      );
+
+      let endDatetime = qdate.extractDate(
+        Event.value.d_date_to.trim() + " " + Event.value.d_time_to.trim(),
+        "D/M/YYYY h:mm:ss A"
+      );
       remark +=
         "時間 Time：" +
-        Event.value.d_time_from.trim() +
+        qdate.formatDate(startDatetime, "h:mm A") +
         " - " +
-        Event.value.d_time_to.trim();
+        qdate.formatDate(endDatetime, "h:mm A");
+    }
 
     const logObject = ref({
       username: username,
@@ -772,6 +863,15 @@ function printReceipt(c_receipt_no) {
   printReceiptDisplay.value = true;
   printReceiptNumber.value = c_receipt_no;
 }
+
+function printMemo(c_mem_id, c_act_code) {
+  printMemoModal.value = true;
+  printMemoData.value = {
+    c_mem_id: c_mem_id,
+    c_act_code: c_act_code,
+  };
+}
+
 // callbacks success
 EventFee_Completed((result) => {
   if (result.data) {
@@ -899,5 +999,26 @@ freeEventUnregistration_Error((error) => {
 function notifyClientError(error) {
   $q.notify({ message: "系統錯誤，請重新登入." });
   console.log("error", error);
+}
+
+function highlightAge(data) {
+  if (data.c_mem_id && Event.value.c_age_control) {
+    let outOfRange = false;
+
+    if (Event.value.i_year_from && data.i_age < Event.value.i_year_from) {
+      outOfRange = true;
+    }
+    if (Event.value.i_year_to && data.i_age > Event.value.i_year_to) {
+      outOfRange = true;
+    }
+    if (outOfRange) {
+      if (Event.value.c_age_control.trim() == "報名提示") {
+        return "bg-warning text-black row col-7";
+      } else if (Event.value.c_age_control.trim() == "才可報名") {
+        return "bg-negative text-white row col-7";
+      }
+    }
+  }
+  return "row col-7";
 }
 </script>

@@ -225,6 +225,37 @@
           /><span v-else>{{ Event.c_worker }}</span>
         </span>
       </div>
+      <div class="row col-12 q-gutter-lg q-ml-sm">
+        <span v-if="edit" class="col-6 row items-center">
+          年齡限制:由
+          <q-input filled type="number" v-model="editObject.i_year_from" />
+          至
+          <q-input filled type="number" v-model="editObject.i_year_to" />
+          歲
+        </span>
+        <span v-else-if="Event.c_age_control" class="col-3">
+          年齡限制:
+          <span v-if="Event.i_year_from && Event.i_year_to"
+            >{{ Event.i_year_from }}歲至{{ Event.i_year_to }}歲</span
+          >
+          <span v-else-if="Event.i_year_from && !Event.i_year_to"
+            >{{ Event.i_year_from }}歲以上</span
+          >
+          <span v-else-if="!Event.i_year_from && Event.i_year_to"
+            >{{ Event.i_year_to }}歲以下</span
+          >
+        </span>
+        <span class="col-4 row items-center">
+          限制方法：
+          <q-select
+            class="col-4"
+            v-if="edit"
+            filled
+            :options="['', '報名提示', '才可報名']"
+            v-model="editObject.c_age_control"
+          /><span v-else>{{ Event.c_age_control }} </span>
+        </span>
+      </div>
     </q-card-section>
 
     <q-card-section class="row bg-red-1 q-pl-none q-pt-none q-pb-lg">
@@ -371,9 +402,9 @@
     </q-card-section>
 
     <q-card-section class="row bg-green-1 q-pl-none q-pt-none q-pb-lg">
-      <q-chip class="col-12 bg-green-3" size="lg">備註</q-chip>
+      <q-chip class="col-12 bg-green-3" size="lg">備註（列印用）</q-chip>
       <div class="row col-12 q-gutter-lg q-ml-sm">
-        <span class="col-11">收據: </span>
+        <span class="col-11">內容: </span>
         <span class="col-11" style="border: 1px solid"
           ><q-input
             v-if="edit"
@@ -382,6 +413,7 @@
           /><span v-else>{{ Event.m_remind_content }}</span></span
         >
       </div>
+      <!--
       <div class="row col-12 q-gutter-lg q-ml-sm q-mt-sm q-pb-md">
         <span class="col-11">備註: </span>
         <span class="col-11" style="border: 1px solid"
@@ -392,6 +424,7 @@
           /><span v-else>{{ Event.m_remark }}</span></span
         >
       </div>
+      -->
     </q-card-section>
   </q-card>
 
@@ -562,6 +595,42 @@
             hint="先刪除舊清單才能修改"
             v-model="editObject.c_worker"
           /><span v-else>{{ Event.c_worker }}</span>
+        </span>
+        <span class="col-12" v-if="edit"
+          >限制方法:
+          <q-select
+            v-if="edit"
+            :options="['', '報名提示', '才可報名']"
+            v-model="editObject.c_age_control"
+          />
+        </span>
+        <span v-else>限制方法：{{ Event.c_age_control }}</span>
+
+        <span class="col-12 row items-center" v-if="edit"
+          >年齡限制:由
+          <q-input
+            class="col-3"
+            type="number"
+            v-model="editObject.i_year_from"
+          />
+          歲至
+          <q-input
+            class="col-3"
+            type="number"
+            v-model="editObject.i_year_to"
+          />歲
+        </span>
+        <span v-else-if="Event.c_age_control" class="col-12">
+          年齡限制：
+          <span v-if="Event.i_year_from && Event.i_year_to"
+            >{{ Event.i_year_from }}歲至{{ Event.i_year_to }}歲</span
+          >
+          <span v-else-if="Event.i_year_from && !Event.i_year_to"
+            >{{ Event.i_year_from }}歲以上</span
+          >
+          <span v-else-if="!Event.i_year_from && Event.i_year_to"
+            >{{ Event.i_year_to }}歲以下</span
+          >
         </span>
       </div>
     </q-expansion-item>
@@ -735,11 +804,11 @@
           <q-avatar icon="help" />
         </q-item-section>
         <q-item-section>
-          <span>備註</span>
+          <span>備註（列印用）</span>
         </q-item-section>
       </template>
       <div class="row col-12 q-px-sm text-body1">
-        <span class="col-12">收據: </span>
+        <span class="col-12">內容: </span>
         <span class="col-12" style="border: 1px solid"
           ><q-input
             v-if="edit"
@@ -747,7 +816,7 @@
             v-model="editObject.m_remind_content"
           /><span v-else>{{ Event.m_remind_content }}</span></span
         >
-        <span class="col-12">備註: </span>
+        <!--<span class="col-12">備註: </span>
         <span class="col-12" style="border: 1px solid"
           ><q-input
             v-if="edit"
@@ -755,6 +824,7 @@
             v-model="editObject.m_remark"
           /><span v-else>{{ Event.m_remark }}</span></span
         >
+        -->
       </div>
     </q-expansion-item>
   </div>
@@ -1002,7 +1072,7 @@ function updateFilenames(filename) {
  */
 function saveEdit(obj) {
   // format data for server
-  serverObject.value = purityData(obj);
+  serverObject.value = purifyData(obj);
 
   updateEventById({
     staff_name: username.value,
@@ -1040,7 +1110,7 @@ function deleteAct() {
  * @param {any} obj
  * @returns {any}
  */
-function purityData(obj) {
+function purifyData(obj) {
   let returnObj = {};
   returnObj.c_act_code = c_act_code.value.trim();
   returnObj.c_act_name = obj.c_act_name ? obj.c_act_name.trim() : null;
@@ -1052,6 +1122,9 @@ function purityData(obj) {
   returnObj.c_nature = obj.c_nature ? obj.c_nature.trim() : null;
   returnObj.c_respon = obj.c_respon ? obj.c_respon.trim() : null;
   returnObj.c_respon2 = obj.c_respon2 ? obj.c_respon2.trim() : null;
+  returnObj.i_year_from = obj.i_year_from ? parseInt(obj.i_year_from) : null;
+  returnObj.i_year_to = obj.i_year_to ? parseInt(obj.i_year_to) : null;
+  returnObj.c_age_control = obj.c_age_control ? obj.c_age_control.trim() : null;
   returnObj.c_dest = obj.c_dest ? obj.c_dest.trim() : null;
   returnObj.c_start_collect = obj.c_start_collect
     ? obj.c_start_collect.trim()

@@ -81,7 +81,7 @@
     <q-route-tab to="/event/my-event" icon="public" label="我的活動" />
     <q-route-tab to="/event/active" icon="public" label="活動進行中" />
     <q-route-tab to="/event/search" icon="public" label="搜尋活動" />
-    <q-route-tab to="/event/summer-event" icon="public" label="暑期活動" />
+    <q-route-tab to="/event/summer-event" icon="public" label="活動查詢" />
     <q-route-tab to="/event/batch-apply" icon="add" label="活動報名" />
     <q-route-tab to="/event/add" icon="public" label="新增活動" />
     <q-route-tab to="/event/report" icon="public" label="報表" />

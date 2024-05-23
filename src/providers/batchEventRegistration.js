@@ -11,7 +11,7 @@ import { is, date } from "quasar";
 // Function to provide attendance data
 export function useBatchEventRegistrationProvider() {
   const updateQueue = ref({ length: 0 });
-  const result = ref([]);
+  const result = ref({});
   const awaitNumber = ref(0);
 
   const loading = computed(() => updateQueue.value.length > 0);
@@ -121,12 +121,18 @@ export function useBatchEventRegistrationProvider() {
 
   onDone_BatchRegister((res) => {
     if (res.data) {
-      result.value = res.data.insert_tbl_account.returning.map(
-        (x) => x.c_receipt_no
-      );
+      result.value = {
+        c_receipt_no: res.data.insert_tbl_account.returning.map(
+          (x) => x.c_receipt_no
+        ),
+        id: res.data.insert_tbl_act_reg.returning.map((x) => x.ID),
+      };
       updateQueue.value = { length: 0 };
       operationStatus.value = true;
       message.value = "報名成功。";
+      setTimeout(() => {
+        (message.value = ""), 3000;
+      });
       retries.value = 0; // Reset retry count
     }
   });
@@ -135,6 +141,9 @@ export function useBatchEventRegistrationProvider() {
     retries.value++; // Increment retry count
     if (retries.value >= maxRetries) {
       message.value = "系統繁忙，請稍後再試。";
+      setTimeout(() => {
+        (message.value = ""), 3000;
+      });
     }
   });
 
@@ -253,7 +262,7 @@ export function useBatchEventRegistrationProvider() {
         retries.value < maxRetries &&
         operationStatus.value == false
       ) {
-        /* 
+        /*
         console.log("trying to register", updateQueue.value);
         console.log("logObject", updateQueue.value.logObjectQueue);
         console.log("regObj", updateQueue.value.regObjectQueue);

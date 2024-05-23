@@ -26,6 +26,9 @@
                 d_time_from: value.d_time_from,
                 d_time_to: value.d_time_to,
                 c_acc_type: value.c_acc_type,
+                c_age_control: value.c_age_control,
+                i_year_from: value.i_year_from,
+                i_year_to: value.i_year_to,
               }
             : {
                 c_act_code: '',
@@ -39,6 +42,19 @@
           <q-item-label>
             {{ scope.opt.value }} -
             {{ scope.opt.c_act_name }}
+            <span v-if="scope.opt.c_age_control">
+              (
+              <span v-if="scope.opt.i_year_from && scope.opt.i_year_to">
+                {{ scope.opt.i_year_from }} - {{ scope.opt.i_year_to }}歲
+              </span>
+              <span v-else-if="scope.opt.i_year_from && !scope.opt.i_year_to">
+                {{ scope.opt.i_year_from }}歲以上
+              </span>
+              <span v-else-if="!scope.opt.i_year_from && scope.opt.i_year_to">
+                {{ scope.opt.i_year_to }}歲以下
+              </span>
+              )
+            </span>
             <q-chip
               v-if="scope.opt.b_freeofcharge"
               size="sm"
@@ -53,6 +69,30 @@
       <div v-if="props.modelValue.c_act_code != ''">
         {{ props.modelValue.c_act_code }} -
         {{ props.modelValue.c_act_name }}
+        <span v-if="props.modelValue.c_age_control">
+          (
+          <span
+            v-if="props.modelValue.i_year_from && props.modelValue.i_year_to"
+          >
+            {{ props.modelValue.i_year_from }} -
+            {{ props.modelValue.i_year_to }}歲
+          </span>
+          <span
+            v-else-if="
+              props.modelValue.i_year_from && !props.modelValue.i_year_to
+            "
+          >
+            {{ props.modelValue.i_year_from }}歲以上
+          </span>
+          <span
+            v-else-if="
+              !props.modelValue.i_year_from && props.modelValue.i_year_to
+            "
+          >
+            {{ props.modelValue.i_year_to }}歲以下
+          </span>
+          )
+        </span>
       </div>
     </template>
     <template v-slot:no-option> 沒有結果 </template>
@@ -104,6 +144,9 @@ const { onResult: NameResult } = useQuery(
         d_time_from
         d_time_to
         c_week
+        c_age_control
+        i_year_from
+        i_year_to
       }
     }
   `,
@@ -148,6 +191,9 @@ NameResult((result) => {
           d_time_from: d.d_time_from ? d.d_time_from.trim() : null,
           d_time_to: d.d_time_from ? d.d_time_to.trim() : null,
           c_acc_type: d.c_acc_type ? d.c_acc_type.trim() : null,
+          c_age_control: d.c_age_control ? d.c_age_control.trim() : null,
+          i_year_from: d.i_year_from ? d.i_year_from : null,
+          i_year_to: d.i_year_to ? d.i_year_to : null,
         });
       }
     });

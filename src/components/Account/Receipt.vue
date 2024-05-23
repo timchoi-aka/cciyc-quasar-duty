@@ -313,9 +313,9 @@ function displayPDF(data) {
   // 經手人
   lineNo += data.c_desc
     ? Math.ceil(data.c_desc.trim().length / 7) > 2
-      ? Math.ceil(data.c_desc.trim().length / 7) - 1
-      : 1
-    : 1;
+      ? Math.ceil(data.c_desc.trim().length / 7) - 0.5
+      : 1.5
+    : 1.5;
   doc.setFontSize(8);
   doc.text("經手人", 5, atLine(lineNo));
   doc.setFontSize(10);

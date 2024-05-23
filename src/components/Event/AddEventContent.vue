@@ -116,9 +116,9 @@
             <div>總堂數：{{ EventData.HTX_Event_by_pk.i_lessons }}</div>
             <div>逢星期：{{ EventData.HTX_Event_by_pk.c_week }}</div>
             <div>
-              收據備註：{{ EventData.HTX_Event_by_pk.m_remind_content }}
+              備註（列印用）：{{ EventData.HTX_Event_by_pk.m_remind_content }}
             </div>
-            <div>備註：{{ EventData.HTX_Event_by_pk.m_remark }}</div>
+            <!--<div>備註：{{ EventData.HTX_Event_by_pk.m_remark }}</div>-->
           </q-tab-panel>
 
           <q-tab-panel name="Venue" class="q-ma-none q-pa-sm text-body1">
@@ -278,6 +278,31 @@
           >負責職員:
           <q-select filled :options="UserList" v-model="editObject.c_respon"
         /></span>
+        <span class="col-3"
+          >協助職員:
+          <StaffSelectionMultiple
+            :includeTemp="true"
+            hint="先刪除舊清單才能修改"
+            v-model="editObject.c_worker"
+        /></span>
+      </div>
+      <div class="row col-12 q-gutter-lg q-ml-sm">
+        <span class="col-6 row items-center">
+          年齡限制:由
+          <q-input filled type="number" v-model="editObject.i_year_from" />
+          至
+          <q-input filled type="number" v-model="editObject.i_year_to" />
+          歲
+        </span>
+        <span class="col-4 row items-center">
+          限制方法：
+          <q-select
+            class="col-3"
+            filled
+            :options="['', '報名提示', '才可報名']"
+            v-model="editObject.c_age_control"
+          />
+        </span>
       </div>
     </q-card-section>
 
@@ -415,19 +440,21 @@
     </q-card-section>
 
     <q-card-section class="row bg-green-1 q-pl-none q-pt-none q-pb-lg">
-      <q-chip class="col-12 bg-green-3" size="xl">備註</q-chip>
+      <q-chip class="col-12 bg-green-3" size="xl">備註（列印用）</q-chip>
       <div class="row col-12 q-gutter-lg q-ml-sm">
-        <span class="col-11">收據: </span>
+        <span class="col-11">內容: </span>
         <span class="col-11" style="border: 1px solid"
           ><q-input type="textarea" v-model="editObject.m_remind_content"
         /></span>
       </div>
+      <!--
       <div class="row col-12 q-gutter-lg q-ml-sm q-mt-md">
         <span class="col-11">備註: </span>
         <span class="col-11" style="border: 1px solid"
           ><q-input type="textarea" v-model="editObject.m_remark"
         /></span>
       </div>
+      -->
     </q-card-section>
   </q-card>
 </template>
@@ -452,6 +479,7 @@ import EventSelection from "components/Event/EventSelection.vue";
 import AccountTypeSelection from "../Account/AccountTypeSelection.vue";
 import { onBeforeRouteLeave, useRouter } from "vue-router";
 import FileUpload from "src/components/Basic/FileUpload.vue";
+import StaffSelectionMultiple from "src/components/Basic/StaffSelectionMultiple.vue";
 
 const token = ref();
 onMounted(async () => {
@@ -714,6 +742,15 @@ function purityData() {
     : null;
   serverObject.value.d_time_to = serverObject.value.d_time_to
     ? dateUtil.tConvert(serverObject.value.d_time_to)
+    : null;
+  serverObject.value.i_year_from = serverObject.value.i_year_from
+    ? parseInt(serverObject.value.i_year_from)
+    : null;
+  serverObject.value.i_year_to = serverObject.value.i_year_to
+    ? parseInt(serverObject.value.i_year_to)
+    : null;
+  serverObject.value.c_age_control = serverObject.value.c_age_control
+    ? serverObject.value.c_age_control.trim()
     : null;
 }
 

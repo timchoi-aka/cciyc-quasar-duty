@@ -17,9 +17,9 @@
     "test:unit:ui": "vitest --ui",
     "test:unit": "vitest",
     "test:unit:ci": "vitest run",
-    "deploy:prod": "run-p build:prod firebase deploy --only hosting",
-    "deploy:staging": "run-p build:staging deploy:stage",
-    "deploy:stage": "firebase hosting:channel:deploy event_test"
+    "deploy:prod": "firebase deploy --only hosting",
+    "deploy:staging": "firebase hosting:channel:deploy event_test",
+    "deploy": "run-s build:prod deploy:prod"
   },
   "dependencies": {
     "@apollo/client": "^3.9.11",

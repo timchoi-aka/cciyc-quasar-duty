@@ -97,6 +97,7 @@
     </q-header>
 
     <q-drawer
+      v-if="$q.platform.is.mobile"
       class="mobile-only column"
       v-model="leftDrawerOpen"
       side="left"
@@ -128,7 +129,13 @@
           v-bind="link"
         />
       </q-list>
-
+      <q-list v-if="uid && module == 'account'">
+        <EssentialLink
+          v-for="link in accountList"
+          :key="link.title"
+          v-bind="link"
+        />
+      </q-list>
       <q-space />
 
       <div class="row col-*">
@@ -496,8 +503,22 @@ const eventList = ref([
   {
     title: "搜尋活動",
     caption: "找尋個別活動資料",
-    icon: "schedule",
+    icon: "search",
     link: "/event/search",
+    enable: !isTmp.value,
+  },
+  {
+    title: "活動查詢",
+    caption: "按活動開始日期查詢",
+    icon: "schedule",
+    link: "/event/summer-event",
+    enable: !isTmp.value,
+  },
+  {
+    title: "活動報名",
+    caption: "一人同時報名多個活動",
+    icon: "add",
+    link: "/event/batch-apply",
     enable: !isTmp.value,
   },
   {
@@ -508,11 +529,42 @@ const eventList = ref([
     enable: !isTmp.value,
   },
   {
+    title: "報表",
+    caption: "SIS報表",
+    icon: "report",
+    link: "/event/report",
+    enable: !isTmp.value,
+  },
+  {
     title: "系統記錄",
     caption: "檢視活動有關的系統記錄",
     icon: "account_circle",
     link: "/event/log",
     enable: isSystemAdmin.value,
+  },
+]);
+
+const accountList = ref([
+  {
+    title: "雜項收入",
+    caption: "雜項收入",
+    icon: "payment",
+    link: "/account/other",
+    enable: !isTmp.value,
+  },
+  {
+    title: "收據一覽",
+    caption: "搜尋收據",
+    icon: "receipt_long",
+    link: "/account/receipt/search",
+    enable: !isTmp.value,
+  },
+  {
+    title: "物資管理",
+    caption: "物資管理，庫存，報表",
+    icon: "inventory_2",
+    link: "/account/inventory",
+    enable: !isTmp.value,
   },
 ]);
 </script>

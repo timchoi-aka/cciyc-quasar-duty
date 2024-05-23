@@ -22,12 +22,13 @@
 
 <script setup>
 import { computed, ref, watch, toRef } from "vue";
-import { date as qdate, useQuasar } from "quasar";
+import { date, useQuasar } from "quasar";
 import { useStore } from "vuex";
 import jspdf from "jspdf";
 import { font } from "/src/assets/NotoSansTC-Regular-normal.js";
 import { useQuery } from "@vue/apollo-composable";
 import { gql } from "graphql-tag";
+import { useMemoByIDProvider } from "src/providers/memo";
 
 const src = ref(null);
 
@@ -37,10 +38,14 @@ const props = defineProps({
     type: Array,
     required: true,
   },
+  memoID: {
+    type: Array,
+    required: false,
+  },
 });
 
 const arr_receipt_no = toRef(props, "c_receipt_no");
-
+const arr_memo_id = toRef(props, "memoID");
 const $q = useQuasar();
 const $store = useStore();
 const username = computed(() => $store.getters["userModule/getUsername"]);
@@ -52,6 +57,10 @@ watch(arr_receipt_no, (newVal, oldVal) => {
 });
 
 // query
+const { result: memoResult } = useMemoByIDProvider({
+  ids: arr_memo_id,
+});
+const memoData = computed(() => memoResult.value?.tbl_act_reg ?? []);
 const { result, loading, refetch } = useQuery(
   gql`
     query GetReceiptByReceiptNumbers($arr_receipt_no: [String!] = []) {
@@ -94,16 +103,27 @@ const Receipt = computed(() => result.value?.tbl_account ?? []);
 // regenerate pdf if data change
 watch(Receipt, (newVal, oldVal) => {
   if (newVal != oldVal) {
-    displayPDF(newVal);
+    displayPDF(newVal, memoData.value);
   }
 });
 
-function displayPDF(data) {
+watch(memoData, (newVal, oldVal) => {
+  if (newVal != oldVal) {
+    displayPDF(Receipt.value, newVal);
+  }
+});
+
+function displayPDF(data, memoData) {
   if (data.length == 0) return;
   var doc = new jspdf({
     orientation: "p",
     unit: "mm",
-    format: [68, 150],
+    format: [
+      68,
+      80 +
+        20 * data.filter((x) => x.m_remark.length > 0).length +
+        20 * memoData.length,
+    ],
   });
   doc.addFileToVFS("NotoSansTC-Regular.ttf", font);
   doc.addFont("NotoSansTC-Regular.ttf", "NotoSans", "normal");
@@ -136,7 +156,7 @@ function displayPDF(data) {
   //doc.text("收據編號 Receipt No: " + data.c_receipt_no, 34, 25, "center");
   //doc.setFontSize(8);
   doc.text(
-    "列印日期 Date: " + qdate.formatDate(Date.now(), "DD/MM/YYYY"),
+    "列印日期 Date: " + date.formatDate(Date.now(), "DD/MM/YYYY"),
     17,
     24
   );
@@ -250,6 +270,144 @@ function displayPDF(data) {
     atLine(lineNo),
     { maxWidth: 60 }
   );
+
+  // remarks
+  lineNo += 2.5;
+  doc.setFontSize(8);
+  doc.text("備註 Remarks", 5, atLine(lineNo));
+  lineNo++;
+  data.forEach((d) => {
+    doc.setFontSize(7);
+    let eventText = "活動：" + d.c_act_code.trim() + "-" + d.c_desc.trim();
+    doc.text(eventText, 5, atLine(lineNo), {
+      maxWidth: 60,
+    });
+    let lines = doc.splitTextToSize(eventText, 60);
+    lineNo += lines.length * 0.8;
+    doc.text(d.m_remark.trim(), 5, atLine(lineNo), {
+      maxWidth: 60,
+    });
+    lines = doc.splitTextToSize(d.m_remark.trim(), 60);
+    lineNo += (lines.length + 1) * 0.8;
+  });
+
+  memoData.forEach((data) => {
+    doc.setFontSize(7);
+    let eventTitle =
+      "活動：" +
+      data.c_act_code.trim() +
+      "-" +
+      data.EventRegistration_to_Event.c_act_name.trim();
+    doc.text(eventTitle, 5, atLine(lineNo), {
+      maxWidth: 60,
+    });
+    let lines = doc.splitTextToSize(eventTitle, 60);
+    lineNo += lines.length * 0.8;
+
+    if (
+      data.EventRegistration_to_Event.d_date_from &&
+      data.EventRegistration_to_Event.d_date_to
+    ) {
+      doc.setFontSize(7);
+      doc.text("日期 Date:", 5, atLine(lineNo));
+      if (
+        date.formatDate(
+          data.EventRegistration_to_Event.d_date_from,
+          "YYYYMMDD"
+        ) ==
+        date.formatDate(data.EventRegistration_to_Event.d_date_to, "YYYYMMDD")
+      ) {
+        doc.text(
+          date.formatDate(
+            date.extractDate(
+              data.EventRegistration_to_Event.d_date_from.trim(),
+              "D/M/YYYY"
+            ),
+            "YYYY年M月D日"
+          ),
+          20,
+          atLine(lineNo)
+        );
+        lineNo += 0.8;
+      } else {
+        let dateText =
+          date.formatDate(
+            date.extractDate(
+              data.EventRegistration_to_Event.d_date_from.trim(),
+              "D/M/YYYY"
+            ),
+            "YYYY年M月D日"
+          ) +
+          " 至 " +
+          date.formatDate(
+            date.extractDate(
+              data.EventRegistration_to_Event.d_date_to.trim(),
+              "D/M/YYYY"
+            ),
+            "YYYY年M月D日"
+          ) +
+          (data.EventRegistration_to_Event.c_week
+            ? " 逢星期" + data.EventRegistration_to_Event.c_week.trim()
+            : "");
+        doc.text(dateText, 20, atLine(lineNo), {
+          maxWidth: 50,
+        });
+        let lines = doc.splitTextToSize(dateText, 50);
+        lineNo += lines.length * 0.8;
+      }
+    }
+    if (
+      data.EventRegistration_to_Event.d_time_from &&
+      data.EventRegistration_to_Event.d_time_to
+    ) {
+      doc.setFontSize(7);
+      doc.text("時間 Time: ", 5, atLine(lineNo));
+      let startDatetime = date.extractDate(
+        data.EventRegistration_to_Event.d_date_from.trim() +
+          " " +
+          data.EventRegistration_to_Event.d_time_from.trim(),
+        "D/M/YYYY h:mm:ss A"
+      );
+
+      let endDatetime = date.extractDate(
+        data.EventRegistration_to_Event.d_date_to.trim() +
+          " " +
+          data.EventRegistration_to_Event.d_time_to.trim(),
+        "D/M/YYYY h:mm:ss A"
+      );
+      doc.text(
+        date.formatDate(startDatetime, "h:mm A") +
+          " - " +
+          date.formatDate(endDatetime, "h:mm A"),
+        20,
+        atLine(lineNo)
+      );
+
+      lineNo++;
+    }
+
+    lineNo += 0.5;
+
+    if (
+      (data.EventRegistration_to_Event.m_remark &&
+        data.EventRegistration_to_Event.m_remark.length > 0) ||
+      (data.EventRegistration_to_Event.m_remind_content &&
+        data.EventRegistration_to_Event.m_remind_content.length > 0)
+    ) {
+      doc.setFontSize(7);
+      doc.text("活動備註", 5, atLine(lineNo));
+      lineNo += 0.8;
+      let remarkText = data.EventRegistration_to_Event.m_remark
+        ? data.EventRegistration_to_Event.m_remark.trim()
+        : data.EventRegistration_to_Event.m_remind_content.trim();
+
+      doc.text(remarkText, 5, atLine(lineNo), {
+        maxWidth: 50,
+      });
+      let lines = doc.splitTextToSize(remarkText, 50);
+      lineNo += lines.length * 0.8;
+    }
+  });
 
   doc.setProperties({
     title: data.map((x) => x.c_receipt_no).join("_") + ".pdf",
