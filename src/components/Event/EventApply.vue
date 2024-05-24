@@ -426,6 +426,7 @@ import MemberInfoByID from "src/components/Member/MemberInfoByID.vue";
 import MemberSelection from "components/Member/MemberSelection.vue";
 import { useRoute } from "vue-router";
 import PrintMemo from "components/Event/Modals/PrintMemo.vue";
+import Apply from "src/pages/HealthCare/Apply.vue";
 
 const EventParticipantPrint = defineAsyncComponent(() =>
   import("components/Event/Participants.vue")
@@ -902,13 +903,17 @@ onApplyResult((result) => {
   // hide refunded record
   if (result.data) {
     ApplyHistory.value = [];
+
+    // unregister from event if all receipt is refunded
     result.data.tbl_act_reg.forEach((d) => {
       if (!d.b_refund) {
         let autoUnregisterEvent = false;
-        d.EventRegistration_to_Account_by_MID.filter((x) => !x.b_refund)
-          .length == 0
+        d.EventRegistration_to_Account_by_MID.filter(
+          (x) => !x.b_refund && !x.b_delete
+        ).length == 0
           ? (autoUnregisterEvent = true)
           : (autoUnregisterEvent = false);
+
         if (autoUnregisterEvent) {
           loading.value = true;
           eventUnregistration({
@@ -921,7 +926,7 @@ onApplyResult((result) => {
                 d.c_mem_id +
                 "(" +
                 d.c_name +
-                ") 因退款取消報名活動 " +
+                ") 因退款/刪除收據而取消報名活動 " +
                 d.c_act_code,
             },
             unregObject: {
