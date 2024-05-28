@@ -258,21 +258,45 @@ function displayPDF(data, memoData) {
 
   // 收據備註
   lineNo += 2;
+  let lines;
   doc.setFontSize(8);
-  doc.text("收據字體會退色，若需要保留，請自行影印。", 6, atLine(lineNo), {
+  let reminder1Chi = "收據字體會退色，若需要保留，請自行影印。"
+  lines = doc.splitTextToSize(reminder1Chi, 60);
+  doc.text(reminder1Chi, 34, atLine(lineNo), {
+    align: "center",
     maxWidth: 60,
   });
-  lineNo++;
+  lineNo+=lines.length;
+
   doc.setFontSize(7);
+  let reminder1Eng = "The receipt will eventually fade out.  Please make a photocopy for a more lasting document."
+  lines = doc.splitTextToSize(reminder1Eng, 60);
   doc.text(
-    "The receipt will eventually fade out.  Please make a photocopy for a more lasting document.",
-    4,
+    reminder1Eng,
+    34,
     atLine(lineNo),
-    { maxWidth: 60 }
+    { align: "center", maxWidth: 60 }
   );
+  lineNo += lines.length;
+
+  doc.setFontSize(8);
+  let reminder2Chi = "請保留收據，直至課堂結束。"
+  lines = doc.splitTextToSize(reminder2Chi, 60);
+  doc.text(reminder2Chi, 34, atLine(lineNo), {
+    align: "center", maxWidth: 60,
+  });
+  lineNo+=lines.length;
+
+  doc.setFontSize(7);
+  let reminder2Eng = "Please keep the receipt until the end of the lessons.";
+  lines = doc.splitTextToSize(reminder2Eng, 60);
+  doc.text(reminder2Eng, 34, atLine(lineNo), {
+    align: "center", maxWidth: 60,
+  });
+  lineNo+=lines.length;
 
   // remarks
-  lineNo += 2.5;
+  lineNo++;
   doc.setFontSize(8);
   doc.text("備註 Remarks", 5, atLine(lineNo));
   lineNo++;

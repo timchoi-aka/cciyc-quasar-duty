@@ -1,37 +1,15 @@
 <template>
   <div>
-    <q-dialog
-      v-model="viewEventModal"
-      persistent
-      full-width
-      transition-show="slide-up"
-      transition-hide="slide-down"
-      class="q-pa-none"
-    >
-      <EventDetail
-        :EventID="viewEventID"
-        @hide-component="viewEventModal = false"
-      />
+    <q-dialog v-model="viewEventModal" persistent full-width transition-show="slide-up" transition-hide="slide-down"
+      class="q-pa-none">
+      <EventDetail :EventID="viewEventID" @hide-component="viewEventModal = false" />
     </q-dialog>
-    <q-table
-      :rows="tableData"
-      :loading="loading"
-      :columns="columns"
-      :pagination="defaultPagination"
-      color="primary"
-      row-key="id"
-      selection="multiple"
-      v-model:selected="selected"
-    >
+    <q-table :rows="tableData" :loading="loading" :columns="columns" :pagination="defaultPagination" color="primary"
+      row-key="id" selection="multiple" v-model:selected="selected">
       <template v-slot:header="props">
         <q-tr :props="props">
           <q-th>
-            <q-checkbox
-              v-if="account.length"
-              v-model="props.selected"
-              dense
-              size="sm"
-            />
+            <q-checkbox v-if="account.length" v-model="props.selected" dense size="sm" />
           </q-th>
 
           <q-th v-for="col in props.cols" :key="col.name" :props="props">
@@ -46,15 +24,8 @@
             <q-checkbox v-model="props.selected" dense size="sm" />
           </q-td>
 
-          <q-td
-            v-for="col in props.cols"
-            :key="col.name"
-            :props="props"
-            @click="
-              viewEventModal = true;
-              viewEventID = props.row.c_act_code;
-            "
-          >
+          <q-td v-for="col in props.cols" :key="col.name" :props="props"
+            @click="displayEventModel(props.row.c_act_code)">
             {{ col.value }}
           </q-td>
         </q-tr>
@@ -252,4 +223,12 @@ const defaultPagination = ref({
   sortBy: "d_create",
   descending: true,
 });
+
+function displayEventModel(c_act_code) {
+  if (c_act_code) {
+    viewEventID.value = c_act_code;
+    viewEventModal.value = true;
+  }
+}
+
 </script>

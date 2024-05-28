@@ -1,46 +1,24 @@
 <template>
   <!-- print receipt modal -->
-  <q-dialog
-    v-if="$q.screen.lt.md"
-    v-model="printReceiptDisplay"
-    persistent
-    maximized
-    full-width
-    transition-show="slide-up"
-    transition-hide="slide-down"
-  >
+  <q-dialog v-if="$q.screen.lt.md" v-model="printReceiptDisplay" persistent maximized full-width
+    transition-show="slide-up" transition-hide="slide-down">
     <Receipt :c_receipt_no="printReceiptNumber" />
   </q-dialog>
 
-  <q-dialog
-    v-else
-    v-model="printReceiptDisplay"
-    persistent
-    full-height
-    style="min-width: 40vw; width: 40vw; max-width: 40vw"
-    transition-show="slide-up"
-    transition-hide="slide-down"
-  >
+  <q-dialog v-else v-model="printReceiptDisplay" persistent full-height
+    style="min-width: 40vw; width: 40vw; max-width: 40vw" transition-show="slide-up" transition-hide="slide-down">
     <!-- <q-card style="min-width: 70vw; width: 70vw; max-width: 70vw;">-->
     <Receipt :c_receipt_no="printReceiptNumber" />
     <!--</q-card>-->
   </q-dialog>
 
   <!-- print memo modal -->
-  <PrintMemo
-    :model-value="printMemoModal"
-    :printMemo="printMemoData"
-    @update:model-value="(val) => (printMemoModal = val)"
-  />
+  <PrintMemo :model-value="printMemoModal" :printMemo="printMemoData"
+    @update:model-value="(val) => (printMemoModal = val)" />
 
   <!-- print participant model -->
-  <q-dialog
-    v-model="printParticipantModel"
-    full-width
-    full-height
-    transition-show="slide-up"
-    transition-hide="slide-down"
-  >
+  <q-dialog v-model="printParticipantModel" full-width full-height transition-show="slide-up"
+    transition-hide="slide-down">
     <q-card style="min-width: 70vw; width: 70vw; max-width: 70vw">
       <q-card-section class="bg-primary text-white row">
         <q-space />
@@ -63,43 +41,25 @@
         確定報名？
       </q-card-section>
       <q-card-section class="text-h6">
-        <div
-          v-if="
-            ApplyHistory.filter((v) => !v.b_refund)
-              .map((v) => v.c_mem_id)
-              .includes(ApplicationQueue[0].c_mem_id)
-          "
-        >
+        <div v-if="
+          ApplyHistory.filter((v) => !v.b_refund)
+            .map((v) => v.c_mem_id)
+            .includes(ApplicationQueue[0].c_mem_id)
+        ">
           {{ ApplicationQueue[0].c_mem_id }}已經報名！
         </div>
-        <div
-          v-if="
-            qdate.getDateDiff(Date.now(), ApplicationQueue[0].d_expired_1) > 0
-          "
-        >
+        <div v-if="
+          qdate.getDateDiff(Date.now(), ApplicationQueue[0].d_expired_1) > 0
+        ">
           {{ ApplicationQueue[0].c_mem_id }}會藉已過期！
         </div>
       </q-card-section>
       <q-card-actions>
         <q-space />
-        <q-btn
-          v-close-popup
-          @click="submitApplication"
-          label="儲存"
-          dense
-          icon="save"
-          class="q-ml-md bg-primary text-white"
-          size="lg"
-        >
+        <q-btn v-close-popup @click="submitApplication" label="儲存" dense icon="save"
+          class="q-ml-md bg-primary text-white" size="lg">
         </q-btn>
-        <q-btn
-          v-close-popup
-          label="取消"
-          dense
-          icon="replay"
-          class="q-ml-md bg-negative text-white"
-          size="lg"
-        />
+        <q-btn v-close-popup label="取消" dense icon="replay" class="q-ml-md bg-negative text-white" size="lg" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -122,132 +82,64 @@
       </q-card-section>
       <q-card-actions>
         <q-space />
-        <q-btn
-          v-close-popup
-          label="取消"
-          dense
-          icon="replay"
-          class="q-ml-md bg-negative text-white"
-          size="lg"
-        />
-        <q-btn
-          v-close-popup
-          @click="unregister"
-          label="儲存"
-          dense
-          icon="save"
-          class="q-ml-md bg-positive text-white"
-          size="lg"
-        />
+        <q-btn v-close-popup label="取消" dense icon="replay" class="q-ml-md bg-negative text-white" size="lg" />
+        <q-btn v-close-popup @click="unregister" label="儲存" dense icon="save" class="q-ml-md bg-positive text-white"
+          size="lg" />
       </q-card-actions>
     </q-card>
   </q-dialog>
 
   <!-- add new user form -->
-  <q-form
-    autocorrect="off"
-    autocapitalize="off"
-    autocomplete="off"
-    spellcheck="false"
-    @submit="startValidation"
-    @reset="ApplicationQueue.splice(0, 1)"
-  >
+  <q-form autocorrect="off" autocapitalize="off" autocomplete="off" spellcheck="false" @submit="startValidation"
+    @reset="ApplicationQueue.splice(0, 1)">
     <div class="row fit items-center">
-      <q-chip size="lg" class="bg-yellow"
-        >報名期限：{{ Event.d_sale_start }} - {{ Event.d_sale_end }}</q-chip
-      >
-      <q-btn
-        @click="
-          ApplicationQueue.push({
-            c_mem_id: '',
-            u_fee: 0,
-            c_name: '',
-            remark: '',
-            c_sex: '',
-            i_age: '',
-            c_tel: '',
-            d_expired_1: '',
-          })
-        "
-        label="新增報名"
-        dense
-        icon="celebration"
-        class="q-ml-md bg-positive text-white"
-        size="lg"
-        :disable="quotaLeft <= 0"
-        v-if="
+      <q-chip size="lg" class="bg-yellow">報名期限：{{ Event.d_sale_start }} - {{ Event.d_sale_end }}</q-chip>
+      <q-btn @click="
+        ApplicationQueue.push({
+          c_mem_id: '',
+          u_fee: 0,
+          c_name: '',
+          remark: '',
+          c_sex: '',
+          i_age: '',
+          c_tel: '',
+          d_expired_1: '',
+        })
+        " label="新增報名" dense icon="celebration" class="q-ml-md bg-positive text-white" size="lg"
+        :disable="quotaLeft <= 0" v-if="
           qdate.isBetweenDates(
             Date.now(),
             qdate.extractDate(Event.d_sale_start, 'D/M/YYYY'),
             qdate.extractDate(Event.d_sale_end, 'D/M/YYYY'),
             { inclusiveFrom: true, inclusiveTo: true }
           ) && ApplicationQueue.length == 0
-        "
-      >
+        ">
         <q-tooltip v-if="quotaLeft <= 0">已滿額</q-tooltip>
       </q-btn>
-      <q-btn
-        type="submit"
-        label="儲存"
-        dense
-        icon="save"
-        class="q-ml-md bg-primary text-white"
-        size="lg"
-        v-if="ApplicationQueue.length > 0"
-      />
-      <q-btn
-        type="reset"
-        label="取消"
-        dense
-        icon="replay"
-        class="q-ml-md bg-negative text-white"
-        size="lg"
-        v-if="ApplicationQueue.length > 0"
-      />
+      <q-btn type="submit" label="儲存" dense icon="save" class="q-ml-md bg-primary text-white" size="lg"
+        v-if="ApplicationQueue.length > 0" />
+      <q-btn type="reset" label="取消" dense icon="replay" class="q-ml-md bg-negative text-white" size="lg"
+        v-if="ApplicationQueue.length > 0" />
       <div class="q-ml-md">剩餘名額：{{ quotaLeft }}</div>
-      <q-btn
-        flat
-        icon="print"
-        class="bg-white text-primary"
-        @click="printParticipantModel = true"
-      >
+      <q-btn flat icon="print" class="bg-white text-primary" @click="printParticipantModel = true">
         <q-tooltip>
           <div class="text-white">列印參加者名單</div>
         </q-tooltip>
       </q-btn>
-      <q-chip
-        v-if="Event.c_age_control"
-        :class="
-          Event.c_age_control && Event.c_age_control.trim() == '報名提示'
-            ? ['bg-warning', 'text-black']
-            : ['bg-negative', 'text-white']
-        "
-      >
-        <q-icon
-          :name="
-            Event.c_age_control && Event.c_age_control.trim() == '報名提示'
-              ? 'warning'
-              : 'error'
-          "
-        />
+      <q-chip v-if="Event.c_age_control" :class="Event.c_age_control && Event.c_age_control.trim() == '報名提示'
+        ? ['bg-warning', 'text-black']
+        : ['bg-negative', 'text-white']
+        ">
+        <q-icon :name="Event.c_age_control && Event.c_age_control.trim() == '報名提示'
+          ? 'warning'
+          : 'error'
+          " />
         報名限制：
-        <span v-if="Event.i_year_from && Event.i_year_to" class="text-bold"
-          >{{ Event.i_year_from }}歲至{{ Event.i_year_to }}歲</span
-        >
-        <span
-          v-else-if="Event.i_year_from && !Event.i_year_to"
-          class="text-bold"
-          >{{ Event.i_year_from }}歲以上</span
-        >
-        <span
-          v-else-if="!Event.i_year_from && Event.i_year_to"
-          class="text-bold"
-          >{{ Event.i_year_to }}歲以下</span
-        >
-        <span
-          v-if="Event.c_age_control && Event.c_age_control.trim() == '才可報名'"
-          >才可報名</span
-        >
+        <span v-if="Event.i_year_from && Event.i_year_to" class="text-bold">{{ Event.i_year_from }}歲至{{ Event.i_year_to
+          }}歲</span>
+        <span v-else-if="Event.i_year_from && !Event.i_year_to" class="text-bold">{{ Event.i_year_from }}歲以上</span>
+        <span v-else-if="!Event.i_year_from && Event.i_year_to" class="text-bold">{{ Event.i_year_to }}歲以下</span>
+        <span v-if="Event.c_age_control && Event.c_age_control.trim() == '才可報名'">才可報名</span>
       </q-chip>
     </div>
     <div v-if="ApplicationQueue.length > 0">
@@ -261,25 +153,16 @@
         <div class="col-2">屆滿日期</div>
       </div>
       <div v-for="(item, index) in ApplicationQueue" class="row">
-        <div class="col-2"><MemberSelection v-model="item.c_mem_id" /></div>
-        <q-select
-          v-if="!Event.b_freeofcharge"
-          use-input
-          input-debounce="0"
-          :options="Fee"
-          class="col-1"
-          v-model="item.u_fee"
-          :display-value="`${
-            item.u_fee ? item.u_fee.label + ' - ' + item.u_fee.value : ''
-          }`"
-          @new-value="newFee"
-        >
+        <div class="col-2">
+          <MemberSelection v-model="item.c_mem_id" />
+        </div>
+        <q-select v-if="!Event.b_freeofcharge" use-input input-debounce="0" :options="Fee" class="col-1"
+          v-model="item.u_fee" :display-value="`${item.u_fee ? item.u_fee.label + ' - ' + item.u_fee.value : ''
+            }`" @new-value="newFee">
           <template v-slot:option="scope">
             <q-item v-bind="scope.itemProps">
               <q-item-section>
-                <q-item-label
-                  >{{ scope.opt.label }} - {{ scope.opt.value }}</q-item-label
-                >
+                <q-item-label>{{ scope.opt.label }} - {{ scope.opt.value }}</q-item-label>
               </q-item-section>
             </q-item>
           </template>
@@ -291,61 +174,27 @@
       </div>
     </div>
   </q-form>
-  <q-table
-    :rows="ApplyHistory.filter((v) => (displayRefund ? true : !v.b_refund))"
-    :columns="columns"
-    :pagination="pagination"
-    :wrap-cells="true"
-    :visible-columns="visibleColumns"
-    :loading="loading"
-  >
+  <q-table :rows="ApplyHistory.filter((v) => (displayRefund ? true : !v.b_refund))" :columns="columns"
+    :pagination="pagination" :wrap-cells="true" :visible-columns="visibleColumns" :loading="loading">
     <template v-slot:top>
       <div class="q-ma-none q-pa-none row col-12">
         <q-space />
-        <q-toggle
-          flat
-          label="顯示已取消報名會員"
-          v-model="displayRefund"
-          class="bg-white text-primary"
-        />
+        <q-toggle flat label="顯示已取消報名會員" v-model="displayRefund" class="bg-white text-primary" />
       </div>
     </template>
     <template v-slot:body-cell-c_receipt_no="props">
       <q-td :props="props">
         <div v-for="data in props.row.c_receipt_no">
-          <q-btn
-            v-if="data.c_receipt_no && !data.b_refund && !data.reregister"
-            icon="print"
-            color="positive"
-            @click="printReceipt(data.c_receipt_no)"
-            size="md"
-            padding="none"
-            outline
-          >
+          <q-btn v-if="data.c_receipt_no && !data.b_refund && !data.reregister" icon="print" color="positive"
+            @click="printReceipt(data.c_receipt_no)" size="md" padding="none" outline>
             <q-tooltip class="bg-white text-positive">列印收據</q-tooltip>
           </q-btn>
-          <q-btn
-            v-if="data.c_receipt_no && !data.b_refund && data.reregister"
-            icon="print"
-            color="warning"
-            @click="printReceipt(data.c_receipt_no)"
-            size="md"
-            padding="none"
-            outline
-          >
-            <q-tooltip class="bg-white text-positive"
-              >列印重覆收費收據</q-tooltip
-            >
+          <q-btn v-if="data.c_receipt_no && !data.b_refund && data.reregister" icon="print" color="warning"
+            @click="printReceipt(data.c_receipt_no)" size="md" padding="none" outline>
+            <q-tooltip class="bg-white text-positive">列印重覆收費收據</q-tooltip>
           </q-btn>
-          <q-btn
-            v-if="data.c_receipt_no && data.b_refund"
-            icon="print"
-            color="negative"
-            @click="printReceipt(data.c_receipt_no)"
-            size="md"
-            padding="none"
-            outline
-          >
+          <q-btn v-if="data.c_receipt_no && data.b_refund" icon="print" color="negative"
+            @click="printReceipt(data.c_receipt_no)" size="md" padding="none" outline>
             <q-tooltip class="bg-white text-negative">列印已退款收據</q-tooltip>
           </q-btn>
           {{ data.c_receipt_no }}
@@ -354,14 +203,8 @@
     </template>
     <template v-slot:body-cell-event_memo="props">
       <q-td :props="props">
-        <q-btn
-          icon="receipt_long"
-          color="positive"
-          @click="printMemo(props.row.c_mem_id, props.row.c_act_code)"
-          size="md"
-          padding="none"
-          outline
-        >
+        <q-btn icon="receipt_long" color="positive" @click="printMemo(props.row.c_mem_id, props.row.c_act_code)"
+          size="md" padding="none" outline>
           <q-tooltip class="bg-white text-positive">列印備忘</q-tooltip>
         </q-btn>
       </q-td>
@@ -369,33 +212,23 @@
     <template v-slot:body-cell-c_name="props">
       <q-td :props="props">
         {{ props.row.c_name }}
-        <EventReregistration
-          v-if="!Event.b_freeofcharge && !props.row.b_refund"
+        <EventReregistration v-if="!Event.b_freeofcharge && !props.row.b_refund"
           :c_act_code="Event.c_act_code ? Event.c_act_code.trim() : ''"
           :c_act_name="Event.c_act_name ? Event.c_act_name.trim() : ''"
           :c_acc_type="Event.c_acc_type ? Event.c_acc_type.trim() : ''"
           :d_date_from="Event.d_date_from ? Event.d_date_from.trim() : ''"
-          :d_date_to="Event.d_date_to ? Event.d_date_to.trim() : ''"
-          :c_week="Event.c_week ? Event.c_week.trim() : ''"
+          :d_date_to="Event.d_date_to ? Event.d_date_to.trim() : ''" :c_week="Event.c_week ? Event.c_week.trim() : ''"
           :d_time_from="Event.d_time_from ? Event.d_time_from.trim() : ''"
           :d_time_to="Event.d_time_to ? Event.d_time_to.trim() : ''"
           :c_mem_id="props.row.c_mem_id ? props.row.c_mem_id.trim() : ''"
-          :c_name="props.row.c_name ? props.row.c_name.trim() : ''"
-        />
+          :c_name="props.row.c_name ? props.row.c_name.trim() : ''" />
       </q-td>
     </template>
     <template v-slot:body-cell-b_refund="props">
       <q-td :props="props">
         <div v-if="!props.row.b_refund">
-          <q-btn
-            v-if="isCenterIC || isFinance"
-            icon="undo"
-            color="negative"
-            @click="confirmUnregister(props.row)"
-            size="md"
-            padding="none"
-            outline
-          />
+          <q-btn v-if="isCenterIC || isFinance" icon="undo" color="negative" @click="confirmUnregister(props.row)"
+            size="md" padding="none" outline />
         </div>
         <div v-else>已退出</div>
       </q-td>
@@ -644,11 +477,11 @@ const pagination = ref({
 const visibleColumns = computed(() =>
   Event.value.b_freeofcharge
     ? columns.value
-        .filter((col) => col.name !== "c_receipt_no")
-        .map((x) => x.name)
+      .filter((col) => col.name !== "c_receipt_no")
+      .map((x) => x.name)
     : columns.value
-        .filter((col) => col.name !== "event_memo")
-        .map((x) => x.name)
+      .filter((col) => col.name !== "event_memo")
+      .map((x) => x.name)
 );
 // functions
 /*
@@ -697,10 +530,10 @@ function submitApplication() {
       module: "活動系統",
       action:
         "會員" +
-        item.c_mem_id +
-        " 報名活動 " +
-        c_act_code.value.trim() +
-        Event.value.b_freeofcharge
+          item.c_mem_id +
+          " 報名活動 " +
+          c_act_code.value.trim() +
+          Event.value.b_freeofcharge
           ? ""
           : " 費用: " + item.u_fee.value,
     });
@@ -906,7 +739,7 @@ onApplyResult((result) => {
 
     // unregister from event if all receipt is refunded
     result.data.tbl_act_reg.forEach((d) => {
-      if (!d.b_refund) {
+      if (!d.b_refund && !Event.value.b_freeofcharge) {
         let autoUnregisterEvent = false;
         d.EventRegistration_to_Account_by_MID.filter(
           (x) => !x.b_refund && !x.b_delete

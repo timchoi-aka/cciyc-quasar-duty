@@ -144,7 +144,7 @@
       </div>
 
       <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-12">
-        家居電話<q-input filled v-model="personalInfo.c_tel" mask="########" />
+        聯絡電話<q-input filled v-model="personalInfo.c_tel" mask="########" />
       </div>
 
       <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-8">

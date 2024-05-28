@@ -27,21 +27,9 @@
       </q-card-section>
       <q-card-section v-else key="has-no-finance-data">沒有資料</q-card-section>
       <q-card-actions>
-        <q-btn
-          icon="check"
-          label="確定"
-          class="bg-positive text-white"
-          @click="save"
-          v-close-popup
-          :disable="!hasFinanceData"
-        />
-        <q-btn
-          icon="cancel"
-          label="取消"
-          class="bg-negative text-white"
-          v-close-popup
-          @click="$emit('close')"
-        />
+        <q-btn icon="check" label="確定" class="bg-positive text-white" @click="save" v-close-popup
+          :disable="!hasFinanceData" />
+        <q-btn icon="cancel" label="取消" class="bg-negative text-white" v-close-popup @click="$emit('close')" />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -85,8 +73,12 @@ const { result, loading, refetch } = useEventProvider({
 });
 
 const username = computed(() => $store.getters["userModule/getUsername"]);
+const actCodeRegex = /^[0-9]{4}-[0-9]{4}$/;
+
 watch(c_act_code, (newValue) => {
-  refetch();
+  if (actCodeRegex.test(newValue)) {
+    refetch();
+  }
 });
 
 const FinanceData = computed(() =>
@@ -95,7 +87,7 @@ const FinanceData = computed(() =>
       result.value.HTX_Event_by_pk.Event_to_Evaluation[0].Evaluation_to_Account
         .length > 0
       ? result.value.HTX_Event_by_pk.Event_to_Evaluation[0]
-          .Evaluation_to_Account
+        .Evaluation_to_Account
       : {}
     : {}
 );

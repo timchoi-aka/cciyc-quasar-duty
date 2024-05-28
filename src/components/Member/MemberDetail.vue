@@ -395,7 +395,7 @@
           }}</span>
         </div>
         <div class="col-12 row">
-          <span class="col-md-2 col-sm-2 col-xs-4">家居電話: </span
+          <span class="col-md-2 col-sm-2 col-xs-4">聯絡電話: </span
           ><span v-if="editState" class="col-md-10 col-sm-10 col-xs-8"
             ><q-input
               filled

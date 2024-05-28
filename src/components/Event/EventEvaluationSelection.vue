@@ -1,52 +1,24 @@
 <template>
-  <q-select
-    dense
-    filled
-    class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none"
-    use-input
-    label="活動編號"
-    input-debounce="0"
-    :options="EventOptions"
-    :model-value="props.modelValue"
-    @filter="eventFilter"
-    @update:model-value="
-      (value) => emit('update:modelValue', value ? value.value.trim() : null)
-    "
-  >
+  <q-select dense filled class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none" use-input label="活動編號"
+    input-debounce="0" :options="EventOptions" :model-value="props.modelValue" @filter="eventFilter"
+    @update:model-value="(value) => emit('update:modelValue', value ? value.value.trim() : null)
+      ">
     <template v-slot:option="scope">
       <q-item v-bind="scope.itemProps">
         <q-item-section>
           <q-item-label>
             {{ scope.opt.value }} -
             {{ scope.opt.c_act_name }}
-            <q-chip
-              v-if="
-                scope.opt.c_status && scope.opt.c_status.trim() == '完成達標'
-              "
-              size="sm"
-              class="bg-primary text-white"
-              >{{ scope.opt.c_status }}</q-chip
-            >
-            <q-chip
-              v-if="scope.opt.c_status && scope.opt.c_status.trim() == '未完成'"
-              size="sm"
-              class="bg-warning text-white"
-              >{{ scope.opt.c_status }}</q-chip
-            >
-            <q-chip
-              v-if="scope.opt.c_status && scope.opt.c_status.trim() == '取消'"
-              size="sm"
-              class="bg-teal text-white"
-              >{{ scope.opt.c_status }}</q-chip
-            >
-            <q-chip
-              v-if="
-                scope.opt.c_status && scope.opt.c_status.trim() == '完成不達標'
-              "
-              size="sm"
-              class="bg-black text-white"
-              >{{ scope.opt.c_status }}</q-chip
-            >
+            <q-chip v-if="
+              scope.opt.c_status && scope.opt.c_status.trim() == '完成達標'
+            " size="sm" class="bg-primary text-white">{{ scope.opt.c_status }}</q-chip>
+            <q-chip v-if="scope.opt.c_status && scope.opt.c_status.trim() == '未完成'" size="sm"
+              class="bg-warning text-white">{{ scope.opt.c_status }}</q-chip>
+            <q-chip v-if="scope.opt.c_status && scope.opt.c_status.trim() == '取消'" size="sm"
+              class="bg-teal text-white">{{ scope.opt.c_status }}</q-chip>
+            <q-chip v-if="
+              scope.opt.c_status && scope.opt.c_status.trim() == '完成不達標'
+            " size="sm" class="bg-black text-white">{{ scope.opt.c_status }}</q-chip>
           </q-item-label>
         </q-item-section>
       </q-item>
@@ -56,8 +28,8 @@
         {{ props.modelValue }} -
         <span v-if="EventOptions.length > 0">
           {{
-            EventOptions.find((x) => x.value.trim() == props.modelValue)
-              .c_act_name
+            EventOptions.find((x) => x.value.trim() == props.modelValue) && EventOptions.find((x) => x.value.trim() ==
+              props.modelValue).c_act_name
           }}
         </span>
       </div>

@@ -1,0 +1,3 @@
+{
+  "reject": ["@quasar/quasar-app-extension-qpdfviewer"]
+}
