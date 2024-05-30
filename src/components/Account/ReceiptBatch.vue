@@ -89,6 +89,10 @@ const { result, loading, refetch } = useQuery(
         m_remark2
         u_price_after_discount
         u_discount
+        Account_to_Event {
+          c_act_code
+          m_remind_content
+        }
       }
     }
   `,
@@ -120,9 +124,9 @@ function displayPDF(data, memoData) {
     unit: "mm",
     format: [
       68,
-      80 +
-        25 * data.filter((x) => x.m_remark.length > 0).length +
-        25 * memoData.length,
+      90 +
+      25 * data.filter((x) => x.m_remark.length > 0).length +
+      25 * memoData.length,
     ],
   });
   doc.addFileToVFS("NotoSansTC-Regular.ttf", font);
@@ -197,11 +201,11 @@ function displayPDF(data, memoData) {
     );
     d.u_price_after_discount
       ? doc.text(
-          "HK$" + d.u_price_after_discount.toFixed(2),
-          64,
-          atLine(lineNo),
-          { align: "right" }
-        )
+        "HK$" + d.u_price_after_discount.toFixed(2),
+        64,
+        atLine(lineNo),
+        { align: "right" }
+      )
       : doc.text("免費", 64, atLine(lineNo), { align: "right" });
     for (let i = d.c_desc.length; i >= 0; i++) {
       lineNo += 0.6;
@@ -215,15 +219,15 @@ function displayPDF(data, memoData) {
   doc.text(data.length + " 項/Items", 32, atLine(lineNo), { align: "center" });
   data.filter((x) => x.u_price_after_discount).length > 0
     ? doc.text(
-        "HK$" +
-          data
-            .map((x) => x.u_price_after_discount)
-            .reduce((a, b) => a + b, 0)
-            .toFixed(2),
-        64,
-        atLine(lineNo),
-        { align: "right" }
-      )
+      "HK$" +
+      data
+        .map((x) => x.u_price_after_discount)
+        .reduce((a, b) => a + b, 0)
+        .toFixed(2),
+      64,
+      atLine(lineNo),
+      { align: "right" }
+    )
     : doc.text("免費", 64, atLine(lineNo), { align: "right" });
 
   // 總金額
@@ -233,14 +237,14 @@ function displayPDF(data, memoData) {
   doc.setFontSize(10);
   data.filter((x) => x.u_price_after_discount).length > 0
     ? doc.text(
-        "HK$" +
-          data
-            .map((x) => x.u_price_after_discount)
-            .reduce((a, b) => a + b, 0)
-            .toFixed(2),
-        32,
-        atLine(lineNo)
-      )
+      "HK$" +
+      data
+        .map((x) => x.u_price_after_discount)
+        .reduce((a, b) => a + b, 0)
+        .toFixed(2),
+      32,
+      atLine(lineNo)
+    )
     : doc.text("免費", 32, atLine(lineNo));
   lineNo += 0.6;
   doc.setFontSize(6);
@@ -266,7 +270,7 @@ function displayPDF(data, memoData) {
     align: "center",
     maxWidth: 60,
   });
-  lineNo+=lines.length;
+  lineNo += lines.length;
 
   doc.setFontSize(7);
   let reminder1Eng = "The receipt will eventually fade out.  Please make a photocopy for a more lasting document."
@@ -285,7 +289,7 @@ function displayPDF(data, memoData) {
   doc.text(reminder2Chi, 34, atLine(lineNo), {
     align: "center", maxWidth: 60,
   });
-  lineNo+=lines.length;
+  lineNo += lines.length;
 
   doc.setFontSize(7);
   let reminder2Eng = "Please keep the receipt until the end of the lessons.";
@@ -293,7 +297,7 @@ function displayPDF(data, memoData) {
   doc.text(reminder2Eng, 34, atLine(lineNo), {
     align: "center", maxWidth: 60,
   });
-  lineNo+=lines.length;
+  lineNo += lines.length;
 
   // remarks
   lineNo++;
@@ -312,7 +316,15 @@ function displayPDF(data, memoData) {
       maxWidth: 60,
     });
     lines = doc.splitTextToSize(d.m_remark.trim(), 60);
-    lineNo += (lines.length + 2) * 0.8;
+    lineNo += (lines.length) * 0.8;
+    if (d.Account_to_Event.m_remind_content) {
+      lines = doc.splitTextToSize(d.Account_to_Event.m_remind_content.trim(), 60);
+      doc.text(d.Account_to_Event.m_remind_content.trim(), 5, atLine(lineNo), {
+        maxWidth: 60,
+      });
+      lineNo++;
+    }
+    lineNo++;
   });
 
   memoData.forEach((data) => {
@@ -388,21 +400,21 @@ function displayPDF(data, memoData) {
       doc.text("時間 Time: ", 5, atLine(lineNo));
       let startDatetime = date.extractDate(
         data.EventRegistration_to_Event.d_date_from.trim() +
-          " " +
-          data.EventRegistration_to_Event.d_time_from.trim(),
+        " " +
+        data.EventRegistration_to_Event.d_time_from.trim(),
         "D/M/YYYY h:mm:ss A"
       );
 
       let endDatetime = date.extractDate(
         data.EventRegistration_to_Event.d_date_to.trim() +
-          " " +
-          data.EventRegistration_to_Event.d_time_to.trim(),
+        " " +
+        data.EventRegistration_to_Event.d_time_to.trim(),
         "D/M/YYYY h:mm:ss A"
       );
       doc.text(
         date.formatDate(startDatetime, "h:mm A") +
-          " - " +
-          date.formatDate(endDatetime, "h:mm A"),
+        " - " +
+        date.formatDate(endDatetime, "h:mm A"),
         20,
         atLine(lineNo)
       );
@@ -419,11 +431,9 @@ function displayPDF(data, memoData) {
         data.EventRegistration_to_Event.m_remind_content.length > 0)
     ) {
       doc.setFontSize(7);
-      doc.text("備註 Remark:", 5, atLine(lineNo));
-      lineNo += 0.8;
-      let remarkText = data.EventRegistration_to_Event.m_remark
-        ? data.EventRegistration_to_Event.m_remark.trim()
-        : data.EventRegistration_to_Event.m_remind_content.trim();
+      let remarkText = data.EventRegistration_to_Event.m_remind_content
+        ? data.EventRegistration_to_Event.m_remind_content.trim()
+        : data.EventRegistration_to_Event.m_remark.trim();
 
       doc.text(remarkText, 5, atLine(lineNo), {
         maxWidth: 50,

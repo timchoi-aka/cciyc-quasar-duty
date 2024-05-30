@@ -16,15 +16,7 @@ import {
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 //import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBn3kOruwr2QZlFuecSiPswBdm6ijulxvM",
-  authDomain: "manage-hr.firebaseapp.com",
-  projectId: "manage-hr",
-  storageBucket: "manage-hr.appspot.com",
-  messagingSenderId: "40845111899",
-  appId: "1:40845111899:web:f5110e9801b0c21704457e",
-};
+const firebaseConfig = JSON.parse(process.env.FIREBASE_CONFIG)
 
 const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);

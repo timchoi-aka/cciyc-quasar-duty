@@ -92,6 +92,10 @@ export function useAccountProvider(options = {}) {
         u_price_after_discount
         b_delete
         m_remark
+        Account_to_Event {
+          c_act_code
+          m_remind_content
+        }
       }
     }
   `;

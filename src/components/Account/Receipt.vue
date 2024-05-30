@@ -11,20 +11,9 @@
         <q-input type="text" :autofucus="true" v-model="refundCheck" />
       </q-card-section>
       <q-card-actions align="right">
-        <q-btn
-          :disable="refundCheck != Receipt.c_receipt_no.trim()"
-          icon="check"
-          label="確定"
-          class="bg-positive text-white"
-          v-close-popup="-1"
-          @click="refundConfirm"
-        />
-        <q-btn
-          icon="cancel"
-          label="取消"
-          class="bg-negative text-white"
-          v-close-popup
-        />
+        <q-btn :disable="refundCheck != Receipt.c_receipt_no.trim()" icon="check" label="確定"
+          class="bg-positive text-white" v-close-popup="-1" @click="refundConfirm" />
+        <q-btn icon="cancel" label="取消" class="bg-negative text-white" v-close-popup />
       </q-card-actions>
     </q-card>
   </q-dialog>
@@ -41,66 +30,31 @@
         <q-input type="text" v-model="deleteCheck" />
       </q-card-section>
       <q-card-actions align="right">
-        <q-btn
-          :disable="deleteCheck != Receipt.c_receipt_no.trim()"
-          icon="check"
-          label="確定"
-          class="bg-positive text-white"
-          v-close-popup="-1"
-          @click="deleteConfirm"
-        />
-        <q-btn
-          icon="cancel"
-          label="取消"
-          class="bg-negative text-white"
-          v-close-popup
-        />
+        <q-btn :disable="deleteCheck != Receipt.c_receipt_no.trim()" icon="check" label="確定"
+          class="bg-positive text-white" v-close-popup="-1" @click="deleteConfirm" />
+        <q-btn icon="cancel" label="取消" class="bg-negative text-white" v-close-popup />
       </q-card-actions>
     </q-card>
   </q-dialog>
 
   <!-- print receipt modal -->
   <div class="row q-ma-md-none q-pa-md-none justify-center">
-    <div
-      class="bg-primary row col-12 items-center"
-      style="min-height: 50px; max-height: 50px"
-    >
-      <q-btn
-        label="Copy+1"
-        flat
-        class="bg-primary text-white col-shrink"
-        @click="rePrint(Receipt.c_receipt_no, Receipt.i_prints)"
-      >
+    <div class="bg-primary row col-12 items-center" style="min-height: 50px; max-height: 50px">
+      <q-btn label="Copy+1" flat class="bg-primary text-white col-shrink"
+        @click="rePrint(Receipt.c_receipt_no, Receipt.i_prints)">
         <q-tooltip class="bg-white text-primary">列印</q-tooltip>
       </q-btn>
       <!--<q-btn icon="picture_as_pdf" flat class="bg-primary text-white col-shrink" @click="download"/>-->
       <q-space />
       <div v-if="!Receipt.b_delete && isFinance">
-        <q-btn
-          label="刪除"
-          icon="delete"
-          class="bg-negative text-white q-mx-sm"
-          flat
-          @click="deleteDialog = true"
-        />
+        <q-btn label="刪除" icon="delete" class="bg-negative text-white q-mx-sm" flat @click="deleteDialog = true" />
       </div>
       <div v-if="!Receipt.b_refund && isFinance">
-        <q-btn
-          label="退款"
-          icon="currency_exchange"
-          class="bg-negative text-white q-mx-sm"
-          flat
-          @click="refundDialog = true"
-        />
+        <q-btn label="退款" icon="currency_exchange" class="bg-negative text-white q-mx-sm" flat
+          @click="refundDialog = true" />
       </div>
       <q-space />
-      <q-btn
-        class="bg-primary text-white col-shrink"
-        dense
-        flat
-        icon="close"
-        v-close-popup
-      >
+      <q-btn class="bg-primary text-white col-shrink" dense flat icon="close" v-close-popup>
         <q-tooltip class="bg-white text-primary">關閉</q-tooltip>
       </q-btn>
     </div>
@@ -108,13 +62,7 @@
       <q-spinner color="primary" size="3em" :thickness="10" />
     </div>
     <div v-else id="printReceipt" class="fit flex flex-top">
-      <q-pdfviewer
-        v-if="src != null"
-        type="html5"
-        class="fit"
-        :src="src"
-        style="height: 100%; min-height: 100%"
-      />
+      <q-pdfviewer v-if="src != null" type="html5" class="fit" :src="src" style="height: 100%; min-height: 100%" />
     </div>
   </div>
 </template>
@@ -340,7 +288,7 @@ function displayPDF(data) {
     align: "center",
     maxWidth: 60,
   });
-  lineNo+=lines.length;
+  lineNo += lines.length;
 
   doc.setFontSize(7);
   let reminder1Eng = "The receipt will eventually fade out.  Please make a photocopy for a more lasting document."
@@ -359,7 +307,7 @@ function displayPDF(data) {
   doc.text(reminder2Chi, 34, atLine(lineNo), {
     align: "center", maxWidth: 60,
   });
-  lineNo+=lines.length;
+  lineNo += lines.length;
 
   doc.setFontSize(7);
   let reminder2Eng = "Please keep the receipt until the end of the lessons.";
@@ -367,13 +315,17 @@ function displayPDF(data) {
   doc.text(reminder2Eng, 34, atLine(lineNo), {
     align: "center", maxWidth: 60,
   });
-  lineNo+=lines.length;
+  lineNo += lines.length;
 
   // 活動備註
   lineNo++;
   doc.setFontSize(10);
-  if (!data.b_refund)
+  if (!data.b_refund) {
+    let lines = doc.splitTextToSize(data.m_remark, 65);
     doc.text(data.m_remark, 3, atLine(lineNo), { maxWidth: 65 });
+    lineNo += lines.length + 1;
+    if (data.Account_to_Event?.m_remind_content) doc.text(data.Account_to_Event.m_remind_content, 3, atLine(lineNo), { maxWidth: 65 })
+  }
   doc.setProperties({
     title: data.c_receipt_no + ".pdf",
     filename: data.c_receipt_no + ".pdf",

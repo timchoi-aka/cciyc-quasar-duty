@@ -1,17 +1,8 @@
 <template>
   <LoadingDialog :model-value="loading ? 1 : 0" message="報名中" />
-  <q-dialog
-    v-model="viewEventModal"
-    persistent
-    full-width
-    transition-show="slide-up"
-    transition-hide="slide-down"
-    class="q-pa-none"
-  >
-    <EventDetail
-      :EventID="viewEventID"
-      @hide-component="viewEventModal = false"
-    />
+  <q-dialog v-model="viewEventModal" persistent full-width transition-show="slide-up" transition-hide="slide-down"
+    class="q-pa-none">
+    <EventDetail :EventID="viewEventID" @hide-component="viewEventModal = false" />
   </q-dialog>
 
   <q-splitter v-model="verticalModel" class="fit">
@@ -32,34 +23,17 @@
             </div>
             <q-separator />
             <div class="row col-12 items-center">
-              <q-btn
-                icon="add"
-                class="bg-primary text-white q-ma-sm"
-                @click="events.push({ c_act_code: '', fee: 0 })"
-                label="新增報名活動"
-              />
+              <q-btn icon="add" class="bg-primary text-white q-ma-sm" @click="events.push({ c_act_code: '', fee: 0 })"
+                label="新增報名活動" />
             </div>
             <div class="row col-12">
-              <div
-                v-for="(item, index) in events"
-                :key="item"
-                class="q-mx-xs row col-12 items-center q-mb-sm q-px-sm"
-              >
-                <q-btn
-                  icon="delete"
-                  class="text-negative"
-                  flat
-                  @click="events.splice(index, 1)"
-                />
+              <div v-for="(item, index) in events" :key="item" class="q-mx-xs row col-12 items-center q-mb-sm q-px-sm">
+                <q-btn icon="delete" class="text-negative" flat @click="events.splice(index, 1)" />
                 <div class="col-5">
                   <div>
-                    <EventBatchApplySelection
-                      v-model="events[index]"
-                      :class="checkAgeRange(MemberObject, events[index])"
-                    />
-                    <q-tooltip
-                      v-if="checkAgeRange(MemberObject, events[index]) != ''"
-                    >
+                    <EventBatchApplySelection v-model="events[index]"
+                      :class="checkAgeRange(MemberObject, events[index])" />
+                    <q-tooltip v-if="checkAgeRange(MemberObject, events[index]) != ''">
                       {{
                         checkAgeRange(MemberObject, events[index]) != "ageMatch"
                           ? "年齡不符合"
@@ -69,88 +43,49 @@
                   </div>
                 </div>
                 <div class="q-mr-sm col-1">
-                  <q-btn
-                    label="詳情"
-                    icon="description"
-                    v-if="events[index].c_act_code"
-                    @click="
-                      viewEventModal = true;
-                      viewEventID = events[index].c_act_code;
-                    "
-                    outline
-                    dense
-                    class="text-primary fit"
-                  />
+                  <q-btn label="詳情" icon="description" v-if="events[index].c_act_code" @click="
+                    viewEventModal = true;
+                  viewEventID = events[index].c_act_code;
+                  " outline dense class="text-primary fit" />
                 </div>
                 <div class="col-3">
-                  <EventBatchApplyFeeSelection
-                    v-if="events[index]"
-                    v-model="events[index]"
-                  />
+                  <EventBatchApplyFeeSelection v-if="events[index]" v-model="events[index]" />
                 </div>
                 <div class="col-2">
-                  <EventBatchApplyQuotaDisplay
-                    v-if="events[index]"
-                    v-model="events[index].i_quota_left"
-                    :event="events[index]"
-                    @update-registrants="
-                      (val) => (events[index].registrants = val)
-                    "
-                  />
+                  <EventBatchApplyQuotaDisplay v-if="events[index]" v-model="events[index].i_quota_left"
+                    :event="events[index]" @update-registrants="(val) => (events[index].registrants = val)
+                      " />
                 </div>
               </div>
             </div>
             <div class="row col-12 q-mt-md items-center">
-              <q-btn
-                class="q-mx-xs col-2 bg-grey text-white"
-                icon="cancel"
-                @click="
-                  events = [];
-                  MemberObject.c_mem_id = '';
-                  MemberObject = {};
-                  ReceiptNo = [];
-                "
-                >重置</q-btn
-              >
-              <q-btn
-                class="q-mx-xs col-2 bg-positive text-white"
-                icon="check"
-                @click="save"
-                :disable="!validApplication"
-                >報名</q-btn
-              >
+              <q-btn class="q-mx-xs col-2 bg-grey text-white" icon="cancel" @click="
+                events = [];
+              MemberObject.c_mem_id = '';
+              MemberObject = {};
+              ReceiptNo = [];
+              ">重置</q-btn>
+              <q-btn class="q-mx-xs col-2 bg-positive text-white" icon="check" @click="save"
+                :disable="!validApplication">報名</q-btn>
 
-              <q-chip
-                v-for="error in errorMessage"
-                :icon="error.level == 'error' ? 'error' : 'warning'"
-                :color="error.level == 'error' ? 'negative' : 'warning'"
-                text-color="white"
-                :label="error.message"
-                class="text-bold"
-              />
+              <q-chip v-for="error in errorMessage" :icon="error.level == 'error' ? 'error' : 'warning'"
+                :color="error.level == 'error' ? 'negative' : 'warning'" text-color="white" :label="error.message"
+                class="text-bold" />
             </div>
           </div>
         </template>
         <template v-slot:after>
-          <ReceiptListByMemberID_Multiple
-            :MemberID="MemberObject.c_mem_id"
-            :key="JSON.stringify(result) + MemberObject.c_mem_id"
-            :selectedReceipts="result?.c_receipt_no ?? []"
-            :selectedMemo="result?.id ?? []"
-            @updateReceiptNumber="(val) => (ReceiptNo = val)"
-            @updateMemoID="(val) => (MemoID = val)"
-          />
+          <ReceiptListByMemberID_Multiple :MemberID="MemberObject.c_mem_id"
+            :key="JSON.stringify(result) + MemberObject.c_mem_id" :selectedReceipts="result?.c_receipt_no ?? []"
+            :selectedMemo="result?.id ?? []" @updateReceiptNumber="(val) => (ReceiptNo = val)"
+            @updateMemoID="(val) => (MemoID = val)" />
         </template>
       </q-splitter>
     </template>
 
     <template v-slot:after>
       <div>
-        <ReceiptBatch
-          :c_receipt_no="ReceiptNo"
-          :memoID="MemoID"
-          :key="ReceiptNo + MemoID"
-        />
+        <ReceiptBatch :c_receipt_no="ReceiptNo" :memoID="MemoID" :key="ReceiptNo + MemoID" />
       </div>
     </template>
   </q-splitter>
@@ -302,19 +237,25 @@ async function save() {
   let remark = "";
   events.value.forEach((e) => {
     remark = "服務資料 Service Detail\r\n";
-    if (e.d_date_from && e.d_date_to)
-      remark +=
-        "日期 Date：" +
-        qdate.formatDate(e.d_date_from, "YYYY年M月D日") +
-        " 至 " +
-        qdate.formatDate(e.d_date_to, "YYYY年M月D日");
+    if (e.d_date_from && e.d_date_to) {
+      if (qdate.getDateDiff(e.d_date_from, e.d_date_to) == 0) {
+        remark += "日期 Date：" + qdate.formatDate(e.d_date_from, "YYYY年M月D日");
+      } else {
+        remark +=
+          "日期 Date：" +
+          qdate.formatDate(e.d_date_from, "YYYY年M月D日") +
+          " 至 " +
+          qdate.formatDate(e.d_date_to, "YYYY年M月D日");
+      }
+    }
+
     if (e.c_week) remark += " 逢星期" + e.c_week;
     remark += "\r\n";
     if (e.d_time_from && e.d_time_to) {
       let startDatetime = qdate.extractDate(
         qdate.formatDate(e.d_date_from, "D/M/YYYY") +
-          " " +
-          e.d_time_from.trim(),
+        " " +
+        e.d_time_from.trim(),
         "D/M/YYYY h:mm:ss A"
       );
 

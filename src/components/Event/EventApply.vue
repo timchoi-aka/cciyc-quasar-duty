@@ -494,17 +494,17 @@ function submitApplication() {
   ApplicationQueue.value.forEach((item) => {
     remark = "服務資料 Service Detail\r\n";
     if (Event.value.d_date_from && Event.value.d_date_to)
-      remark +=
-        "日期 Date：" +
-        qdate.formatDate(
-          qdate.extractDate(Event.value.d_date_from, "D/M/YYYY"),
-          "YYYY年M月D日"
-        ) +
-        " 至 " +
-        qdate.formatDate(
-          qdate.extractDate(Event.value.d_date_to, "D/M/YYYY"),
-          "YYYY年M月D日"
-        );
+      if (e.d_date_from && e.d_date_to) {
+        if (qdate.getDateDiff(e.d_date_from, e.d_date_to) == 0) {
+          remark += "日期 Date：" + qdate.formatDate(e.d_date_from, "YYYY年M月D日");
+        } else {
+          remark +=
+            "日期 Date：" +
+            qdate.formatDate(e.d_date_from, "YYYY年M月D日") +
+            " 至 " +
+            qdate.formatDate(e.d_date_to, "YYYY年M月D日");
+        }
+      }
     if (Event.value.c_week) remark += " 逢星期" + Event.value.c_week;
     remark += "\r\n";
     if (Event.value.d_time_from && Event.value.d_time_to) {

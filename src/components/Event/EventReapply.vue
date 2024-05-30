@@ -1,13 +1,6 @@
 <template>
   <!-- reregister button -->
-  <q-btn
-    outline
-    class="bg-positive text-white"
-    dense
-    flat
-    icon="redo"
-    @click="reregistrationModal = true"
-  >
+  <q-btn outline class="bg-positive text-white" dense flat icon="redo" @click="reregistrationModal = true">
     <q-tooltip class="bg-white text-primary"> 重覆收費 </q-tooltip>
   </q-btn>
 
@@ -20,13 +13,7 @@
       <q-card-section class="bg-primary q-py-sm row">
         <div class="text-h6 text-white">確定重覆收費？</div>
         <q-space />
-        <q-btn
-          v-close-popup
-          icon="close"
-          class="bg-primary text-white"
-          dense
-          flat
-        >
+        <q-btn v-close-popup icon="close" class="bg-primary text-white" dense flat>
           <q-tooltip class="bg-white text-primary"> 關閉 </q-tooltip>
         </q-btn>
       </q-card-section>
@@ -62,44 +49,20 @@
         <q-form class="col-12 row" @submit="submitApplication">
           <div class="col-12 row">
             <div class="text-h6 text-primary">收費：</div>
-            <q-input
-              label="請輸入收費..."
-              outlined
-              lazy-rules
-              :rules="[(val) => (val && val > 0) || '收費要大於0']"
-              v-model.number="u_fee"
-              type="number"
-              dense
-            />
+            <q-input label="請輸入收費..." outlined lazy-rules :rules="[(val) => (val && val > 0) || '收費要大於0']"
+              v-model.number="u_fee" type="number" dense />
             <q-space />
             <div class="text-h6 text-primary">原因：</div>
-            <q-input
-              label="請輸入原因..."
-              outlined
-              lazy-rules
-              :rules="[(val) => (val && val.length > 0) || '請輸入原因...']"
-              v-model="remark2"
-              type="text"
-              dense
-            />
+            <q-input label="請輸入原因..." outlined lazy-rules :rules="[(val) => (val && val.length > 0) || '請輸入原因...']"
+              v-model="remark2" type="text" dense />
           </div>
           <div class="col-12 row">
             <q-space />
             <div>
-              <q-btn
-                label="取消"
-                class="bg-negative text-white q-mr-md"
-                icon="cancel"
-                v-close-popup
-              />
+              <q-btn label="取消" class="bg-negative text-white q-mr-md" icon="cancel" v-close-popup />
             </div>
             <div>
-              <q-btn
-                label="確認"
-                class="bg-positive text-white"
-                icon="check"
-                type="submit"
-              />
+              <q-btn label="確認" class="bg-positive text-white" icon="check" type="submit" />
             </div>
           </div>
         </q-form>
@@ -191,17 +154,17 @@ const loading = ref(0);
 function submitApplication() {
   let remark = "服務資料 Service Detail\r\n";
   if (props.d_date_from && props.d_date_to)
-    remark +=
-      "日期 Date：" +
-      qdate.formatDate(
-        qdate.extractDate(props.d_date_from, "D/M/YYYY"),
-        "YYYY年M月D日"
-      ) +
-      " 至 " +
-      qdate.formatDate(
-        qdate.extractDate(props.d_date_to, "D/M/YYYY"),
-        "YYYY年M月D日"
-      );
+    if (e.d_date_from && e.d_date_to) {
+      if (qdate.getDateDiff(e.d_date_from, e.d_date_to) == 0) {
+        remark += "日期 Date：" + qdate.formatDate(e.d_date_from, "YYYY年M月D日");
+      } else {
+        remark +=
+          "日期 Date：" +
+          qdate.formatDate(e.d_date_from, "YYYY年M月D日") +
+          " 至 " +
+          qdate.formatDate(e.d_date_to, "YYYY年M月D日");
+      }
+    }
   if (props.c_week) remark += " 逢星期" + props.c_week;
   remark += "\r\n";
   if (props.d_time_from && props.d_time_to) {
