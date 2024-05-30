@@ -11,12 +11,12 @@ const slotMap = {
 exports.getPublicHoliday = functions.region("asia-east2").https.onCall(async (data, context) => {
   // App Check token. (If the request includes an invalid App Check
   // token, the request will be rejected with HTTP error 401.)
-  
+
   if (context.app == undefined) {
     throw new functions.https.HttpsError(
         "failed-precondition",
         "The function must be called from an App Check verified app.");
-  } 
+  }
 
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
@@ -44,7 +44,7 @@ exports.delLeaveByDocid = functions.region("asia-east2").https.onCall(async (dat
         "failed-precondition",
         "The function must be called from an App Check verified app.");
   } */
-  
+
 
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
@@ -96,7 +96,7 @@ exports.approveLeaveByDocid = functions.region("asia-east2").https.onCall(async 
         "failed-precondition",
         "The function must be called from an App Check verified app.");
   } */
-  
+
 
   const runUser = await FireDB.collection("users").doc(context.auth.uid).get();
   const runUserData = runUser.data();
@@ -117,96 +117,93 @@ exports.approveLeaveByDocid = functions.region("asia-east2").https.onCall(async 
   // offset 8 hours to hk time
   currentDate.setTime(currentDate.getTime() + 8 * 60 * 60 * 1000);
 
-  let logData = "";
+  let approveLogData = "HOLIDAY: ";
+  let changeScheduleLogData = "HOLIDAY>SCHEDULE: （批准假期>新更表）";
   const batch = FireDB.batch();
   const notiQueue = [];
-  for (const d of data) {
-    const leaveDoc = FireDB.collection("leave").doc(d.docid);
-    const scheduleDocid = d.uid + formatDate(d.date, "", "YYYYMMDD") + d.slot;
-    const userRef = FireDB.collection("users").doc(d.uid);
 
-    batch.update(leaveDoc, {
-      remarks: FieldValue.arrayUnion(...d.remarks),
-      status: d.status,
-    });
+  // generate unique list of applicant
+  let applicantList = data.filter((v,i,a)=>a.findIndex(t=>(t.uid === v.uid))===i).map(x => ({uid: x.uid, name: x.name}));
 
-    logData += "HOLIDAY: " + runUserData.name +
-            " 批准了 " +
-            d.name +
-            " 於 " +
-            d.date +
-            " 時段 " +
-            d.slot +
-            " 假期種類 " +
-            d.type + "\n";
+  // approve leave
+  for (const applicant of applicantList) {
+    approveLogData += runUserData.name + " 批准了 " + applicant.name + " 於 ";
+    changeScheduleLogData += applicant.name + " 於 ";
+    let messageBody = runUserData.name + "批准了" + applicant.name + "於"
+    let dataList = data.filter((x) => x.uid == applicant.uid);
+    for (const d of dataList) {
+      const leaveDoc = FireDB.collection("leave").doc(d.docid);
+      const scheduleDocid = d.uid + formatDate(d.date, "", "YYYYMMDD") + d.slot;
+      const userRef = FireDB.collection("users").doc(d.uid);
 
-    const holidayDate = new Date(d.date);
-
-    notiQueue.push({
-      message: {
-        title: "青年-假期系統",
-        body: holidayDate.getFullYear() + "年" + parseInt(holidayDate.getMonth()+1) + "月" + holidayDate.getDate() + "日" + "(" + slotMap[d.slot] + ")-" + d.type + "已獲批",
-      },
-      topic: d.uid,
-    });
-
-    // reduce balance
-    if (d.type == "AL") {
-      batch.update(userRef, "balance.al", FieldValue.increment(-0.5));
-    } else if (d.type == "SAL") {
-      batch.update(userRef, "balance.sal", FieldValue.increment(-0.5));
-    }
-
-    const firebaseDate = Timestamp.fromDate(
-        new Date(d.date),
-    );
-
-    const scheduleCollection = FireDB.collection("schedule");
-
-    // find if timeslot is already occupied
-    const scheduleDoc = scheduleCollection.doc(scheduleDocid);
-    const schedule = await scheduleDoc.get();
-    const scheduleData = schedule.data();
-
-    if (!scheduleData) { // old data doesn't exist, create new schedule
-      batch.set(scheduleDoc, {
-        date: firebaseDate,
-        slot: d.slot,
-        uid: d.uid,
-        type: d.type,
-        leaveDocid: d.docid,
+      batch.update(leaveDoc, {
+        remarks: FieldValue.arrayUnion(...d.remarks),
+        status: d.status,
       });
 
-      logData += "HOLIDAY>SCHEDULE: （批准假期>新更表）" +
-                      d.name +
-                      " 於 " +
-                      d.date +
-                      " 時段 " +
-                      d.slot +
-                      " 假期種類 " +
-                      d.type + "\n";
-    } else {
-      batch.update(scheduleDoc, {
-        type: d.type,
-        leaveDocid: d.docid,
-      });
+      approveLogData += d.date +
+              " 時段 " +
+              d.slot +
+              "(" +
+              d.type + ") ";
+      const holidayDate = new Date(d.date);
+      messageBody += holidayDate.getFullYear() + "年" + parseInt(holidayDate.getMonth()+1) + "月" + holidayDate.getDate() + "日" + "(" + slotMap[d.slot] + ")-" + d.type + ", ";
 
-      logData += "HOLIDAY>SCHEDULE: （批准假期>修改更表）" +
-      d.name +
-      " 於 " +
-      d.date +
-      " 時段 " +
-      d.slot +
-      " 假期種類 " +
-      d.type + "\n";
+      // reduce balance
+      if (d.type == "AL") {
+        batch.update(userRef, "balance.al", FieldValue.increment(-0.5));
+      } else if (d.type == "SAL") {
+        batch.update(userRef, "balance.sal", FieldValue.increment(-0.5));
+      }
+
+      const firebaseDate = Timestamp.fromDate(
+          new Date(d.date),
+      );
+
+      const scheduleCollection = FireDB.collection("schedule");
+
+      // find if timeslot is already occupied
+      const scheduleDoc = scheduleCollection.doc(scheduleDocid);
+      const schedule = await scheduleDoc.get();
+      const scheduleData = schedule.data();
+
+      if (!scheduleData) { // old data doesn't exist, create new schedule
+        batch.set(scheduleDoc, {
+          date: firebaseDate,
+          slot: d.slot,
+          uid: d.uid,
+          type: d.type,
+          leaveDocid: d.docid,
+        });
+      } else {
+        batch.update(scheduleDoc, {
+          type: d.type,
+          leaveDocid: d.docid,
+        });
+      }
+
+      // update server log
+      changeScheduleLogData += d.date + " 時段 " + d.slot + " 假期種類 " + d.type + ", ";
+    };
+
+    // notify user
+    if (!process.env.FUNCTIONS_EMULATOR) {
+      notiQueue.push({
+        message: {
+          title: "青年-假期系統",
+          body: messageBody,
+        },
+        topic: applicant.uid,
+      });
     }
-  }
+  };
 
   return await batch.commit().then((result) => {
     notiQueue.forEach((queue) => {
       publishTopic(queue.topic, queue.message);
     });
-    console.log(logData);
+    console.log(approveLogData);
+    console.log(changeScheduleLogData);
   });
 });
 
@@ -220,7 +217,7 @@ exports.modifyLeaveByDocid = functions.region("asia-east2").https.onCall(async (
         "failed-precondition",
         "The function must be called from an App Check verified app.");
   } */
-  
+
 
   if (!context.auth.uid) {
     throw new functions.https.HttpsError(
@@ -342,7 +339,7 @@ exports.rejectLeaveByDocid = functions.region("asia-east2").https.onCall(async (
         "failed-precondition",
         "The function must be called from an App Check verified app.");
   } */
-  
+
 
   const user = await FireDB.collection("users").doc(context.auth.uid).get();
   const userData = user.data();
@@ -465,100 +462,6 @@ exports.updatePendingCount = functions.region("asia-east2").firestore
       // return Promise.reject(new Error("updatePendingCount: Direct DB modification/deletion or Unhandled Case."));
     });
 
-// API 2.0 Scheduled task to updated AL Balance
-/* cancel using new function
-exports.updateALBalance = functions.region("asia-east2").pubsub.schedule("0 0 1 * *").timeZone("Asia/Hong_Kong").onRun(async (context) => {
-  const usersDocRef = FireDB.collection("users");
-  const usersDoc = await usersDocRef.where("privilege.tmp", "==", false).where("privilege.systemAdmin", "==", false).get();
-  const userData = [];
-  const leaveData = [];
-  const salLeaveData = [];
-
-  const leaveDocRef = FireDB.collection("leave");
-  const leaveDoc = await leaveDocRef.where("status", "==", "批准").where("validity", "==", true).where("type", "==", "AL").orderBy("uid").get();
-  const salLeaveDoc = await leaveDocRef.where("status", "==", "批准").where("validity", "==", true).where("type", "==", "SAL").orderBy("uid").get();
-  usersDoc.forEach((doc) => {
-    userData.push(doc.data());
-  });
-  leaveDoc.forEach((doc) => {
-    leaveData.push(doc.data());
-  });
-  salLeaveDoc.forEach((doc) => {
-    salLeaveData.push(doc.data());
-  });
-  const batch = FireDB.batch();
-  const leaveConfigRef = FireDB.collection("dashboard").doc("leaveConfig");
-  const leaveConfigDoc = await leaveConfigRef.get();
-  const leaveConfigData = leaveConfigDoc.data();
-  const tiersConfig = [0, 5, 8, 10, 12];
-
-  for (const usr of userData) {
-    // const tiers = leaveConfigData[usr.rank];
-    const salBeginBalance = leaveConfigData[usr.uid][0].sal? leaveConfigData[usr.uid][0].sal:0;
-    const today = new Date();
-    const entryDate = new Date(usr.dateOfEntry.toDate().getTime() + 28800000);
-    const systemMonthStart = new Date(2021, 3, 1);
-    const thisMonthStart = new Date(today.getFullYear(), today.getMonth(), 1);
-    let counter = systemMonthStart;
-    let leaveGain = 0;
-    do {
-      // year difference, and month difference, then calculate exact year difference
-      const yearDiff = counter.getFullYear() - entryDate.getFullYear();
-      const monthDiff = counter.getMonth() - entryDate.getMonth();
-      const yearServed = Math.floor((yearDiff*12 + monthDiff)/12);
-      let tier = 0;
-
-      let tiers;
-      // console.log("usr employment length:" + usr.employment.length);
-      if (usr.employment) {
-        for (let i = 0; i < usr.employment.length; i++) {
-          if (counter >= usr.employment[i].dateOfEntry.toDate() && (!usr.employment[i].dateOfExit || counter <= usr.employment[i].dateOfExit.toDate())) {
-            tiers = leaveConfigData[usr.employment[i].rank];
-            // console.log("tiers in loop:" + tiers);
-          }
-        }
-      } else {
-        tiers = leaveConfigData[usr.rank];
-      }
-      if (!tiers) break;
-
-      for (let j = tiersConfig.length; j > 0; j--) {
-        if (yearServed >= tiersConfig[j - 1]) {
-          tier = tiers["t" + j];
-          break;
-        }
-      }
-
-      // console.log("yearServed:" + yearServed + " dateOfEntry:" + entryDate + " counter:" + counter + " tier:" + tier);
-      leaveGain += tier/12;
-      counter = new Date(counter.getFullYear(), counter.getMonth()+1, 1);
-    } while (counter <= thisMonthStart);
-
-    // console.log(usr.name + " date diff: " + yearDiff + ":" + monthDiff + ":" + diff );
-    const ALTaken = leaveData.filter((row) => row.uid == usr.uid).length/2;
-    const alBalance = parseFloat(leaveConfigData[usr.uid][0]["al"]) + parseFloat(leaveGain) - parseFloat(ALTaken);
-    // console.log(usr.name + "[" + usr.rank + ":" + tier + "]: " + ALTaken);
-    // console.log(usr.name + " starts with " + leaveConfigData[usr.uid][0]["al"] + " gained " + leaveGain + " ALTaken " + ALTaken + " balance: " + alBalance);
-    const salBalance = parseFloat(salBeginBalance) - parseFloat(salLeaveData.filter((element) => element.uid == usr.uid).length/2);
-    const ref = FireDB.collection("users").doc(usr.uid);
-    const refData = await ref.get();
-    batch.update(ref, {
-      balance: {
-        al: alBalance,
-        sal: salBalance,
-        ot: refData.data().balance.ot,
-      },
-    });
-  }
-
-  // console.log(JSON.stringify(leaveData));
-
-  return await batch.commit().then(() => {
-    console.log("AL / SAL Balance updated at: " + new Date());
-  });
-});
-*/
-
 // API 2.0 - add a leave application
 exports.addLeave = functions.region("asia-east2").https.onCall(async (data, context) => {
   // only authenticated can proceed
@@ -578,21 +481,32 @@ exports.addLeave = functions.region("asia-east2").https.onCall(async (data, cont
     )
   }
   const batch = FireDB.batch();
-  let logData = "";
+  let logData = ""
   let leaveDoc;
   const notiQueue = [];
-  data.forEach((d) => {
-    // only add record if all value exists
-    if (d.name && d.date && d.slot && d.type) {
-      leaveDoc = FireDB.collection("leave").doc();
-      batch.set(leaveDoc, d);
-      logData += "HOLIDAY: " + d.name + " 申請了 " + d.date + ":" + d.slot + "(" + d.type + ")\n";
-      const holidayDate = new Date(d.date);
 
+  // generate unique list of applicant
+  let applicantList = data.filter((v,i,a)=>a.findIndex(t=>(t.uid === v.uid))===i).map(x => ({uid: x.uid, name: x.name}));
+
+  applicantList.forEach((applicant) => {
+    logData += "HOLIDAY: " + applicant.name + " 申請了 "
+    let messageBody = applicant.name + "申請了"
+    data.filter((x) => x.uid == applicant.uid).forEach((d) => {
+      // only add record if all value exists
+      if (d.name && d.date && d.slot && d.type) {
+        leaveDoc = FireDB.collection("leave").doc();
+        batch.set(leaveDoc, d);
+        logData += d.date + ":" + d.slot + "(" + d.type + ") ";
+        const holidayDate = new Date(d.date);
+        messageBody += holidayDate.getFullYear() + "年" + parseInt(holidayDate.getMonth()+1) + "月" + holidayDate.getDate() + "日" + "(" + slotMap[d.slot] + ")-" + d.type + " ";
+      }
+    });
+
+    if (!process.env.FUNCTIONS_EMULATOR) {
       notiQueue.push({
         message: {
           title: "青年-假期系統",
-          body: d.name + "申請了" + holidayDate.getFullYear() + "年" + parseInt(holidayDate.getMonth()+1) + "月" + holidayDate.getDate() + "日" + "(" + slotMap[d.slot] + ")-" + d.type,
+          body: messageBody,
         },
         topic: "holidayApprove",
       });
@@ -617,7 +531,7 @@ exports.migrateALBalance = functions.region("asia-east2").https.onCall(async (da
         "failed-precondition",
         "The function must be called from an App Check verified app.");
   } */
-  
+
 
   // only authenticated users can run this
   if (!context.auth) {

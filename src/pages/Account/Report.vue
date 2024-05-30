@@ -3,58 +3,24 @@
   <LoadingDialog :model-value="loading ? 1 : 0" message="處理中" />
 
   <!-- rowDetail modal -->
-  <q-dialog
-    v-if="$q.screen.lt.md"
-    v-model="detailModal"
-    persistent
-    maximized
-    full-width
-    transition-show="slide-up"
-    transition-hide="slide-down"
-  >
+  <q-dialog v-if="$q.screen.lt.md" v-model="detailModal" persistent maximized full-width transition-show="slide-up"
+    transition-hide="slide-down">
     <Receipt :c_receipt_no="showReceiptNo" />
   </q-dialog>
 
-  <q-dialog
-    v-else
-    v-model="detailModal"
-    persistent
-    full-height
-    transition-show="slide-up"
-    transition-hide="slide-down"
-    class="q-pa-none"
-  >
-    <q-card style="min-width: 70vw; width: 70vw; max-width: 70vw">
-      <Receipt :c_receipt_no="showReceiptNo" />
-    </q-card>
+  <q-dialog v-else v-model="detailModal" persistent full-height transition-show="slide-up" transition-hide="slide-down"
+    class="q-pa-none">
+    <Receipt :c_receipt_no="showReceiptNo" />
   </q-dialog>
 
   <!-- Event Detail modal -->
-  <q-dialog
-    v-if="$q.screen.lt.md"
-    v-model="EventDetailModal"
-    persistent
-    maximized
-    full-width
-    transition-show="slide-up"
-    transition-hide="slide-down"
-  >
-    <EventDetail
-      :EventID="showEventID"
-      @hide-component="EventDetailModal = false"
-    />
+  <q-dialog v-if="$q.screen.lt.md" v-model="EventDetailModal" persistent maximized full-width transition-show="slide-up"
+    transition-hide="slide-down">
+    <EventDetail :EventID="showEventID" @hide-component="EventDetailModal = false" />
   </q-dialog>
 
-  <q-dialog
-    v-else
-    v-model="EventDetailModal"
-    persistent
-    full-width
-    full-height
-    transition-show="slide-up"
-    transition-hide="slide-down"
-    class="q-pa-none"
-  >
+  <q-dialog v-else v-model="EventDetailModal" persistent full-width full-height transition-show="slide-up"
+    transition-hide="slide-down" class="q-pa-none">
     <EventDetail :EventID="showEventID" />
   </q-dialog>
 
@@ -67,52 +33,29 @@
       <div class="col-2 q-mx-md">
         <DateComponent v-model="reportEndDate" label="結束日期" />
       </div>
-      <div class="col-2 q-mx-md"><EventSelection v-model="reportEvent" /></div>
+      <div class="col-2 q-mx-md">
+        <EventSelection v-model="reportEvent" />
+      </div>
       <div class="col-2 q-mx-md">
         <StaffSelection :multiple="false" v-model="reportStaff" />
       </div>
       <div class="col-1 q-mx-md">
-        <q-btn
-          icon="undo"
-          label="重置"
-          class="bg-primary text-white"
-          @click="reset"
-        />
+        <q-btn icon="undo" label="重置" class="bg-primary text-white" @click="reset" />
       </div>
     </div>
   </div>
 
-  <q-tabs
-    v-model="activeTab"
-    inline-label
-    align="left"
-    class="desktop-only bg-primary text-white"
-  >
+  <q-tabs v-model="activeTab" inline-label align="left" class="desktop-only bg-primary text-white">
     <q-tab name="accountReport" icon="source" label="會計報表" />
-    <q-tab
-      name="All"
-      icon="source"
-      :label="'收據細列表(' + ReceiptData.length + ')'"
-    />
+    <q-tab name="All" icon="source" :label="'收據細列表(' + ReceiptData.length + ')'" />
     <!--
     <q-tab name="Error" icon="error" :label="'錯誤('+ErrorData.length+'人)'" />
     -->
-    <q-tab
-      name="delete"
-      icon="source"
-      :label="'刪除收據細列表(' + DeletedData.length + ')'"
-    />
+    <q-tab name="delete" icon="source" :label="'刪除收據細列表(' + DeletedData.length + ')'" />
     <q-tab name="dailyIncome" icon="source" label="每日收款摘要" />
   </q-tabs>
 
-  <q-tab-panels
-    id="printMe"
-    v-model="activeTab"
-    animated
-    swipeable
-    transition-prev="jump-up"
-    transition-next="jump-up"
-  >
+  <q-tab-panels id="printMe" v-model="activeTab" animated swipeable transition-prev="jump-up" transition-next="jump-up">
     <q-tab-panel name="All" class="q-ma-none q-pa-sm">
       <div class="col-12 row items-center hideOnScreen">
         <div class="print-title col-7 row q-mx-md items-center">
@@ -133,26 +76,13 @@
           負責人：{{ reportStaff.label }}
         </div>
       </div>
-      <div
-        class="col-12 row hideOnScreen justify-end items-end q-py-none q-my-none"
-      >
+      <div class="col-12 row hideOnScreen justify-end items-end q-py-none q-my-none">
         列印日期：{{ qdate.formatDate(new Date(), "YYYY年M月D日") }}
       </div>
       <!-- 收據細列表 -->
-      <q-table
-        dense
-        flat
-        :rows="ReceiptData"
-        :columns="receiptListColumns"
-        :pagination="defaultPagination"
-        hide-pagination
-        :rows-per-page-options="[0]"
-        color="primary"
-        row-key="c_receipt_no"
-        :loading="loading"
-        binary-state-sort
-        @row-click="rowDetail"
-      >
+      <q-table dense flat :rows="ReceiptData" :columns="receiptListColumns" :pagination="defaultPagination"
+        hide-pagination :rows-per-page-options="[0]" color="primary" row-key="c_receipt_no" :loading="loading"
+        binary-state-sort @row-click="rowDetail">
         <!-- loading -->
         <template v-slot:loading>
           <q-inner-loading showing color="primary" />
@@ -168,46 +98,28 @@
 
         <!-- top -->
         <template v-slot:top class="row">
-          <div
-            class="q-my-none q-py-none row col-12 items-end"
-            style="line-height: 10px"
-          >
+          <div class="q-my-none q-py-none row col-12 items-end" style="line-height: 10px">
             <div class="col-auto items-end text-bold">收據細列表</div>
             <q-space />
 
-            <q-btn
-              icon="print"
-              flat
-              class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end"
-              v-print="printObj"
-            >
+            <q-btn icon="print" flat class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end"
+              v-print="printObj">
               <q-tooltip class="bg-white text-primary">列印</q-tooltip>
             </q-btn>
-            <q-btn
-              color="primary"
-              icon-right="archive"
-              class="hideOnPrint"
-              label="匯出Excel"
-              no-caps
-              @click="
-                exportExcel(
-                  ReceiptData,
-                  receiptListColumns,
-                  '收據細列表' + reportStartDate + '-' + reportEndDate
-                )
-              "
-            />
+            <q-btn color="primary" icon-right="archive" class="hideOnPrint" label="匯出Excel" no-caps @click="
+              exportExcel(
+                ReceiptData,
+                receiptListColumns,
+                '收據細列表' + reportStartDate + '-' + reportEndDate
+              )
+              " />
           </div>
         </template>
 
         <!-- bottom total row -->
         <template v-slot:bottom-row="props">
           <q-tr>
-            <q-td
-              v-for="index in props.cols.length"
-              class="text-center"
-              style="line-height: 10px"
-            >
+            <q-td v-for="index in props.cols.length" class="text-center" style="line-height: 10px">
               {{
                 props.cols[index - 1].name == "u_price_after_discount"
                   ? "總金額(HKD): "
@@ -252,26 +164,13 @@
           負責人：{{ reportStaff.label }}
         </div>
       </div>
-      <div
-        class="col-12 row hideOnScreen justify-end items-end q-py-none q-my-none"
-      >
+      <div class="col-12 row hideOnScreen justify-end items-end q-py-none q-my-none">
         列印日期：{{ qdate.formatDate(new Date(), "YYYY年M月D日") }}
       </div>
       <!-- 刪除收據 -->
-      <q-table
-        dense
-        flat
-        :rows="DeletedData"
-        :columns="receiptListColumns"
-        :pagination="defaultPagination"
-        hide-pagination
-        :rows-per-page-options="[0]"
-        color="primary"
-        row-key="c_receipt_no"
-        :loading="loading"
-        binary-state-sort
-        @row-click="rowDetail"
-      >
+      <q-table dense flat :rows="DeletedData" :columns="receiptListColumns" :pagination="defaultPagination"
+        hide-pagination :rows-per-page-options="[0]" color="primary" row-key="c_receipt_no" :loading="loading"
+        binary-state-sort @row-click="rowDetail">
         <!-- loading -->
         <template v-slot:loading>
           <q-inner-loading showing color="primary" />
@@ -279,45 +178,27 @@
 
         <!-- top -->
         <template v-slot:top class="row">
-          <div
-            class="q-my-none q-py-none row col-12 items-end"
-            style="line-height: 10px"
-          >
+          <div class="q-my-none q-py-none row col-12 items-end" style="line-height: 10px">
             <div class="col-auto items-end text-bold">刪除收據細列表</div>
             <q-space />
-            <q-btn
-              icon="print"
-              flat
-              class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end"
-              v-print="printObj"
-            >
+            <q-btn icon="print" flat class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end"
+              v-print="printObj">
               <q-tooltip class="bg-white text-primary">列印</q-tooltip>
             </q-btn>
-            <q-btn
-              color="primary"
-              class="hideOnPrint"
-              icon-right="archive"
-              label="匯出Excel"
-              no-caps
-              @click="
-                exportExcel(
-                  DeletedData,
-                  receiptListColumns,
-                  '刪除收據細列表' + reportStartDate + '-' + reportEndDate
-                )
-              "
-            />
+            <q-btn color="primary" class="hideOnPrint" icon-right="archive" label="匯出Excel" no-caps @click="
+              exportExcel(
+                DeletedData,
+                receiptListColumns,
+                '刪除收據細列表' + reportStartDate + '-' + reportEndDate
+              )
+              " />
           </div>
         </template>
 
         <!-- bottom total row -->
         <template v-slot:bottom-row="props">
           <q-tr>
-            <q-td
-              v-for="index in props.cols.length"
-              class="text-center"
-              style="line-height: 10px"
-            >
+            <q-td v-for="index in props.cols.length" class="text-center" style="line-height: 10px">
               {{
                 props.cols[index - 1].name == "u_price_after_discount"
                   ? "總金額(HKD): "
@@ -359,28 +240,13 @@
           負責人：{{ reportStaff.label }}
         </div>
       </div>
-      <div
-        class="col-12 row hideOnScreen justify-end items-end q-py-none q-my-none"
-      >
+      <div class="col-12 row hideOnScreen justify-end items-end q-py-none q-my-none">
         列印日期：{{ qdate.formatDate(new Date(), "YYYY年M月D日") }}
       </div>
       <!-- PF -->
-      <q-table
-        v-if="PFData.length > 0"
-        dense
-        flat
-        :rows="PFData"
-        :columns="accountReportColumns"
-        :pagination="accountReportPagination"
-        hide-pagination
-        :rows-per-page-options="[0]"
-        color="primary"
-        class="q-mt-md"
-        :loading="loading"
-        binary-state-sort
-        no-data-label="沒有資料"
-        @row-click="eventDetail"
-      >
+      <q-table v-if="PFData.length > 0" dense flat :rows="PFData" :columns="accountReportColumns"
+        :pagination="accountReportPagination" hide-pagination :rows-per-page-options="[0]" color="primary"
+        class="q-mt-md" :loading="loading" binary-state-sort no-data-label="沒有資料" @row-click="eventDetail">
         <!-- loading -->
         <template v-slot:loading>
           <q-inner-loading showing color="primary" />
@@ -399,46 +265,31 @@
           <div class="q-my-none q-py-none row col-12 items-end">
             <div class="col-auto items-end text-bold">會計報表(PF)</div>
             <q-space />
-            <q-btn
-              icon="print"
-              flat
-              class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end"
-              v-print="printObj"
-            >
+            <q-btn icon="print" flat class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end"
+              v-print="printObj">
               <q-tooltip class="bg-white text-primary">列印</q-tooltip>
             </q-btn>
-            <q-btn
-              color="primary"
-              class="hideOnPrint items-end"
-              icon-right="archive"
-              label="匯出Excel"
-              no-caps
-              @click="
-                exportExcel(
-                  PFData,
-                  accountReportColumns,
-                  '會計報表(PF)-' + reportStartDate + '-' + reportEndDate
-                )
-              "
-            />
+            <q-btn color="primary" class="hideOnPrint items-end" icon-right="archive" label="匯出Excel" no-caps @click="
+              exportExcel(
+                PFData,
+                accountReportColumns,
+                '會計報表(PF)-' + reportStartDate + '-' + reportEndDate
+              )
+              " />
           </div>
         </template>
 
         <!-- bottom total row -->
         <template v-slot:bottom-row="props">
           <q-tr>
-            <q-td
-              v-for="index in props.cols.length"
-              class="text-center"
-              style="line-height: 10px"
-            >
+            <q-td v-for="index in props.cols.length" class="text-center" style="line-height: 10px">
               {{ props.cols[index - 1].name == "number" ? "總數: " : "" }}
               {{
                 props.cols[index - 1].name == "number"
                   ? PFData.reduce(
-                      (x, v) => x + v[props.cols[index - 1].name],
-                      0
-                    )
+                    (x, v) => x + v[props.cols[index - 1].name],
+                    0
+                  )
                   : ""
               }}
               {{
@@ -447,9 +298,9 @@
               {{
                 props.cols[index - 1].name == "total"
                   ? PFData.reduce(
-                      (x, v) => x + v[props.cols[index - 1].name],
-                      0
-                    ).toLocaleString()
+                    (x, v) => x + v[props.cols[index - 1].name],
+                    0
+                  ).toLocaleString()
                   : ""
               }}
             </q-td>
@@ -458,21 +309,9 @@
       </q-table>
 
       <!-- MF -->
-      <q-table
-        v-if="MFData.length > 0"
-        dense
-        flat
-        :rows="MFData"
-        :columns="accountReportColumns"
-        :pagination="accountReportPagination"
-        color="primary"
-        class="q-mt-md"
-        :loading="loading"
-        binary-state-sort
-        hide-pagination
-        :rows-per-page-options="[0]"
-        no-data-label="沒有資料"
-      >
+      <q-table v-if="MFData.length > 0" dense flat :rows="MFData" :columns="accountReportColumns"
+        :pagination="accountReportPagination" color="primary" class="q-mt-md" :loading="loading" binary-state-sort
+        hide-pagination :rows-per-page-options="[0]" no-data-label="沒有資料">
         <!-- loading -->
         <template v-slot:loading>
           <q-inner-loading showing color="primary" />
@@ -488,52 +327,34 @@
 
         <!-- top -->
         <template v-slot:top>
-          <div
-            class="q-my-none q-py-none row col-12 items-end"
-            style="line-height: 10px"
-          >
+          <div class="q-my-none q-py-none row col-12 items-end" style="line-height: 10px">
             <div class="col-auto items-end text-bold">會計報表(MF)</div>
             <q-space />
-            <q-btn
-              icon="print"
-              flat
-              class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end"
-              v-print="printObj"
-            >
+            <q-btn icon="print" flat class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end"
+              v-print="printObj">
               <q-tooltip class="bg-white text-primary">列印</q-tooltip>
             </q-btn>
-            <q-btn
-              color="primary"
-              class="hideOnPrint"
-              icon-right="archive"
-              label="匯出Excel"
-              no-caps
-              @click="
-                exportExcel(
-                  MFData,
-                  accountReportColumns,
-                  '會計報表(MF)-' + reportStartDate + '-' + reportEndDate
-                )
-              "
-            />
+            <q-btn color="primary" class="hideOnPrint" icon-right="archive" label="匯出Excel" no-caps @click="
+              exportExcel(
+                MFData,
+                accountReportColumns,
+                '會計報表(MF)-' + reportStartDate + '-' + reportEndDate
+              )
+              " />
           </div>
         </template>
 
         <!-- bottom total row -->
         <template v-slot:bottom-row="props">
           <q-tr>
-            <q-td
-              v-for="index in props.cols.length"
-              class="text-center"
-              style="line-height: 10px"
-            >
+            <q-td v-for="index in props.cols.length" class="text-center" style="line-height: 10px">
               {{ props.cols[index - 1].name == "number" ? "總數: " : "" }}
               {{
                 props.cols[index - 1].name == "number"
                   ? MFData.reduce(
-                      (x, v) => x + v[props.cols[index - 1].name],
-                      0
-                    )
+                    (x, v) => x + v[props.cols[index - 1].name],
+                    0
+                  )
                   : ""
               }}
               {{
@@ -542,9 +363,9 @@
               {{
                 props.cols[index - 1].name == "total"
                   ? MFData.reduce(
-                      (x, v) => x + v[props.cols[index - 1].name],
-                      0
-                    ).toLocaleString()
+                    (x, v) => x + v[props.cols[index - 1].name],
+                    0
+                  ).toLocaleString()
                   : ""
               }}
             </q-td>
@@ -553,22 +374,9 @@
       </q-table>
 
       <!-- SF -->
-      <q-table
-        v-if="SFData.length > 0"
-        dense
-        flat
-        :rows="SFData"
-        :columns="accountReportColumns"
-        :pagination="accountReportPagination"
-        color="primary"
-        class="q-mt-md"
-        :loading="loading"
-        binary-state-sort
-        hide-pagination
-        :rows-per-page-options="[0]"
-        no-data-label="沒有資料"
-        @row-click="eventDetail"
-      >
+      <q-table v-if="SFData.length > 0" dense flat :rows="SFData" :columns="accountReportColumns"
+        :pagination="accountReportPagination" color="primary" class="q-mt-md" :loading="loading" binary-state-sort
+        hide-pagination :rows-per-page-options="[0]" no-data-label="沒有資料" @row-click="eventDetail">
         <!-- loading -->
         <template v-slot:loading>
           <q-inner-loading showing color="primary" />
@@ -584,52 +392,34 @@
 
         <!-- top -->
         <template v-slot:top>
-          <div
-            class="q-my-none q-py-none row col-12 items-end"
-            style="line-height: 10px"
-          >
+          <div class="q-my-none q-py-none row col-12 items-end" style="line-height: 10px">
             <div class="col-auto items-end text-bold">會計報表(SF)</div>
             <q-space />
-            <q-btn
-              icon="print"
-              flat
-              class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end"
-              v-print="printObj"
-            >
+            <q-btn icon="print" flat class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end"
+              v-print="printObj">
               <q-tooltip class="bg-white text-primary">列印</q-tooltip>
             </q-btn>
-            <q-btn
-              color="primary"
-              class="hideOnPrint"
-              icon-right="archive"
-              label="匯出Excel"
-              no-caps
-              @click="
-                exportExcel(
-                  SFData,
-                  accountReportColumns,
-                  '會計報表(SF)-' + reportStartDate + '-' + reportEndDate
-                )
-              "
-            />
+            <q-btn color="primary" class="hideOnPrint" icon-right="archive" label="匯出Excel" no-caps @click="
+              exportExcel(
+                SFData,
+                accountReportColumns,
+                '會計報表(SF)-' + reportStartDate + '-' + reportEndDate
+              )
+              " />
           </div>
         </template>
 
         <!-- bottom total row -->
         <template v-slot:bottom-row="props">
           <q-tr>
-            <q-td
-              v-for="index in props.cols.length"
-              class="text-center"
-              style="line-height: 10px"
-            >
+            <q-td v-for="index in props.cols.length" class="text-center" style="line-height: 10px">
               {{ props.cols[index - 1].name == "number" ? "總數: " : "" }}
               {{
                 props.cols[index - 1].name == "number"
                   ? SFData.reduce(
-                      (x, v) => x + v[props.cols[index - 1].name],
-                      0
-                    )
+                    (x, v) => x + v[props.cols[index - 1].name],
+                    0
+                  )
                   : ""
               }}
               {{
@@ -638,9 +428,9 @@
               {{
                 props.cols[index - 1].name == "total"
                   ? SFData.reduce(
-                      (x, v) => x + v[props.cols[index - 1].name],
-                      0
-                    ).toLocaleString()
+                    (x, v) => x + v[props.cols[index - 1].name],
+                    0
+                  ).toLocaleString()
                   : ""
               }}
             </q-td>
@@ -649,21 +439,9 @@
       </q-table>
 
       <!-- RF -->
-      <q-table
-        v-if="RFData.length > 0"
-        dense
-        flat
-        :rows="RFData"
-        :columns="accountReportColumns"
-        :pagination="accountReportPagination"
-        color="primary"
-        class="q-mt-md"
-        :loading="loading"
-        binary-state-sort
-        hide-pagination
-        :rows-per-page-options="[0]"
-        no-data-label="沒有資料"
-      >
+      <q-table v-if="RFData.length > 0" dense flat :rows="RFData" :columns="accountReportColumns"
+        :pagination="accountReportPagination" color="primary" class="q-mt-md" :loading="loading" binary-state-sort
+        hide-pagination :rows-per-page-options="[0]" no-data-label="沒有資料">
         <!-- loading -->
         <template v-slot:loading>
           <q-inner-loading showing color="primary" />
@@ -679,52 +457,34 @@
 
         <!-- top -->
         <template v-slot:top>
-          <div
-            class="q-my-none q-py-none row col-12 items-end"
-            style="line-height: 10px"
-          >
+          <div class="q-my-none q-py-none row col-12 items-end" style="line-height: 10px">
             <div class="col-auto items-end text-bold">會計報表(RF)</div>
             <q-space />
-            <q-btn
-              icon="print"
-              flat
-              class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end"
-              v-print="printObj"
-            >
+            <q-btn icon="print" flat class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end"
+              v-print="printObj">
               <q-tooltip class="bg-white text-primary">列印</q-tooltip>
             </q-btn>
-            <q-btn
-              color="primary"
-              class="hideOnPrint"
-              icon-right="archive"
-              label="匯出Excel"
-              no-caps
-              @click="
-                exportExcel(
-                  RFData,
-                  accountReportColumns,
-                  '會計報表(RF)-' + reportStartDate + '-' + reportEndDate
-                )
-              "
-            />
+            <q-btn color="primary" class="hideOnPrint" icon-right="archive" label="匯出Excel" no-caps @click="
+              exportExcel(
+                RFData,
+                accountReportColumns,
+                '會計報表(RF)-' + reportStartDate + '-' + reportEndDate
+              )
+              " />
           </div>
         </template>
 
         <!-- bottom total row -->
         <template v-slot:bottom-row="props">
           <q-tr>
-            <q-td
-              v-for="index in props.cols.length"
-              class="text-center"
-              style="line-height: 10px"
-            >
+            <q-td v-for="index in props.cols.length" class="text-center" style="line-height: 10px">
               {{ props.cols[index - 1].name == "number" ? "總數: " : "" }}
               {{
                 props.cols[index - 1].name == "number"
                   ? RFData.reduce(
-                      (x, v) => x + v[props.cols[index - 1].name],
-                      0
-                    )
+                    (x, v) => x + v[props.cols[index - 1].name],
+                    0
+                  )
                   : ""
               }}
               {{
@@ -733,9 +493,9 @@
               {{
                 props.cols[index - 1].name == "total"
                   ? RFData.reduce(
-                      (x, v) => x + v[props.cols[index - 1].name],
-                      0
-                    ).toLocaleString()
+                    (x, v) => x + v[props.cols[index - 1].name],
+                    0
+                  ).toLocaleString()
                   : ""
               }}
             </q-td>
@@ -744,21 +504,9 @@
       </q-table>
 
       <!-- CF -->
-      <q-table
-        v-if="CFData.length > 0"
-        dense
-        flat
-        :rows="CFData"
-        :columns="accountReportColumns"
-        :pagination="accountReportPagination"
-        color="primary"
-        class="q-mt-md"
-        :loading="loading"
-        binary-state-sort
-        hide-pagination
-        :rows-per-page-options="[0]"
-        no-data-label="沒有資料"
-      >
+      <q-table v-if="CFData.length > 0" dense flat :rows="CFData" :columns="accountReportColumns"
+        :pagination="accountReportPagination" color="primary" class="q-mt-md" :loading="loading" binary-state-sort
+        hide-pagination :rows-per-page-options="[0]" no-data-label="沒有資料">
         <!-- loading -->
         <template v-slot:loading>
           <q-inner-loading showing color="primary" />
@@ -774,52 +522,34 @@
 
         <!-- top -->
         <template v-slot:top>
-          <div
-            class="q-my-none q-py-none row col-12 items-end"
-            style="line-height: 10px"
-          >
+          <div class="q-my-none q-py-none row col-12 items-end" style="line-height: 10px">
             <div class="col-auto items-end text-bold">會計報表(CF)</div>
             <q-space />
-            <q-btn
-              icon="print"
-              flat
-              class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end"
-              v-print="printObj"
-            >
+            <q-btn icon="print" flat class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end"
+              v-print="printObj">
               <q-tooltip class="bg-white text-primary">列印</q-tooltip>
             </q-btn>
-            <q-btn
-              color="primary"
-              class="hideOnPrint"
-              icon-right="archive"
-              label="匯出Excel"
-              no-caps
-              @click="
-                exportExcel(
-                  CFData,
-                  accountReportColumns,
-                  '會計報表(CF)-' + reportStartDate + '-' + reportEndDate
-                )
-              "
-            />
+            <q-btn color="primary" class="hideOnPrint" icon-right="archive" label="匯出Excel" no-caps @click="
+              exportExcel(
+                CFData,
+                accountReportColumns,
+                '會計報表(CF)-' + reportStartDate + '-' + reportEndDate
+              )
+              " />
           </div>
         </template>
 
         <!-- bottom total row -->
         <template v-slot:bottom-row="props">
           <q-tr>
-            <q-td
-              v-for="index in props.cols.length"
-              class="text-center"
-              style="line-height: 10px"
-            >
+            <q-td v-for="index in props.cols.length" class="text-center" style="line-height: 10px">
               {{ props.cols[index - 1].name == "number" ? "總數: " : "" }}
               {{
                 props.cols[index - 1].name == "number"
                   ? CFData.reduce(
-                      (x, v) => x + v[props.cols[index - 1].name],
-                      0
-                    )
+                    (x, v) => x + v[props.cols[index - 1].name],
+                    0
+                  )
                   : ""
               }}
               {{
@@ -828,9 +558,9 @@
               {{
                 props.cols[index - 1].name == "total"
                   ? CFData.reduce(
-                      (x, v) => x + v[props.cols[index - 1].name],
-                      0
-                    ).toLocaleString()
+                    (x, v) => x + v[props.cols[index - 1].name],
+                    0
+                  ).toLocaleString()
                   : ""
               }}
             </q-td>
@@ -839,21 +569,9 @@
       </q-table>
 
       <!-- 新會員費 -->
-      <q-table
-        v-if="NewMemberData.length > 0"
-        dense
-        flat
-        :rows="NewMemberData"
-        :columns="accountReportColumns"
-        :pagination="accountReportPagination"
-        color="primary"
-        class="q-mt-md"
-        :loading="loading"
-        binary-state-sort
-        hide-pagination
-        :rows-per-page-options="[0]"
-        no-data-label="沒有資料"
-      >
+      <q-table v-if="NewMemberData.length > 0" dense flat :rows="NewMemberData" :columns="accountReportColumns"
+        :pagination="accountReportPagination" color="primary" class="q-mt-md" :loading="loading" binary-state-sort
+        hide-pagination :rows-per-page-options="[0]" no-data-label="沒有資料">
         <!-- loading -->
         <template v-slot:loading>
           <q-inner-loading showing color="primary" />
@@ -869,52 +587,34 @@
 
         <!-- top -->
         <template v-slot:top>
-          <div
-            class="q-my-none q-py-none row col-12 items-end"
-            style="line-height: 10px"
-          >
+          <div class="q-my-none q-py-none row col-12 items-end" style="line-height: 10px">
             <div class="col-auto items-end text-bold">會計報表(新會員費)</div>
             <q-space />
-            <q-btn
-              icon="print"
-              flat
-              class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end"
-              v-print="printObj"
-            >
+            <q-btn icon="print" flat class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end"
+              v-print="printObj">
               <q-tooltip class="bg-white text-primary">列印</q-tooltip>
             </q-btn>
-            <q-btn
-              color="primary"
-              class="hideOnPrint"
-              icon-right="archive"
-              label="匯出Excel"
-              no-caps
-              @click="
-                exportExcel(
-                  NewMemberData,
-                  accountReportColumns,
-                  '會計報表(新會員費)-' + reportStartDate + '-' + reportEndDate
-                )
-              "
-            />
+            <q-btn color="primary" class="hideOnPrint" icon-right="archive" label="匯出Excel" no-caps @click="
+              exportExcel(
+                NewMemberData,
+                accountReportColumns,
+                '會計報表(新會員費)-' + reportStartDate + '-' + reportEndDate
+              )
+              " />
           </div>
         </template>
 
         <!-- bottom total row -->
         <template v-slot:bottom-row="props">
           <q-tr>
-            <q-td
-              v-for="index in props.cols.length"
-              class="text-center"
-              style="line-height: 10px"
-            >
+            <q-td v-for="index in props.cols.length" class="text-center" style="line-height: 10px">
               {{ props.cols[index - 1].name == "number" ? "總數: " : "" }}
               {{
                 props.cols[index - 1].name == "number"
                   ? NewMemberData.reduce(
-                      (x, v) => x + v[props.cols[index - 1].name],
-                      0
-                    )
+                    (x, v) => x + v[props.cols[index - 1].name],
+                    0
+                  )
                   : ""
               }}
               {{
@@ -925,9 +625,9 @@
               {{
                 props.cols[index - 1].name == "total"
                   ? NewMemberData.reduce(
-                      (x, v) => x + v[props.cols[index - 1].name],
-                      0
-                    ).toLocaleString()
+                    (x, v) => x + v[props.cols[index - 1].name],
+                    0
+                  ).toLocaleString()
                   : ""
               }}
             </q-td>
@@ -936,21 +636,9 @@
       </q-table>
 
       <!-- OF -->
-      <q-table
-        v-if="OFData.length > 0"
-        dense
-        flat
-        :rows="OFData"
-        :columns="accountReportColumns"
-        :pagination="accountReportPagination"
-        color="primary"
-        class="q-mt-md"
-        :loading="loading"
-        binary-state-sort
-        hide-pagination
-        :rows-per-page-options="[0]"
-        no-data-label="沒有資料"
-      >
+      <q-table v-if="OFData.length > 0" dense flat :rows="OFData" :columns="accountReportColumns"
+        :pagination="accountReportPagination" color="primary" class="q-mt-md" :loading="loading" binary-state-sort
+        hide-pagination :rows-per-page-options="[0]" no-data-label="沒有資料">
         <!-- loading -->
         <template v-slot:loading>
           <q-inner-loading showing color="primary" />
@@ -966,52 +654,34 @@
 
         <!-- top -->
         <template v-slot:top>
-          <div
-            class="q-my-none q-py-none row col-12 items-end"
-            style="line-height: 10px"
-          >
+          <div class="q-my-none q-py-none row col-12 items-end" style="line-height: 10px">
             <div class="col-auto items-end text-bold">其他收入</div>
             <q-space />
-            <q-btn
-              icon="print"
-              flat
-              class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end"
-              v-print="printObj"
-            >
+            <q-btn icon="print" flat class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end"
+              v-print="printObj">
               <q-tooltip class="bg-white text-primary">列印</q-tooltip>
             </q-btn>
-            <q-btn
-              color="primary"
-              class="hideOnPrint"
-              icon-right="archive"
-              label="匯出Excel"
-              no-caps
-              @click="
-                exportExcel(
-                  OFData,
-                  accountReportColumns,
-                  '其他收入-' + reportStartDate + '-' + reportEndDate
-                )
-              "
-            />
+            <q-btn color="primary" class="hideOnPrint" icon-right="archive" label="匯出Excel" no-caps @click="
+              exportExcel(
+                OFData,
+                accountReportColumns,
+                '其他收入-' + reportStartDate + '-' + reportEndDate
+              )
+              " />
           </div>
         </template>
 
         <!-- bottom total row -->
         <template v-slot:bottom-row="props">
           <q-tr>
-            <q-td
-              v-for="index in props.cols.length"
-              class="text-center"
-              style="line-height: 10px"
-            >
+            <q-td v-for="index in props.cols.length" class="text-center" style="line-height: 10px">
               {{ props.cols[index - 1].name == "number" ? "總數: " : "" }}
               {{
                 props.cols[index - 1].name == "number"
                   ? NewMemberData.reduce(
-                      (x, v) => x + v[props.cols[index - 1].name],
-                      0
-                    )
+                    (x, v) => x + v[props.cols[index - 1].name],
+                    0
+                  )
                   : ""
               }}
               {{
@@ -1022,9 +692,9 @@
               {{
                 props.cols[index - 1].name == "total"
                   ? OFData.reduce(
-                      (x, v) => x + v[props.cols[index - 1].name],
-                      0
-                    ).toLocaleString()
+                    (x, v) => x + v[props.cols[index - 1].name],
+                    0
+                  ).toLocaleString()
                   : ""
               }}
             </q-td>
@@ -1033,21 +703,9 @@
       </q-table>
 
       <!-- 續會員費 -->
-      <q-table
-        v-if="RenewMemberData.length > 0"
-        dense
-        flat
-        :rows="RenewMemberData"
-        :columns="accountReportColumns"
-        :pagination="accountReportPagination"
-        color="primary"
-        class="q-mt-md"
-        :loading="loading"
-        binary-state-sort
-        hide-pagination
-        :rows-per-page-options="[0]"
-        no-data-label="沒有資料"
-      >
+      <q-table v-if="RenewMemberData.length > 0" dense flat :rows="RenewMemberData" :columns="accountReportColumns"
+        :pagination="accountReportPagination" color="primary" class="q-mt-md" :loading="loading" binary-state-sort
+        hide-pagination :rows-per-page-options="[0]" no-data-label="沒有資料">
         <!-- loading -->
         <template v-slot:loading>
           <q-inner-loading showing color="primary" />
@@ -1063,52 +721,34 @@
 
         <!-- top -->
         <template v-slot:top>
-          <div
-            class="q-my-none q-py-none row col-12 items-end"
-            style="line-height: 10px"
-          >
+          <div class="q-my-none q-py-none row col-12 items-end" style="line-height: 10px">
             <div class="col-auto items-end text-bold">會計報表(續會員費)</div>
             <q-space />
-            <q-btn
-              icon="print"
-              flat
-              class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end"
-              v-print="printObj"
-            >
+            <q-btn icon="print" flat class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end"
+              v-print="printObj">
               <q-tooltip class="bg-white text-primary">列印</q-tooltip>
             </q-btn>
-            <q-btn
-              color="primary"
-              class="hideOnPrint"
-              icon-right="archive"
-              label="匯出Excel"
-              no-caps
-              @click="
-                exportExcel(
-                  RenewMemberData,
-                  accountReportColumns,
-                  '會計報表(續會員費)-' + reportStartDate + '-' + reportEndDate
-                )
-              "
-            />
+            <q-btn color="primary" class="hideOnPrint" icon-right="archive" label="匯出Excel" no-caps @click="
+              exportExcel(
+                RenewMemberData,
+                accountReportColumns,
+                '會計報表(續會員費)-' + reportStartDate + '-' + reportEndDate
+              )
+              " />
           </div>
         </template>
 
         <!-- bottom total row -->
         <template v-slot:bottom-row="props">
           <q-tr>
-            <q-td
-              v-for="index in props.cols.length"
-              class="text-center"
-              style="line-height: 10px"
-            >
+            <q-td v-for="index in props.cols.length" class="text-center" style="line-height: 10px">
               {{ props.cols[index - 1].name == "number" ? "總數: " : "" }}
               {{
                 props.cols[index - 1].name == "number"
                   ? RenewMemberData.reduce(
-                      (x, v) => x + v[props.cols[index - 1].name],
-                      0
-                    )
+                    (x, v) => x + v[props.cols[index - 1].name],
+                    0
+                  )
                   : ""
               }}
               {{
@@ -1119,9 +759,9 @@
               {{
                 props.cols[index - 1].name == "total"
                   ? RenewMemberData.reduce(
-                      (x, v) => x + v[props.cols[index - 1].name],
-                      0
-                    ).toLocaleString()
+                    (x, v) => x + v[props.cols[index - 1].name],
+                    0
+                  ).toLocaleString()
                   : ""
               }}
             </q-td>
@@ -1471,15 +1111,15 @@ const { result, loading, refetch } = useQuery(
         reportEvent.value ? { c_act_code: { _eq: reportEvent.value } } : {},
         reportStaff.value
           ? {
-              c_user_id: {
-                _in: [
-                  reportStaff.value.label in staffNameMapping
-                    ? staffNameMapping[reportStaff.value.label]
-                    : reportStaff.value.label,
-                  reportStaff.value.label,
-                ],
-              },
-            }
+            c_user_id: {
+              _in: [
+                reportStaff.value.label in staffNameMapping
+                  ? staffNameMapping[reportStaff.value.label]
+                  : reportStaff.value.label,
+                reportStaff.value.label,
+              ],
+            },
+          }
           : {},
       ],
     },
@@ -1824,6 +1464,7 @@ export default {
   .hideOnPrint {
     display: none;
   }
+
   .print-title {
     font-size: 0.4rem;
     line-height: 25px;
