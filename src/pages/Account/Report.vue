@@ -48,6 +48,8 @@
   <q-tabs v-model="activeTab" inline-label align="left" class="desktop-only bg-primary text-white">
     <q-tab name="accountReport" icon="source" label="會計報表" />
     <q-tab name="All" icon="source" :label="'收據細列表(' + ReceiptData.length + ')'" />
+    <q-tab name="Scout" icon="source"
+      :label="'童軍收據細列表(' + ReceiptData.filter((x) => x.c_desc && x.c_desc.includes('童軍')).length + ')'" />
     <!--
     <q-tab name="Error" icon="error" :label="'錯誤('+ErrorData.length+'人)'" />
     -->
@@ -83,6 +85,90 @@
       <q-table dense flat :rows="ReceiptData" :columns="receiptListColumns" :pagination="defaultPagination"
         hide-pagination :rows-per-page-options="[0]" color="primary" row-key="c_receipt_no" :loading="loading"
         binary-state-sort @row-click="rowDetail">
+        <!-- loading -->
+        <template v-slot:loading>
+          <q-inner-loading showing color="primary" />
+        </template>
+
+        <!-- status -->
+        <template v-slot:body-cell-c_status="props">
+          <q-td :props="props">
+            <div v-if="props.row.b_refund">退款</div>
+            <div v-if="props.row.b_delete">刪除</div>
+          </q-td>
+        </template>
+
+        <!-- top -->
+        <template v-slot:top class="row">
+          <div class="q-my-none q-py-none row col-12 items-end" style="line-height: 10px">
+            <div class="col-auto items-end text-bold">收據細列表</div>
+            <q-space />
+
+            <q-btn icon="print" flat class="bg-primary text-white col-shrink q-mx-md hideOnPrint items-end"
+              v-print="printObj">
+              <q-tooltip class="bg-white text-primary">列印</q-tooltip>
+            </q-btn>
+            <q-btn color="primary" icon-right="archive" class="hideOnPrint" label="匯出Excel" no-caps @click="
+              exportExcel(
+                ReceiptData,
+                receiptListColumns,
+                '收據細列表' + reportStartDate + '-' + reportEndDate
+              )
+              " />
+          </div>
+        </template>
+
+        <!-- bottom total row -->
+        <template v-slot:bottom-row="props">
+          <q-tr>
+            <q-td v-for="index in props.cols.length" class="text-center" style="line-height: 10px">
+              {{
+                props.cols[index - 1].name == "u_price_after_discount"
+                  ? "總金額(HKD): "
+                  : ""
+              }}
+              {{
+                ReceiptData.reduce(
+                  (x, v) =>
+                    props.cols[index - 1].name == "u_price_after_discount"
+                      ? x + v[props.cols[index - 1].name]
+                      : "",
+                  0
+                ).toLocaleString()
+              }}
+            </q-td>
+          </q-tr>
+        </template>
+      </q-table>
+    </q-tab-panel>
+
+    <q-tab-panel name="Scout" class="q-ma-none q-pa-sm">
+      <div class="col-12 row items-center hideOnScreen">
+        <div class="print-title col-7 row q-mx-md items-center">
+          <div class="col-12">長洲鄉事委員會青年綜合服務中心</div>
+          <div class="col-12">
+            Cheung Chau Rural Committee Integrated Youth Centre
+          </div>
+        </div>
+      </div>
+      <div class="col-12 row hideOnScreen justify-around q-py-none q-my-none">
+        <div class="col-auto q-mx-md items-end">
+          範圍：{{ reportStartDate }} - {{ reportEndDate }}
+        </div>
+        <div v-if="reportEvent" class="col-auto q-mx-md items-end">
+          活動編號：{{ reportEvent }}
+        </div>
+        <div v-if="reportStaff" class="col-auto q-mx-md items-end">
+          負責人：{{ reportStaff.label }}
+        </div>
+      </div>
+      <div class="col-12 row hideOnScreen justify-end items-end q-py-none q-my-none">
+        列印日期：{{ qdate.formatDate(new Date(), "YYYY年M月D日") }}
+      </div>
+      <!-- 收據細列表 -->
+      <q-table dense flat :rows="ReceiptData.filter((x) => x.c_desc && x.c_desc.includes('童軍'))"
+        :columns="receiptListColumns" :pagination="defaultPagination" hide-pagination :rows-per-page-options="[0]"
+        color="primary" row-key="c_receipt_no" :loading="loading" binary-state-sort @row-click="rowDetail">
         <!-- loading -->
         <template v-slot:loading>
           <q-inner-loading showing color="primary" />

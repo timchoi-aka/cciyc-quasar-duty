@@ -237,9 +237,12 @@ async function save() {
   let remark = "";
   events.value.forEach((e) => {
     remark = "服務資料 Service Detail\r\n";
+
     if (e.d_date_from && e.d_date_to) {
       if (qdate.getDateDiff(e.d_date_from, e.d_date_to) == 0) {
-        remark += "日期 Date：" + qdate.formatDate(e.d_date_from, "YYYY年M月D日");
+        remark += "日期 Date：" + qdate.formatDate(e.d_date_from, "YYYY年M月D日 星期ddd", {
+          daysShort: ["日", "一", "二", "三", "四", "五", "六"],
+        });
       } else {
         remark +=
           "日期 Date：" +
@@ -249,7 +252,7 @@ async function save() {
       }
     }
 
-    if (e.c_week) remark += " 逢星期" + e.c_week;
+    if (e.c_week && (qdate.formatDate(e.d_date_from, "YYYYMMDD") != qdate.formatDate(e.d_date_to, "YYYYMMDD"))) remark += " 逢星期" + e.c_week;
     remark += "\r\n";
     if (e.d_time_from && e.d_time_to) {
       let startDatetime = qdate.extractDate(

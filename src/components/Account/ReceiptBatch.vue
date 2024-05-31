@@ -345,7 +345,7 @@ function displayPDF(data, memoData) {
       data.EventRegistration_to_Event.d_date_to
     ) {
       doc.setFontSize(7);
-      doc.text("日期 Date:", 5, atLine(lineNo));
+      doc.text("日期 Date：", 5, atLine(lineNo));
       if (
         date.formatDate(
           data.EventRegistration_to_Event.d_date_from,
@@ -359,7 +359,9 @@ function displayPDF(data, memoData) {
               data.EventRegistration_to_Event.d_date_from.trim(),
               "D/M/YYYY"
             ),
-            "YYYY年M月D日"
+            "YYYY年M月D日 星期ddd", {
+            daysShort: ["日", "一", "二", "三", "四", "五", "六"],
+          }
           ),
           20,
           atLine(lineNo)
@@ -382,7 +384,7 @@ function displayPDF(data, memoData) {
             ),
             "YYYY年M月D日"
           ) +
-          (data.EventRegistration_to_Event.c_week
+          (data.EventRegistration_to_Event.c_week && (date.formatDate(data.EventRegistration_to_Event.d_date_from.trim(), "YYYYMMDD") == date.formatDate(data.EventRegistration_to_Event.d_date_to.trim(), "YYYYMMDD"))
             ? " 逢星期" + data.EventRegistration_to_Event.c_week.trim()
             : "");
         doc.text(dateText, 20, atLine(lineNo), {
@@ -397,7 +399,7 @@ function displayPDF(data, memoData) {
       data.EventRegistration_to_Event.d_time_to
     ) {
       doc.setFontSize(7);
-      doc.text("時間 Time: ", 5, atLine(lineNo));
+      doc.text("時間 Time：", 5, atLine(lineNo));
       let startDatetime = date.extractDate(
         data.EventRegistration_to_Event.d_date_from.trim() +
         " " +
@@ -419,7 +421,7 @@ function displayPDF(data, memoData) {
         atLine(lineNo)
       );
 
-      lineNo++;
+      lineNo += 0.8;
     }
 
     //lineNo += 0.5;
@@ -439,9 +441,11 @@ function displayPDF(data, memoData) {
         maxWidth: 50,
       });
       let lines = doc.splitTextToSize(remarkText, 50);
-      lineNo += (lines.length + 1) * 0.8;
+      lineNo += (lines.length) * 0.8;
     }
+    lineNo += 0.8
   });
+
 
   doc.setProperties({
     title: data.map((x) => x.c_receipt_no).join("_") + ".pdf",

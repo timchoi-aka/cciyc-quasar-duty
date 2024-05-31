@@ -3,61 +3,39 @@
   <LoadingDialog v-model="loading" message="處理中" />
 
   <!-- Duplicate Member modal -->
-  <q-dialog
-    v-model="duplicateMemberModal"
-    transition-show="slide-up"
-    transition-hide="slide-down"
-    class="q-pa-none"
-  >
+  <q-dialog v-model="duplicateMemberModal" transition-show="slide-up" transition-hide="slide-down" class="q-pa-none">
     <q-card>
-      <q-card-section class="bg-primary text-white text-h6"
-        >發現重複會員</q-card-section
-      >
+      <q-card-section class="bg-primary text-white text-h6">發現重複會員</q-card-section>
       <q-card-section class="q-pa-none">
         <div class="row">
           <div class="col-6 row bg-yellow-1 items-start content-start q-pa-sm">
             <span class="col-12 q-pb-md">新會員</span>
             <span class="col-12">姓名：{{ personalInfo.c_name }}</span>
-            <span class="col-12"
-              >英文姓名：{{ personalInfo.c_name_other }}</span
-            >
+            <span class="col-12">英文姓名：{{ personalInfo.c_name_other }}</span>
             <span class="col-12">出生日期：{{ personalInfo.d_birth }}</span>
           </div>
           <div class="col-6 row bg-blue-1 q-pa-sm">
             <span class="col-12 q-pb-md">舊會員</span>
-            <div
-              v-for="obj in duplicateMemberObject"
-              class="col-12 row q-pb-md"
-            >
+            <div v-for="obj in duplicateMemberObject" class="col-12 row q-pb-md">
               <span class="col-12">會員編號：{{ obj.c_mem_id }}</span>
               <span class="col-12">姓名：{{ obj.c_name }}</span>
               <span class="col-12">英文姓名：{{ obj.c_name_other }}</span>
-              <span class="col-12"
-                >出生日期：{{
-                  qdate.formatDate(obj.d_birth, "YYYY/MM/DD")
-                }}</span
-              >
+              <span class="col-12">出生日期：{{
+                qdate.formatDate(obj.d_birth, "YYYY/MM/DD")
+                }}</span>
               <span class="col-12">會藉：{{ obj.c_udf_1 }}</span>
-              <span class="col-12"
-                >人會日期：{{
-                  qdate.formatDate(obj.d_enter_1, "YYYY/MM/DD")
-                }}</span
-              >
-              <span class="col-12"
-                >退會日期：{{
-                  qdate.formatDate(obj.d_exit_1, "YYYY/MM/DD")
-                }}</span
-              >
-              <span class="col-12"
-                >屆滿日期：{{
-                  qdate.formatDate(obj.d_expired_1, "YYYY/MM/DD")
-                }}</span
-              >
-              <span class="col-12"
-                >續會日期：{{
-                  qdate.formatDate(obj.d_renew_1, "YYYY/MM/DD")
-                }}</span
-              >
+              <span class="col-12">人會日期：{{
+                qdate.formatDate(obj.d_enter_1, "YYYY/MM/DD")
+                }}</span>
+              <span class="col-12">退會日期：{{
+                qdate.formatDate(obj.d_exit_1, "YYYY/MM/DD")
+                }}</span>
+              <span class="col-12">屆滿日期：{{
+                qdate.formatDate(obj.d_expired_1, "YYYY/MM/DD")
+                }}</span>
+              <span class="col-12">續會日期：{{
+                qdate.formatDate(obj.d_renew_1, "YYYY/MM/DD")
+                }}</span>
             </div>
           </div>
         </div>
@@ -65,82 +43,46 @@
       <q-card-actions>
         <q-space />
         <q-btn label="取消" class="bg-negative text-white" v-close-popup />
-        <q-btn
-          label="確定新增"
-          class="bg-primary text-white"
-          v-close-popup
-          @click="addMember"
-        />
+        <q-btn label="確定新增" class="bg-primary text-white" v-close-popup @click="addMember" />
       </q-card-actions>
     </q-card>
   </q-dialog>
 
   <!-- print receipt modal -->
-  <q-dialog
-    v-if="$q.screen.gt.md"
-    v-model="printReceiptModal"
-    full-height
-    full-width
-    transition-show="slide-up"
-    transition-hide="slide-down"
-    class="q-pa-none"
-  >
+  <q-dialog v-if="$q.platform.is.desktop" v-model="printReceiptModal" full-height full-width transition-show="slide-up"
+    transition-hide="slide-down" class="q-pa-none">
     <PrintReceipt :MemberID="printReceiptMember" />
   </q-dialog>
 
-  <q-dialog
-    v-if="$q.screen.lt.md"
-    v-model="printReceiptModal"
-    maximized
-    full-width
-    persistent
-    transition-show="slide-up"
-    transition-hide="slide-down"
-    class="q-pa-none"
-  >
+  <q-dialog v-if="$q.platform.is.mobile" v-model="printReceiptModal" maximized full-width persistent
+    transition-show="slide-up" transition-hide="slide-down" class="q-pa-none">
     <PrintReceipt :MemberID="printReceiptMember" />
   </q-dialog>
 
   <!-- personal info qcard -->
   <q-card class="q-ma-md-md q-ma-xs-none q-ma-sm-sm">
-    <q-card-section class="q-pa-md-md q-pa-sm-sm q-pa-xs-xs text-h6 bg-blue-1"
-      >新會員個人資料<span v-if="!loadingMem"
-        >(編號：{{ latestMemberID }})</span
-      >
+    <q-card-section class="q-pa-md-md q-pa-sm-sm q-pa-xs-xs text-h6 bg-blue-1">新會員個人資料<span v-if="!loadingMem">(編號：{{
+      latestMemberID }})</span>
     </q-card-section>
-    <q-card-section
-      class="row justify-start items-start q-pa-sm-sm q-pa-xs-xs q-pa-md-md"
-    >
+    <q-card-section class="row justify-start items-start q-pa-sm-sm q-pa-xs-xs q-pa-md-md">
       <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-8">
         姓名<q-input filled v-model="personalInfo.c_name"></q-input>
       </div>
 
       <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-4">
         性別<br />
-        <q-btn-toggle
-          v-model="personalInfo.c_sex"
-          toggle-color="primary"
-          :options="[
-            { label: '男', value: '男' },
-            { label: '女', value: '女' },
-          ]"
-        />
+        <q-btn-toggle v-model="personalInfo.c_sex" toggle-color="primary" :options="[
+          { label: '男', value: '男' },
+          { label: '女', value: '女' },
+        ]" />
       </div>
 
       <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-12">
-        Name<q-input
-          filled
-          v-model="personalInfo.c_name_other"
-          @update:model-value="capitalize"
-        ></q-input>
+        Name<q-input filled v-model="personalInfo.c_name_other" @update:model-value="capitalize"></q-input>
       </div>
 
       <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-12">
-        手提電話<q-input
-          filled
-          v-model="personalInfo.c_mobile"
-          mask="########"
-        />
+        手提電話<q-input filled v-model="personalInfo.c_mobile" mask="########" />
       </div>
 
       <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-12">
@@ -149,21 +91,10 @@
 
       <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-8">
         出生日期
-        <q-input
-          filled
-          v-model="personalInfo.d_birth"
-          debounce="500"
-          mask="date"
-          hint="YYYY/MM/DD"
-          :rules="['date']"
-        >
+        <q-input filled v-model="personalInfo.d_birth" debounce="500" mask="date" hint="YYYY/MM/DD" :rules="['date']">
           <template v-slot:append>
             <q-icon name="event" class="cursor-pointer">
-              <q-popup-proxy
-                cover
-                transition-show="scale"
-                transition-hide="scale"
-              >
+              <q-popup-proxy cover transition-show="scale" transition-hide="scale">
                 <q-date v-model="personalInfo.d_birth">
                   <div class="row items-center justify-end">
                     <q-btn v-close-popup label="Close" color="primary" flat />
@@ -197,133 +128,73 @@
     </q-card-section>
     <q-card-section class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md">
       <div class="col-12 row">
-        <span class="col-4">緊急聯絡人: </span
-        ><span class="col-8"
-          ><q-input filled v-model="personalInfo.c_emer_name"
-        /></span>
+        <span class="col-4">緊急聯絡人: </span><span class="col-8"><q-input filled
+            v-model="personalInfo.c_emer_name" /></span>
       </div>
       <div class="col-12 row">
-        <span class="col-4">關係: </span
-        ><span class="col-8"
-          ><q-input filled v-model="personalInfo.c_emer_rel"
-        /></span>
+        <span class="col-4">關係: </span><span class="col-8"><q-input filled v-model="personalInfo.c_emer_rel" /></span>
       </div>
       <div class="col-12 row">
-        <span class="col-4">電話: </span
-        ><span class="col-8"
-          ><q-input filled v-model="personalInfo.c_emer_tel1_1" mask="########"
-        /></span>
+        <span class="col-4">電話: </span><span class="col-8"><q-input filled v-model="personalInfo.c_emer_tel1_1"
+            mask="########" /></span>
       </div>
     </q-card-section>
   </q-card>
 
   <!-- related member -->
   <q-card class="q-ma-md-md q-ma-xs-none q-ma-sm-sm">
-    <q-card-section
-      class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md text-h6 bg-yellow-1"
-    >
+    <q-card-section class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md text-h6 bg-yellow-1">
       關聯會員
-      <q-btn
-        square
-        class="col-1 col-xs-1 text-white bg-primary"
-        icon="add"
-        @click="
-          relationTable.push({
-            c_mem_id_1: latestMemberID,
-            c_mem_id_2: '',
-            relation: '',
-            name: '',
-            age: 0,
-            d_birth: '',
-            b_mem_type1: false,
-            uuid: '',
-            delete: false,
-          })
-        "
-      />
-      <q-btn
-        v-if="relationTable.length > 1"
-        square
-        class="col-1 text-white bg-negative"
-        icon="remove"
-        @click="
-          relationTable.splice(relationTable.length - 1, 1) &&
-            updateType1Expire()
-        "
-      />
+      <q-btn square class="col-1 col-xs-1 text-white bg-primary" icon="add" @click="
+        relationTable.push({
+          c_mem_id_1: latestMemberID,
+          c_mem_id_2: '',
+          relation: '',
+          name: '',
+          age: 0,
+          d_birth: '',
+          b_mem_type1: false,
+          uuid: '',
+          delete: false,
+        })
+        " />
+      <q-btn v-if="relationTable.length > 1" square class="col-1 text-white bg-negative" icon="remove" @click="
+        relationTable.splice(relationTable.length - 1, 1) &&
+        updateType1Expire()
+        " />
     </q-card-section>
     <q-card-section class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md">
       <div class="row">
-        <span class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none"
-          >編號</span
-        >
-        <span class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none"
-          >關係</span
-        >
-        <span class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none"
-          >姓名</span
-        >
-        <span class="col-1 col-xs-1 q-mr-md-md q-mr-sm-sm q-mr-xs-none"
-          >會藉</span
-        >
+        <span class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none">編號</span>
+        <span class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none">關係</span>
+        <span class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none">姓名</span>
+        <span class="col-1 col-xs-1 q-mr-md-md q-mr-sm-sm q-mr-xs-none">會藉</span>
         <q-space />
       </div>
 
-      <div
-        v-for="(relation, index) in relationTable"
-        :key="index"
-        class="row fit"
-      >
-        <MemberRelated
-          :key="latestMemberID"
-          v-model="relationTable[index]"
-          :MemberID="latestMemberID"
-          class="row fit"
-        />
+      <div v-for="(relation, index) in relationTable" :key="index" class="row fit">
+        <MemberRelated :key="latestMemberID" v-model="relationTable[index]" :MemberID="latestMemberID"
+          class="row fit" />
       </div>
     </q-card-section>
   </q-card>
 
   <!-- membership info qcard -->
   <q-card class="q-ma-md-md q-ma-xs-none q-ma-sm-sm">
-    <q-card-section class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md text-h6 bg-green-1"
-      >會籍</q-card-section
-    >
-    <q-card-section
-      class="row justify-start items-start q-pa-xs-xs q-pa-sm-sm q-pa-md-md"
-    >
+    <q-card-section class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md text-h6 bg-green-1">會籍</q-card-section>
+    <q-card-section class="row justify-start items-start q-pa-xs-xs q-pa-sm-sm q-pa-md-md">
       <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-2 col-xs-12">
-        會籍<q-select
-          v-model="memberInfo.c_udf_1"
-          :options="udf1List"
-          :option-disable="
-            (opt) => (Object(opt) === opt ? opt.inactive === true : true)
-          "
-          label="選擇會藉"
-          @update:model-value="updateType1Expire"
-        />
+        會籍<q-select v-model="memberInfo.c_udf_1" :options="udf1List" :option-disable="(opt) => (Object(opt) === opt ? opt.inactive === true : true)
+          " label="選擇會藉" @update:model-value="updateType1Expire" />
       </div>
       <div class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md col-xs-12">
         入會日期
-        <q-input
-          filled
-          v-model="memberInfo.d_enter_1"
-          mask="date"
-          hint="YYYY/MM/DD"
-          :rules="['date']"
-          @update:model-value="updateType1Expire"
-        >
+        <q-input filled v-model="memberInfo.d_enter_1" mask="date" hint="YYYY/MM/DD" :rules="['date']"
+          @update:model-value="updateType1Expire">
           <template v-slot:append>
             <q-icon name="event" class="cursor-pointer">
-              <q-popup-proxy
-                cover
-                transition-show="scale"
-                transition-hide="scale"
-              >
-                <q-date
-                  v-model="memberInfo.d_enter_1"
-                  @update:model-value="updateType1Expire"
-                >
+              <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+                <q-date v-model="memberInfo.d_enter_1" @update:model-value="updateType1Expire">
                   <div class="row items-center justify-end">
                     <q-btn v-close-popup label="Close" color="primary" flat />
                   </div>
@@ -342,25 +213,16 @@
 
   <div class="q-pa-xs-none q-pa-sm-sm q-pa-md-md col-xs-6 row justify-end">
     <div v-if="memberInfo.c_udf_1 != ''" class="text-h6 self-end q-ma-md">
-      <span
-        >應收會費:
+      <span>應收會費:
         {{
           memberInfo.c_udf_1.label
             ? membershipFee[memberInfo.c_udf_1.label]
             : ""
-        }}</span
-      >
+        }}</span>
     </div>
     <div>
-      <q-btn
-        class="q-ma-md self-end"
-        size="lg"
-        square
-        color="primary"
-        icon="add"
-        label="新增會員"
-        @click="checkDuplicate"
-      />
+      <q-btn class="q-ma-md self-end" size="lg" square color="primary" icon="add" label="新增會員"
+        @click="checkDuplicate" />
     </div>
   </div>
 </template>
@@ -477,7 +339,7 @@ const {
 const {
   mutate: addMemberAndRelationFromIDUpdateRelatedYouthStatusWithPayment,
   onDone:
-    addMemberAndRelationFromIDUpdateRelatedYouthStatusWithPayment_Completed,
+  addMemberAndRelationFromIDUpdateRelatedYouthStatusWithPayment_Completed,
   onError: addMemberAndRelationFromIDUpdateRelatedYouthStatusWithPayment_Error,
 } = useMutation(
   ADD_MEMBER_AND_RELATION_FROM_ID_UPDATE_RELATED_YOUTH_STATUS_WITH_PAYMENT
@@ -747,7 +609,7 @@ function postCallback(data) {
                   printReceiptModal.value = true;
                 },
               },
-              { label: "關閉", color: "white", handler: () => {} },
+              { label: "關閉", color: "white", handler: () => { } },
             ],
           },
           5000
@@ -777,7 +639,7 @@ function postCallback(data) {
                   printReceiptModal.value = true;
                 },
               },
-              { label: "關閉", color: "white", handler: () => {} },
+              { label: "關閉", color: "white", handler: () => { } },
             ],
           },
           5000

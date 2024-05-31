@@ -1,10 +1,5 @@
 <template>
-  <q-pdfviewer
-    v-if="src != null"
-    type="html5"
-    :src="src"
-    style="height: 100%; min-height: 100%"
-  />
+  <q-pdfviewer v-if="src != null" type="html5" :src="src" style="height: 100%; min-height: 100%" />
 </template>
 
 <script setup>
@@ -176,11 +171,14 @@ function displayPDF(data) {
             data.EventRegistration_to_Event.d_date_from.trim(),
             "D/M/YYYY"
           ),
-          "YYYY年M月D日"
+          "YYYY年M月D日 星期ddd", {
+          daysShort: ["日", "一", "二", "三", "四", "五", "六"],
+        }
         ),
         20,
         atLine(lineNo)
       );
+      lineNo++
     } else {
       let dateText =
         date.formatDate(
@@ -198,7 +196,7 @@ function displayPDF(data) {
           ),
           "YYYY年M月D日"
         ) +
-        (data.EventRegistration_to_Event.c_week
+        (data.EventRegistration_to_Event.c_week && (date.formatDate(data.EventRegistration_to_Event.d_date_from, "YYYYMMDD") != date.formatDate(data.EventRegistration_to_Event.d_date_to, "YYYYMMDD"))
           ? " 逢星期" + data.EventRegistration_to_Event.c_week
           : "");
       doc.text(dateText, 20, atLine(lineNo), {
@@ -216,21 +214,21 @@ function displayPDF(data) {
     doc.text("時間 Time: ", 5, atLine(lineNo));
     let startDatetime = date.extractDate(
       data.EventRegistration_to_Event.d_date_from.trim() +
-        " " +
-        data.EventRegistration_to_Event.d_time_from.trim(),
+      " " +
+      data.EventRegistration_to_Event.d_time_from.trim(),
       "D/M/YYYY h:mm:ss A"
     );
 
     let endDatetime = date.extractDate(
       data.EventRegistration_to_Event.d_date_to.trim() +
-        " " +
-        data.EventRegistration_to_Event.d_time_to.trim(),
+      " " +
+      data.EventRegistration_to_Event.d_time_to.trim(),
       "D/M/YYYY h:mm:ss A"
     );
     doc.text(
       date.formatDate(startDatetime, "h:mm A") +
-        " - " +
-        date.formatDate(endDatetime, "h:mm A"),
+      " - " +
+      date.formatDate(endDatetime, "h:mm A"),
       20,
       atLine(lineNo)
     );

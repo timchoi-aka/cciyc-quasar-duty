@@ -153,19 +153,22 @@ const loading = ref(0);
 */
 function submitApplication() {
   let remark = "服務資料 Service Detail\r\n";
-  if (props.d_date_from && props.d_date_to)
-    if (e.d_date_from && e.d_date_to) {
-      if (qdate.getDateDiff(e.d_date_from, e.d_date_to) == 0) {
-        remark += "日期 Date：" + qdate.formatDate(e.d_date_from, "YYYY年M月D日");
-      } else {
-        remark +=
-          "日期 Date：" +
-          qdate.formatDate(e.d_date_from, "YYYY年M月D日") +
-          " 至 " +
-          qdate.formatDate(e.d_date_to, "YYYY年M月D日");
-      }
+
+  if (props.d_date_from && props.d_date_to) {
+    if (qdate.getDateDiff(qdate.extractDate(props.d_date_from.trim(), "D/M/YYYY"), qdate.extractDate(props.d_date_to.trim(), "D/M/YYYY")) == 0) {
+      remark += "日期 Date：" + qdate.formatDate(qdate.extractDate(props.d_date_from.trim(), "D/M/YYYY"), "YYYY年M月D日 星期ddd", {
+        daysShort: ["日", "一", "二", "三", "四", "五", "六"],
+      });
+    } else {
+      remark +=
+        "日期 Date：" +
+        qdate.formatDate(qdate.extractDate(props.d_date_from.trim(), "D/M/YYYY"), "YYYY年M月D日") +
+        " 至 " +
+        qdate.formatDate(qdate.extractDate(props.d_date_to.trim(), "D/M/YYYY"), "YYYY年M月D日");
     }
-  if (props.c_week) remark += " 逢星期" + props.c_week;
+  }
+
+  if (props.c_week && (qdate.formatDate(props.d_date_from, "YYYYMMDD") != qdate.formatDate(props.d_date_to, "YYYYMMDD"))) remark += " 逢星期" + props.c_week;
   remark += "\r\n";
   if (props.d_time_from && props.d_time_to) {
     let startDatetime = qdate.extractDate(

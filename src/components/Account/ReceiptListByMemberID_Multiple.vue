@@ -153,11 +153,11 @@ const tableData = computed(() => {
       id: v.ID,
       c_act_code: v.c_act_code,
       d_create: v.d_reg,
-      c_desc: v.EventRegistration_to_Event.c_act_name,
+      c_desc: v.EventRegistration_to_Event ? v.EventRegistration_to_Event.c_act_name : "",
       c_receipt_no: null,
       c_user_id: v.c_user_id,
       u_price_after_discount: 0,
-      m_remark: v.EventRegistration_to_Event.m_remark,
+      m_remark: v.EventRegistration_to_Event ? v.EventRegistration_to_Event.m_remark : "",
     });
   });
   return res;
