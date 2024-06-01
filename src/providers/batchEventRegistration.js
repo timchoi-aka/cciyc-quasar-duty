@@ -164,6 +164,7 @@ export function useBatchEventRegistrationProvider() {
       accountObjectQueue: [],
       length: 0,
     };
+    updateQueue.value = queue;
     let now = date.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss");
 
     // build regObject

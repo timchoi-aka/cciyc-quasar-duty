@@ -235,6 +235,7 @@ const validApplication = computed(() => {
 async function save() {
   let regObject = ref([]);
   let remark = "";
+
   events.value.forEach((e) => {
     remark = "服務資料 Service Detail\r\n";
 
@@ -274,7 +275,7 @@ async function save() {
         qdate.formatDate(endDatetime, "h:mm A");
     }
 
-    regObject.value.push({
+    let obj = {
       c_mem_id: MemberObject.value.c_mem_id,
       c_name: MemberObject.value.c_name,
       c_act_code: e.c_act_code,
@@ -285,7 +286,8 @@ async function save() {
       u_fee: e.b_freeofcharge ? null : e.u_fee,
       remark: remark,
       c_acc_type: e.c_acc_type,
-    });
+    }
+    if (!regObject.value.find((o) => o.c_mem_id == obj.c_mem_id && o.c_act_code == obj.c_act_code)) regObject.value.push(obj);
   });
 
   batchRegister({

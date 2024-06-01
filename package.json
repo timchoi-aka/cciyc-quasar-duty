@@ -12,6 +12,7 @@
     "build:prod": "ENV_FILE=production quasar build",
     "build:staging": "ENV_FILE=staging quasar build",
     "serve": "run-p emu build:dev",
+    "serve:dev": "ENV_FILE=development quasar dev",
     "serve:staging": "ENV_FILE=staging quasar dev",
     "serve:prod": "ENV_FILE=production quasar dev",
     "test:unit:ui": "vitest --ui",

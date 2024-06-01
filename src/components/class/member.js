@@ -283,11 +283,14 @@ class Member {
   }
 
   getAge(asOfDate) {
-    return date.getDateDiff(
+    if (!this.d_birth || !date.isValid(this.d_birth) || !date.isValid(asOfDate)) return 0;
+    let birth = date.adjustDate(this.d_birth, {year: asOfDate.getFullYear()})
+    let offset = date.getDateDiff(asOfDate, birth, "days") < 0? -1: 0
+    return (date.getDateDiff(
       asOfDate,
       date.extractDate(this.d_birth, "YYYY-MM-DD"),
       "years"
-    );
+    ) + offset);
   }
 
   isActive(asOfDate) {
