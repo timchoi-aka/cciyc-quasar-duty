@@ -2,8 +2,7 @@
   <q-dialog :model-value="true" position="top">
     <q-card>
       <q-card-section class="text-h6 bg-blue-2">
-        載入活動計劃財務資料:
-        <EventEvaluationSelection v-model="c_act_code" />
+        複制活動財務計劃資料:
       </q-card-section>
       <q-card-section v-if="hasFinanceData" key="has-finance-data">
         <q-chip>計劃</q-chip>
@@ -15,17 +14,6 @@
           </li>
         </ul>
         <div v-else key="has-no-plan-data">沒有資料</div>
-        <!-- 2024-06-04 User Request 停止滙入檢討資料
-        <q-chip>檢討</q-chip>
-        <ul v-if="FinanceDataEval.length > 0" key="has_eval_data">
-          <li v-for="data in FinanceDataEval" :key="data.account_uuid">
-            {{ data.type }} -
-            {{ date.formatDate(data.txn_date, "YYYY年M月D日") }} -
-            {{ data.description }} - ${{ data.amount }}
-          </li>
-        </ul>
-        <div v-else key="has-no-eval-data">沒有資料</div>
-        -->
       </q-card-section>
       <q-card-section v-else key="has-no-finance-data">沒有資料</q-card-section>
       <q-card-actions>
@@ -38,10 +26,8 @@
 </template>
 
 <script setup>
-import EventEvaluationSelection from "components/Event/EventEvaluationSelection.vue";
 import { ref, watch, computed } from "vue";
 import { useStore } from "vuex";
-import { useEventProvider } from "src/providers/event";
 import { uid, date, useQuasar } from "quasar";
 import { useEvaluationFinanceProvider } from "src/providers/evaluationFinance";
 import { useRouter } from "vue-router";
@@ -67,52 +53,29 @@ const props = defineProps({
 });
 const emit = defineEmits(["close"]);
 
-const c_act_code = ref(null);
-
-const { result, loading, refetch } = useEventProvider({
-  c_act_code: c_act_code,
-  loadEvaluation: ref(true),
-});
-
 const username = computed(() => $store.getters["userModule/getUsername"]);
-const actCodeRegex = /^[0-9]{4}-[0-9]{4}$/;
-
-watch(c_act_code, (newValue) => {
-  if (actCodeRegex.test(newValue)) {
-    refetch();
-  }
-});
 
 const FinanceData = computed(() =>
-  result.value && result.value.HTX_Event_by_pk
-    ? result.value.HTX_Event_by_pk.Event_to_Evaluation.length > 0 &&
-      result.value.HTX_Event_by_pk.Event_to_Evaluation[0].Evaluation_to_Account
-        .length > 0
-      ? result.value.HTX_Event_by_pk.Event_to_Evaluation[0]
-        .Evaluation_to_Account
-      : {}
-    : {}
+  result.value && result.value.Event_Evaluation_Account
+    ? result.value.Event_Evaluation_Account
+    : []
 );
 const hasFinanceData = computed(
-  () => Object.keys(FinanceData.value).length > 0
+  () => FinanceData.value && FinanceData.value.filter((x) => x.planeval.trim() == "計劃").length > 0
 );
+
 const FinanceDataPlan = computed(() =>
   FinanceData.value
     .filter((data) => data.planeval.trim() == "計劃")
     .sort((a, b) => a.type.localeCompare(b.type))
 );
-const FinanceDataEval = computed(() =>
-  FinanceData.value
-    .filter((data) => data.planeval.trim() == "檢討")
-    .sort((a, b) => a.type.localeCompare(b.type))
-);
 
 const {
-  result: financeResult,
+  result,
   addFinance,
   message,
 } = useEvaluationFinanceProvider({
-  evalUUID: props.evalUUID,
+  eval_uuid: ref(props.evalUUID),
 });
 
 watch(message, (newMessage) => {
@@ -132,8 +95,8 @@ function save() {
         amount: data.amount,
         account_uuid: uid(),
         eval_uuid: props.evalUUID,
-        c_act_code: props.c_act_code ? props.c_act_code.trim() : "",
-        planeval: data.planeval ? data.planeval.trim() : "",
+        c_act_code: data.c_act_code ? data.c_act_code.trim() : "",
+        planeval: "檢討",
         description: data.description ? data.description.trim() : "",
         txn_date: date.formatDate(new Date(), "YYYY-MM-DDTHH:mm:ss"),
       });

@@ -100,6 +100,10 @@ export const FireDB = db;
 export const FirebaseFunctions = functions;
 export const FirebaseMessaging = messaging;
 
+// CloudFunctions always connect to live functions
+const cloudfunctions = getFunctions(getApp(), "asia-east2");
+export const CloudFunctions = cloudfunctions;
+
 // collection references
 export const usersCollection = collection(db, "users");
 export const scheduleCollection = collection(db, "schedule");

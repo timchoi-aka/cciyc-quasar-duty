@@ -1,22 +1,15 @@
-//import User from "components/class/user";
-import { FirebaseFunctions } from "boot/firebase";
+import { CloudFunctions } from "boot/firebase";
 import { ref } from "vue";
 import { httpsCallable } from "@firebase/functions";
 
 export function useNotifier(payload) {
   const { topic, data } = payload;
-  /*
-  const userMapping = async () => { User.loadPermUsers().then((users) => users.reduce((acc, { name, uid }) => {
-    acc[name] = uid;
-    return acc;
-  }, {}))};
-  console.log("useNotifier", topic, data, userMapping);
-  */
+
   const result = ref([]);
 
   // Function to execute the query
   const execute = async () => {
-    const notifyUser = httpsCallable(FirebaseFunctions,
+    const notifyUser = httpsCallable(CloudFunctions,
       "notification-notifyUser"
     );
 

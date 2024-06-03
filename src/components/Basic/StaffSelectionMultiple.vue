@@ -1,19 +1,16 @@
 <template>
-  <q-select
-    label="員工"
-    clearable
-    input-debounce="0"
-    filled
-    :bottom-slots="props.hint && props.hint.length > 0"
-    multiple
-    :options="UserList"
-    :model-value="props.modelValue"
-    @update:model-value="
-      (value) => emit('update:modelValue', value ? value : null)
-    "
-  >
-    <template v-slot:hint>
-      {{ props.hint }}
+  <q-select label="員工" clearable input-debounce="0" filled multiple :options="UserList" :model-value="user"
+    @update:model-value="(value) => save(value)
+      ">
+    <template v-slot:option="scope">
+      <q-item v-bind="scope.itemProps">
+        <q-item-section>
+          <q-item-label>
+            <q-icon outline v-if="scope.selected" size="sm" color="positive" class="q-mr-sm" name="check" />{{
+              scope.opt.label
+            }}</q-item-label>
+        </q-item-section>
+      </q-item>
     </template>
   </q-select>
 </template>
@@ -36,7 +33,7 @@ const props = defineProps({
     Default: false,
   },
 });
-
+const user = ref([])
 const emit = defineEmits(["update:modelValue"]);
 const UserList = ref([
   {
@@ -45,14 +42,23 @@ const UserList = ref([
   },
 ]);
 
+function save(value) {
+  user.value = value
+  emit("update:modelValue", value);
+}
+
 onMounted(async () => {
   let now = new Date();
   let users = await User.loadPermUsers();
   users.forEach((u) => {
-    UserList.value.push({
+    let userObj = {
       value: u.uid,
       label: u.name,
-    });
+    };
+    UserList.value.push(userObj);
+    if (props.modelValue && props.modelValue.includes(u.name)) {
+      user.value.push(userObj)
+    }
   });
   if (props.includeTemp) {
     users = await User.loadTempUsers();
