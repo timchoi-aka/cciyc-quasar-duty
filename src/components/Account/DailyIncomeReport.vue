@@ -1,18 +1,10 @@
 <template>
   <q-page>
     <span v-for="date in accountDates" :key="date">
-      <q-btn
-        :label="date"
-        color="primary"
-        @click="showAccounts(date)"
-        class="q-mx-md q-mb-md"
-      />
+      <q-btn :label="date" color="primary" @click="showAccounts(date)" class="q-mx-md q-mb-md" />
     </span>
 
-    <div
-      class="print-area q-pa-none q-ma-none"
-      v-if="src != null && $q.platform.is.desktop"
-    >
+    <div class="print-area q-pa-none q-ma-none" v-if="src != null && $q.platform.is.desktop">
       <q-pdfviewer type="html5" :src="src" />
     </div>
   </q-page>
@@ -34,6 +26,7 @@ const props = defineProps({
 
 const $q = useQuasar();
 const src = ref(null);
+const pageNumber = ref(1);
 const accTypeMap = {
   PF: "活動收費",
   MF: "會員費",
@@ -51,8 +44,8 @@ const accountDates = computed(() => {
     new Set(
       props.accounts
         ? props.accounts.map((account) =>
-            date.formatDate(account.d_create, "DD/MM/YYYY")
-          )
+          date.formatDate(account.d_create, "DD/MM/YYYY")
+        )
         : []
     )
   );
@@ -96,13 +89,13 @@ const showAccounts = (d) => {
 
   $q.platform.is.mobile
     ? openURL(
-        doc.output("bloburi", {
-          filename: "每日收款摘要" + d + ".pdf",
-        })
-      )
-    : (src.value = doc.output("datauristring", {
+      doc.output("bloburi", {
         filename: "每日收款摘要" + d + ".pdf",
-      }));
+      })
+    )
+    : (src.value = doc.output("datauristring", {
+      filename: "每日收款摘要" + d + ".pdf",
+    }));
 };
 
 function drawContent(doc, reportData) {
@@ -127,13 +120,7 @@ function drawContent(doc, reportData) {
   doc.setLineWidth(0.5);
 
   // first line
-  doc.line(15, 27, 185, 27);
-  doc.line(15, 34, 185, 34);
-  doc.text("收條號碼", 30, 32, "center");
-  doc.text("會員費", 60, 32, "center");
-  doc.text("活動收費", 90, 32, "center");
-  doc.text("其他", 120, 32, "center");
-  doc.text("存入銀行日期", 160, 32, "center");
+  printFirstLine(doc);
 
   let lineNo = 1;
   reportData.forEach((account) => {
@@ -141,30 +128,39 @@ function drawContent(doc, reportData) {
     doc.text(account.c_receipt_no, 30, atLine(lineNo), "center");
     accTypeMap[account.c_type] == "會員費"
       ? doc.text(
-          account.u_price_after_discount.toString(),
-          60,
-          atLine(lineNo),
-          "center"
-        )
+        account.u_price_after_discount.toString(),
+        60,
+        atLine(lineNo),
+        "center"
+      )
       : "";
     accTypeMap[account.c_type] == "活動收費"
       ? doc.text(
-          account.u_price_after_discount.toString(),
-          90,
-          atLine(lineNo),
-          "center"
-        )
+        account.u_price_after_discount.toString(),
+        90,
+        atLine(lineNo),
+        "center"
+      )
       : "";
     accTypeMap[account.c_type] == "其他"
       ? doc.text(
-          account.u_price_after_discount.toString(),
-          120,
-          atLine(lineNo),
-          "center"
-        )
+        account.u_price_after_discount.toString(),
+        120,
+        atLine(lineNo),
+        "center"
+      )
       : "";
 
-    lineNo++;
+    // draw vertical lines
+    doc.line(15, 27, 15, atLine(lineNo) + 2);
+    doc.line(48, 27, 48, atLine(lineNo) + 2);
+    doc.line(75, 27, 75, atLine(lineNo) + 2);
+    doc.line(105, 27, 105, atLine(lineNo) + 2);
+    doc.line(135, 27, 135, atLine(lineNo) + 2);
+    doc.line(185, 27, 185, atLine(lineNo) + 2);
+
+    // lineNo++;
+    lineNo = newLine(doc, lineNo, reportData);
   });
   // bottom line
   doc.line(15, atLine(lineNo - 1) + 2, 185, atLine(lineNo - 1) + 2);
@@ -174,47 +170,47 @@ function drawContent(doc, reportData) {
   reportData.filter((account) => accTypeMap[account.c_type] == "會員費")
     .length > 0
     ? doc.text(
-        reportData
-          .filter((account) => accTypeMap[account.c_type] == "會員費")
-          .map((account) => account.u_price_after_discount)
-          .reduce((a, b) => a + b)
-          .toString(),
-        60,
-        atLine(lineNo),
-        "center"
-      )
+      reportData
+        .filter((account) => accTypeMap[account.c_type] == "會員費")
+        .map((account) => account.u_price_after_discount)
+        .reduce((a, b) => a + b)
+        .toString(),
+      60,
+      atLine(lineNo),
+      "center"
+    )
     : "";
   reportData.filter((account) => accTypeMap[account.c_type] == "活動收費")
     .length > 0
     ? doc.text(
-        reportData
-          .filter((account) => accTypeMap[account.c_type] == "活動收費")
-          .map((account) => account.u_price_after_discount)
-          .reduce((a, b) => a + b)
-          .toString(),
-        90,
-        atLine(lineNo),
-        "center"
-      )
+      reportData
+        .filter((account) => accTypeMap[account.c_type] == "活動收費")
+        .map((account) => account.u_price_after_discount)
+        .reduce((a, b) => a + b)
+        .toString(),
+      90,
+      atLine(lineNo),
+      "center"
+    )
     : "";
   reportData.filter((account) => accTypeMap[account.c_type] == "其他").length >
-  0
+    0
     ? doc.text(
-        reportData
-          .filter((account) => accTypeMap[account.c_type] == "其他")
-          .map((account) => account.u_price_after_discount)
-          .reduce((a, b) => a + b)
-          .toString(),
-        120,
-        atLine(lineNo),
-        "center"
-      )
+      reportData
+        .filter((account) => accTypeMap[account.c_type] == "其他")
+        .map((account) => account.u_price_after_discount)
+        .reduce((a, b) => a + b)
+        .toString(),
+      120,
+      atLine(lineNo),
+      "center"
+    )
     : "";
 
   // bottom line
   doc.line(15, atLine(lineNo) + 2, 185, atLine(lineNo) + 2);
 
-  // draw vertical lines
+  // vertical lines
   doc.line(15, 27, 15, atLine(lineNo) + 2);
   doc.line(48, 27, 48, atLine(lineNo) + 2);
   doc.line(75, 27, 75, atLine(lineNo) + 2);
@@ -246,6 +242,41 @@ function drawContent(doc, reportData) {
 
 function atLine(lineNo) {
   return 32 + 7 * lineNo;
+}
+
+function newLine(doc, lineNo, reportData) {
+  if (atLine(lineNo) > 260) {
+    doc.text(" ～ 續下頁 ～", 100, 280, "center")
+    doc.addPage();
+    pageNumber.value++;
+
+    doc.setFontSize(12);
+    doc.text("每日收款摘要 - 第" + pageNumber.value.toString() + "頁", 110, 10, "center");
+    doc.text(
+      "收款月份: " + date.formatDate(reportData[0].d_create, "MM/YYYY"),
+      40,
+      17,
+      "center"
+    );
+    doc.text(
+      "收款日期: " + date.formatDate(reportData[0].d_create, "DD/MM/YYYY"),
+      150,
+      17,
+      "center"
+    );
+    printFirstLine(doc);
+    return 1;
+  } else return lineNo + 1;
+}
+
+function printFirstLine(doc) {
+  doc.line(15, 27, 185, 27);
+  doc.line(15, 34, 185, 34);
+  doc.text("收條號碼", 30, 32, "center");
+  doc.text("會員費", 60, 32, "center");
+  doc.text("活動收費", 90, 32, "center");
+  doc.text("其他", 120, 32, "center");
+  doc.text("存入銀行日期", 160, 32, "center");
 }
 </script>
 
