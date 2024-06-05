@@ -1,5 +1,5 @@
 <template>
-  <EventEvaluationImportModal v-if="loadDialog" v-model="editObject" @close="loadDialog = false" />
+  <EventEvaluationImportModal v-if="loadDialog" v-model="editObject" :loadMode="loadMode" @close="loadDialog = false" />
   <EventEvaluationImportFinanceModal v-if="importFinanceModal" :evalUUID="PlanEval.uuid"
     :c_act_code="PlanEval.c_act_code" @close="importFinanceModal = false" />
   <EventEvaluationFinancePlanToEvalModal v-if="copyFromPlanningModal" :evalUUID="PlanEval.uuid"
@@ -10,8 +10,10 @@
     <q-fab label="取消" icon="cancel" color="warning" push @click="cancelEdit" />
   </q-page-sticky>
   <div v-if="$q.screen.gt.xs">
-    <q-btn icon="upload_file" outline label="載入其他活動計劃檢討" @click="loadDialog = true" color="positive" class="q-ma-md"
-      v-if="!isPlanSubmitted && !isEvalSubmitted" />
+    <q-btn icon="upload_file" outline label="載入其他活動計劃" @click="loadDialog = true; loadMode = 'plan'" color="positive"
+      class="q-ma-md" v-if="!isPlanSubmitted && !isEvalSubmitted" />
+    <q-btn icon="upload_file" outline label="載入其他活動檢討" @click="loadDialog = true; loadMode = 'eval'" color="positive"
+      class="q-ma-md" v-if="isPlanApproved && !isEvalSubmitted" />
     <div class="row text-h6">
       <div v-if="PlanEval.ic_comment" class="col-12 q-my-sm" style="border: 1px dotted red">
         審批評語:
@@ -373,6 +375,7 @@ const loadDialog = ref(false);
 const importFinanceModal = ref(false);
 const copyFromPlanningModal = ref(false);
 const userMapping = ref({});
+const loadMode = ref();
 const printPlan = ref(false);
 const printEvaluation = ref(false);
 const EventEvaluationPrint = defineAsyncComponent(() =>
@@ -432,6 +435,11 @@ const isPlanSubmitted = computed(() =>
     ? PlanEval.value.submit_plan_date.length > 0
     : false
 );
+
+const isPlanApproved = computed(
+  () => PlanEval.value && PlanEval.value.ic_plan_date
+);
+
 const isEvalSubmitted = computed(() =>
   PlanEval.value && PlanEval.value.submit_eval_date
     ? PlanEval.value.submit_eval_date.length > 0

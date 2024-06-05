@@ -174,6 +174,7 @@
       </div>
     </div>
   </q-form>
+
   <q-table :rows="ApplyHistory.filter((v) => (displayRefund ? true : !v.b_refund))" :columns="columns"
     :pagination="pagination" :wrap-cells="true" :visible-columns="visibleColumns" :loading="loading">
     <template v-slot:top>
@@ -185,8 +186,12 @@
     <template v-slot:body-cell-c_receipt_no="props">
       <q-td :props="props">
         <div v-for="data in props.row.c_receipt_no">
-          <q-btn v-if="data.c_receipt_no && !data.b_refund && !data.reregister" icon="print" color="positive"
-            @click="printReceipt(data.c_receipt_no)" size="md" padding="none" outline>
+          <q-btn v-if="data.c_receipt_no && !data.b_refund && !data.reregister && data.b_delete" icon="print"
+            color="warning" @click="printReceipt(data.c_receipt_no)" size="md" padding="none" outline>
+            <q-tooltip class="bg-white text-warning">收據已刪除</q-tooltip>
+          </q-btn>
+          <q-btn v-if="data.c_receipt_no && !data.b_refund && !data.reregister && !data.b_delete" icon="print"
+            color="positive" @click="printReceipt(data.c_receipt_no)" size="md" padding="none" outline>
             <q-tooltip class="bg-white text-positive">列印收據</q-tooltip>
           </q-btn>
           <q-btn v-if="data.c_receipt_no && !data.b_refund && data.reregister" icon="print" color="warning"
@@ -239,7 +244,7 @@
 <script setup>
 import { computed, ref, defineAsyncComponent } from "vue";
 import { useStore } from "vuex";
-import { useQuasar, date as qdate } from "quasar";
+import { useQuasar, date as qdate, Notify } from "quasar";
 import {
   EVENT_APPLY_AND_RECEIPT_BY_ACT_CODE,
   EVENT_BY_PK,
@@ -749,26 +754,38 @@ onApplyResult((result) => {
           : (autoUnregisterEvent = false);
 
         if (autoUnregisterEvent) {
-          loading.value = true;
-          eventUnregistration({
-            logObject: {
-              username: username.value,
-              datetime: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-              module: "活動系統",
-              action:
-                "會員" +
-                d.c_mem_id +
-                "(" +
-                d.c_name +
-                ") 因退款/刪除收據而取消報名活動 " +
-                d.c_act_code,
-            },
-            unregObject: {
-              b_refund: true,
-              d_refund: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
-            },
-            ID: d.ID,
-          });
+          Notify.create({
+            color: 'primary',
+            progress: true,
+            message: d.c_name + '沒有找到有效收據，取消活動報名？',
+            actions: [
+              {
+                label: '確認', color: 'white', handler: () => {
+                  loading.value = true;
+                  eventUnregistration({
+                    logObject: {
+                      username: username.value,
+                      datetime: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+                      module: "活動系統",
+                      action:
+                        "會員" +
+                        d.c_mem_id +
+                        "(" +
+                        d.c_name +
+                        ") 因退款/刪除收據而取消報名活動 " +
+                        d.c_act_code,
+                    },
+                    unregObject: {
+                      b_refund: true,
+                      d_refund: qdate.formatDate(Date.now(), "YYYY-MM-DDTHH:mm:ss"),
+                    },
+                    ID: d.ID,
+                  });
+                }
+              },
+              { label: '取消', color: 'grey-5', handler: () => { /* ... */ } }
+            ]
+          })
         }
       }
 
@@ -776,10 +793,11 @@ onApplyResult((result) => {
       ApplyHistory.value.push({
         ...d,
         c_receipt_no: d.EventRegistration_to_Account_by_MID.map(
-          ({ c_receipt_no, i_receipt_type, b_refund }) => ({
+          ({ c_receipt_no, i_receipt_type, b_refund, b_delete }) => ({
             c_receipt_no: c_receipt_no,
             reregister: i_receipt_type == 20,
             b_refund: b_refund,
+            b_delete: b_delete,
           })
         ),
       });
