@@ -144,6 +144,7 @@ export function useMemberProvider(options = {}) {
         c_mem_id_2
         relation
         uuid
+        d_effective
         RelationMember1 {
           c_mem_id
           d_birth
@@ -170,6 +171,7 @@ export function useMemberProvider(options = {}) {
         c_mem_id_2
         relation
         uuid
+        d_effective
         RelationMember1 {
           c_mem_id
           d_birth

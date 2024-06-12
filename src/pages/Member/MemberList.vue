@@ -3,73 +3,32 @@
   <LoadingDialog :model-value="loading ? 1 : 0" message="處理中" />
 
   <!-- print receipt modal -->
-  <q-dialog
-    v-if="$q.screen.gt.md"
-    v-model="printReceiptModal"
-    full-height
-    full-width
-    transition-show="slide-up"
-    transition-hide="slide-down"
-    class="q-pa-none"
-  >
+  <q-dialog v-if="$q.screen.gt.md" v-model="printReceiptModal" full-height full-width transition-show="slide-up"
+    transition-hide="slide-down" class="q-pa-none">
     <PrintReceipt :MemberID="printReceiptMember" />
   </q-dialog>
 
-  <q-dialog
-    v-if="$q.screen.lt.md || $q.screen.md"
-    v-model="printReceiptModal"
-    maximized
-    full-width
-    persistent
-    transition-show="slide-up"
-    transition-hide="slide-down"
-    class="q-pa-none"
-  >
+  <q-dialog v-if="$q.screen.lt.md || $q.screen.md" v-model="printReceiptModal" maximized full-width persistent
+    transition-show="slide-up" transition-hide="slide-down" class="q-pa-none">
     <PrintReceipt :MemberID="printReceiptMember" />
   </q-dialog>
 
   <!-- rowDetail modal -->
-  <q-dialog
-    v-if="$q.screen.lt.md"
-    v-model="detailModal"
-    persistent
-    maximized
-    full-width
-    transition-show="slide-up"
-    transition-hide="slide-down"
-  >
+  <q-dialog v-if="$q.screen.lt.md" v-model="detailModal" persistent maximized full-width transition-show="slide-up"
+    transition-hide="slide-down">
     <MemberDetail v-model="showMemberID" :key="showMemberID" />
   </q-dialog>
 
-  <q-dialog
-    v-else
-    v-model="detailModal"
-    persistent
-    full-height
-    transition-show="slide-up"
-    transition-hide="slide-down"
-    class="q-pa-none"
-  >
+  <q-dialog v-else v-model="detailModal" persistent full-height full-width transition-show="slide-up"
+    transition-hide="slide-down" class="q-pa-none">
     <q-card style="min-width: 70vw; width: 70vw; max-width: 70vw">
       <MemberDetail v-model="showMemberID" />
     </q-card>
   </q-dialog>
 
-  <q-table
-    class="col"
-    dense
-    flat
-    :rows="MemberData"
-    :columns="memberListColumns"
-    :filter="filter"
-    :filter-method="tableFilter"
-    :pagination="defaultPagination"
-    color="primary"
-    row-key="c_mem_id"
-    :loading="loading"
-    binary-state-sort
-    @row-click="rowDetail"
-  >
+  <q-table class="col" dense flat :rows="MemberData" :columns="memberListColumns" :filter="filter"
+    :filter-method="tableFilter" :pagination="defaultPagination" color="primary" row-key="c_mem_id" :loading="loading"
+    binary-state-sort @row-click="rowDetail">
     <!-- loading -->
     <template v-slot:loading>
       <q-inner-loading showing color="primary" />
@@ -79,29 +38,15 @@
       <q-tr style="text-align: center">
         <q-td />
         <q-td>
-          <q-input
-            v-model="searchFilter.memberID"
-            dense
-            debounce="300"
-            type="search"
-          >
+          <q-input v-model="searchFilter.memberID" dense debounce="300" type="search">
             <template v-slot:append>
               <q-icon v-if="searchFilter.memberID == ''" name="search" />
-              <q-icon
-                v-else
-                name="cancel"
-                @click="searchFilter.memberID = ''"
-              />
+              <q-icon v-else name="cancel" @click="searchFilter.memberID = ''" />
             </template>
           </q-input>
         </q-td>
         <q-td>
-          <q-input
-            v-model="searchFilter.name"
-            dense
-            debounce="300"
-            type="search"
-          >
+          <q-input v-model="searchFilter.name" dense debounce="300" type="search">
             <template v-slot:append>
               <q-icon v-if="searchFilter.name == ''" name="search" />
               <q-icon v-else name="cancel" @click="searchFilter.name = ''" />
@@ -109,75 +54,42 @@
           </q-input>
         </q-td>
         <q-td>
-          <q-input
-            v-model="searchFilter.nameOther"
-            dense
-            debounce="300"
-            type="search"
-          >
+          <q-input v-model="searchFilter.nameOther" dense debounce="300" type="search">
             <template v-slot:append>
               <q-icon v-if="searchFilter.nameOther == ''" name="search" />
-              <q-icon
-                v-else
-                name="cancel"
-                @click="searchFilter.nameOther = ''"
-              />
+              <q-icon v-else name="cancel" @click="searchFilter.nameOther = ''" />
             </template>
           </q-input>
         </q-td>
         <q-td> </q-td>
         <q-td>
-          <q-btn-toggle
-            dense
-            v-model="searchFilter.sex"
-            toggle-color="primary"
-            :options="[
-              { label: '全部', value: '' },
-              { label: '男', value: '男' },
-              { label: '女', value: '女' },
-            ]"
-          />
+          <q-btn-toggle dense v-model="searchFilter.sex" toggle-color="primary" :options="[
+            { label: '全部', value: '' },
+            { label: '男', value: '男' },
+            { label: '女', value: '女' },
+          ]" />
         </q-td>
         <q-td colspan="2">
           <q-input v-model="searchFilter.mobile_tel" dense debounce="300">
             <template v-slot:append>
               <q-icon v-if="searchFilter.mobile_tel == ''" name="search" />
-              <q-icon
-                v-else
-                name="cancel"
-                @click="searchFilter.mobile_tel = ''"
-              />
-            </template> </q-input
-        ></q-td>
+              <q-icon v-else name="cancel" @click="searchFilter.mobile_tel = ''" />
+            </template> </q-input></q-td>
 
         <q-td>
-          <q-btn-toggle
-            dense
-            v-model="searchFilter.mem_type1"
-            toggle-color="primary"
-            :options="[
-              { label: '是', value: 'true' },
-              { label: '全部', value: '' },
-            ]"
-          />
+          <q-btn-toggle dense v-model="searchFilter.mem_type1" toggle-color="primary" :options="[
+            { label: '是', value: 'true' },
+            { label: '全部', value: '' },
+          ]" />
         </q-td>
         <q-td>
-          <q-btn-toggle
-            dense
-            v-model="searchFilter.mem_type10"
-            toggle-color="primary"
-            :options="[
-              { label: '全部', value: '' },
-              { label: '是', value: 'true' },
-            ]"
-          />
+          <q-btn-toggle dense v-model="searchFilter.mem_type10" toggle-color="primary" :options="[
+            { label: '全部', value: '' },
+            { label: '是', value: 'true' },
+          ]" />
         </q-td>
         <q-td>
-          <q-select
-            v-model="searchFilter.udf_1"
-            :options="udf1List"
-            label="會藉篩選"
-          />
+          <q-select v-model="searchFilter.udf_1" :options="udf1List" label="會藉篩選" />
         </q-td>
 
         <q-td>
@@ -202,15 +114,8 @@
 
     <template v-slot:body-cell-MemberAccount="props">
       <q-td :props="props">
-        <q-btn
-          v-if="props.row.MemberAccount.length > 0"
-          icon="print"
-          color="positive"
-          @click="printReceipt(props.key)"
-          size="md"
-          padding="none"
-          outline
-        />
+        <q-btn v-if="props.row.MemberAccount.length > 0" icon="print" color="positive" @click="printReceipt(props.key)"
+          size="md" padding="none" outline />
       </q-td>
     </template>
   </q-table>

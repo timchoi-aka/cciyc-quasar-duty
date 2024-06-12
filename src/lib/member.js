@@ -47,6 +47,7 @@ function extractRelationChange(originalRelation, updatedRelation) {
               c_mem_id_1: updatedRelation[key].c_mem_id_1,
               c_mem_id_2: updatedRelation[key].c_mem_id_2,
               relation: updatedRelation[key].relation,
+              d_effective: updatedRelation[key].d_effective,
             });
           }
         }
@@ -63,6 +64,7 @@ function extractRelationChange(originalRelation, updatedRelation) {
               c_mem_id_1: updatedRelation[key].c_mem_id_1,
               c_mem_id_2: updatedRelation[key].c_mem_id_2,
               relation: updatedRelation[key].relation,
+              d_effective: updatedRelation[key].d_effective,
             });
           } else {
             valid = false;

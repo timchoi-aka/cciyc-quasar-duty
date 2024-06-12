@@ -1,37 +1,31 @@
 <template>
   <div class="row">
-    <div class="col-3" v-if="relatedMember.c_mem_id_1 == props.MemberID">
-      <MemberSelection
-        :key="props.MemberID"
-        :MemberID="props.MemberID"
-        v-model="relatedMember.c_mem_id_2"
-        @update:model-value="(value) => getNameFromMemberID(value)"
-      />
+    <div class="col-2" v-if="relatedMember.c_mem_id_1 == props.MemberID">
+      <MemberSelection :key="props.MemberID" :MemberID="props.MemberID" v-model="relatedMember.c_mem_id_2"
+        @update:model-value="(value) => getNameFromMemberID(value)" />
     </div>
-    <div class="col-3" v-else>
-      <MemberSelection
-        :key="props.MemberID"
-        :MemberID="props.MemberID"
-        v-model="relatedMember.c_mem_id_1"
-        @update:model-value="(value) => getNameFromMemberID(value)"
-      />
+    <div class="col-2" v-else>
+      <MemberSelection :key="props.MemberID" :MemberID="props.MemberID" v-model="relatedMember.c_mem_id_1"
+        @update:model-value="(value) => getNameFromMemberID(value)" />
     </div>
-    <q-select
-      dense
-      filled
-      class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none"
-      v-model="relatedMember.relation"
-      :options="relationOptions"
-      @update:model-value="$emit('update:modelValue', relatedMember)"
-    />
-    <span class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none">
+
+    <q-select dense filled class="col-2 col-xs-2 q-mr-md-md q-mr-sm-sm q-mr-xs-none" v-model="relatedMember.relation"
+      :options="relationOptions" @update:model-value="$emit('update:modelValue', relatedMember)" />
+
+    <span class="col-2 col-xs-2 q-mr-md-md q-mr-sm-sm q-mr-xs-none">
       {{ relatedMember.name }}
       <span v-if="relatedMember.age != null">({{ relatedMember.age }})</span>
     </span>
+
     <span class="col-1 col-xs-1 q-mr-md-md q-mr-sm-sm q-mr-xs-none">
       <q-icon v-if="relatedMember.b_mem_type1" color="positive" name="check" />
       <q-icon v-else color="negative" name="cancel" />
     </span>
+
+    <span class="col-2 col-xs-2 q-mr-md-md q-mr-sm-sm q-mr-xs-none">
+      {{ qdate.formatDate(relatedMember.d_effective, "YYYY年M月D日") }}
+    </span>
+
     <span class="col-1 col-xs-1 q-mr-md-none q-mr-sm-none q-mr-xs-none">
       <q-btn square flat class="text-negative" icon="replay" @click="reset">
         <q-tooltip class="bg-white text-red">重置</q-tooltip>
@@ -73,6 +67,7 @@ const relatedMember = ref({
   d_expired_1: props.modelValue.d_expired_1
     ? props.modelValue.d_expired_1
     : null,
+  d_effective: props.modelValue.d_effective
 });
 const originalValue = ref({});
 
@@ -81,8 +76,8 @@ const variables =
   props.modelValue.c_mem_id_1 == props.MemberID
     ? ref(props.modelValue.c_mem_id_2)
     : props.modelValue.c_mem_id_2 == props.MemberID
-    ? ref(props.modelValue.c_mem_id_1)
-    : ref("");
+      ? ref(props.modelValue.c_mem_id_1)
+      : ref("");
 
 // query
 const { onResult } = useQuery(GET_NAME_FROM_ID, () => ({
@@ -133,6 +128,9 @@ onResult((data) => {
     relatedMember.value.d_birth = result.d_birth;
     relatedMember.value.d_exit_1 = result.d_exit_1;
     relatedMember.value.d_expired_1 = result.d_expired_1;
+    relatedMember.value.d_effective = relatedMember.value.d_effective
+      ? relatedMember.value.d_effective
+      : qdate.startOfDate(new Date(), 'day');
   } else {
     relatedMember.value.c_mem_id_1 =
       relatedMember.value.c_mem_id_1 == props.MemberID.trim()
@@ -148,6 +146,7 @@ onResult((data) => {
     relatedMember.value.d_birth = null;
     relatedMember.value.d_exit_1 = null;
     relatedMember.value.d_expired_1 = null;
+    relatedMember.value.d_effective = qdate.startOfDate(new Date(), 'day');
   }
 
   if (Object.keys(originalValue.value).length == 0) {

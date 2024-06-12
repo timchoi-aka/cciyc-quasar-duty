@@ -18,6 +18,7 @@ query GetRelationByPK($c_mem_id: String = "") {
       c_mem_id_2
       relation
       uuid
+      d_effective
       RelationMember1 {
         c_mem_id,
         d_birth,
@@ -40,6 +41,7 @@ query GetRelationByPK($c_mem_id: String = "") {
       c_mem_id_2
       relation
       uuid
+      d_effective
       RelationMember1 {
         c_mem_id,
         d_birth,

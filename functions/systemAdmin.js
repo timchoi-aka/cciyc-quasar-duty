@@ -13,7 +13,7 @@ exports.testNotify = functions.region("asia-east2").https.onCall(async (data, co
         "failed-precondition",
         "The function must be called from an App Check verified app.");
   } */
-  
+
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -33,7 +33,7 @@ exports.testNotify = functions.region("asia-east2").https.onCall(async (data, co
     );
   }
   // notify(context.auth.uid, ({title: "test title", body: "test body"}));
-  publishTopic(
+  return await publishTopic(
       context.auth.uid,
       {
         title: data.title,
@@ -51,7 +51,7 @@ exports.setCustomClaims = functions.region("asia-east2").https.onCall(async (dat
         "failed-precondition",
         "The function must be called from an App Check verified app.");
   } */
-  
+
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -101,7 +101,7 @@ exports.addSALDeadline = functions.region("asia-east2").https.onCall(async (data
         "failed-precondition",
         "The function must be called from an App Check verified app.");
   } */
-  
+
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -153,7 +153,7 @@ exports.migrateOTBalance = functions.region("asia-east2").https.onCall(async (da
         "failed-precondition",
         "The function must be called from an App Check verified app.");
   } */
-  
+
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -207,7 +207,7 @@ exports.upgradeUserObject = functions.region("asia-east2").https.onCall(async (d
         "failed-precondition",
         "The function must be called from an App Check verified app.");
   } */
-  
+
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -338,7 +338,7 @@ exports.findDanglingHoliday = functions.region("asia-east2").https.onCall(async 
         "failed-precondition",
         "The function must be called from an App Check verified app.");
   } */
-  
+
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -404,7 +404,7 @@ exports.addNewRank = functions.region("asia-east2").https.onCall(async (data, co
         "failed-precondition",
         "The function must be called from an App Check verified app.");
   } */
-  
+
 
   // only authenticated users can run this
   if (!context.auth) {
@@ -446,7 +446,7 @@ exports.updateLeaveBalance = functions.region("asia-east2").https.onCall(async (
         "failed-precondition",
         "The function must be called from an App Check verified app.");
   } */
-  
+
 
   const DEBUG = false;
   // only authenticated users can run this
@@ -567,7 +567,7 @@ exports.calculateLeaveBalance = functions.region("asia-east2").https.onCall(asyn
         "failed-precondition",
         "The function must be called from an App Check verified app.");
   } */
-  
+
 
   // only authenticated users can run this
   if (!context.auth) {

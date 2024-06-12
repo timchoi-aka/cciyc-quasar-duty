@@ -393,6 +393,7 @@
             d_expired_1: '',
             d_exit_1: '',
             delete: false,
+            d_effective: qdate.startOfDate(new Date(), 'day'),
           })
           " />
       </div>
@@ -403,10 +404,11 @@
       ]">
         <div v-if="editState" class="full-width row">
           <div class="full-width row">
-            <span class="col-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none">編號</span>
-            <span class="col-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none">關係</span>
-            <span class="col-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none">姓名</span>
-            <span class="col-1 q-mr-md-md q-mr-sm-sm q-mr-xs-none">&nbsp;</span>
+            <span class="col-2 q-mr-md-md q-mr-sm-sm q-mr-xs-none">編號</span>
+            <span class="col-2 q-mr-md-md q-mr-sm-sm q-mr-xs-none">關係</span>
+            <span class="col-2 q-mr-md-md q-mr-sm-sm q-mr-xs-none">姓名</span>
+            <span class="col-1 q-mr-md-md q-mr-sm-sm q-mr-xs-none">會藉有效</span>
+            <span class="col-2 q-mr-md-md q-mr-sm-sm q-mr-xs-none">關聯日期</span>
             <span class="col-1 q-mr-md-md q-mr-sm-sm q-mr-xs-none">&nbsp;</span>
           </div>
           <div class="row col-12" v-for="(relation, index) in edit_relationTable" :key="index">
@@ -435,14 +437,15 @@
             <span v-if="!relation.delete">
               <q-chip v-if="relation.b_mem_type1" key="membership_valid" label="會藉有效" color="positive"
                 text-color="white" />
-              <q-chip v-else key="membership_invalid" label="會藉無效" color="negative" text-color="white" />[{{
+              <q-chip v-else key="membership_invalid" label="會藉無效" color="negative" text-color="white" />
+              <q-chip>[{{
                 relation.c_mem_id_1 == props.modelValue
                   ? relation.c_mem_id_2
                   : relation.c_mem_id_1
               }}] {{ relation.name }} ({{ relation.age }}) -
-              {{ relation.relation }} -
+                {{ relation.relation }}</q-chip>
 
-              <q-chip>屆滿：{{
+              <q-chip>{{ relation.c_udf_1 }}＠{{
                 qdate.getDateDiff(
                   relation.d_expired_1,
                   new Date(3000, 0, 1)
@@ -450,7 +453,9 @@
                   ? "永久"
                   : qdate.formatDate(relation.d_expired_1, "YYYY年M月D日")
               }}</q-chip>
-              - <q-chip>會藉：{{ relation.c_udf_1 }}</q-chip></span>
+              <q-chip>關聯日期：{{ qdate.formatDate(relation.d_effective, "YYYY年M月D日") }}</q-chip>
+            </span>
+
           </div>
         </div>
       </div>
@@ -659,6 +664,7 @@ const relationTable = computed(() => {
             d_exit_1: rel.RelationMember2 ? rel.RelationMember2.d_exit_1 : "",
             uuid: rel.uuid,
             delete: false,
+            d_effective: rel.d_effective,
           });
         } else if (
           rel.c_mem_id_2 == currentMemberID.value &&
@@ -688,6 +694,7 @@ const relationTable = computed(() => {
             d_exit_1: rel.RelationMember1 ? rel.RelationMember1.d_exit_1 : "",
             uuid: rel.uuid,
             delete: false,
+            d_effective: rel.d_effective,
           });
         }
       }

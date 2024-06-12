@@ -22,20 +22,20 @@
               <span class="col-12">英文姓名：{{ obj.c_name_other }}</span>
               <span class="col-12">出生日期：{{
                 qdate.formatDate(obj.d_birth, "YYYY/MM/DD")
-                }}</span>
+              }}</span>
               <span class="col-12">會藉：{{ obj.c_udf_1 }}</span>
               <span class="col-12">人會日期：{{
                 qdate.formatDate(obj.d_enter_1, "YYYY/MM/DD")
-                }}</span>
+              }}</span>
               <span class="col-12">退會日期：{{
                 qdate.formatDate(obj.d_exit_1, "YYYY/MM/DD")
-                }}</span>
+              }}</span>
               <span class="col-12">屆滿日期：{{
                 qdate.formatDate(obj.d_expired_1, "YYYY/MM/DD")
-                }}</span>
+              }}</span>
               <span class="col-12">續會日期：{{
                 qdate.formatDate(obj.d_renew_1, "YYYY/MM/DD")
-                }}</span>
+              }}</span>
             </div>
           </div>
         </div>
@@ -156,6 +156,7 @@
           b_mem_type1: false,
           uuid: '',
           delete: false,
+          d_effective: qdate.startOfDate(new Date(), 'day'),
         })
         " />
       <q-btn v-if="relationTable.length > 1" square class="col-1 text-white bg-negative" icon="remove" @click="
@@ -165,10 +166,11 @@
     </q-card-section>
     <q-card-section class="q-pa-xs-xs q-pa-sm-sm q-pa-md-md">
       <div class="row">
-        <span class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none">編號</span>
-        <span class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none">關係</span>
-        <span class="col-3 col-xs-3 q-mr-md-md q-mr-sm-sm q-mr-xs-none">姓名</span>
+        <span class="col-2 col-xs-2 q-mr-md-md q-mr-sm-sm q-mr-xs-none">編號</span>
+        <span class="col-2 col-xs-2 q-mr-md-md q-mr-sm-sm q-mr-xs-none">關係</span>
+        <span class="col-2 col-xs-2 q-mr-md-md q-mr-sm-sm q-mr-xs-none">姓名</span>
         <span class="col-1 col-xs-1 q-mr-md-md q-mr-sm-sm q-mr-xs-none">會藉</span>
+        <span class="col-2 col-xs-2 q-mr-md-md q-mr-sm-sm q-mr-xs-none">關聯日期</span>
         <q-space />
       </div>
 
@@ -383,6 +385,7 @@ let relationTable = ref([
     b_mem_type1: false,
     uuid: "",
     delete: false,
+    d_effective: qdate.startOfDate(new Date(), "day"),
   },
 ]);
 
@@ -690,6 +693,7 @@ function postCallback(data) {
       b_mem_type1: false,
       uuid: "",
       delete: false,
+      d_effective: qdate.startOfDate(new Date(), "day"),
     },
   ];
   loading.value--;
@@ -796,6 +800,7 @@ function checkForm() {
           c_mem_id_1: latestMemberID,
           c_mem_id_2: rel.c_mem_id_2,
           relation: rel.relation,
+          d_effective: rel.d_effective,
         });
         related_ids.value.push(rel.c_mem_id_2);
       } else {
