@@ -364,7 +364,7 @@ const userProfileLogout = () => $store.dispatch("userModule/logout");
 const quotaLeft = computed(
   () =>
     parseInt(Event.value.i_quota_max) -
-    ApplyHistory.value.filter((v) => !v.b_refund).length
+    Array.from(new Set(ApplyHistory.value.filter((v) => !v.b_refund).map((x) => x.c_mem_id))).length
 );
 const columns = ref([
   {
