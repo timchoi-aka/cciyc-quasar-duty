@@ -2,6 +2,7 @@ import { date as qdate } from "quasar";
 import calculateAge from "./calculateAge.js";
 
 function sisFilter(reportDate, reportType, x) {
+  x.MemberRelation1.length > 0? console.log(x.MemberRelation1.filter((y) => qdate.getDateDiff(new Date(y.d_effective), reportDate.value, 'days') < 0)): null
   /*
   console.log(x.c_mem_id + ":" + qdate.startOfDate(qdate.subtractFromDate(reportDate.value, {years: 15}), 'month') + ":" + qdate.getDateDiff(
     x.d_birth,
@@ -42,7 +43,10 @@ function sisFilter(reportDate, reportType, x) {
           x.d_birth,
           qdate.endOfDate(qdate.subtractFromDate(reportDate.value, {years: 15}), 'month')
         ) > 0 &&
-        x.isYouthFamily
+        x.isYouthFamily && (
+          (x.MemberRelation1.length > 0? x.MemberRelation1.filter((y) => qdate.getDateDiff(new Date(y.d_effective), reportDate.value, 'days') < 0).length > 0: false) ||
+          (x.MemberRelation2.length > 0? x.MemberRelation2.filter((y) => qdate.getDateDiff(new Date(y.d_effective), reportDate.value, 'days') < 0).length > 0: false)
+        )
       ) ||
       // family: is aged 25 or above and isYouthFamily and family Membership
       (
@@ -51,7 +55,11 @@ function sisFilter(reportDate, reportType, x) {
           x.d_birth,
           qdate.startOfDate(qdate.subtractFromDate(reportDate.value, {years: 25}), 'month')
         ) < 0 &&
-        x.isYouthFamily //&&
+        x.isYouthFamily && (
+          (x.MemberRelation1.length > 0? x.MemberRelation1.filter((y) => qdate.getDateDiff(new Date(y.d_effective), reportDate.value, 'days') < 0).length > 0: false) ||
+          (x.MemberRelation2.length > 0? x.MemberRelation2.filter((y) => qdate.getDateDiff(new Date(y.d_effective), reportDate.value, 'days') < 0).length > 0: false)
+        )
+        //&&
         //x.c_udf_1 == "青年家人義工"
       )
     ) && (

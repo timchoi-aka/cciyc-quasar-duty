@@ -23,10 +23,11 @@
     </span>
 
     <span class="col-2 col-xs-2 q-mr-md-md q-mr-sm-sm q-mr-xs-none">
-      {{ qdate.formatDate(relatedMember.d_effective, "YYYY年M月D日") }}
+      <q-input type="date" :model-value="qdate.formatDate(relatedMember.d_effective, 'YYYY-MM-DD')"
+        @update:model-value="(val) => relatedMember.d_effective = qdate.formatDate(qdate.startOfDate(val, 'day'), 'YYYY-MM-DDTHH:mm:ss')"></q-input>
     </span>
 
-    <span class="col-1 col-xs-1 q-mr-md-none q-mr-sm-none q-mr-xs-none">
+    <span class=" col-1 col-xs-1 q-mr-md-none q-mr-sm-none q-mr-xs-none">
       <q-btn square flat class="text-negative" icon="replay" @click="reset">
         <q-tooltip class="bg-white text-red">重置</q-tooltip>
       </q-btn>
@@ -35,7 +36,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { GET_NAME_FROM_ID } from "/src/graphQueries/Member/query.js";
 import ageUtil from "src/lib/calculateAge.js";
 import MemberSelection from "components/Member/MemberSelection.vue";
@@ -153,8 +154,12 @@ onResult((data) => {
     originalValue.value = JSON.parse(JSON.stringify(relatedMember.value));
   }
 
-  emit("update:modelValue", relatedMember.value);
+  //emit("update:modelValue", relatedMember.value);
 });
+
+watch(relatedMember.value, (newVal, oldVal) => {
+  emit("update:modelValue", newVal);
+})
 
 // function
 function reset() {

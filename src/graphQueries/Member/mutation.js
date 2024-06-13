@@ -21,9 +21,9 @@ export const DELETE_MEMBER_BY_ID = gql`
 
 export const ADD_MEMBER_FROM_ID = gql`
   mutation addMemberFromID (
-    $logObject: Log_insert_input! = {}, 
+    $logObject: Log_insert_input! = {},
     $memberObject: Member_insert_input = {}
-  ) 
+  )
   {
     insert_Member_one(object: $memberObject)
       {
@@ -36,10 +36,10 @@ export const ADD_MEMBER_FROM_ID = gql`
 
 export const ADD_MEMBER_FROM_ID_WITH_PAYMENT = gql`
   mutation addMemberFromIDWithPayment (
-    $logObject: Log_insert_input! = {}, 
-    $memberObject: Member_insert_input = {}, 
+    $logObject: Log_insert_input! = {},
+    $memberObject: Member_insert_input = {},
     $accountObject: tbl_account_insert_input = {}
-  ) 
+  )
   {
     insert_Member_one(object: $memberObject) {
         c_mem_id
@@ -55,10 +55,10 @@ export const ADD_MEMBER_FROM_ID_WITH_PAYMENT = gql`
   export const RENEW_MEMBER_FROM_ID_WITH_PAYMENT = gql`
     mutation renewMemberFromIDWithPayment (
       $c_mem_id: String!
-      $logObject: Log_insert_input! = {}, 
-      $memberObject:  Member_set_input = {}, 
+      $logObject: Log_insert_input! = {},
+      $memberObject:  Member_set_input = {},
       $accountObject: tbl_account_insert_input = {}
-    ) 
+    )
     {
       update_Member_by_pk(pk_columns: {c_mem_id: $c_mem_id}, _set: $memberObject) {
         c_mem_id
@@ -70,13 +70,13 @@ export const ADD_MEMBER_FROM_ID_WITH_PAYMENT = gql`
         c_receipt_no
       }
     }`
-  
+
   export const ADD_MEMBER_AND_RELATION_FROM_ID = gql`
     mutation addMemberAndRelationFromID (
-      $logObject: Log_insert_input! = {}, 
+      $logObject: Log_insert_input! = {},
       $memberObject: Member_insert_input = {}
       $relationObjects: [Relation_insert_input!] = {},
-    ) 
+    )
     {
       insert_Member_one(object: $memberObject) {
         c_mem_id
@@ -95,11 +95,11 @@ export const ADD_MEMBER_FROM_ID_WITH_PAYMENT = gql`
 
 export const ADD_MEMBER_AND_RELATION_FROM_ID_WITH_PAYMENT = gql`
   mutation addMemberAndRelationFromIDWithPayment (
-    $logObject: Log_insert_input! = {}, 
+    $logObject: Log_insert_input! = {},
     $memberObject: Member_insert_input = {}
     $relationObjects: [Relation_insert_input!] = {},
     $accountObject: tbl_account_insert_input = {}
-  ) 
+  )
   {
     insert_Member_one(object: $memberObject) {
       c_mem_id
@@ -121,10 +121,10 @@ export const ADD_MEMBER_AND_RELATION_FROM_ID_WITH_PAYMENT = gql`
 
 export const UPDATE_YOUTH_MEMBER_STATUS = gql`
   mutation updateYouthMemberStatus(
-    $c_mem_id: String = "", 
+    $c_mem_id: String = "",
     $b_mem_type10: Boolean = false,
     $d_expired_1: datetime2,
-    $logObject: Log_insert_input! = {}, 
+    $logObject: Log_insert_input! = {},
     ) {
     update_Member_by_pk(pk_columns: {c_mem_id: $c_mem_id}, _set: {b_mem_type10: $b_mem_type10, d_expired_1: $d_expired_1}) {
       c_mem_id
@@ -132,15 +132,15 @@ export const UPDATE_YOUTH_MEMBER_STATUS = gql`
     insert_Log_one(object: $logObject) {
       log_id
     }
-  }  
+  }
 `
 export const ADD_MEMBER_AND_RELATION_FROM_ID_UPDATE_RELATED_YOUTH_STATUS = gql`
   mutation addMemberAndRelationFromIDUpdateRelatedYouthStatus (
-    $logObject: Log_insert_input! = {}, 
+    $logObject: Log_insert_input! = {},
     $memberObject: Member_insert_input = {}
     $relationObjects: [Relation_insert_input!] = {},
     $related_ids: [String] = [],
-  ) 
+  )
   {
     insert_Member_one(object: $memberObject) {
       c_mem_id
@@ -162,12 +162,12 @@ export const ADD_MEMBER_AND_RELATION_FROM_ID_UPDATE_RELATED_YOUTH_STATUS = gql`
 
   export const ADD_MEMBER_AND_RELATION_FROM_ID_UPDATE_RELATED_YOUTH_STATUS_WITH_PAYMENT = gql`
     mutation addMemberAndRelationFromIDUpdateRelatedYouthStatusWithPayment (
-      $logObject: Log_insert_input! = {}, 
+      $logObject: Log_insert_input! = {},
       $memberObject: Member_insert_input = {}
       $relationObjects: [Relation_insert_input!] = {},
       $related_ids: [String!] = [],
       $accountObject: tbl_account_insert_input = {}
-    ) 
+    )
     {
       insert_Member_one(object: $memberObject) {
         c_mem_id
@@ -208,7 +208,7 @@ export const UPDATE_RELATED_YOUTH_MEMBER_STATUS = gql`
  */
 export const QUIT_MEMBER_BY_ID = gql`
   mutation quitMemberByID (
-    $c_mem_id: String!, 
+    $c_mem_id: String!,
     $exitDate: datetime2,
     $logObject: Log_insert_input! = {}
     ) {
@@ -249,15 +249,16 @@ export const QUIT_MEMBER_BY_ID = gql`
     */
 export const UPDATE_MEMBER_BY_ID = gql`
   mutation updateMemberByID(
-    $c_mem_id: String!, 
-    $object: Member_set_input = {}, 
-    $logObject: Log_insert_input! = {}, 
+    $c_mem_id: String!,
+    $object: Member_set_input = {},
+    $logObject: Log_insert_input! = {},
     $deleteObjects: [uniqueidentifier!] = ["00000000-0000-0000-0000-000000000000"],
     $upsertObjects: [Relation_insert_input!] = [{
     	uuid: "00000000-0000-0000-0000-000000000000",
     	c_mem_id_1: "",
     	c_mem_id_2: "",
-    	relation: ""
+    	relation: "",
+      d_effective: "2000-01-01T00:00:00"
   	}]
   ) {
     update_Member_by_pk(pk_columns: {c_mem_id: $c_mem_id}, _set: $object) {
@@ -267,7 +268,7 @@ export const UPDATE_MEMBER_BY_ID = gql`
       log_id
     }
     insert_Relation(
-      objects: $upsertObjects, if_matched: {match_columns: uuid, update_columns: [c_mem_id_1, c_mem_id_2, relation]}
+      objects: $upsertObjects, if_matched: {match_columns: uuid, update_columns: [c_mem_id_1, c_mem_id_2, relation, d_effective]}
     ) {
       affected_rows
       returning {
@@ -275,6 +276,7 @@ export const UPDATE_MEMBER_BY_ID = gql`
         c_mem_id_1
         c_mem_id_2
         relation
+        d_effective
         RelationMember1 {
           c_mem_id
           b_mem_type1
@@ -298,6 +300,7 @@ export const UPDATE_MEMBER_BY_ID = gql`
         c_mem_id_1
         c_mem_id_2
         relation
+        d_effective
         RelationMember1 {
           c_mem_id
           b_mem_type1
@@ -334,9 +337,9 @@ export const INSERT_RELATION = gql`
 
 export const UPDATE_RELATION = gql`
   mutation updateRelation(
-    $uuid: uniqueidentifier!, 
+    $uuid: uniqueidentifier!,
     $changeObject: Relation_set_input = {},
-    $logObject: Log_insert_input! = {}, 
+    $logObject: Log_insert_input! = {},
   ) {
     update_Relation_by_pk(pk_columns: {uuid: $uuid}, _set: $changeObject) {
       uuid
@@ -345,7 +348,7 @@ export const UPDATE_RELATION = gql`
       log_id
     }
   }`
-  
+
 export const DELETE_RELATION = gql`
   mutation deleteRelation(
     $deleteObjects: [uniqueidentifier!],

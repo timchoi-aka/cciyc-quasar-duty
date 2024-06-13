@@ -223,7 +223,7 @@
           </span>
           <span v-else class="col-md-10 col-sm-10 col-xs-8">{{
             qdate.formatDate(member ? member.d_birth : null, "YYYY年MM月DD日")
-            }}</span>
+          }}</span>
         </div>
         <div class="col-12 row">
           <span class="col-md-2 col-sm-2 col-xs-4">年齡: </span><span v-if="editState"
@@ -231,7 +231,7 @@
             edit_member && edit_member.getAge(new Date())
           }}--></span><span v-else class="col-md-10 col-sm-10 col-xs-8">{{
             member && member.getAge(new Date())
-            }}</span>
+          }}</span>
         </div>
         <div class="col-12 row">
           <span class="col-md-2 col-sm-2 col-xs-4">手提電話: </span><span v-if="editState"
@@ -333,7 +333,7 @@
           </span>
           <span v-else>{{
             qdate.formatDate(member ? member.d_enter_1 : null, "YYYY年MM月DD日")
-            }}</span>
+          }}</span>
         </div>
         <div class="col-12 row">
           <span class="col-md-2 col-sm-2 col-xs-4">屆滿日期:</span>
@@ -366,10 +366,10 @@
             }}</span>
           <span class="col-md-2 col-sm-2 col-xs-4">續會日期:</span><span class="col-md-10 col-sm-10 col-xs-8">{{
             qdate.formatDate(member ? member.d_renew_1 : null, "YYYY年MM月DD日")
-            }}</span>
+          }}</span>
           <span class="col-md-2 col-sm-2 col-xs-4">退會日期:</span><span class="col-md-10 col-sm-10 col-xs-8">{{
             qdate.formatDate(member ? member.d_exit_1 : null, "YYYY年MM月DD日")
-            }}</span>
+          }}</span>
           <span class="col-md-2 col-sm-2 col-xs-4">青年家人:</span><span class="col-md-10 col-sm-10 col-xs-8">
             <q-icon v-if="member && member.b_mem_type10" color="positive" name="check" />
             <q-icon v-else color="negative" name="cancel" />
@@ -855,6 +855,7 @@ async function saveRecord() {
     object: updateObject.value,
     logObject: logObject.value,
   };
+
   if (deleteRelation.length > 0) parameters.deleteObjects = deleteRelation;
   if ([...newRelation, ...changeRelation].length > 0)
     parameters.upsertObjects = [...newRelation, ...changeRelation];
