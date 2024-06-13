@@ -2,7 +2,6 @@ import { date as qdate } from "quasar";
 import calculateAge from "./calculateAge.js";
 
 function sisFilter(reportDate, reportType, x) {
-  x.MemberRelation1.length > 0? console.log(x.MemberRelation1.filter((y) => qdate.getDateDiff(new Date(y.d_effective), reportDate.value, 'days') < 0)): null
   /*
   console.log(x.c_mem_id + ":" + qdate.startOfDate(qdate.subtractFromDate(reportDate.value, {years: 15}), 'month') + ":" + qdate.getDateDiff(
     x.d_birth,
@@ -43,10 +42,7 @@ function sisFilter(reportDate, reportType, x) {
           x.d_birth,
           qdate.endOfDate(qdate.subtractFromDate(reportDate.value, {years: 15}), 'month')
         ) > 0 &&
-        x.isYouthFamily && (
-          (x.MemberRelation1.length > 0? x.MemberRelation1.filter((y) => qdate.getDateDiff(new Date(y.d_effective), reportDate.value, 'days') < 0).length > 0: false) ||
-          (x.MemberRelation2.length > 0? x.MemberRelation2.filter((y) => qdate.getDateDiff(new Date(y.d_effective), reportDate.value, 'days') < 0).length > 0: false)
-        )
+        x.isYouthFamily
       ) ||
       // family: is aged 25 or above and isYouthFamily and family Membership
       (
@@ -55,10 +51,7 @@ function sisFilter(reportDate, reportType, x) {
           x.d_birth,
           qdate.startOfDate(qdate.subtractFromDate(reportDate.value, {years: 25}), 'month')
         ) < 0 &&
-        x.isYouthFamily && (
-          (x.MemberRelation1.length > 0? x.MemberRelation1.filter((y) => qdate.getDateDiff(new Date(y.d_effective), reportDate.value, 'days') < 0).length > 0: false) ||
-          (x.MemberRelation2.length > 0? x.MemberRelation2.filter((y) => qdate.getDateDiff(new Date(y.d_effective), reportDate.value, 'days') < 0).length > 0: false)
-        )
+        x.isYouthFamily
         //&&
         //x.c_udf_1 == "青年家人義工"
       )
@@ -136,7 +129,7 @@ function isYouthFamily(reportDate, database, c_mem_id) {
 
   let allRelations = [...database[i].MemberRelation1, ...database[i].MemberRelation2]
   let relatedMembers = []
-  allRelations.forEach((relation) => {
+  allRelations.filter((x) => qdate.getDateDiff(new Date(x.d_effective), reportDate.value) < 0).forEach((relation) => {
     if (relation.c_mem_id_1 == c_mem_id) relatedMembers.push(relation.c_mem_id_2)
     else relatedMembers.push(relation.c_mem_id_1)
   })
