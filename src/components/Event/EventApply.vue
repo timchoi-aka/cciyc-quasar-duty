@@ -59,7 +59,7 @@
         <q-btn v-close-popup @click="submitApplication" label="儲存" dense icon="save"
           class="q-ml-md bg-primary text-white" size="lg" :disable="ApplyHistory.filter((v) => !v.b_refund)
             .map((v) => v.c_mem_id)
-            .includes(ApplicationQueue[0].c_mem_id)">
+            .includes(ApplicationQueue[0].c_mem_id) && ApplicationQueue[0].c_mem_id != '9999'">
         </q-btn>
         <q-btn v-close-popup label="取消" dense icon="replay" class="q-ml-md bg-negative text-white" size="lg" />
       </q-card-actions>
