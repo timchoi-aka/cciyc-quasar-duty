@@ -56,9 +56,9 @@
       </q-card-section>
       <q-card-actions>
         <q-space />
-        <q-btn v-close-popup @click="submitApplication" label="儲存" dense icon="save"
+        <!--<q-btn v-close-popup @click="submitApplication" label="儲存" dense icon="save"
           class="q-ml-md bg-primary text-white" size="lg">
-        </q-btn>
+        </q-btn>-->
         <q-btn v-close-popup label="取消" dense icon="replay" class="q-ml-md bg-negative text-white" size="lg" />
       </q-card-actions>
     </q-card>
