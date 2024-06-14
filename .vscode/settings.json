@@ -10,5 +10,11 @@
   "vs-code-prettier-eslint.prettierLast": false,
   "[vue]": {
     "editor.defaultFormatter": "Vue.volar"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
   } // set as "true" to run 'prettier' last not first
 }

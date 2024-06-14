@@ -358,6 +358,7 @@ function updateReport() {
   MemberData.value = res
   Family_15Data.value = res.filter((x) => Report.sisFilter(reportDate, 'child', x))
   Family_24Data.value = res.filter((x) => Report.sisFilter(reportDate, 'family', x))
+
   QuitData.value = res.filter((x) => x.d_exit_1 != null)
   YouthData.value = res.filter((x) => Report.sisFilter(reportDate, 'youth', x))
 

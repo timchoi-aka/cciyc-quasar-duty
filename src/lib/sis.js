@@ -26,21 +26,21 @@ function sisFilter(reportDate, reportType, x) {
     ) &&
     (
       // youth: is age 15-24 in the report month
-      ( reportType == 'youth' &&
+      (reportType == 'youth' &&
         // age 15 - 24 at the end of report month
         qdate.isBetweenDates(
           x.d_birth,
-          qdate.startOfDate(qdate.subtractFromDate(reportDate.value, {years: 25}), 'month'),
-          qdate.endOfDate(qdate.subtractFromDate(reportDate.value, {years: 15}), 'month'), {
-            inclusiveFrom: true, inclusiveTo: true
-          }
+          qdate.startOfDate(qdate.subtractFromDate(reportDate.value, { years: 25 }), 'month'),
+          qdate.endOfDate(qdate.subtractFromDate(reportDate.value, { years: 15 }), 'month'), {
+          inclusiveFrom: true, inclusiveTo: true
+        }
         )
       ) ||
       // children: is aged below 15 and isYouthFamily
-      ( reportType == 'child' &&
+      (reportType == 'child' &&
         qdate.getDateDiff(
           x.d_birth,
-          qdate.endOfDate(qdate.subtractFromDate(reportDate.value, {years: 15}), 'month')
+          qdate.endOfDate(qdate.subtractFromDate(reportDate.value, { years: 15 }), 'month')
         ) > 0 &&
         x.isYouthFamily
       ) ||
@@ -49,7 +49,7 @@ function sisFilter(reportDate, reportType, x) {
         reportType == 'family' &&
         qdate.getDateDiff(
           x.d_birth,
-          qdate.startOfDate(qdate.subtractFromDate(reportDate.value, {years: 25}), 'month')
+          qdate.startOfDate(qdate.subtractFromDate(reportDate.value, { years: 25 }), 'month')
         ) < 0 &&
         x.isYouthFamily
         //&&
@@ -60,6 +60,23 @@ function sisFilter(reportDate, reportType, x) {
         // for report months Jan-Mar, May-Dec
         qdate.formatDate(reportDate.value, "M") != 4 &&
         (
+          ( // associate with related member within report month
+            (x.MemberRelation1.length > 0 ? x.MemberRelation1.filter((relation) => qdate.isBetweenDates(
+              relation.d_effective,
+              qdate.startOfDate(reportDate.value, 'month'),
+              qdate.endOfDate(reportDate.value, 'month'),
+              {
+                inclusiveFrom: true, inclusiveTo: true
+              })).length > 0 : false) ||
+            (x.MemberRelation2.length > 0 ? x.MemberRelation2.filter((relation) => qdate.isBetweenDates(
+              relation.d_effective,
+              qdate.startOfDate(reportDate.value, 'month'),
+              qdate.endOfDate(reportDate.value, 'month'),
+              {
+                inclusiveFrom: true, inclusiveTo: true
+              })).length > 0 : false
+            )
+          ) ||
           ( // enter within report month
             qdate.isBetweenDates(
               x.d_enter_1,
@@ -84,18 +101,18 @@ function sisFilter(reportDate, reportType, x) {
             reportType == 'youth' &&
             qdate.isBetweenDates(
               x.d_birth,
-              qdate.startOfDate(qdate.subtractFromDate(reportDate.value, {years: 15}), 'month'),
-              qdate.endOfDate(qdate.subtractFromDate(reportDate.value, {years: 15}), 'month'), {
-                inclusiveFrom: true, inclusiveTo: true, onlyDate: true
+              qdate.startOfDate(qdate.subtractFromDate(reportDate.value, { years: 15 }), 'month'),
+              qdate.endOfDate(qdate.subtractFromDate(reportDate.value, { years: 15 }), 'month'), {
+              inclusiveFrom: true, inclusiveTo: true, onlyDate: true
             })
           ) ||
           ( // passed age 25 birthday 1 month before report month (family only)
             reportType == 'family' && x.isYouthFamily &&
             qdate.isBetweenDates(
               x.d_birth,
-              qdate.startOfDate(qdate.subtractFromDate(reportDate.value, {years: 25, months: 1}), 'month'),
-              qdate.endOfDate(qdate.subtractFromDate(reportDate.value, {years: 25, months: 1}), 'month'), {
-                inclusiveFrom: true, inclusiveTo: true, onlyDate: true
+              qdate.startOfDate(qdate.subtractFromDate(reportDate.value, { years: 25, months: 1 }), 'month'),
+              qdate.endOfDate(qdate.subtractFromDate(reportDate.value, { years: 25, months: 1 }), 'month'), {
+              inclusiveFrom: true, inclusiveTo: true, onlyDate: true
             })
           )
         )
@@ -109,6 +126,16 @@ function sisFilter(reportDate, reportType, x) {
         ) &&
         ( // expiry after begin of report month
           qdate.getDateDiff(x.d_expired_1, qdate.startOfDate(reportDate.value, 'month')) > 0
+        ) && (
+          // associate with related member within the beginning of report year
+          (x.MemberRelation1.length > 0 ? x.MemberRelation1.filter((relation) => qdate.getDateDiff(
+            relation.d_effective,
+            qdate.startOfDate(new Date(parseInt(qdate.formatDate(reportDate.value, "YYYY")), 2, 31), 'day'),
+          ) < 0).length > 0 : false) ||
+          (x.MemberRelation2.length > 0 ? x.MemberRelation2.filter((relation) => qdate.getDateDiff(
+            relation.d_effective,
+            qdate.startOfDate(new Date(parseInt(qdate.formatDate(reportDate.value, "YYYY")), 2, 31), 'day'),
+          ) < 0).length > 0 : false)
         )
       )
     )
@@ -129,41 +156,40 @@ function isYouthFamily(reportDate, database, c_mem_id) {
 
   let allRelations = [...database[i].MemberRelation1, ...database[i].MemberRelation2]
   let relatedMembers = []
+
   allRelations.filter((x) => qdate.getDateDiff(new Date(x.d_effective), reportDate.value) < 0).forEach((relation) => {
     if (relation.c_mem_id_1 == c_mem_id) relatedMembers.push(relation.c_mem_id_2)
     else relatedMembers.push(relation.c_mem_id_1)
   })
 
-  //console.log(relatedMembers)
-
   relatedMembers.forEach((mem_id) => {
     // console.log(mem_id)
     let j = database.findIndex((element) => element.c_mem_id == mem_id)
-    if ( j != -1 ) {
+    if (j != -1) {
       // target is youth?
       // 1) check age
       // 2) membership not yet expired (compare with start of report month)
       // 3) no quit date or not quit yet (compare with start of report month)
       let isYouth = // 1
-                    qdate.isBetweenDates(
-                      database[j].d_birth,
-                      qdate.startOfDate(qdate.subtractFromDate(reportDate.value, {years: 25}), 'month'),
-                      qdate.endOfDate(qdate.subtractFromDate(reportDate.value, {years: 15}), 'month'), {
-                        inclusiveFrom: true, inclusiveTo: true
-                      }
-                    ) && (
-                      // 2
-                      (database[j].d_expired_1 == null) ||
-                      (database[j].d_expired_1 && qdate.getDateDiff(database[j].d_expired_1, qdate.startOfDate(reportDate.value, 'month')) > 0)
-                    ) &&
-                    (
-                      // 3
-                      database[j].d_exit_1 == null ||
-                      database[j].d_exit_1 && qdate.getDateDiff(database[j].d_exit_1, qdate.startOfDate(reportDate.value, 'month')) > 0
-                    )
+        qdate.isBetweenDates(
+          database[j].d_birth,
+          qdate.startOfDate(qdate.subtractFromDate(reportDate.value, { years: 25 }), 'month'),
+          qdate.endOfDate(qdate.subtractFromDate(reportDate.value, { years: 15 }), 'month'), {
+          inclusiveFrom: true, inclusiveTo: true
+        }
+        ) && (
+          // 2
+          (database[j].d_expired_1 == null) ||
+          (database[j].d_expired_1 && qdate.getDateDiff(database[j].d_expired_1, qdate.startOfDate(reportDate.value, 'month')) > 0)
+        ) &&
+        (
+          // 3
+          database[j].d_exit_1 == null ||
+          database[j].d_exit_1 && qdate.getDateDiff(database[j].d_exit_1, qdate.startOfDate(reportDate.value, 'month')) > 0
+        )
       if (isYouth) {
         result.isYouthFamily = true
-        result.youthMemberName.push(database[j].c_name? database[j].c_name: database[j].c_name_other)
+        result.youthMemberName.push(database[j].c_name ? database[j].c_name : database[j].c_name_other)
       }
     }
   })

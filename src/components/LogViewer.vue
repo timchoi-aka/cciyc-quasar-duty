@@ -1,10 +1,14 @@
 <template>
-<q-table
-  :rows="data"
-  :columns="columns"
-  wrap-cells
-  :pagination="pagination"
-/>
+  <q-table :rows="data.filter((x) => x.action.includes(filter))" :columns="columns" wrap-cells :pagination="pagination">
+    <template v-slot:top-right>
+      <!-- search filter -->
+      <q-input v-model="filter" debounce="300" placeholder="搜尋" dense outlined class="q-mb-md">
+        <template v-slot:prepend>
+          <q-icon name="search" />
+        </template>
+      </q-input>
+    </template>
+  </q-table>
 
 </template>
 
@@ -17,7 +21,7 @@ import { gql } from "graphql-tag"
 const props = defineProps({
   module: String
 })
-
+const filter = ref("")
 // query
 const { onResult: onData } = useQuery(gql`
   query Component_getLog($module: String! = "") {
@@ -28,14 +32,14 @@ const { onResult: onData } = useQuery(gql`
       module
       username
     }
-  }`, 
+  }`,
   () => ({
     module: props.module,
   }), {
-    pollInterval: 5000
-  })
+  pollInterval: 5000
+})
 
-  
+
 // computed
 const data = ref([])
 
