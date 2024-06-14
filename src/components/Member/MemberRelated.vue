@@ -23,8 +23,9 @@
     </span>
 
     <span class="col-2 col-xs-2 q-mr-md-md q-mr-sm-sm q-mr-xs-none">
-      <q-input type="date" :model-value="qdate.formatDate(relatedMember.d_effective, 'YYYY-MM-DD')"
-        @update:model-value="(val) => relatedMember.d_effective = qdate.formatDate(qdate.startOfDate(val, 'day'), 'YYYY-MM-DDTHH:mm:ss')"></q-input>
+      <DateComponent :model-value="qdate.formatDate(relatedMember.d_effective, 'YYYY-MM-DD')" :clearable="false"
+        label="關聯日期"
+        @update:model-value="(val) => relatedMember.d_effective = qdate.formatDate(qdate.startOfDate(val, 'day'), 'YYYY-MM-DDTHH:mm:ss')" />
     </span>
 
     <span class=" col-1 col-xs-1 q-mr-md-none q-mr-sm-none q-mr-xs-none">
@@ -43,6 +44,7 @@ import MemberSelection from "components/Member/MemberSelection.vue";
 import { useQuery } from "@vue/apollo-composable";
 import { is, date as qdate } from "quasar";
 import Member from "src/components/class/member";
+import DateComponent from "../Basic/DateComponent.vue";
 
 // props and emits
 const emit = defineEmits(["update:modelValue"]);
