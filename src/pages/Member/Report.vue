@@ -356,22 +356,22 @@ function updateReport() {
   })
 
   MemberData.value = res
-  Family_15Data.value = res.filter((x) => Report.sisFilter(reportDate, 'child', x))
-  Family_24Data.value = res.filter((x) => Report.sisFilter(reportDate, 'family', x))
+  Family_15Data.value = res.filter((member) => Report.sisFilter(reportDate, 'child', member))
+  Family_24Data.value = res.filter((member) => Report.sisFilter(reportDate, 'family', member))
 
-  QuitData.value = res.filter((x) => x.d_exit_1 != null)
-  YouthData.value = res.filter((x) => Report.sisFilter(reportDate, 'youth', x))
+  QuitData.value = res.filter((member) => member.d_exit_1 != null)
+  YouthData.value = res.filter((member) => Report.sisFilter(reportDate, 'youth', member))
 
-  ErrorData.value = res.filter((x) =>
+  ErrorData.value = res.filter((member) =>
     (
-      x.d_birth == null ||
-      x.d_birth > reportDate.value ||
-      x.d_enter_1 == null
+      member.d_birth == null ||
+      member.d_birth > reportDate.value ||
+      member.d_enter_1 == null
     ) &&
-    x.c_udf_1 != "社區義工" &&
+    member.c_udf_1 != "社區義工" &&
     (
-      (x.d_expired_1 == null) ||
-      (x.d_expired_1 && qdate.getDateDiff(x.d_expired_1, reportDate.value) > 0)
+      (member.d_expired_1 == null) ||
+      (member.d_expired_1 && qdate.getDateDiff(member.d_expired_1, reportDate.value) > 0)
     )
   )
 
@@ -386,10 +386,10 @@ function updateReport() {
   })
 
   DuplicateData.value = DuplicateDataRes
-  ExpiredData.value = res.filter((x) =>
-    !x.d_exit_1 &&
-    x.d_expired_1 && qdate.getDateDiff(x.d_expired_1, reportDate.value) < 0 &&
-    qdate.isBetweenDates(x.d_expired_1, qdate.startOfDate(reportDate.value, 'month'), qdate.endOfDate(reportDate.value, 'month'))
+  ExpiredData.value = res.filter((member) =>
+    !member.d_exit_1 &&
+    member.d_expired_1 && qdate.getDateDiff(member.d_expired_1, reportDate.value) < 0 &&
+    qdate.isBetweenDates(member.d_expired_1, qdate.startOfDate(reportDate.value, 'month'), qdate.endOfDate(reportDate.value, 'month'))
   )
 }
 

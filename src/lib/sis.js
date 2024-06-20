@@ -1,145 +1,199 @@
 import { date as qdate } from "quasar";
-import calculateAge from "./calculateAge.js";
+import Member from "src/components/class/member";
+const dateRangeOptions = { inclusiveFrom: true, inclusiveTo: true };
 
-function sisFilter(reportDate, reportType, x) {
-  /*
-  console.log(x.c_mem_id + ":" + qdate.startOfDate(qdate.subtractFromDate(reportDate.value, {years: 15}), 'month') + ":" + qdate.getDateDiff(
-    x.d_birth,
-    qdate.startOfDate(qdate.subtractFromDate(reportDate.value, {years: 15}), 'month')
-  ) )
-    */
-  return (
-    x.c_udf_1 != "社區義工" &&
-    ( // did not exit membership or exit after start of report month
-      x.d_exit_1 == null ||
-      x.d_exit_1 && qdate.getDateDiff(x.d_exit_1, qdate.startOfDate(reportDate.value, 'month')) > 0
-    ) &&
-    ( // did not expire membership or expire after start of report month
-      (x.d_expired_1 == null) ||
-      (x.d_expired_1 && qdate.getDateDiff(x.d_expired_1, qdate.startOfDate(reportDate.value, 'month')) > 0)
-    ) &&
-    (
-      // enter before end of report month
-      qdate.getDateDiff(x.d_enter_1, qdate.endOfDate(reportDate.value, 'month')) < 0 &&
-      // expiry after begin of report month
-      qdate.getDateDiff(x.d_expired_1, qdate.startOfDate(reportDate.value, 'month')) > 0
-    ) &&
-    (
-      // youth: is age 15-24 in the report month
-      (reportType == 'youth' &&
-        // age 15 - 24 at the end of report month
-        qdate.isBetweenDates(
-          x.d_birth,
-          qdate.startOfDate(qdate.subtractFromDate(reportDate.value, { years: 25 }), 'month'),
-          qdate.endOfDate(qdate.subtractFromDate(reportDate.value, { years: 15 }), 'month'), {
-          inclusiveFrom: true, inclusiveTo: true
-        }
-        )
-      ) ||
-      // children: is aged below 15 and isYouthFamily
-      (reportType == 'child' &&
-        qdate.getDateDiff(
-          x.d_birth,
-          qdate.endOfDate(qdate.subtractFromDate(reportDate.value, { years: 15 }), 'month')
-        ) > 0 &&
-        x.isYouthFamily
-      ) ||
-      // family: is aged 25 or above and isYouthFamily and family Membership
-      (
-        reportType == 'family' &&
-        qdate.getDateDiff(
-          x.d_birth,
-          qdate.startOfDate(qdate.subtractFromDate(reportDate.value, { years: 25 }), 'month')
-        ) < 0 &&
-        x.isYouthFamily
-        //&&
-        //x.c_udf_1 == "青年家人義工"
-      )
-    ) && (
-      (
-        // for report months Jan-Mar, May-Dec
-        qdate.formatDate(reportDate.value, "M") != 4 &&
+function isNotCommunityVolunteer(member) {
+  return member.c_udf_1 != "社區義工";
+}
+
+function didNotExitMembershipOrExitedAfter(member, date) {
+  return member.d_exit_1 == null || (member.d_exit_1 && qdate.getDateDiff(member.d_exit_1, date) > 0);
+}
+
+function didNotExpireMembershipOrExpiredAfter(member, date) {
+  return member.d_expired_1 == null || (member.d_expired_1 && qdate.getDateDiff(member.d_expired_1, date) > 0);
+}
+
+function enteredBeforeDate(member, date) {
+  return qdate.getDateDiff(member.d_enter_1, date) < 0;
+}
+
+const reportTypeHandlers = {
+  youth: handleYouth,
+  child: handleChild,
+  family: handleFamily,
+};
+
+const yearlyReportTypeHandlers = {
+  youth: yearlyHandleYouth,
+  child: yearlyHandleChild,
+  family: yearlyHandleFamily,
+};
+
+function yearlyHandleYouth(periodStart, periodEnd, member) {
+  // Logic specific to 'youth'
+  return ageMetAtCutoff(new Member(member), periodStart, 15, 24) || ageMetAtCutoff(new Member(member), periodEnd, 15, 24);
+}
+
+function yearlyHandleChild(periodStart, periodEnd, member) {
+  // Logic specific to 'child'
+  // is aged 0 - 14 within periodStart and periodEnd, also is a youth family
+  return member.isYouthFamily && (ageMetAtCutoff(new Member(member), periodStart, 0, 14) || ageMetAtCutoff(new Member(member), periodEnd, 0, 14));
+}
+
+function yearlyHandleFamily(periodStart, periodEnd, member) {
+  // Logic specific to 'family'
+  return member.isYouthFamily && (ageMetAtCutoff(new Member(member), periodStart, 25, 999) || ageMetAtCutoff(new Member(member), periodEnd, 25, 999));
+}
+
+function handleYouth(periodStart, periodEnd, member) {
+  // Logic specific to 'youth'
+  return ageInRange(new Member(member), periodStart, periodEnd, 15, 24);
+}
+
+function handleChild(periodStart, periodEnd, member) {
+  // Logic specific to 'child'
+  // is aged 0 - 14 within periodStart and periodEnd, also is a youth family
+  return ageInRange(new Member(member), periodStart, periodEnd, 0, 14) && member.isYouthFamily;
+}
+
+function handleFamily(periodStart, periodEnd, member) {
+  // Logic specific to 'family'
+  return ageInRange(new Member(member), periodStart, periodEnd, 25, 999) && member.isYouthFamily;
+}
+
+function ageInRange(memObj, periodStart, periodEnd, lowerBound, upperBound) {
+  return (memObj.getAge(periodStart) >= lowerBound && memObj.getAge(periodStart) <= upperBound) || (memObj.getAge(periodEnd) >= lowerBound && memObj.getAge(periodEnd) <= upperBound)
+}
+
+function ageMetAtCutoff(memObj, date, lowerBound, upperBound) {
+  return (memObj.getAge(date) >= lowerBound && memObj.getAge(date) <= upperBound)
+}
+
+function validAgeBasedOnReportType(reportType, periodStart, periodEnd, member) {
+  const handler = reportTypeHandlers[reportType];
+  if (handler) {
+    return handler(periodStart, periodEnd, member);
+  } else {
+    console.error("Unsupported report type:", reportType);
+    return false; // Or any other default/fallback action
+  }
+}
+
+function yearlyValidAgeBasedOnReportType(reportType, periodStart, periodEnd, member) {
+  const handler = yearlyReportTypeHandlers[reportType];
+  if (handler) {
+    return handler(periodStart, periodEnd, member);
+  } else {
+    console.error("Unsupported report type:", reportType);
+    return false; // Or any other default/fallback action
+  }
+}
+
+function associatedRelationInPeriod(relations, periodStart, periodEnd) {
+  return relations.some(relation =>
+    qdate.isBetweenDates(relation.d_effective, periodStart, periodEnd, dateRangeOptions)
+  );
+}
+
+function isDateInRange(date, periodStart, periodEnd) {
+  return qdate.isBetweenDates(date, periodStart, periodEnd, dateRangeOptions);
+}
+
+function hasValidRelation(relations, periodStart, periodEnd) {
+  return relations.some(relation =>
+    qdate.getDateDiff(relation.d_effective, periodStart) < 0
+  );
+}
+
+function isNewOrRenewInPeriod(member, periodStart, periodEnd, dateRangeOptions) {
+  return isDateInRange(member.d_enter_1, periodStart, periodEnd, dateRangeOptions) || isDateInRange(member.d_renew_1, periodStart, periodEnd, dateRangeOptions);
+}
+
+// for report months Jan-Mar, May-Dec, generate monthly report
+// monthly report needs members to have associated relation within that period
+function monthlyReportFilter(periodStart, periodEnd, reportType, member) {
+  switch (reportType) {
+    case 'youth':
+      // youth has to be renewed or entered in the period
+      // or turned 15 within the period
+      return isNotCommunityVolunteer(member) &&
+        didNotExitMembershipOrExitedAfter(member, periodStart) &&
+        didNotExpireMembershipOrExpiredAfter(member, periodStart) &&
+        enteredBeforeDate(member, periodEnd) &&
         (
-          ( // associate with related member within report month
-            (x.MemberRelation1.length > 0 ? x.MemberRelation1.filter((relation) => qdate.isBetweenDates(
-              relation.d_effective,
-              qdate.startOfDate(reportDate.value, 'month'),
-              qdate.endOfDate(reportDate.value, 'month'),
-              {
-                inclusiveFrom: true, inclusiveTo: true
-              })).length > 0 : false) ||
-            (x.MemberRelation2.length > 0 ? x.MemberRelation2.filter((relation) => qdate.isBetweenDates(
-              relation.d_effective,
-              qdate.startOfDate(reportDate.value, 'month'),
-              qdate.endOfDate(reportDate.value, 'month'),
-              {
-                inclusiveFrom: true, inclusiveTo: true
-              })).length > 0 : false
-            )
-          ) ||
-          ( // enter within report month
-            qdate.isBetweenDates(
-              x.d_enter_1,
-              qdate.startOfDate(reportDate.value, 'month'),
-              qdate.endOfDate(reportDate.value, 'month'),
-              {
-                inclusiveFrom: true, inclusiveTo: true
-              }
-            )
-          ) ||
-          ( // renew within report month
-            qdate.isBetweenDates(
-              x.d_renew_1,
-              qdate.startOfDate(reportDate.value, 'month'),
-              qdate.endOfDate(reportDate.value, 'month'),
-              {
-                inclusiveFrom: true, inclusiveTo: true
-              }
-            )
-          ) ||
-          ( // age 15 birthday within report month (youth only)
-            reportType == 'youth' &&
-            qdate.isBetweenDates(
-              x.d_birth,
-              qdate.startOfDate(qdate.subtractFromDate(reportDate.value, { years: 15 }), 'month'),
-              qdate.endOfDate(qdate.subtractFromDate(reportDate.value, { years: 15 }), 'month'), {
-              inclusiveFrom: true, inclusiveTo: true, onlyDate: true
-            })
-          ) ||
-          ( // passed age 25 birthday 1 month before report month (family only)
-            reportType == 'family' && x.isYouthFamily &&
-            qdate.isBetweenDates(
-              x.d_birth,
-              qdate.startOfDate(qdate.subtractFromDate(reportDate.value, { years: 25, months: 1 }), 'month'),
-              qdate.endOfDate(qdate.subtractFromDate(reportDate.value, { years: 25, months: 1 }), 'month'), {
-              inclusiveFrom: true, inclusiveTo: true, onlyDate: true
-            })
-          )
-        )
-      ) ||
-      (
-        // for report months Apr
-        qdate.formatDate(reportDate.value, "M") == 4 &&
-        //console.log(x.c_mem_id + " " + x.c_name + " " + qdate.formatDate(x.d_enter_1, "YYYYMMDD") + " " + qdate.getDateDiff(x.d_enter_1, qdate.endOfDate(reportDate.value, 'month'))) &&
-        ( // enter before end of report month
-          qdate.getDateDiff(x.d_enter_1, qdate.endOfDate(reportDate.value, 'month')) < 0
+          isNewOrRenewInPeriod(member, periodStart, periodEnd, dateRangeOptions) ||
+          isDateInRange(qdate.addToDate(member.d_birth, { year: 15 }), periodStart, periodEnd)
         ) &&
-        ( // expiry after begin of report month
-          qdate.getDateDiff(x.d_expired_1, qdate.startOfDate(reportDate.value, 'month')) > 0
-        ) && (
-          // associate with related member within the beginning of report year
-          (x.MemberRelation1.length > 0 ? x.MemberRelation1.filter((relation) => qdate.getDateDiff(
-            relation.d_effective,
-            qdate.startOfDate(new Date(parseInt(qdate.formatDate(reportDate.value, "YYYY")), 2, 31), 'day'),
-          ) < 0).length > 0 : false) ||
-          (x.MemberRelation2.length > 0 ? x.MemberRelation2.filter((relation) => qdate.getDateDiff(
-            relation.d_effective,
-            qdate.startOfDate(new Date(parseInt(qdate.formatDate(reportDate.value, "YYYY")), 2, 31), 'day'),
-          ) < 0).length > 0 : false)
+        validAgeBasedOnReportType(reportType, periodStart, periodEnd, member);
+
+    case 'child':
+    case 'family':
+      // child and family has to be renewed or entered in the period
+      // or has valid relation associated within period
+      return isNotCommunityVolunteer(member) &&
+        didNotExitMembershipOrExitedAfter(member, periodStart) &&
+        didNotExpireMembershipOrExpiredAfter(member, periodStart) &&
+        enteredBeforeDate(member, periodEnd) &&
+        validAgeBasedOnReportType(reportType, periodStart, periodEnd, member) &&
+        (
+          isNewOrRenewInPeriod(member, periodStart, periodEnd) ||
+          associatedRelationInPeriod(member.MemberRelation1, periodStart, periodEnd) ||
+          associatedRelationInPeriod(member.MemberRelation2, periodStart, periodEnd)
         )
-      )
-    )
-  )
+
+    default:
+      console.error("Unsupported report type:", reportType);
+      return false; // Or any other default/fallback action
+  }
+}
+
+// for Apr report, generate yearly report
+// yearly report needs members to just have active relation within that period
+function yearlyReportFilter(periodStart, periodEnd, reportType, member) {
+  switch (reportType) {
+    case 'youth':
+      // youth has to be renewed or entered in the period
+      return isNotCommunityVolunteer(member) &&
+        didNotExitMembershipOrExitedAfter(member, periodStart) &&
+        didNotExpireMembershipOrExpiredAfter(member, periodStart) &&
+        enteredBeforeDate(member, periodEnd) &&
+        yearlyValidAgeBasedOnReportType(reportType, periodStart, periodEnd, member);
+
+    case 'child':
+    case 'family':
+      // child and family has to be renewed or entered in the period
+      // or has valid relation associated within period
+      return isNotCommunityVolunteer(member) &&
+        didNotExitMembershipOrExitedAfter(member, periodStart) &&
+        didNotExpireMembershipOrExpiredAfter(member, periodStart) &&
+        enteredBeforeDate(member, periodEnd) &&
+        yearlyValidAgeBasedOnReportType(reportType, periodStart, periodEnd, member) &&
+        (
+          isNewOrRenewInPeriod(member, periodStart, periodEnd) ||
+          hasValidRelation(member.MemberRelation1, periodStart, periodEnd) ||
+          hasValidRelation(member.MemberRelation2, periodStart, periodEnd)
+        )
+
+    default:
+      console.error("Unsupported report type:", reportType);
+      return false; // Or any other default/fallback action
+  }
+}
+
+/**
+ * Filters members based on specific criteria including membership status, entry and exit dates, and age validity determined by report type.
+ *
+ * @param {Object} reportDate - A reference object containing a Date value, used to determine the report's reference date.
+ * @param {string} reportType - A string indicating the type of report, which influences age validation criteria.
+ * @param {Object} member - An object representing a member's data, including their birth date, membership status, and other relevant information.
+ *
+ * @returns {boolean} - Returns true if the member meets all the criteria for inclusion in the report, false otherwise.
+ */
+function sisFilter(reportDate, reportType, member) {
+  // For reports generated in April, generate yearly report
+  // For reports generated in other months, generate monthly report
+  return qdate.formatDate(reportDate.value, "M") == 4 ? yearlyReportFilter(qdate.startOfDate(reportDate.value, 'month'), qdate.endOfDate(reportDate.value, 'month'), reportType, member) : monthlyReportFilter(qdate.startOfDate(reportDate.value, 'month'), qdate.endOfDate(reportDate.value, 'month'), reportType, member)
 }
 
 // determine if c_mem_id is a youth family at the time of reportDate
@@ -157,13 +211,12 @@ function isYouthFamily(reportDate, database, c_mem_id) {
   let allRelations = [...database[i].MemberRelation1, ...database[i].MemberRelation2]
   let relatedMembers = []
 
-  allRelations.filter((x) => qdate.getDateDiff(new Date(x.d_effective), reportDate.value) < 0).forEach((relation) => {
+  allRelations.filter((rel) => qdate.getDateDiff(new Date(rel.d_effective), reportDate.value) < 0).forEach((relation) => {
     if (relation.c_mem_id_1 == c_mem_id) relatedMembers.push(relation.c_mem_id_2)
     else relatedMembers.push(relation.c_mem_id_1)
   })
 
   relatedMembers.forEach((mem_id) => {
-    // console.log(mem_id)
     let j = database.findIndex((element) => element.c_mem_id == mem_id)
     if (j != -1) {
       // target is youth?
