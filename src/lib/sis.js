@@ -3,6 +3,12 @@ import Member from "src/components/class/member";
 
 // dateRangeOptions for date range comparison, default is including boundaries
 const dateRangeOptions = { inclusiveFrom: true, inclusiveTo: true };
+const { childMinAge, childMaxAge, youthMinAge, youthMaxAge, familyMinAge, familyMaxAge } = { childMinAge: 0, childMaxAge: 14, youthMinAge: 15, youthMaxAge: 24, familyMinAge: 25, familyMaxAge: 999 };
+const ageLimitByReportType = {
+  child: { min: childMinAge, max: childMaxAge },
+  youth: { min: youthMinAge, max: youthMaxAge },
+  family: { min: familyMinAge, max: familyMaxAge }
+}
 
 /**
  * Checks if a member is not a community volunteer.
@@ -70,7 +76,7 @@ const yearlyReportTypeHandlers = {
  */
 function yearlyHandleYouth(periodStart, periodEnd, member) {
   // Logic specific to 'youth'
-  return ageMetAtCutoff(new Member(member), periodStart, 15, 24) || ageMetAtCutoff(new Member(member), periodEnd, 15, 24);
+  return ageMetAtCutoff(new Member(member), periodStart, youthMinAge, youthMaxAge) || ageMetAtCutoff(new Member(member), periodEnd, youthMinAge, youthMaxAge);
 }
 
 /**
@@ -83,7 +89,7 @@ function yearlyHandleYouth(periodStart, periodEnd, member) {
 function yearlyHandleChild(periodStart, periodEnd, member) {
   // Logic specific to 'child'
   // is aged 0 - 14 within periodStart and periodEnd, also is a youth family
-  return member.isYouthFamily && (ageMetAtCutoff(new Member(member), periodStart, 0, 14) || ageMetAtCutoff(new Member(member), periodEnd, 0, 14));
+  return member.isYouthFamily && (ageMetAtCutoff(new Member(member), periodStart, childMinAge, childMaxAge) || ageMetAtCutoff(new Member(member), periodEnd, childMinAge, childMaxAge));
 }
 
 /**
@@ -95,7 +101,7 @@ function yearlyHandleChild(periodStart, periodEnd, member) {
  */
 function yearlyHandleFamily(periodStart, periodEnd, member) {
   // Logic specific to 'family'
-  return member.isYouthFamily && (ageMetAtCutoff(new Member(member), periodStart, 25, 999) || ageMetAtCutoff(new Member(member), periodEnd, 25, 999));
+  return member.isYouthFamily && (ageMetAtCutoff(new Member(member), periodStart, familyMinAge, familyMaxAge) || ageMetAtCutoff(new Member(member), periodEnd, familyMinAge, familyMaxAge));
 }
 
 /**
@@ -107,7 +113,7 @@ function yearlyHandleFamily(periodStart, periodEnd, member) {
  */
 function handleYouth(periodStart, periodEnd, member) {
   // Logic specific to 'youth'
-  return ageInRange(new Member(member), periodStart, periodEnd, 15, 24);
+  return ageInRange(new Member(member), periodStart, periodEnd, youthMinAge, youthMaxAge);
 }
 
 /**
@@ -120,7 +126,7 @@ function handleYouth(periodStart, periodEnd, member) {
 function handleChild(periodStart, periodEnd, member) {
   // Logic specific to 'child'
   // is aged 0 - 14 within periodStart and periodEnd, also is a youth family
-  return ageInRange(new Member(member), periodStart, periodEnd, 0, 14) && member.isYouthFamily;
+  return ageInRange(new Member(member), periodStart, periodEnd, childMinAge, childMaxAge) && member.isYouthFamily;
 }
 
 /**
@@ -132,7 +138,7 @@ function handleChild(periodStart, periodEnd, member) {
  */
 function handleFamily(periodStart, periodEnd, member) {
   // Logic specific to 'family'
-  return ageInRange(new Member(member), periodStart, periodEnd, 25, 999) && member.isYouthFamily;
+  return ageInRange(new Member(member), periodStart, periodEnd, familyMinAge, familyMaxAge) && member.isYouthFamily;
 }
 
 /**
@@ -140,8 +146,8 @@ function handleFamily(periodStart, periodEnd, member) {
  * @param {Member} member - The member object to check.
  * @param {Date} periodStart - The start date of the period.
  * @param {Date} periodEnd - The end date of the period.
- * @param {number} minAge - The minimum age to check for.
- * @param {number} maxAge - The maximum age to check for.
+ * @param {number} lowerBound - The minimum age to check for.
+ * @param {number} upperBound - The maximum age to check for.
  * @returns {boolean} True if the member's age is within the specified range during the period, false otherwise.
  */
 function ageInRange(memObj, periodStart, periodEnd, lowerBound, upperBound) {
@@ -228,7 +234,7 @@ function isDateInRange(date, periodStart, periodEnd) {
  */
 function hasValidRelation(relations, periodStart, periodEnd) {
   return relations.some(relation =>
-    qdate.getDateDiff(relation.d_effective, periodStart) < 0
+    qdate.getDateDiff(relation.d_effective, periodStart) <= 0
   );
 }
 
@@ -241,6 +247,21 @@ function hasValidRelation(relations, periodStart, periodEnd) {
  */
 function isNewOrRenewInPeriod(member, periodStart, periodEnd) {
   return isDateInRange(member.d_enter_1, periodStart, periodEnd, dateRangeOptions) || isDateInRange(member.d_renew_1, periodStart, periodEnd, dateRangeOptions);
+}
+
+function ageChangeAndMetReportTypeInPeriod(member, periodStart, periodEnd, reportType) {
+  const ageRange = ageLimitByReportType[reportType];
+  const memObj = new Member(member)
+  let ageChange = false
+  let previousStart = qdate.subtractFromDate(periodStart, { month: 1 })
+  let previousEnd = qdate.endOfDate(periodStart, 'month')
+  // if age changed in previous month
+  if (memObj.getAge(previousStart) != memObj.getAge(previousEnd) && memObj.getAge(periodStart) == memObj.getAge(periodEnd)) {
+    if (memObj.getAge(periodEnd) == ageRange.min) {
+      ageChange = true
+    }
+  }
+  return ageChange
 }
 
 /**
@@ -262,7 +283,7 @@ function monthlyReportFilter(periodStart, periodEnd, reportType, member) {
         enteredBeforeDate(member, periodEnd) &&
         (
           isNewOrRenewInPeriod(member, periodStart, periodEnd) ||
-          isDateInRange(qdate.addToDate(member.d_birth, { year: 15 }), periodStart, periodEnd)
+          isDateInRange(qdate.addToDate(member.d_birth, { year: youthMinAge }), periodStart, periodEnd)
         ) &&
         validAgeBasedOnReportType(reportType, periodStart, periodEnd, member);
 
@@ -277,6 +298,7 @@ function monthlyReportFilter(periodStart, periodEnd, reportType, member) {
         validAgeBasedOnReportType(reportType, periodStart, periodEnd, member) &&
         (
           isNewOrRenewInPeriod(member, periodStart, periodEnd) ||
+          ageChangeAndMetReportTypeInPeriod(member, periodStart, periodEnd, reportType) ||
           associatedRelationInPeriod(member.MemberRelation1, periodStart, periodEnd) ||
           associatedRelationInPeriod(member.MemberRelation2, periodStart, periodEnd)
         )
@@ -329,6 +351,32 @@ function yearlyReportFilter(periodStart, periodEnd, reportType, member) {
 }
 
 /**
+ * Logs detailed information about a specific member for debugging purposes.
+ * It prints the member's ID, checks if the member is new or has renewed within the specified period,
+ * and logs the member's relations if applicable.
+ * @param {Object} member - The member object to debug.
+ * @param {Date} periodStart - The start date of the period for checking new or renewed membership.
+ * @param {Date} periodEnd - The end date of the period for checking new or renewed membership.
+ * @param {string} c_mem_id - The member ID to specifically debug.
+ */
+function debugPrint(periodStart, periodEnd, reportType, member, c_mem_id) {
+  if (member.c_mem_id == c_mem_id) {
+    console.log("mem_id", member.c_mem_id)
+    console.log("reportType:", reportType)
+    console.log('isNewOrRenewInPeriod', isNewOrRenewInPeriod(member, periodStart, periodEnd))
+    console.log('ageChangeAndMetReportTypeInPeriod(member, periodStart, periodEnd, reportType)', ageChangeAndMetReportTypeInPeriod(member, periodStart, periodEnd, reportType))
+    console.log('didNotExitMembershipOrExitedAfter', didNotExitMembershipOrExitedAfter(member, periodStart))
+    console.log('didNotExpireMembershipOrExpiredAfter(member, periodStart)', didNotExpireMembershipOrExpiredAfter(member, periodStart))
+    console.log('enteredBeforeDate(member, periodEnd)', enteredBeforeDate(member, periodEnd))
+    console.log('validAgeBasedOnReportType(reportType, periodStart, periodEnd, member)', validAgeBasedOnReportType(reportType, periodStart, periodEnd, member))
+    console.log("relations: ", member.MemberRelation1, member.MemberRelation2)
+    console.log("periods: ", periodStart, periodEnd)
+    console.log("hasValidRelation", hasValidRelation(member.MemberRelation1, periodStart, periodEnd), hasValidRelation(member.MemberRelation2, periodStart, periodEnd))
+    console.log("-------------------")
+  }
+}
+
+/**
  * Filters members based on specific criteria including membership status, entry and exit dates, and age validity determined by report type.
  * @param {Object} reportDate - A reference object containing a Date value, used to determine the report's reference date.
  * @param {string} reportType - A string indicating the type of report, which influences age validation criteria.
@@ -339,6 +387,27 @@ function sisFilter(reportDate, reportType, member) {
   // For reports generated in April, generate yearly report
   // For reports generated in other months, generate monthly report
   return qdate.formatDate(reportDate.value, "M") == 4 ? yearlyReportFilter(qdate.startOfDate(reportDate.value, 'month'), qdate.endOfDate(reportDate.value, 'month'), reportType, member) : monthlyReportFilter(qdate.startOfDate(reportDate.value, 'month'), qdate.endOfDate(reportDate.value, 'month'), reportType, member)
+}
+
+/**
+ * Classifies a member based on the report date, report type, and an array of member objects.
+ * @param {Object} reportDate - An object containing a Date value, used as the reference date for the report.
+ * @param {string} reportType - A string indicating the type of report, which influences age validation criteria.
+ * @param {Array} memberArray - An array of member objects, each containing member and relation data.
+ * @returns {Array} - An array of member objects that meet the criteria for the specified report type.
+ */
+function classifyMember(reportDate, memberArray) {
+  let youthMembers = [], childMembers = [], familyMembers = []
+  memberArray.forEach((member) => {
+    if (sisFilter(reportDate, 'youth', member)) {
+      youthMembers.push(member)
+    } else if (sisFilter(reportDate, 'child', member)) {
+      childMembers.push(member)
+    } else if (sisFilter(reportDate, 'family', member)) {
+      familyMembers.push(member)
+    }
+  })
+  return { youthMembers, childMembers, familyMembers }
 }
 
 /**
@@ -376,8 +445,8 @@ function isYouthFamily(reportDate, database, c_mem_id) {
       let isYouth = // 1
         qdate.isBetweenDates(
           database[j].d_birth,
-          qdate.startOfDate(qdate.subtractFromDate(reportDate.value, { years: 25 }), 'month'),
-          qdate.endOfDate(qdate.subtractFromDate(reportDate.value, { years: 15 }), 'month'), {
+          qdate.startOfDate(qdate.subtractFromDate(reportDate.value, { years: familyMinAge }), 'month'),
+          qdate.endOfDate(qdate.subtractFromDate(reportDate.value, { years: youthMinAge }), 'month'), {
           inclusiveFrom: true, inclusiveTo: true
         }
         ) && (
@@ -399,4 +468,4 @@ function isYouthFamily(reportDate, database, c_mem_id) {
 
   return result
 }
-export default { sisFilter, isYouthFamily }
+export default { classifyMember, sisFilter, isYouthFamily }

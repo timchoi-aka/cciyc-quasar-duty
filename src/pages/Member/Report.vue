@@ -1,149 +1,160 @@
-<template>
-  <!-- loading dialog -->
-  <q-dialog v-model="loading" position="bottom">
-    <LoadingDialog message="處理中" />
-  </q-dialog>
+<template><!-- loading dialog -->
+<q-dialog v-model="loading" position="bottom">
+  <LoadingDialog message="處理中" />
+</q-dialog>
 
-  <!-- rowDetail modal -->
-  <q-dialog v-if="$q.screen.lt.md" v-model="detailModal" persistent maximized full-width transition-show="slide-up"
-    transition-hide="slide-down">
+<!-- rowDetail modal -->
+<q-dialog v-if="$q.screen.lt.md" v-model="detailModal" persistent maximized full-width transition-show="slide-up"
+  transition-hide="slide-down">
+  <MemberDetail v-model="showMemberID" />
+</q-dialog>
+
+<q-dialog v-else v-model="detailModal" persistent full-height transition-show="slide-up" transition-hide="slide-down"
+  class="q-pa-none">
+  <q-card style="min-width: 70vw; width: 70vw; max-width: 70vw;">
     <MemberDetail v-model="showMemberID" />
-  </q-dialog>
+  </q-card>
+</q-dialog>
+<div class="row justify-center">
 
-  <q-dialog v-else v-model="detailModal" persistent full-height transition-show="slide-up" transition-hide="slide-down"
-    class="q-pa-none">
-    <q-card style="min-width: 70vw; width: 70vw; max-width: 70vw;">
-      <MemberDetail v-model="showMemberID" />
-    </q-card>
-  </q-dialog>
-  <div class="row justify-center">
+  <div class="row items-center q-mx-md"><q-btn label="上月"
+      @click="reportDate = qdate.formatDate(qdate.endOfDate(qdate.subtractFromDate(reportDate, { month: 1 }), 'month'), 'YYYY/MM/DD')"
+      class="bg-primary text-white items-center" /></div>
 
-    <div class="row items-center q-mx-md"><q-btn label="上月"
-        @click="reportDate = qdate.formatDate(qdate.endOfDate(qdate.subtractFromDate(reportDate, { month: 1 }), 'month'), 'YYYY/MM/DD')"
-        class="bg-primary text-white items-center" /></div>
-
-    <div>
-      <q-input filled v-model="reportDate" mask="date" :rules="['date']">
-        <template v-slot:prepend>
-          截數月份：
-        </template>
-        <template v-slot:append>
-          <q-icon name="event" class="cursor-pointer">
-            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-              <q-date v-model="reportDate">
-                <div class="row items-center justify-end">
-                  <q-btn v-close-popup label="關閉" color="primary" flat />
-                </div>
-              </q-date>
-            </q-popup-proxy>
-          </q-icon>
-        </template>
-      </q-input>
-    </div>
-
-    <div class="row items-center q-mx-md"><q-btn label="下月"
-        @click="reportDate = qdate.formatDate(qdate.endOfDate(qdate.addToDate(reportDate, { month: 1 }), 'month'), 'YYYY/MM/DD')"
-        class="bg-primary text-white items-center" /></div>
+  <div>
+    <q-input filled v-model="reportDate" mask="date" :rules="['date']">
+      <template v-slot:prepend>
+        截數月份：
+      </template>
+      <template v-slot:append>
+        <q-icon name="event" class="cursor-pointer">
+          <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+            <q-date v-model="reportDate">
+              <div class="row items-center justify-end">
+                <q-btn v-close-popup label="關閉" color="primary" flat />
+              </div>
+            </q-date>
+          </q-popup-proxy>
+        </q-icon>
+      </template>
+    </q-input>
   </div>
 
+  <div class="row items-center q-mx-md"><q-btn label="下月"
+      @click="reportDate = qdate.formatDate(qdate.endOfDate(qdate.addToDate(reportDate, { month: 1 }), 'month'), 'YYYY/MM/DD')"
+      class="bg-primary text-white items-center" /></div>
+</div>
 
-  <!--<q-date v-model="reportDate" default-view="Months"/>-->
-  <q-tabs v-model="activeTab" inline-label align="left" class="desktop-only bg-primary text-white">
-    <q-tab name="All" icon="source" :label="'全部(' + MemberData.length + '人)'" />
-    <q-tab name="Youth" icon="pin_drop" :label="'青年(' + YouthData.length + '人)'" />
-    <q-tab name="Family_15" icon="pin_drop" :label="'家人(<15)(' + Family_15Data.length + '人)'" />
-    <q-tab name="Family_24" icon="pin_drop" :label="'家人(>24)(' + Family_24Data.length + '人)'" />
-    <q-tab name="Quit" icon="pin_drop" :label="'退會(' + QuitData.length + '人)'" />
-    <q-tab name="Expired" icon="pin_drop" :label="'截數月過期(' + ExpiredData.length + '人)'" />
-    <q-tab name="Error" icon="error" :label="'錯誤(' + ErrorData.length + '人)'" />
-    <q-tab name="Duplicate" icon="error" :label="'重覆(' + DuplicateData.length + '人)'" />
-  </q-tabs>
 
-  <q-tab-panels v-model="activeTab" animated swipeable transition-prev="jump-up" transition-next="jump-up">
-    <q-tab-panel name="All" class="q-ma-none q-pa-sm text-body1">
-      <q-table dense flat title="全部會員數據" :rows="MemberData" :columns="memberListColumns" :pagination="defaultPagination"
-        color="primary" row-key="c_mem_id" :loading="loading" binary-state-sort @row-click="rowDetail">
-        <template v-slot:top-right>
-          <q-btn color="primary" icon-right="archive" label="匯出Excel" no-caps
-            @click="exportExcel(MemberData, memberListColumns, '全部會員數據')" />
-        </template>
-      </q-table>
-    </q-tab-panel>
+<!--<q-date v-model="reportDate" default-view="Months"/>-->
+<q-tabs v-model="activeTab" inline-label align="left" class="desktop-only bg-primary text-white">
+  <q-tab name="All" icon="source" :label="'全部(' + MemberData.length + '人)'" />
+  <q-tab name="Youth" icon="pin_drop" :label="'青年(' + YouthData.length + '人)'" />
+  <q-tab name="Family_15" icon="pin_drop" :label="'家人(<15)(' + Family_15Data.length + '人)'" />
+  <q-tab name="Family_24" icon="pin_drop" :label="'家人(>24)(' + Family_24Data.length + '人)'" />
+  <q-tab name="Quit" icon="pin_drop" :label="'退會(' + QuitData.length + '人)'" />
+  <q-tab name="Expired" icon="pin_drop" :label="'截數月過期(' + ExpiredData.length + '人)'" />
+  <q-tab name="Error" icon="error" :label="'錯誤(' + ErrorData.length + '人)'" />
+  <q-tab name="Duplicate" icon="error" :label="'重覆(' + DuplicateData.length + '人)'" />
+</q-tabs>
 
-    <q-tab-panel name="Quit" class="q-ma-none q-pa-sm text-body1">
-      <q-table dense flat title="退會會員數據" :rows="QuitData" :columns="memberListColumns" :pagination="defaultPagination"
-        color="primary" row-key="c_mem_id" :loading="loading" binary-state-sort @row-click="rowDetail">
-        <template v-slot:top-right>
-          <q-btn color="primary" icon-right="archive" label="匯出Excel" no-caps
-            @click="exportExcel(QuitData, memberListColumns, '退會會員數據')" />
-        </template>
-      </q-table>
-    </q-tab-panel>
+<q-tab-panels v-model="activeTab" animated swipeable transition-prev="jump-up" transition-next="jump-up">
+  <q-tab-panel name="All" class="q-ma-none q-pa-sm text-body1">
+    <q-table dense flat title="全部會員數據" :rows="MemberData" :columns="memberListColumns" :pagination="defaultPagination"
+      color="primary" row-key="c_mem_id" :loading="loading" binary-state-sort @row-click="rowDetail">
+      <template v-slot:top-right>
+        <q-btn color="primary" icon-right="archive" label="匯出Excel" no-caps
+          @click="exportExcel(MemberData, memberListColumns, '全部會員數據')" />
+      </template>
+    </q-table>
+  </q-tab-panel>
 
-    <q-tab-panel name="Youth" class="q-ma-none q-pa-sm text-body1">
-      <q-table dense flat title="青年會員數據" :rows="YouthData" :columns="memberListColumns" :pagination="defaultPagination"
-        color="primary" row-key="c_mem_id" :loading="loading" binary-state-sort @row-click="rowDetail">
-        <template v-slot:top-right>
-          <q-btn color="primary" icon-right="archive" label="匯出Excel" no-caps
-            @click="exportExcel(YouthData, memberListColumns, '青年會員數據_' + qdate.formatDate(reportDate, 'YYYY-MM'))" />
-        </template>
-      </q-table>
-    </q-tab-panel>
+  <q-tab-panel name="Quit" class="q-ma-none q-pa-sm text-body1">
+    <q-table dense flat title="退會會員數據" :rows="QuitData" :columns="memberListColumns" :pagination="defaultPagination"
+      color="primary" row-key="c_mem_id" :loading="loading" binary-state-sort @row-click="rowDetail">
+      <template v-slot:top-right>
+        <q-btn color="primary" icon-right="archive" label="匯出Excel" no-caps
+          @click="exportExcel(QuitData, memberListColumns, '退會會員數據')" />
+      </template>
+    </q-table>
+  </q-tab-panel>
 
-    <q-tab-panel name="Family_15" class="q-ma-none q-pa-sm text-body1">
-      <q-table dense flat title="家人(<15)會員數據" :rows="Family_15Data" :columns="memberListColumns"
-        :pagination="defaultPagination" color="primary" row-key="c_mem_id" :loading="loading" binary-state-sort
-        @row-click="rowDetail">
-        <template v-slot:top-right>
-          <q-btn color="primary" icon-right="archive" label="匯出Excel" no-caps
-            @click="exportExcel(Family_15Data, memberListColumns, '家人(14歲或以下)會員數據_' + qdate.formatDate(reportDate, 'YYYY-MM'))" />
-        </template>
-      </q-table>
-    </q-tab-panel>
+  <q-tab-panel name="Youth" class="q-ma-none q-pa-sm text-body1">
+    <q-table dense flat title="青年會員數據" :rows="YouthData" :columns="memberListColumns" :pagination="defaultPagination"
+      color="primary" row-key="c_mem_id" :loading="loading" binary-state-sort @row-click="rowDetail">
+      <template v-slot:top-right>
+        <q-btn color="primary" icon-right="archive" label="匯出Excel" no-caps
+          @click="exportExcel(YouthData, memberListColumns, '青年會員數據_' + qdate.formatDate(reportDate, 'YYYY-MM'))" />
+      </template>
+    </q-table>
+  </q-tab-panel>
 
-    <q-tab-panel name="Family_24" class="q-ma-none q-pa-sm text-body1">
-      <q-table dense flat title="家人(>24)會員數據" :rows="Family_24Data" :columns="memberListColumns"
-        :pagination="defaultPagination" color="primary" row-key="c_mem_id" :loading="loading" binary-state-sort
-        @row-click="rowDetail">
-        <template v-slot:top-right>
-          <q-btn color="primary" icon-right="archive" label="匯出Excel" no-caps
-            @click="exportExcel(Family_24Data, memberListColumns, '家人(25歲或以上)會員數據_' + qdate.formatDate(reportDate, 'YYYY-MM'))" />
-        </template>
-      </q-table>
-    </q-tab-panel>
+  <q-tab-panel name="Family_15" class="q-ma-none q-pa-sm text-body1">
+    <q-table dense flat title="家人(<15)會員數據" :rows="Family_15Data" :columns="memberListColumns"
+      :pagination="defaultPagination" color="primary" row-key="c_mem_id" :loading="loading" binary-state-sort
+      @row-click="rowDetail">
+      <template v-slot:top-right>
+        <q-btn color="primary" icon-right="archive" label="匯出Excel" no-caps
+          @click="exportExcel(Family_15Data, memberListColumns, '家人(14歲或以下)會員數據_' + qdate.formatDate(reportDate, 'YYYY-MM'))" />
+      </template>
+    </q-table>
+  </q-tab-panel>
 
-    <q-tab-panel name="Expired" class="q-ma-none q-pa-sm text-body1">
-      <q-table dense flat title="過期會員數據" :rows="ExpiredData" :columns="memberListColumns"
-        :pagination="defaultPagination" color="primary" row-key="c_mem_id" :loading="loading" binary-state-sort
-        @row-click="rowDetail">
-        <template v-slot:top-right>
-          <q-btn color="primary" icon-right="archive" label="匯出Excel" no-caps
-            @click="exportExcel(ExpiredData, memberListColumns, '過期會員數據_' + qdate.formatDate(reportDate, 'YYYY-MM'))" />
-        </template>
-      </q-table>
-    </q-tab-panel>
+  <q-tab-panel name="Family_24" class="q-ma-none q-pa-sm text-body1">
+    <q-table dense flat title="家人(>24)會員數據" :rows="Family_24Data" :columns="memberListColumns"
+      :pagination="defaultPagination" color="primary" row-key="c_mem_id" :loading="loading" binary-state-sort
+      @row-click="rowDetail">
+      <template v-slot:top-right>
+        <q-btn color="primary" icon-right="archive" label="匯出Excel" no-caps
+          @click="exportExcel(Family_24Data, memberListColumns, '家人(25歲或以上)會員數據_' + qdate.formatDate(reportDate, 'YYYY-MM'))" />
+      </template>
+    </q-table>
+  </q-tab-panel>
 
-    <q-tab-panel name="Error" class="q-ma-none q-pa-sm text-body1">
-      <q-table dense flat title="錯誤會員數據" :rows="ErrorData" :columns="memberListColumns" :pagination="defaultPagination"
-        color="primary" row-key="c_mem_id" :loading="loading" binary-state-sort @row-click="rowDetail">
-        <template v-slot:top-right>
+  <q-tab-panel name="Expired" class="q-ma-none q-pa-sm text-body1">
+    <q-table dense flat title="過期會員數據" :rows="ExpiredData" :columns="memberListColumns" :pagination="defaultPagination"
+      color="primary" row-key="c_mem_id" :loading="loading" binary-state-sort @row-click="rowDetail">
+      <template v-slot:top-right>
+        <q-btn color="primary" icon-right="archive" label="匯出Excel" no-caps
+          @click="exportExcel(ExpiredData, memberListColumns, '過期會員數據_' + qdate.formatDate(reportDate, 'YYYY-MM'))" />
+      </template>
+    </q-table>
+  </q-tab-panel>
+
+  <q-tab-panel name="Error" class="q-ma-none q-pa-sm text-body1">
+    <q-table dense flat title="錯誤會員數據" :rows="ErrorData" :columns="memberListColumns" :pagination="defaultPagination"
+             color="primary"
+             row-key="c_mem_id"
+             :loading="loading"
+             binary-state-sort
+             @row-click="rowDetail">
+      <template v-slot:top-right>
           <q-btn color="primary" icon-right="archive" label="匯出Excel" no-caps
             @click="exportExcel(ErrorData, memberListColumns, '錯誤會員數據')" />
         </template>
-      </q-table>
-    </q-tab-panel>
+    </q-table>
+  </q-tab-panel>
 
-    <q-tab-panel name="Duplicate" class="q-ma-none q-pa-sm text-body1">
-      <q-table dense flat title="重覆會員數據" :rows="DuplicateData" :columns="memberListColumns"
-        :pagination="defaultPagination" color="primary" row-key="c_mem_id" :loading="loading" binary-state-sort
-        @row-click="rowDetail">
-        <template v-slot:top-right>
+  <q-tab-panel name="Duplicate"
+               class="q-ma-none q-pa-sm text-body1">
+    <q-table dense
+             flat
+             title="重覆會員數據"
+             :rows="DuplicateData"
+             :columns="memberListColumns"
+             :pagination="defaultPagination"
+             color="primary"
+             row-key="c_mem_id"
+             :loading="loading"
+             binary-state-sort
+             @row-click="rowDetail">
+      <template v-slot:top-right>
           <q-btn color="primary" icon-right="archive" label="匯出Excel" no-caps
             @click="exportExcel(DuplicateData, memberListColumns, '重覆會員數據')" />
         </template>
-      </q-table>
-    </q-tab-panel>
-  </q-tab-panels>
+    </q-table>
+  </q-tab-panel>
+</q-tab-panels>
 </template>
 
 <script setup>
@@ -356,12 +367,11 @@ function updateReport() {
   })
 
   MemberData.value = res
-  Family_15Data.value = res.filter((member) => Report.sisFilter(reportDate, 'child', member))
-  Family_24Data.value = res.filter((member) => Report.sisFilter(reportDate, 'family', member))
+  const { youthMembers, childMembers, familyMembers } = Report.classifyMember(reportDate, res)
 
-  QuitData.value = res.filter((member) => member.d_exit_1 != null)
-  YouthData.value = res.filter((member) => Report.sisFilter(reportDate, 'youth', member))
-
+  YouthData.value = youthMembers
+  Family_15Data.value = childMembers
+  Family_24Data.value = familyMembers
   ErrorData.value = res.filter((member) =>
     (
       member.d_birth == null ||
