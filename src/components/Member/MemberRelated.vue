@@ -1,39 +1,39 @@
 <template>
-  <div class="row">
-    <div class="col-2" v-if="relatedMember.c_mem_id_1 == props.MemberID">
-      <MemberSelection :key="props.MemberID" :MemberID="props.MemberID" v-model="relatedMember.c_mem_id_2"
-        @update:model-value="(value) => getNameFromMemberID(value)" />
-    </div>
-    <div class="col-2" v-else>
-      <MemberSelection :key="props.MemberID" :MemberID="props.MemberID" v-model="relatedMember.c_mem_id_1"
-        @update:model-value="(value) => getNameFromMemberID(value)" />
-    </div>
-
-    <q-select dense filled class="col-2 col-xs-2 q-mr-md-md q-mr-sm-sm q-mr-xs-none" v-model="relatedMember.relation"
-      :options="relationOptions" @update:model-value="$emit('update:modelValue', relatedMember)" />
-
-    <span class="col-2 col-xs-2 q-mr-md-md q-mr-sm-sm q-mr-xs-none">
-      {{ relatedMember.name }}
-      <span v-if="relatedMember.age != null">({{ relatedMember.age }})</span>
-    </span>
-
-    <span class="col-1 col-xs-1 q-mr-md-md q-mr-sm-sm q-mr-xs-none">
-      <q-icon v-if="relatedMember.b_mem_type1" color="positive" name="check" />
-      <q-icon v-else color="negative" name="cancel" />
-    </span>
-
-    <span class="col-2 col-xs-2 q-mr-md-md q-mr-sm-sm q-mr-xs-none">
-      <DateComponent :model-value="qdate.formatDate(relatedMember.d_effective, 'YYYY-MM-DD')" :clearable="false"
-        label="關聯日期"
-        @update:model-value="(val) => relatedMember.d_effective = qdate.formatDate(qdate.startOfDate(val, 'day'), 'YYYY-MM-DDTHH:mm:ss')" />
-    </span>
-
-    <span class=" col-1 col-xs-1 q-mr-md-none q-mr-sm-none q-mr-xs-none">
-      <q-btn square flat class="text-negative" icon="replay" @click="reset">
-        <q-tooltip class="bg-white text-red">重置</q-tooltip>
-      </q-btn>
-    </span>
+<div class="row">
+  <div class="col-2" v-if="relatedMember.c_mem_id_1 == props.MemberID">
+    <MemberSelection :key="props.MemberID" :MemberID="props.MemberID" v-model="relatedMember.c_mem_id_2"
+      @update:model-value="(value) => getNameFromMemberID(value)" />
   </div>
+  <div class="col-2" v-else>
+    <MemberSelection :key="props.MemberID" :MemberID="props.MemberID" v-model="relatedMember.c_mem_id_1"
+      @update:model-value="(value) => getNameFromMemberID(value)" />
+  </div>
+
+  <q-select dense filled class="col-2 col-xs-2 q-mr-md-md q-mr-sm-sm q-mr-xs-none" v-model="relatedMember.relation"
+    :options="relationOptions" @update:model-value="$emit('update:modelValue', relatedMember)" />
+
+  <span class="col-2 col-xs-2 q-mr-md-md q-mr-sm-sm q-mr-xs-none">
+    {{ relatedMember.name }}
+    <span v-if="relatedMember.age != null">({{ relatedMember.age }})</span>
+  </span>
+
+  <span class="col-1 col-xs-1 q-mr-md-md q-mr-sm-sm q-mr-xs-none">
+    <q-icon v-if="relatedMember.b_mem_type1" color="positive" name="check" />
+    <q-icon v-else color="negative" name="cancel" />
+  </span>
+
+  <span class="col-2 col-xs-2 q-mr-md-md q-mr-sm-sm q-mr-xs-none">
+    <DateComponent :model-value="qdate.formatDate(relatedMember.d_effective, 'YYYY-MM-DD')" :clearable="false"
+      label="關聯日期"
+      @update:model-value="(val) => relatedMember.d_effective = qdate.formatDate(qdate.addToDate(qdate.startOfDate(val, 'day'), { hours: 8 }), 'YYYY-MM-DDTHH:mm:ss')" />
+  </span>
+
+  <span class=" col-1 col-xs-1 q-mr-md-none q-mr-sm-none q-mr-xs-none">
+    <q-btn square flat class="text-negative" icon="replay" @click="reset">
+      <q-tooltip class="bg-white text-red">重置</q-tooltip>
+    </q-btn>
+  </span>
+</div>
 </template>
 
 <script setup>
