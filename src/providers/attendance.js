@@ -1,8 +1,10 @@
-import { ref, computed } from "vue";
-import { useQuery, useMutation } from "@vue/apollo-composable";
+import { ref, computed, watch } from "vue";
+import { provideApolloClient, useQuery, useMutation } from "@vue/apollo-composable";
 import { gql } from "graphql-tag";
 import { date, extend } from "quasar";
 import { useNotifier } from "./notifier";
+import apolloClient from "src/boot/apollo";
+provideApolloClient(apolloClient);
 
 // Function to provide attendance data
 export function useAttendanceProvider(options = {}) {
@@ -382,15 +384,13 @@ export function useAttendanceProvider(options = {}) {
         registrantsObjects.value
           .map(
             (item) =>
-              `${item.c_name} (${item.c_mem_id}) - 中心內: ${
-                item.i_in_center_session ? item.i_in_center_session : 0
-              }, 中心外: ${
-                item.i_out_center_session ? item.i_out_center_session : 0
+              `${item.c_name} (${item.c_mem_id}) - 中心內: ${item.i_in_center_session ? item.i_in_center_session : 0
+              }, 中心外: ${item.i_out_center_session ? item.i_out_center_session : 0
               }`
           )
           .join(", "),
     });
-    /* 
+    /*
     console.log("username: ", username.value);
     console.log("d_date: ", d_date.value);
     console.log("registrantsObjects: ", registrantsObjects.value);
@@ -430,7 +430,7 @@ export function useAttendanceProvider(options = {}) {
         date.formatDate(d_date.value, "YYYY-MM-DD") +
         "。",
     });
-    /* 
+    /*
     console.log("username: ", username.value);
     console.log("d_date: ", d_date.value);
     console.log("registrantsObjects: ", registrantsObjects.value);
@@ -491,6 +491,17 @@ export function useAttendanceReportProvider(options = {}) {
 
   // returned message to be displayed to client
   const message = ref({});
+
+  // Ref to store the result of the async operations
+  const result = ref([])
+
+  watch(start_date, (newVal) => {
+    if (newVal) execute()
+  })
+
+  watch(end_date, (newVal) => {
+    if (newVal) execute()
+  })
 
   // GraphQL query string
   let GET_ATTENDANCE_BY_PERIOD = gql`
@@ -553,22 +564,39 @@ export function useAttendanceReportProvider(options = {}) {
     }
   `;
 
-  // Return the provided data and functions
-  const {
-    result,
-    loading: loadingReport,
-    refetch,
-  } = useQuery(
-    GET_ATTENDANCE_BY_PERIOD,
-    () => ({
-      start_date: start_date.value,
-      end_date: end_date.value,
-    }),
-    {
-      enabled: computed(
-        () => start_date.value != null && end_date.value != null
-      ),
-    }
-  );
-  return { result, loading, refetch };
+
+  const execute = async () => {
+
+    /*
+    console.log("start_date: ", start_date.value)
+    console.log("end_date: ", end_date.value)
+    console.log(date.getDateDiff(end_date.value, start_date.value, "days"))
+    */
+    result.value = []
+    awaitNumber.value++;
+    // Return the provided data and functions
+    const {
+      onResult,
+    } = useQuery(
+      GET_ATTENDANCE_BY_PERIOD,
+      () => ({
+        start_date: start_date.value,
+        end_date: end_date.value
+      }),
+      {
+        enabled: computed(() => start_date.value != null && end_date.value != null)
+      }
+    );
+
+    onResult((res) => {
+      if (res.data) {
+        result.value = res.data;
+        awaitNumber.value--;
+      }
+    })
+  }
+
+  execute()
+
+  return { result, loading, refetch: execute };
 }
