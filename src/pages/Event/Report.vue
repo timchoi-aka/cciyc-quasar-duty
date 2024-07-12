@@ -747,7 +747,7 @@ const reportEndDate = ref(
 );
 
 const fetchStartDate = computed(() => qdate.startOfDate(qdate.extractDate(reportStartDate.value, "YYYY/MM/DD"), "day"))
-const fetchEndDate = computed(() => qdate.endOfDate(qdate.extractDate(reportEndDate.value, "YYYY/MM/DD"), reportEndDate.value, "day"))
+const fetchEndDate = computed(() => qdate.endOfDate(qdate.extractDate(reportEndDate.value, "YYYY/MM/DD"), "day"))
 
 const { result: AttendanceReport } =
   useAttendanceReportProvider({
