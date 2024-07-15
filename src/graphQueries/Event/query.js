@@ -234,6 +234,10 @@ export const APPLICANTS_BY_ACT_CODE = gql`
       c_mem_id
       c_name
       c_receipt_no
+      EventRegistration_to_Member {
+        c_mem_id
+        c_tel
+      }
     }
   }
 `;
