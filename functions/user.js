@@ -1,26 +1,26 @@
 /* eslint-disable max-len */
-const {functions, FireDB, Timestamp} = require("./fbadmin");
-const {formatDate} = require("./utilities");
+const { functions, FireDB, Timestamp } = require("./fbadmin");
+const { formatDate } = require("./utilities");
 // API 2.0 - add temp staff
 exports.addTempStaff = functions.region("asia-east2").https.onCall(async (data, context) => {
   // only authenticated users can run this
   if (!context.auth) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only authenticated users can add requests",
+      "unauthenticated",
+      "only authenticated users can add requests",
     );
   }
 
   // only user management can run this
   const loginUserDoc = FireDB
-      .collection("users")
-      .doc(context.auth.uid);
+    .collection("users")
+    .doc(context.auth.uid);
   const loginUser = await loginUserDoc.get();
   const loginUserData = loginUser.data();
   if (loginUserData.privilege.userManagement != true) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only user management admin can add temp users",
+      "unauthenticated",
+      "only user management admin can add temp users",
     );
   }
   console.log("data: " + JSON.stringify(data));
@@ -54,21 +54,21 @@ exports.delTempStaff = functions.region("asia-east2").https.onCall(async (data, 
   // only authenticated users can run this
   if (!context.auth) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only authenticated users can add requests",
+      "unauthenticated",
+      "only authenticated users can add requests",
     );
   }
 
   // only user management can run this
   const loginUserDoc = FireDB
-      .collection("users")
-      .doc(context.auth.uid);
+    .collection("users")
+    .doc(context.auth.uid);
   const loginUser = await loginUserDoc.get();
   const loginUserData = loginUser.data();
   if (loginUserData.privilege.userManagement != true) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only user management admin can delete temp users",
+      "unauthenticated",
+      "only user management admin can delete temp users",
     );
   }
 
@@ -165,16 +165,16 @@ exports.newUserSignUp = functions.region("asia-east2").auth.user().onCreate((use
         "",
         "",
       ],
-    }).then(()=>{
+    }).then(() => {
       return FireDB.collection("dashboard").doc("leaveConfig").set({
         [user.uid]: [{
           "al": 0,
           "date": "2021-03-30T16:00:00.000Z",
         }],
-      }, {merge: true}).then(()=>{
+      }, { merge: true }).then(() => {
         return FireDB.collection("dashboard").doc("otConfig").set({
           [user.uid]: 0,
-        }, {merge: true}).then(()=>{
+        }, { merge: true }).then(() => {
           const customClaims = {
             "https://hasura.io/jwt/claims": {
               "x-hasura-default-role": "user",
@@ -182,7 +182,7 @@ exports.newUserSignUp = functions.region("asia-east2").auth.user().onCreate((use
               "x-hasura-user-id": user.email,
             },
           };
-                
+
           return admin.auth().setCustomUserClaims(user.uid, customClaims).then(() => {
             console.log(context.auth.token.name + " updated customClaims on " + user.displayName);
           }).catch((error) => {
@@ -198,21 +198,21 @@ exports.newUserSignUp = functions.region("asia-east2").auth.user().onCreate((use
 // auth trigger (user deleted)
 exports.userDeleted = functions.region("asia-east2").auth.user().onDelete((user) => {
   const doc = FireDB
-      .collection("users")
-      .doc(user.uid);
+    .collection("users")
+    .doc(user.uid);
   return doc.delete();
 });
 
 exports.updateDefaultSchedule = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
-      .collection("users")
-      .doc(context.auth.uid);
+    .collection("users")
+    .doc(context.auth.uid);
   const loginUser = await loginUserDoc.get();
   const loginUserData = loginUser.data();
   if (loginUserData.privilege.userManagement != true) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only user management admin can change user privilege",
+      "unauthenticated",
+      "only user management admin can change user privilege",
     );
   }
 
@@ -223,21 +223,21 @@ exports.updateDefaultSchedule = functions.region("asia-east2").https.onCall(asyn
     "defaultSchedule": data.schedule,
   }).then(() => {
     console.log("USER: " +
-    changeUserData.name + "[defaultSchedule]:" + data.schedule);
+      changeUserData.name + "[defaultSchedule]:" + data.schedule);
     return data.schedule;
   });
 });
 
 exports.toggleEnable = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
-      .collection("users")
-      .doc(context.auth.uid);
+    .collection("users")
+    .doc(context.auth.uid);
   const loginUser = await loginUserDoc.get();
   const loginUserData = loginUser.data();
   if (loginUserData.privilege.userManagement != true) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only user management admin can change user privilege",
+      "unauthenticated",
+      "only user management admin can change user privilege",
     );
   }
 
@@ -249,21 +249,21 @@ exports.toggleEnable = functions.region("asia-east2").https.onCall(async (data, 
     "enable": newEnable,
   }).then(() => {
     console.log("USER: " +
-    changeUserData.name + "[enable]:" + newEnable);
+      changeUserData.name + "[enable]:" + newEnable);
     return newEnable;
   });
 });
 
 exports.toggleUserManagement = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
-      .collection("users")
-      .doc(context.auth.uid);
+    .collection("users")
+    .doc(context.auth.uid);
   const loginUser = await loginUserDoc.get();
   const loginUserData = loginUser.data();
   if (loginUserData.privilege.userManagement != true) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only user management admin can change user privilege",
+      "unauthenticated",
+      "only user management admin can change user privilege",
     );
   }
 
@@ -275,21 +275,21 @@ exports.toggleUserManagement = functions.region("asia-east2").https.onCall(async
     "privilege.userManagement": newPrivilege,
   }).then(() => {
     console.log("USER: " +
-    changeUserData.name + "[privilege.userManagement]:" + newPrivilege);
+      changeUserData.name + "[privilege.userManagement]:" + newPrivilege);
     return newPrivilege;
   });
 });
 
 exports.toggleFinance = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
-      .collection("users")
-      .doc(context.auth.uid);
+    .collection("users")
+    .doc(context.auth.uid);
   const loginUser = await loginUserDoc.get();
   const loginUserData = loginUser.data();
   if (loginUserData.privilege.userManagement != true) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only user management admin can change user privilege",
+      "unauthenticated",
+      "only user management admin can change user privilege",
     );
   }
 
@@ -301,125 +301,151 @@ exports.toggleFinance = functions.region("asia-east2").https.onCall(async (data,
     "privilege.finance": newPrivilege,
   }).then(() => {
     console.log("USER: " +
-    changeUserData.name + "[privilege.finance]:" + newPrivilege);
+      changeUserData.name + "[privilege.finance]:" + newPrivilege);
     return newPrivilege;
   });
 });
 
 exports.toggleEventManagement = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
-      .collection("users")
-      .doc(context.auth.uid);
+    .collection("users")
+    .doc(context.auth.uid);
   const loginUser = await loginUserDoc.get();
   const loginUserData = loginUser.data();
   if (loginUserData.privilege.userManagement != true) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only user management admin can change user privilege",
+      "unauthenticated",
+      "only user management admin can change user privilege",
     );
   }
 
   const changeUserDoc = FireDB.collection("users").doc(data);
   const changeUser = await changeUserDoc.get();
   const changeUserData = changeUser.data();
-  const newPrivilege = changeUserData.privilege.eventManagement? false: true;
+  const newPrivilege = changeUserData.privilege.eventManagement ? false : true;
   return await changeUserDoc.update({
     "privilege.eventManagement": newPrivilege,
   }).then(() => {
     console.log("USER: " +
-    changeUserData.name + "[privilege.eventManagement]:" + newPrivilege);
+      changeUserData.name + "[privilege.eventManagement]:" + newPrivilege);
+    return newPrivilege;
+  });
+});
+
+exports.toggleInventoryManagement = functions.region("asia-east2").https.onCall(async (data, context) => {
+  const loginUserDoc = FireDB
+    .collection("users")
+    .doc(context.auth.uid);
+  const loginUser = await loginUserDoc.get();
+  const loginUserData = loginUser.data();
+  if (loginUserData.privilege.userManagement != true) {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "only user management admin can change user privilege",
+    );
+  }
+
+  const changeUserDoc = FireDB.collection("users").doc(data);
+  const changeUser = await changeUserDoc.get();
+  const changeUserData = changeUser.data();
+  const newPrivilege = changeUserData.privilege.inventoryManagement ? false : true;
+  return await changeUserDoc.update({
+    "privilege.inventoryManagement": newPrivilege,
+  }).then(() => {
+    console.log("USER: " +
+      changeUserData.name + "[privilege.inventoryManagement]:" + newPrivilege);
     return newPrivilege;
   });
 });
 
 exports.toggleEventApprove = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
-      .collection("users")
-      .doc(context.auth.uid);
+    .collection("users")
+    .doc(context.auth.uid);
   const loginUser = await loginUserDoc.get();
   const loginUserData = loginUser.data();
   if (loginUserData.privilege.userManagement != true) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only user management admin can change user privilege",
+      "unauthenticated",
+      "only user management admin can change user privilege",
     );
   }
 
   const changeUserDoc = FireDB.collection("users").doc(data);
   const changeUser = await changeUserDoc.get();
   const changeUserData = changeUser.data();
-  const newPrivilege = changeUserData.privilege.eventApprove? false: true;
+  const newPrivilege = changeUserData.privilege.eventApprove ? false : true;
   return await changeUserDoc.update({
     "privilege.eventApprove": newPrivilege,
   }).then(() => {
     console.log("USER: " +
-    changeUserData.name + "[privilege.eventApprove]:" + newPrivilege);
+      changeUserData.name + "[privilege.eventApprove]:" + newPrivilege);
     return newPrivilege;
   });
 });
 
 exports.toggleProbation = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
-      .collection("users")
-      .doc(context.auth.uid);
+    .collection("users")
+    .doc(context.auth.uid);
   const loginUser = await loginUserDoc.get();
   const loginUserData = loginUser.data();
   if (loginUserData.privilege.userManagement != true) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only user management admin can change user privilege",
+      "unauthenticated",
+      "only user management admin can change user privilege",
     );
   }
 
   const changeUserDoc = FireDB.collection("users").doc(data);
   const changeUser = await changeUserDoc.get();
   const changeUserData = changeUser.data();
-  const newPrivilege = changeUserData.privilege.probation? !changeUserData.privilege.probation: true;
+  const newPrivilege = changeUserData.privilege.probation ? !changeUserData.privilege.probation : true;
   return await changeUserDoc.update({
     "privilege.probation": newPrivilege,
   }).then(() => {
     console.log("USER: " +
-    changeUserData.name + "[privilege.probation]:" + newPrivilege);
+      changeUserData.name + "[privilege.probation]:" + newPrivilege);
     return newPrivilege;
   });
 });
 
 exports.toggleParttime = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
-      .collection("users")
-      .doc(context.auth.uid);
+    .collection("users")
+    .doc(context.auth.uid);
   const loginUser = await loginUserDoc.get();
   const loginUserData = loginUser.data();
   if (loginUserData.privilege.userManagement != true) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only user management admin can change user privilege",
+      "unauthenticated",
+      "only user management admin can change user privilege",
     );
   }
 
   const changeUserDoc = FireDB.collection("users").doc(data);
   const changeUser = await changeUserDoc.get();
   const changeUserData = changeUser.data();
-  const newPrivilege = changeUserData.parttime? !changeUserData.parttime: true;
+  const newPrivilege = changeUserData.parttime ? !changeUserData.parttime : true;
   return await changeUserDoc.update({
     "parttime": newPrivilege,
   }).then(() => {
     console.log("USER: " +
-    changeUserData.name + "[parttime]:" + newPrivilege);
+      changeUserData.name + "[parttime]:" + newPrivilege);
     return newPrivilege;
   });
 });
 
 exports.toggleLeaveApprove = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
-      .collection("users")
-      .doc(context.auth.uid);
+    .collection("users")
+    .doc(context.auth.uid);
   const loginUser = await loginUserDoc.get();
   const loginUserData = loginUser.data();
   if (loginUserData.privilege.userManagement != true) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only user management admin can change user privilege",
+      "unauthenticated",
+      "only user management admin can change user privilege",
     );
   }
 
@@ -431,21 +457,21 @@ exports.toggleLeaveApprove = functions.region("asia-east2").https.onCall(async (
     "privilege.leaveApprove": newPrivilege,
   }).then(() => {
     console.log("USER: " +
-    changeUserData.name + "[privilege.leaveApprove]:" + newPrivilege);
+      changeUserData.name + "[privilege.leaveApprove]:" + newPrivilege);
     return newPrivilege;
   });
 });
 
 exports.toggleLeaveManage = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
-      .collection("users")
-      .doc(context.auth.uid);
+    .collection("users")
+    .doc(context.auth.uid);
   const loginUser = await loginUserDoc.get();
   const loginUserData = loginUser.data();
   if (loginUserData.privilege.userManagement != true) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only user management admin can change user privilege",
+      "unauthenticated",
+      "only user management admin can change user privilege",
     );
   }
 
@@ -457,21 +483,21 @@ exports.toggleLeaveManage = functions.region("asia-east2").https.onCall(async (d
     "privilege.leaveManage": newPrivilege,
   }).then(() => {
     console.log("USER: " +
-    changeUserData.name + "[privilege.leaveManage]:" + newPrivilege);
+      changeUserData.name + "[privilege.leaveManage]:" + newPrivilege);
     return newPrivilege;
   });
 });
 
 exports.toggleHealthApprove = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
-      .collection("users")
-      .doc(context.auth.uid);
+    .collection("users")
+    .doc(context.auth.uid);
   const loginUser = await loginUserDoc.get();
   const loginUserData = loginUser.data();
   if (loginUserData.privilege.userManagement != true) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only user management admin can change user privilege",
+      "unauthenticated",
+      "only user management admin can change user privilege",
     );
   }
 
@@ -483,21 +509,21 @@ exports.toggleHealthApprove = functions.region("asia-east2").https.onCall(async 
     "privilege.healthapprove": newPrivilege,
   }).then(() => {
     console.log("USER: " +
-    changeUserData.name + "[privilege.healthapprove]:" + newPrivilege);
+      changeUserData.name + "[privilege.healthapprove]:" + newPrivilege);
     return newPrivilege;
   });
 });
 
 exports.toggleScheduleModify = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
-      .collection("users")
-      .doc(context.auth.uid);
+    .collection("users")
+    .doc(context.auth.uid);
   const loginUser = await loginUserDoc.get();
   const loginUserData = loginUser.data();
   if (loginUserData.privilege.userManagement != true) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only user management admin can change user privilege",
+      "unauthenticated",
+      "only user management admin can change user privilege",
     );
   }
 
@@ -509,21 +535,21 @@ exports.toggleScheduleModify = functions.region("asia-east2").https.onCall(async
     "privilege.scheduleModify": newPrivilege,
   }).then(() => {
     console.log("USER: " +
-    changeUserData.name + "[privilege.scheduleModify]:" + newPrivilege);
+      changeUserData.name + "[privilege.scheduleModify]:" + newPrivilege);
     return newPrivilege;
   });
 });
 
 exports.toggleSal = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
-      .collection("users")
-      .doc(context.auth.uid);
+    .collection("users")
+    .doc(context.auth.uid);
   const loginUser = await loginUserDoc.get();
   const loginUserData = loginUser.data();
   if (loginUserData.privilege.userManagement != true) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only user management admin can change user privilege",
+      "unauthenticated",
+      "only user management admin can change user privilege",
     );
   }
 
@@ -535,32 +561,32 @@ exports.toggleSal = functions.region("asia-east2").https.onCall(async (data, con
     "privilege.sal": newPrivilege,
   }).then(() => {
     console.log("USER: " +
-    changeUserData.name + "[privilege.sal]:" + newPrivilege);
+      changeUserData.name + "[privilege.sal]:" + newPrivilege);
     return newPrivilege;
   });
 });
 
 exports.changeOrder = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
-      .collection("users")
-      .doc(context.auth.uid);
+    .collection("users")
+    .doc(context.auth.uid);
   const loginUser = await loginUserDoc.get();
   const loginUserData = loginUser.data();
   if (loginUserData.privilege.userManagement != true) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only user management admin can change user privilege",
+      "unauthenticated",
+      "only user management admin can change user privilege",
     );
   }
 
   const changeUserDoc1 = FireDB.collection("users").doc(data.uid);
   const changeUser1 = await changeUserDoc1.get();
   const changeUserData1 = changeUser1.data();
-  const order1 = changeUserData1.order + (data.dir == "UP"? -1: 1);
+  const order1 = changeUserData1.order + (data.dir == "UP" ? -1 : 1);
 
   const changeUserDoc2 = await FireDB.collection("users")
-      .where("order", "==", order1)
-      .get();
+    .where("order", "==", order1)
+    .get();
 
   let changeUserData2;
   if (!changeUserDoc2.empty) {
@@ -579,11 +605,11 @@ exports.changeOrder = functions.region("asia-east2").https.onCall(async (data, c
     }
   }).then(() => {
     console.log("USER: " +
-    changeUserData1.name + "[order]:" + order1);
+      changeUserData1.name + "[order]:" + order1);
 
     if (changeUserData2) {
       console.log("USER: " +
-      changeUserData2.name + "[order]:" + changeUserData1.order);
+        changeUserData2.name + "[order]:" + changeUserData1.order);
       return {
         uid1: changeUserData1.uid,
         uid2: changeUserData2.uid,
@@ -602,20 +628,20 @@ exports.changeOrder = functions.region("asia-east2").https.onCall(async (data, c
 exports.changeRank = functions.region("asia-east2").https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only authenticated users can add requests",
+      "unauthenticated",
+      "only authenticated users can add requests",
     );
   }
 
   const loginUserDoc = FireDB
-      .collection("users")
-      .doc(context.auth.uid);
+    .collection("users")
+    .doc(context.auth.uid);
   const loginUser = await loginUserDoc.get();
   const loginUserData = loginUser.data();
   if (loginUserData.privilege.userManagement != true) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only user management admin can change user privilege",
+      "unauthenticated",
+      "only user management admin can change user privilege",
     );
   }
 
@@ -627,7 +653,7 @@ exports.changeRank = functions.region("asia-east2").https.onCall(async (data, co
     "rank": data.rank,
   }).then(() => {
     console.log("USER: " +
-    loginUserData.name + "修改了 " + changeUserData.name + "[職級]:" + data.rank);
+      loginUserData.name + "修改了 " + changeUserData.name + "[職級]:" + data.rank);
     return {
       uid: changeUserData.uid,
       rank: data.rank,
@@ -638,20 +664,20 @@ exports.changeRank = functions.region("asia-east2").https.onCall(async (data, co
 exports.changeDateOfExit = functions.region("asia-east2").https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only authenticated users can add requests",
+      "unauthenticated",
+      "only authenticated users can add requests",
     );
   }
 
   const loginUserDoc = FireDB
-      .collection("users")
-      .doc(context.auth.uid);
+    .collection("users")
+    .doc(context.auth.uid);
   const loginUser = await loginUserDoc.get();
   const loginUserData = loginUser.data();
   if (loginUserData.privilege.userManagement != true) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only user management admin can change user privilege",
+      "unauthenticated",
+      "only user management admin can change user privilege",
     );
   }
 
@@ -671,7 +697,7 @@ exports.changeDateOfExit = functions.region("asia-east2").https.onCall(async (da
     employment: employment,
   }).then(() => {
     console.log("USER: " +
-    loginUserData.name + " 修改了 " + changeUserData.name + "[離職日期]:" + formatDate(dateOfExit, "-", "YYYYMMDD"));
+      loginUserData.name + " 修改了 " + changeUserData.name + "[離職日期]:" + formatDate(dateOfExit, "-", "YYYYMMDD"));
     return {
       uid: changeUserData.uid,
       index: data.index,
@@ -683,20 +709,20 @@ exports.changeDateOfExit = functions.region("asia-east2").https.onCall(async (da
 exports.changeDateOfEntry = functions.region("asia-east2").https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only authenticated users can add requests",
+      "unauthenticated",
+      "only authenticated users can add requests",
     );
   }
 
   const loginUserDoc = FireDB
-      .collection("users")
-      .doc(context.auth.uid);
+    .collection("users")
+    .doc(context.auth.uid);
   const loginUser = await loginUserDoc.get();
   const loginUserData = loginUser.data();
   if (loginUserData.privilege.userManagement != true) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only user management admin can change user privilege",
+      "unauthenticated",
+      "only user management admin can change user privilege",
     );
   }
 
@@ -715,7 +741,7 @@ exports.changeDateOfEntry = functions.region("asia-east2").https.onCall(async (d
     employment: employment,
   }).then(() => {
     console.log("USER: " +
-    loginUserData.name + " 修改了 " + changeUserData.name + "[入職日期]:" + formatDate(dateOfEntry, "-", "YYYYMMDD"));
+      loginUserData.name + " 修改了 " + changeUserData.name + "[入職日期]:" + formatDate(dateOfEntry, "-", "YYYYMMDD"));
     return {
       uid: changeUserData.uid,
       index: data.index,
@@ -726,14 +752,14 @@ exports.changeDateOfEntry = functions.region("asia-east2").https.onCall(async (d
 
 exports.saveEmployment = functions.region("asia-east2").https.onCall(async (data, context) => {
   const loginUserDoc = FireDB
-      .collection("users")
-      .doc(context.auth.uid);
+    .collection("users")
+    .doc(context.auth.uid);
   const loginUser = await loginUserDoc.get();
   const loginUserData = loginUser.data();
   if (loginUserData.privilege.userManagement != true) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only user management admin can change user privilege",
+      "unauthenticated",
+      "only user management admin can change user privilege",
     );
   }
 
@@ -743,14 +769,14 @@ exports.saveEmployment = functions.region("asia-east2").https.onCall(async (data
   const employmentData = JSON.parse(JSON.stringify(data.employment));
   // console.log("employmentData:" + JSON.stringify(employmentData));
   employmentData.forEach((d) => {
-    d.dateOfEntry = d.dateOfEntry? Timestamp.fromDate(new Date(d.dateOfEntry)): null;
-    d.dateOfExit = d.dateOfExit? Timestamp.fromDate(new Date(d.dateOfExit)): null;
+    d.dateOfEntry = d.dateOfEntry ? Timestamp.fromDate(new Date(d.dateOfEntry)) : null;
+    d.dateOfExit = d.dateOfExit ? Timestamp.fromDate(new Date(d.dateOfExit)) : null;
   });
   return await changeUserDoc.update({
     "employment": employmentData,
   }).then(() => {
     console.log("USER: " +
-    changeUserData.name + "[受聘記錄]:" + JSON.stringify(data.employment));
+      changeUserData.name + "[受聘記錄]:" + JSON.stringify(data.employment));
     return data.employment;
   });
 });
@@ -759,21 +785,21 @@ exports.delete = functions.region("asia-east2").https.onCall(async (data, contex
   // only authenticated users can run this
   if (!context.auth) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only authenticated users can add requests",
+      "unauthenticated",
+      "only authenticated users can add requests",
     );
   }
 
   // only user management can run this
   const loginUserDoc = FireDB
-      .collection("users")
-      .doc(context.auth.uid);
+    .collection("users")
+    .doc(context.auth.uid);
   const loginUser = await loginUserDoc.get();
   const loginUserData = loginUser.data();
   if (loginUserData.privilege.userManagement != true) {
     throw new functions.https.HttpsError(
-        "unauthenticated",
-        "only user management admin can delete temp users",
+      "unauthenticated",
+      "only user management admin can delete temp users",
     );
   }
 

@@ -12,76 +12,76 @@ export function getUserProfile(state) {
   } else return null;
 }
 
- export function getUsername(state) {
+export function getUsername(state) {
   if (Object.keys(state.userProfile).length) {
-   return state.userProfile.name;
+    return state.userProfile.name;
   } else {
     return null;
   }
- }
+}
 
- export function getEmployment(state) {
+export function getEmployment(state) {
   if (Object.keys(state.userProfile).length) {
-   return state.userProfile.employment;
+    return state.userProfile.employment;
   } else {
     return null;
   }
- }
+}
 
- export function getPhotoURL(state) {
+export function getPhotoURL(state) {
   if (Object.keys(state.userProfile).length) {
-   return state.auth.photoURL;
+    return state.auth.photoURL;
   } else {
     return null;
   }
- }
+}
 
- export function getUserManagement(state) {
+export function getUserManagement(state) {
   if (Object.keys(state.userProfile).length) {
-   return state.userProfile.privilege.userManagement;
+    return state.userProfile.privilege.userManagement;
   } else {
     return null;
   }
- }
+}
 
- export function getDateOfExit(state) {
+export function getDateOfExit(state) {
   if (Object.keys(state.userProfile).length && state.userProfile.dateOfExit != undefined) {
-   return state.userProfile.dateOfExit;
+    return state.userProfile.dateOfExit;
   } else {
     return null;
   }
- }
+}
 
- export function getRank(state) {
+export function getRank(state) {
   if (Object.keys(state.userProfile).length) {
-   return state.userProfile.rank;
+    return state.userProfile.rank;
   } else {
     return null;
   }
- }
+}
 
- export function getDateOfEntry(state) {
+export function getDateOfEntry(state) {
   if (Object.keys(state.userProfile).length) {
-   return state.userProfile.dateOfEntry;
+    return state.userProfile.dateOfEntry;
   } else {
     return null;
   }
- }
+}
 
- export function getUID(state) {
+export function getUID(state) {
   if (Object.keys(state.userProfile).length) {
-   return state.userProfile.uid;
+    return state.userProfile.uid;
   } else {
     return null;
   }
- }
+}
 
 export function getFinance(state) {
   if (Object.keys(state.userProfile).length) {
     return state.userProfile.privilege.finance;
-   } else {
-     return null;
-   }
+  } else {
+    return null;
+  }
 }
 
 export function getSystemAdmin(state) {
@@ -166,6 +166,14 @@ export function getTmp(state) {
   }
 }
 
+export function getInventoryManagement(state) {
+  if (Object.keys(state.userProfile).length) {
+    return state.userProfile.privilege.inventoryManagement
+  } else {
+    return null;
+  }
+}
+
 export function getALBalance(state) {
   if (Object.keys(state.userProfile).length) {
     return state.userProfile.balance.al
@@ -208,7 +216,7 @@ export function getUAT(state) {
 
 export function getProbation(state) {
   if (Object.keys(state.userProfile).length) {
-    return state.userProfile.privilege.probation? true: false
+    return state.userProfile.privilege.probation ? true : false
   } else {
     return null;
   }
@@ -224,9 +232,9 @@ export function getHasuraClaim(state) {
 
 export function isLogin(state) {
   if (Object.keys(state.userProfile).length) {
-   return true;
+    return true;
   } else {
     return false;
   }
- }
+}
 

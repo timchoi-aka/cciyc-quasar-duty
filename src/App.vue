@@ -1,246 +1,119 @@
-<template>
-  <q-layout id="q-app" view="hHh lpR lFf">
-    <!-- loading dialog -->
-    <LoadingDialog v-model="loading" message="處理中" />
+<template><q-layout id="q-app" view="hHh lpR lFf">
+  <!-- loading dialog -->
+  <LoadingDialog v-model="loading" message="處理中" />
 
-    <q-header elevated class="bg-primary text-white" height-hint="98">
-      <q-dialog v-model="bugReportModal">
-        <q-card>
-          <q-card-section>
-            <div class="text-h6">錯誤回報</div>
-          </q-card-section>
-          <q-card-section class="row">
-            <div class="col-3">錯誤發生日期：</div>
-            <div class="col-9">
-              <DateComponent v-model="bugReportObject.date" />
-            </div>
-            <div class="col-3">錯誤描述：</div>
-            <div class="col-9">
-              <q-input type="text" v-model="bugReportObject.message" />
-            </div>
-            <div class="col-3">截圖（如有）：</div>
-            <FileUpload
-              class="col-9"
-              path="bug-report"
-              @onDone="updateFilenames"
-            />
-          </q-card-section>
-          <q-card-actions align="right">
-            <q-btn label="取消" class="bg-negative text-white" v-close-popup />
-            <q-btn
-              label="提交"
-              class="bg-primary text-white"
-              @click="submitBugReport"
-            />
-          </q-card-actions>
-        </q-card>
-      </q-dialog>
+  <q-header elevated class="bg-primary text-white" height-hint="98">
+    <q-dialog v-model="bugReportModal">
+      <q-card>
+        <q-card-section>
+          <div class="text-h6">錯誤回報</div>
+        </q-card-section>
+        <q-card-section class="row">
+          <div class="col-3">錯誤發生日期：</div>
+          <div class="col-9">
+            <DateComponent v-model="bugReportObject.date" />
+          </div>
+          <div class="col-3">錯誤描述：</div>
+          <div class="col-9">
+            <q-input type="text" v-model="bugReportObject.message" />
+          </div>
+          <div class="col-3">截圖（如有）：</div>
+          <FileUpload class="col-9" path="bug-report" @onDone="updateFilenames" />
+        </q-card-section>
+        <q-card-actions align="right">
+          <q-btn label="取消" class="bg-negative text-white" v-close-popup />
+          <q-btn label="提交" class="bg-primary text-white" @click="submitBugReport" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
 
-      <q-toolbar>
-        <q-btn
-          class="mobile-only"
-          dense
-          flat
-          round
-          icon="menu"
-          @click="toggleLeftDrawer"
-        />
+    <q-toolbar>
+      <q-btn class="mobile-only" dense flat round icon="menu" @click="toggleLeftDrawer" />
 
-        <q-toolbar-title>
-          <q-avatar size="70px">
-            <img src="~assets/cciyc_logo.svg" />
-          </q-avatar>
-          <span class="desktop-only">青年</span>
-        </q-toolbar-title>
+      <q-toolbar-title>
+        <q-avatar size="70px">
+          <img src="~assets/cciyc_logo.svg" />
+        </q-avatar>
+        <span class="desktop-only">青年</span>
+      </q-toolbar-title>
 
-        <!-- notifications -->
-        <div v-if="username && UAT" class="q-ml-sm bg-primary text-white">
-          <q-btn
-            flat
-            class="desktop-only"
-            icon="bug_report"
-            label="錯誤回報"
-            @click="bugReportModal = true"
-          />
-        </div>
-        <div v-if="username" class="q-mx-sm bg-primary text-white">
-          <NotificationBell />
-        </div>
+      <!-- notifications -->
+      <div v-if="username && UAT" class="q-ml-sm bg-primary text-white">
+        <q-btn flat class="desktop-only" icon="bug_report" label="錯誤回報" @click="bugReportModal = true" />
+      </div>
+      <div v-if="username" class="q-mx-sm bg-primary text-white">
+        <NotificationBell />
+      </div>
 
-        <div v-if="username" class="desktop-only q-mr-md">
-          <q-avatar rounded left v-if="photoURL" size="42px">
-            <img :src="photoURL" />
-          </q-avatar>
-          <q-btn
-            class="q-px-sm q-py-sm"
-            size="md"
-            flat
-            text-color="white"
-            :label="'登出: ' + username"
-            icon="logout"
-            @click="logout"
-          >
-          </q-btn>
-        </div>
-        <q-btn
-          v-if="isLocal"
-          class="desktop-only"
-          dense
-          flat
-          round
-          icon="menu"
-          @click="toggleRightDrawer"
-        />
-      </q-toolbar>
-
-      <MenuBar :key="module" />
-    </q-header>
-
-    <q-drawer
-      v-if="$q.platform.is.mobile"
-      class="mobile-only column"
-      v-model="leftDrawerOpen"
-      side="left"
-      overlay
-      behavior="mobile"
-      elevated
-    >
-      <q-list v-if="!uid">
-        <EssentialLink title="登入" caption="請先登入" icon="login" link="/" />
-      </q-list>
-      <q-list v-if="uid && module == 'duty'">
-        <EssentialLink
-          v-for="link in dutyList"
-          :key="link.title"
-          v-bind="link"
-        />
-      </q-list>
-      <q-list v-if="uid && module == 'member'">
-        <EssentialLink
-          v-for="link in memberList"
-          :key="link.title"
-          v-bind="link"
-        />
-      </q-list>
-      <q-list v-if="uid && module == 'event'">
-        <EssentialLink
-          v-for="link in eventList"
-          :key="link.title"
-          v-bind="link"
-        />
-      </q-list>
-      <q-list v-if="uid && module == 'account'">
-        <EssentialLink
-          v-for="link in accountList"
-          :key="link.title"
-          v-bind="link"
-        />
-      </q-list>
-      <q-space />
-
-      <div class="row col-*">
-        <q-btn
-          class="col"
-          name="duty"
-          icon="event"
-          label="編更"
-          @click="setCurrentModule('duty')"
-          :disable="isStaging"
-          ><q-tooltip v-if="isStaging"> 測試環境不能使用編更系統。 </q-tooltip>
+      <div v-if="username" class="desktop-only q-mr-md">
+        <q-avatar rounded left v-if="photoURL" size="42px">
+          <img :src="photoURL" />
+        </q-avatar>
+        <q-btn class="q-px-sm q-py-sm" size="md" flat text-color="white" :label="'登出: ' + username" icon="logout"
+          @click="logout">
         </q-btn>
-        <q-btn
-          v-if="!isTmp && isLocal"
-          class="col"
-          name="member"
-          icon="public"
-          label="會員"
-          @click="setCurrentModule('member')"
-        />
-        <q-btn
-          v-if="!isTmp && isLocal"
-          class="col"
-          name="event"
-          icon="festival"
-          label="活動"
-          @click="setCurrentModule('event')"
-        />
-        <q-btn
-          v-if="!isTmp && isLocal"
-          class="col"
-          name="finance"
-          icon="money"
-          label="財務"
-          @click="setCurrentModule('account')"
-        />
       </div>
-      <div class="row text-h6 q-ml-md q-my-sm">
-        {{ qdate.formatDate(new Date(), "YYYY年M月D日") }}
-      </div>
-    </q-drawer>
+      <q-btn v-if="isLocal" class="desktop-only" dense flat round icon="menu" @click="toggleRightDrawer" />
+    </q-toolbar>
 
-    <!-- right drawer -->
-    <q-drawer
-      :width="100"
-      v-model="rightDrawerOpen"
-      side="right"
-      overlay
-      elevated
-      class="column justify-around"
-      behavior="mobile"
-    >
-      <q-btn
-        v-close-popup
-        class="col-grow"
-        name="duty"
-        icon="event"
-        label="編更"
-        to="/duty/dutytable"
-        :disable="isStaging"
-        ><q-tooltip v-if="isStaging"> 測試環境不能使用編更系統。 </q-tooltip>
+    <MenuBar :key="module" />
+  </q-header>
+
+  <q-drawer v-if="$q.platform.is.mobile" class="mobile-only column" v-model="leftDrawerOpen" side="left" overlay
+    behavior="mobile" elevated>
+    <q-list v-if="!uid">
+      <EssentialLink title="登入" caption="請先登入" icon="login" link="/" />
+    </q-list>
+    <q-list v-if="uid && module == 'duty'">
+      <EssentialLink v-for="link in dutyList" :key="link.title" v-bind="link" />
+    </q-list>
+    <q-list v-if="uid && module == 'member'">
+      <EssentialLink v-for="link in memberList" :key="link.title" v-bind="link" />
+    </q-list>
+    <q-list v-if="uid && module == 'event'">
+      <EssentialLink v-for="link in eventList" :key="link.title" v-bind="link" />
+    </q-list>
+    <q-list v-if="uid && module == 'account'">
+      <EssentialLink v-for="link in accountList" :key="link.title" v-bind="link" />
+    </q-list>
+    <q-space />
+
+    <div class="row col-*">
+      <q-btn class="col" name="duty" icon="event" label="編更" @click="setCurrentModule('duty')"
+        :disable="isStaging"><q-tooltip v-if="isStaging"> 測試環境不能使用編更系統。 </q-tooltip>
       </q-btn>
-      <q-btn
-        v-if="!isTmp && isLocal"
-        v-close-popup
-        class="col-grow"
-        name="member"
-        icon="public"
-        label="會員"
-        to="/member/list"
-      />
-      <q-btn
-        v-if="!isTmp && isLocal"
-        v-close-popup
-        class="col-grow"
-        name="event"
-        icon="festival"
-        label="活動"
-        to="/event/my-event"
-      />
-      <q-btn
-        v-if="!isTmp && isLocal"
-        v-close-popup
-        class="col-grow"
-        name="finance"
-        icon="money"
-        label="財務"
-        to="/account/receipt/search"
-      />
-      <q-btn
-        v-if="!isTmp && isLocal"
-        v-close-popup
-        class="col-grow"
-        name="web"
-        icon="home"
-        label="網站"
-        to="/website/gallery/list?type=event"
-      />
-    </q-drawer>
+      <q-btn v-if="!isTmp && isLocal" class="col" name="member" icon="public" label="會員"
+        @click="setCurrentModule('member')" />
+      <q-btn v-if="!isTmp && isLocal" class="col" name="event" icon="festival" label="活動"
+        @click="setCurrentModule('event')" />
+      <q-btn v-if="!isTmp && isLocal" class="col" name="finance" icon="money" label="財務"
+        @click="setCurrentModule('account')" />
+    </div>
+    <div class="row text-h6 q-ml-md q-my-sm">
+      {{ qdate.formatDate(new Date(), "YYYY年M月D日") }}
+    </div>
+  </q-drawer>
 
-    <q-page-container>
-      <router-view />
-    </q-page-container>
-  </q-layout>
-</template>
+  <!-- right drawer -->
+  <q-drawer :width="100" v-model="rightDrawerOpen" side="right" overlay elevated class="column justify-around"
+    behavior="mobile">
+    <q-btn v-close-popup class="col-grow" name="duty" icon="event" label="編更" to="/duty/dutytable"
+      :disable="isStaging"><q-tooltip v-if="isStaging"> 測試環境不能使用編更系統。 </q-tooltip>
+    </q-btn>
+    <q-btn v-if="!isTmp && isLocal" v-close-popup class="col-grow" name="member" icon="public" label="會員"
+      to="/member/list" />
+    <q-btn v-if="!isTmp && isLocal" v-close-popup class="col-grow" name="event" icon="festival" label="活動"
+      to="/event/my-event" />
+    <q-btn v-if="!isTmp && isLocal" v-close-popup class="col-grow" name="finance" icon="money" label="財務"
+      to="/account/receipt/search" />
+    <q-btn v-if="!isTmp && isLocal" v-close-popup class="col-grow" name="web" icon="home" label="網站"
+      to="/website/gallery/list?type=event" />
+  </q-drawer>
+
+  <q-page-container>
+    <router-view />
+  </q-page-container>
+</q-layout></template>
 
 <script setup>
 import EssentialLink from "components/EssentialLink.vue";
@@ -275,6 +148,8 @@ const username = computed(() => $store.getters["userModule/getUsername"]);
 const photoURL = computed(() => $store.getters["userModule/getPhotoURL"]);
 const UAT = computed(() => $store.getters["userModule/getUAT"]);
 const isTmp = computed(() => $store.getters["userModule/getTmp"]);
+const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"]);
+const isInventoryManagement = computed(() => $store.getters["userModule/getInventoryManagement"]);
 const isStaging = computed(() => process.env.DEV_MODE == "staging");
 const isSystemAdmin = computed(
   () => $store.getters["userModule/getSystemAdmin"]
@@ -564,7 +439,7 @@ const accountList = ref([
     caption: "物資管理，庫存，報表",
     icon: "inventory_2",
     link: "/account/inventory",
-    enable: !isTmp.value,
+    enable: !isTmp.value && (isInventoryManagement.value || isSystemAdmin.value || isCenterIC.value),
   },
 ]);
 </script>
