@@ -74,6 +74,7 @@ export /* async */ function getClientOptions(/* {app, router, ...} */ options) {
     // General options.
     {
       link: from([errorLink, link]),
+      connectToDevTools: false,
       cache: new InMemoryCache({
         typePolicies: {
           Member: {

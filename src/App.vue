@@ -435,7 +435,7 @@ const accountList = ref([
     enable: !isTmp.value,
   },
   {
-    title: "物資管理",
+    title: "固定資產",
     caption: "物資管理，庫存，報表",
     icon: "inventory_2",
     link: "/account/inventory",

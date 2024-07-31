@@ -1,13 +1,6 @@
 <template>
   <q-page style="margin-top: 70px">
-    <q-dialog v-model="addModal">
-      <InventoryAddModal
-        :serverStat="serverStat"
-        @refetch="refetch"
-        @addDialog="(value) => (addModal = value)"
-      />
-    </q-dialog>
-
+    {{ allInventory }}
     <q-dialog v-model="editModal">
       <InventoryEditModal
         :serverStat="serverStat"
@@ -81,9 +74,9 @@ import { useQuery, useMutation } from "@vue/apollo-composable";
 import { ref, computed } from "vue";
 import gql from "graphql-tag";
 import { useQuasar, date as qdate } from "quasar";
-import InventoryAddModal from "src/components/Inventory/InventoryAddModal.vue";
 import InventoryEditModal from "src/components/Inventory/InventoryEditModal.vue";
 import { useStore } from "vuex";
+import { useAllInventoryProvider } from "src/providers/inventory";
 
 // variables
 const $q = useQuasar();
@@ -97,6 +90,38 @@ const pagination = ref({
 const selectedRow = ref([]);
 const addModal = ref(false);
 const editModal = ref(false);
+
+const { result } = useAllInventoryProvider();
+const allInventory = computed(() => {
+  let res = [];
+  if (result.value) {
+    result.value.Inventory.forEach((x) => {
+      res.push({
+        ID: x.ID,
+        c_name: x.c_name,
+        c_model: x.c_model,
+        c_location: x.c_location,
+        d_purchase: x.d_purchase,
+        f_cost: x.f_cost,
+        c_funding: x.c_funding,
+        i_qty: x.i_qty,
+        i_deleted_qty: x.Inventory_to_Destroy.filter((x) => x.b_confirm).reduce(
+          (a, v) => a + v.i_destroy_quantity,
+          0
+        ),
+        i_remaining_qty:
+          x.i_qty -
+          x.Inventory_to_Destroy.filter((x) => x.b_confirm).reduce(
+            (a, v) => a + v.i_destroy_quantity,
+            0
+          ),
+        c_createdByUser: x.c_createdByUser,
+        b_approve: x.b_approve,
+      });
+    });
+  }
+  return res;
+});
 
 const InventoryColumn = ref([
   {
@@ -158,8 +183,24 @@ const InventoryColumn = ref([
   },
   {
     name: "i_qty",
-    label: "數量",
+    label: "購入數量",
     field: "i_qty",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "i_deleted_qty",
+    label: "報銷數量",
+    name: "i_deleted_qty",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "i_remaining_qty",
+    label: "剩餘數量",
+    field: "i_remaining_qty",
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
@@ -208,32 +249,6 @@ const InventoryColumn = ref([
   },
   */
 ]);
-
-// query
-const {
-  result: LocationResult,
-  loading,
-  refetch,
-  onResult,
-} = useQuery(gql`
-  query AllInventory {
-    Inventory(order_by: { ID: asc }) {
-      f_cost
-      d_purchase
-      c_name
-      c_model
-      c_location
-      c_funding
-      ID
-      i_qty
-      c_createdByUser
-      d_createDate
-      b_approve
-      c_approvedByUser
-      d_approvalDate
-    }
-  }
-`);
 
 const {
   mutate: deleteInventoryMutation,
@@ -337,13 +352,6 @@ function deleteRow(ID) {
   deleteData.value.push(InventoryData.value[i]);
   InventoryData.value.splice(i, 1);
 }
-
-// callback
-onResult((result) => {
-  InventoryData.value = result.data
-    ? JSON.parse(JSON.stringify(result.data.Inventory))
-    : [];
-});
 
 deleteInventoryMutation_Completed((result) => {
   refetch();

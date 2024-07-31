@@ -420,6 +420,11 @@ const routes = [
             meta: { requiresAuth: true },
           },
           {
+            path: "list",
+            component: () => import("src/pages/Account/InventoryList.vue"),
+            meta: { requiresAuth: true },
+          },
+          {
             path: "delete",
             component: () => import("src/pages/Account/InventoryDelete.vue"),
             meta: { requiresAuth: true },

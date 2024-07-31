@@ -2,7 +2,7 @@
 /* eslint-disable max-len */
 // import fetch from "node-fetch"
 const fetch = require("cross-fetch");
-const {functions} = require("./fbadmin");
+const { functions } = require("./fbadmin");
 const adminSecret = process.env["adminSecret"];
 // const hgeEndpoint = process.env["hgeEndpoint"];
 const hgeEndpoint = "https://hasura.cciyc.com:4430";
@@ -74,220 +74,307 @@ mutation housekeep_updateYouthMemberStatus(
     log_id
   }
 }`;
-// API 2.0 Scheduled task to updated AL Balance
-exports.updateMemberStatus = functions.region("asia-east2").pubsub.schedule("0 0 * * *").timeZone("Asia/Hong_Kong").onRun(async (context) => {
-  const timeStamp = new Date().toISOString();
+// API 2.0 Scheduled task to updated member status
+exports.updateMemberStatus = functions
+  .region("asia-east2")
+  .pubsub.schedule("0 0 * * *")
+  .timeZone("Asia/Hong_Kong")
+  .onRun(async (context) => {
+    const timeStamp = new Date().toISOString();
 
-  /*
+    /*
   if (myTimer.isPastDue)
   {
       console.log('JavaScript is running late!');
   }
   */
-  console.log("JavaScript timer trigger function ran!", timeStamp);
+    console.log("JavaScript timer trigger function ran!", timeStamp);
 
-  const res = await fetch(hgeEndpoint + "/v1/graphql/", {
-    method: "POST",
-    body: JSON.stringify({query: query}),
-    headers: {"Content-Type": "application/json", "x-hasura-admin-secret": adminSecret},
-  });
-  const json = await res.json();
-
-  const Members = json.data.Member;
-  const Relations = json.data.Relation;
-  console.log("會員數目：" + Members.length);
-  console.log("關係數目：" + Relations.length);
-
-  if (Members.length) {
-    const queue = [];
-    // calculate b_mem_type1
-    Members.forEach((member) => {
-      if (member.c_mem_id != "9999") {
-        const original_b_mem_type1 = member.b_mem_type1;
-        let b_mem_type1 = member.b_mem_type1;
-        const d_expired_1 = new Date(member.d_expired_1);
-        const now = new Date();
-
-        /* if date in d_expired_1 is later than now, set b_mem_type1 to true
-        else set b_mem_type1 to false */
-        if (now - d_expired_1 < 0) {
-          b_mem_type1 = true;
-        } else b_mem_type1 = false;
-
-        // expired or quit, set active member status to false
-        if (b_mem_type1 != original_b_mem_type1) {
-          console.log("會員：" + member.c_mem_id + "，原會藉:" + original_b_mem_type1 + "，新會藉" + b_mem_type1 + "，屆滿日期:" + member.d_expired_1 + "，距離屆滿日期:" + (now - d_expired_1) / (1000 * 60 * 60 * 24) + "天");
-          queue.push({
-            c_mem_id: member.c_mem_id,
-            b_mem_type1: b_mem_type1,
-          });
-          // update the member object for calculating relations
-          member.b_mem_type1 = b_mem_type1;
-        }
-      }
+    const res = await fetch(hgeEndpoint + "/v1/graphql/", {
+      method: "POST",
+      body: JSON.stringify({ query: query }),
+      headers: {
+        "Content-Type": "application/json",
+        "x-hasura-admin-secret": adminSecret,
+      },
     });
+    const json = await res.json();
 
+    const Members = json.data.Member;
+    const Relations = json.data.Relation;
+    console.log("會員數目：" + Members.length);
+    console.log("關係數目：" + Relations.length);
 
-    // debug test
-    /* queue.push({
+    if (Members.length) {
+      const queue = [];
+      // calculate b_mem_type1
+      Members.forEach((member) => {
+        if (member.c_mem_id != "9999") {
+          const original_b_mem_type1 = member.b_mem_type1;
+          let b_mem_type1 = member.b_mem_type1;
+          const d_expired_1 = new Date(member.d_expired_1);
+          const now = new Date();
+
+          /* if date in d_expired_1 is later than now, set b_mem_type1 to true
+        else set b_mem_type1 to false */
+          if (now - d_expired_1 < 0) {
+            b_mem_type1 = true;
+          } else b_mem_type1 = false;
+
+          // expired or quit, set active member status to false
+          if (b_mem_type1 != original_b_mem_type1) {
+            console.log(
+              "會員：" +
+                member.c_mem_id +
+                "，原會藉:" +
+                original_b_mem_type1 +
+                "，新會藉" +
+                b_mem_type1 +
+                "，屆滿日期:" +
+                member.d_expired_1 +
+                "，距離屆滿日期:" +
+                (now - d_expired_1) / (1000 * 60 * 60 * 24) +
+                "天"
+            );
+            queue.push({
+              c_mem_id: member.c_mem_id,
+              b_mem_type1: b_mem_type1,
+            });
+            // update the member object for calculating relations
+            member.b_mem_type1 = b_mem_type1;
+          }
+        }
+      });
+
+      // debug test
+      /* queue.push({
       c_mem_id: "0281",
       b_mem_type1: true,
     })*/
 
-    console.log("會藉自動更新數目：" + queue.length);
-    const relationQueue = [...queue];
-    if (queue.length > 0) {
-      const loopCount = Math.floor(queue.length / 1000);
+      console.log("會藉自動更新數目：" + queue.length);
+      const relationQueue = [...queue];
+      if (queue.length > 0) {
+        const loopCount = Math.floor(queue.length / 1000);
 
-      for (let i = 0; i <= loopCount; i++) {
-        const submitQueue = [];
-        const end = queue.length > 1000? 1000: queue.length;
+        for (let i = 0; i <= loopCount; i++) {
+          const submitQueue = [];
+          const end = queue.length > 1000 ? 1000 : queue.length;
 
-        for (let j = 0; j < end; j++) {
-          submitQueue.push(queue.shift());
+          for (let j = 0; j < end; j++) {
+            submitQueue.push(queue.shift());
+          }
+
+          const qv = {
+            upsertObjects: submitQueue,
+            logObject: {
+              username: "系統每日",
+              datetime: new Date().toISOString(),
+              module: "會員系統",
+              action: "系統自動更新會藉狀態:" + JSON.stringify(submitQueue),
+            },
+          };
+          const res = await fetch(hgeEndpoint + "/v1/graphql/", {
+            method: "POST",
+            body: JSON.stringify({ query: mutation, variables: qv }),
+            headers: {
+              "Content-Type": "application/json",
+              "x-hasura-admin-secret": adminSecret,
+            },
+          });
+          const json = await res.json();
+          console.log(json);
         }
-
-        const qv = {
-          upsertObjects: submitQueue,
-          logObject: {
-            "username": "系統每日",
-            "datetime": (new Date()).toISOString(),
-            "module": "會員系統",
-            "action": "系統自動更新會藉狀態:" + JSON.stringify(submitQueue),
-          },
-        };
-        const res = await fetch(hgeEndpoint + "/v1/graphql/", {
-          method: "POST",
-          body: JSON.stringify({query: mutation, variables: qv}),
-          headers: {"Content-Type": "application/json", "x-hasura-admin-secret": adminSecret},
-        });
-        const json = await res.json();
-        console.log(json);
-      }
-      // console.log("relationQueue: "+ relationQueue)
-      // update b_mem_type10
-      /*
+        // console.log("relationQueue: "+ relationQueue)
+        // update b_mem_type10
+        /*
         algorithm: for each member that has b_mem_type1 changed,
         get a list of all his related members (j)
         for each (j), check his youth related status against j's related members (k)
       */
-      for (const member of relationQueue) {
-        // console.log("member:"+member)
-        const i = Members.findIndex((element) => element.c_mem_id == member.c_mem_id);
+        for (const member of relationQueue) {
+          // console.log("member:"+member)
+          const i = Members.findIndex(
+            (element) => element.c_mem_id == member.c_mem_id
+          );
 
-        let rel = [];
-        // loop through all related members, find related member of the member that b_mem_type1 changed
-        Relations.forEach((relation) => {
-          if (relation.c_mem_id_1 == Members[i].c_mem_id) rel.push(relation.c_mem_id_2);
-          if (relation.c_mem_id_2 == Members[i].c_mem_id) rel.push(relation.c_mem_id_1);
-        });
-        // remove duplicates
-        rel = [...new Set(rel)];
-        // console.log("rel:" + JSON.stringify(rel))
-        // update all related member of this member who changed b_mem_type1
-        if (rel.length > 0) {
-          // loop on every related members
-          for (const rm of rel) {
-            const j = Members.findIndex((element) => element.c_mem_id == rm);
-            if (j != -1) {
-              // build the related members of the related member
-              const rel_rel = [];
-              // loop through all related members, find related member
-              Relations.forEach((relation) => {
-                if (relation.c_mem_id_1 == Members[j].c_mem_id) rel_rel.push(relation.c_mem_id_2);
-                if (relation.c_mem_id_2 == Members[j].c_mem_id) rel_rel.push(relation.c_mem_id_1);
-              });
-              // console.log("rel_rel of " + Members[j].c_mem_id + ":" + rel_rel)
-              // only consider "青年家人義工"
-              // default is not Youth relative, and membership expire today
-              const youthMembership = Members[j].c_udf_1 == "青年家人義工";
-              // console.log("youthMembership:" + youthMembership)
-              let isYouth = false;
-              let currentExpiryDate = new Date();
+          let rel = [];
+          // loop through all related members, find related member of the member that b_mem_type1 changed
+          Relations.forEach((relation) => {
+            if (relation.c_mem_id_1 == Members[i].c_mem_id)
+              rel.push(relation.c_mem_id_2);
+            if (relation.c_mem_id_2 == Members[i].c_mem_id)
+              rel.push(relation.c_mem_id_1);
+          });
+          // remove duplicates
+          rel = [...new Set(rel)];
+          // console.log("rel:" + JSON.stringify(rel))
+          // update all related member of this member who changed b_mem_type1
+          if (rel.length > 0) {
+            // loop on every related members
+            for (const rm of rel) {
+              const j = Members.findIndex((element) => element.c_mem_id == rm);
+              if (j != -1) {
+                // build the related members of the related member
+                const rel_rel = [];
+                // loop through all related members, find related member
+                Relations.forEach((relation) => {
+                  if (relation.c_mem_id_1 == Members[j].c_mem_id)
+                    rel_rel.push(relation.c_mem_id_2);
+                  if (relation.c_mem_id_2 == Members[j].c_mem_id)
+                    rel_rel.push(relation.c_mem_id_1);
+                });
+                // console.log("rel_rel of " + Members[j].c_mem_id + ":" + rel_rel)
+                // only consider "青年家人義工"
+                // 2024-07-30: change to consider all membership type
+                //const youthMembership = Members[j].c_udf_1 == "青年家人義工";
+                const youthMembership = true;
 
-              rel_rel.forEach((rel_rel_rm) => {
-                const k = Members.findIndex((element) => element.c_mem_id == rel_rel_rm);
-                // check relation member youth status
-                // criterion: b_mem_type1 valid && d_exit_1 invalid && relatedMember membership is not yet expired && relatedMember age is 15-24
-                const tempYouth = Members[k].b_mem_type1 && !Members[k].d_exit_1 && (Members[k].d_expired_1 && (Date.now() - new Date(Members[k].d_expired_1) < 0)) && calculateAge(Members[k].d_birth) >= 15 && calculateAge(Members[k].d_birth) <= 24;
+                // console.log("youthMembership:" + youthMembership)
 
-                let t; let dateOfTwentyFive;
+                // default is not Youth relative, and membership expire date is current expiry date
+                let isYouth = false;
+                //let currentExpiryDate = new Date();
+                let currentExpiryDate = element.d_expired_1;
 
-                // set isYouth to true if one of the relation is youth
-                if (tempYouth) isYouth = tempYouth;
-                // if target is youth && this member is a youth membership, determine expiry date
-                if (tempYouth && youthMembership) {
-                  // determine this member expiry base on relatedMember membership and age
-                  switch (Members[k].c_udf_1) {
-                    case "個人會員":
-                      if (currentExpiryDate < new Date(Members[k].d_expired_1)) currentExpiryDate = new Date(new Date(Members[k].d_expired_1).setHours(8));
-                      break;
-                    case "永久會員":
-                    case "青年義工會員":
-                      // timezone adjust
-                      t = new Date(new Date(Members[k].d_birth).setHours(8));
-                      // add 25 years after birth to expiry date
-                      dateOfTwentyFive = new Date(t.setFullYear(t.getFullYear() + 25));
-                      // console.log("dateOfTwentyFive: " + dateOfTwentyFive.toISOString())
-                      if (currentExpiryDate < dateOfTwentyFive) currentExpiryDate = dateOfTwentyFive;
-                      break;
+                rel_rel.forEach((rel_rel_rm) => {
+                  const k = Members.findIndex(
+                    (element) => element.c_mem_id == rel_rel_rm
+                  );
+                  // check relation member youth status
+                  // criterion: b_mem_type1 valid && d_exit_1 invalid && relatedMember membership is not yet expired && relatedMember age is 15-24
+                  const tempYouth =
+                    Members[k].b_mem_type1 &&
+                    !Members[k].d_exit_1 &&
+                    Members[k].d_expired_1 &&
+                    Date.now() - new Date(Members[k].d_expired_1) < 0 &&
+                    calculateAge(Members[k].d_birth) >= 15 &&
+                    calculateAge(Members[k].d_birth) <= 24;
+
+                  let t;
+                  let dateOfTwentyFive;
+
+                  // set isYouth to true if one of the relation is youth
+                  if (tempYouth) isYouth = tempYouth;
+                  // if target is youth && this member is a youth membership, determine expiry date
+                  if (tempYouth && youthMembership) {
+                    // determine this member expiry base on relatedMember membership and age
+                    switch (Members[k].c_udf_1) {
+                      case "個人會員":
+                        if (
+                          currentExpiryDate < new Date(Members[k].d_expired_1)
+                        )
+                          currentExpiryDate = new Date(
+                            new Date(Members[k].d_expired_1).setHours(8)
+                          );
+                        break;
+                      // 2024-07-31: considering all membership types
+                      //case "永久會員":
+                      //case "青年義工會員":
+                      default:
+                        // timezone adjust
+                        t = new Date(new Date(Members[k].d_birth).setHours(8));
+                        // add 25 years after birth to expiry date
+                        dateOfTwentyFive = new Date(
+                          t.setFullYear(t.getFullYear() + 25)
+                        );
+                        // console.log("dateOfTwentyFive: " + dateOfTwentyFive.toISOString())
+                        if (currentExpiryDate < dateOfTwentyFive)
+                          currentExpiryDate = dateOfTwentyFive;
+                        break;
+                    }
                   }
+                });
+
+                if (isYouth && youthMembership) {
+                  // console.log("currentExpiryDate:" + currentExpiryDate.toISOString())
+                  const logObject = {
+                    username: "系統每日",
+                    datetime: new Date().toISOString(),
+                    module: "會員系統",
+                    action:
+                      "系統自動更新:" +
+                      Members[j].c_mem_id +
+                      " 青年家人狀態-" +
+                      isYouth +
+                      " 會藉屆滿日期-" +
+                      currentExpiryDate.toISOString(),
+                  };
+
+                  const qv = {
+                    c_mem_id: Members[j].c_mem_id,
+                    b_mem_type10: isYouth,
+                    d_expired_1: currentExpiryDate.toISOString(),
+                    logObject: logObject,
+                  };
+                  const res = await fetch(hgeEndpoint + "/v1/graphql/", {
+                    method: "POST",
+                    body: JSON.stringify({
+                      query: mutation_updateYouthMemberStatus,
+                      variables: qv,
+                    }),
+                    headers: {
+                      "Content-Type": "application/json",
+                      "x-hasura-admin-secret": adminSecret,
+                    },
+                  });
+                  const json = await res.json();
+                  console.log(json);
+                  console.log(
+                    "setting " +
+                      Members[j].c_mem_id +
+                      " b_mem_type10 to " +
+                      isYouth +
+                      " expiryDate: " +
+                      currentExpiryDate.toISOString()
+                  );
+                } else {
+                  const logObject = {
+                    username: "系統每日",
+                    datetime: new Date().toISOString(),
+                    module: "會員系統",
+                    action:
+                      "系統自動更新:" +
+                      Members[j].c_mem_id +
+                      " 青年家人狀態-" +
+                      isYouth +
+                      " 會藉屆滿日期-" +
+                      Members[j].d_expired_1,
+                  };
+
+                  const qv = {
+                    c_mem_id: Members[j].c_mem_id,
+                    b_mem_type10: isYouth,
+                    d_expired_1: Members[j].d_expired_1,
+                    logObject: logObject,
+                  };
+                  const res = await fetch(hgeEndpoint + "/v1/graphql/", {
+                    method: "POST",
+                    body: JSON.stringify({
+                      query: mutation_updateYouthMemberStatus,
+                      variables: qv,
+                    }),
+                    headers: {
+                      "Content-Type": "application/json",
+                      "x-hasura-admin-secret": adminSecret,
+                    },
+                  });
+                  const json = await res.json();
+                  console.log(json);
+                  console.log(
+                    "setting " +
+                      Members[j].c_mem_id +
+                      " b_mem_type10 to " +
+                      isYouth
+                  );
                 }
-              });
-
-              if (isYouth && youthMembership) {
-                // console.log("currentExpiryDate:" + currentExpiryDate.toISOString())
-                const logObject = {
-                  "username": "系統每日",
-                  "datetime": (new Date()).toISOString(),
-                  "module": "會員系統",
-                  "action": "系統自動更新:" + Members[j].c_mem_id + " 青年家人狀態-" + isYouth + " 會藉屆滿日期-" + currentExpiryDate.toISOString(),
-                };
-
-                const qv = {
-                  c_mem_id: Members[j].c_mem_id,
-                  b_mem_type10: isYouth,
-                  d_expired_1: currentExpiryDate.toISOString(),
-                  logObject: logObject,
-                };
-                const res = await fetch(hgeEndpoint + "/v1/graphql/", {
-                  method: "POST",
-                  body: JSON.stringify({query: mutation_updateYouthMemberStatus, variables: qv}),
-                  headers: {"Content-Type": "application/json", "x-hasura-admin-secret": adminSecret},
-                });
-                const json = await res.json();
-                console.log(json);
-                console.log("setting " + Members[j].c_mem_id + " b_mem_type10 to " + isYouth + " expiryDate: " + currentExpiryDate.toISOString());
-              } else {
-                const logObject = {
-                  "username": "系統每日",
-                  "datetime": (new Date()).toISOString(),
-                  "module": "會員系統",
-                  "action": "系統自動更新:" + Members[j].c_mem_id + " 青年家人狀態-" + isYouth + " 會藉屆滿日期-" + Members[j].d_expired_1,
-                };
-
-                const qv = {
-                  c_mem_id: Members[j].c_mem_id,
-                  b_mem_type10: isYouth,
-                  d_expired_1: Members[j].d_expired_1,
-                  logObject: logObject,
-                };
-                const res = await fetch(hgeEndpoint + "/v1/graphql/", {
-                  method: "POST",
-                  body: JSON.stringify({query: mutation_updateYouthMemberStatus, variables: qv}),
-                  headers: {"Content-Type": "application/json", "x-hasura-admin-secret": adminSecret},
-                });
-                const json = await res.json();
-                console.log(json);
-                console.log("setting " + Members[j].c_mem_id + " b_mem_type10 to " + isYouth);
               }
             }
           }
         }
       }
     }
-  }
-});
+  });
 
 // eslint-disable-next-line require-jsdoc
 function calculateAge(dob) {
@@ -295,7 +382,7 @@ function calculateAge(dob) {
   let birth = new Date(dob);
   const birthyear = birth.getFullYear();
   birth = birth.setFullYear(now.getFullYear());
-  const offset = now - birth < 0? -1: 0;
+  const offset = now - birth < 0 ? -1 : 0;
   if (birthyear == now.getFullYear()) {
     return 0;
   } else {

@@ -1,5 +1,5 @@
 <template>
-  <router-view/>
+  <router-view />
   <q-page-sticky position="top" expand>
     <q-tabs
       dense
@@ -9,8 +9,21 @@
       align="justify"
     >
       <q-route-tab to="/account/inventory/add" icon="add" label="新增物資" />
-      <q-route-tab to="/account/inventory/delete" icon="delete" label="報銷物資" />
-      <q-route-tab to="/account/inventory/report" icon="leaderboard" label="報表" />
+      <q-route-tab
+        to="/account/inventory/list"
+        icon="description"
+        label="資產列表"
+      />
+      <q-route-tab
+        to="/account/inventory/delete"
+        icon="delete"
+        label="報銷物資"
+      />
+      <q-route-tab
+        to="/account/inventory/report"
+        icon="leaderboard"
+        label="報表"
+      />
     </q-tabs>
   </q-page-sticky>
 </template>
@@ -21,7 +34,7 @@ import { computed } from "vue";
 import { useQuasar } from "quasar";
 
 const $store = useStore();
-const $q = useQuasar()
+const $q = useQuasar();
 
-const isTmp = computed(() => $store.getters["userModule/getTmp"])
+const isTmp = computed(() => $store.getters["userModule/getTmp"]);
 </script>
