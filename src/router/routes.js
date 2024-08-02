@@ -411,27 +411,27 @@ const routes = [
       },
       {
         path: "inventory",
-        component: () => import("src/pages/Account/InventoryHome.vue"),
+        component: () => import("src/pages/Inventory/InventoryHome.vue"),
         meta: { requiresAuth: true },
         children: [
           {
             path: "add",
-            component: () => import("src/pages/Account/InventoryAdd.vue"),
+            component: () => import("src/pages/Inventory/InventoryAdd.vue"),
             meta: { requiresAuth: true },
           },
           {
             path: "list",
-            component: () => import("src/pages/Account/InventoryList.vue"),
+            component: () => import("src/pages/Inventory/InventoryList.vue"),
             meta: { requiresAuth: true },
           },
           {
-            path: "delete",
-            component: () => import("src/pages/Account/InventoryDelete.vue"),
+            path: "destroy",
+            component: () => import("src/pages/Inventory/InventoryDestroy.vue"),
             meta: { requiresAuth: true },
           },
           {
             path: "report",
-            component: () => import("src/pages/Account/InventoryReport.vue"),
+            component: () => import("src/pages/Inventory/InventoryReport.vue"),
             meta: { requiresAuth: true },
           },
         ],

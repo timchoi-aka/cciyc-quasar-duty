@@ -8,14 +8,14 @@
       indicator-color="blue"
       align="justify"
     >
-      <q-route-tab to="/account/inventory/add" icon="add" label="新增物資" />
+      <q-route-tab to="/account/inventory/add" icon="add" label="新增資產" />
       <q-route-tab
         to="/account/inventory/list"
         icon="description"
         label="資產列表"
       />
       <q-route-tab
-        to="/account/inventory/delete"
+        to="/account/inventory/destroy"
         icon="delete"
         label="報銷物資"
       />

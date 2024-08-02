@@ -83,6 +83,7 @@ import { ref, computed } from "vue";
 import { useQuasar, date as qdate } from "quasar";
 import DateComponent from "src/components/Basic/DateComponent.vue";
 import { useStore } from "vuex";
+import { useInventoryProvider } from "src/providers/inventory";
 
 // queries
 const { mutate: updateInventoryStat, onDone: updateInventoryStat_Completed } =

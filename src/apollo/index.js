@@ -74,7 +74,7 @@ export /* async */ function getClientOptions(/* {app, router, ...} */ options) {
     // General options.
     {
       link: from([errorLink, link]),
-      connectToDevTools: false,
+      connectToDevTools: process.env.DEV_MODE == "development",
       cache: new InMemoryCache({
         typePolicies: {
           Member: {
@@ -120,6 +120,23 @@ export /* async */ function getClientOptions(/* {app, router, ...} */ options) {
           EventRegistration_to_Member: {
             keyFields: ["c_mem_id"],
           },
+          Inventory: {
+            keyFields: ["ID"],
+            fields: {
+              Inventory_to_Destroy: {
+                keyFields: ["uuid"],
+                merge(existing = [], incoming) {
+                  return [...incoming];
+                },
+              },
+            },
+          },
+          Inventory_by_pk: {
+            keyFields: ["ID"],
+          },
+          Inventory_Destroy: {
+            keyFields: ["uuid"],
+          },
           tbl_act_session: {
             keyFields: ["c_act_code", "d_act", "inCenter"],
           },
@@ -155,6 +172,27 @@ export /* async */ function getClientOptions(/* {app, router, ...} */ options) {
               tbl_act_reg: {
                 merge(existing = [], incoming) {
                   return [...existing, ...incoming];
+                },
+              },
+            },
+          },
+          Query: {
+            fields: {
+              Inventory: {
+                keyArgs: ["ID"],
+                merge(existing = [], incoming) {
+                  return [...incoming];
+                },
+              },
+              Inventory_Location: {
+                merge(existing = [], incoming) {
+                  return [...incoming];
+                },
+              },
+              Inventory_Destroy: {
+                keyArgs: ["uuid"],
+                merge(existing = [], incoming) {
+                  return [...incoming];
                 },
               },
             },
