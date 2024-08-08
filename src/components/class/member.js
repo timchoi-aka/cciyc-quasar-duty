@@ -1,6 +1,4 @@
 import { date } from "quasar";
-import { useMemberProvider } from "src/providers/member";
-import { ref, computed } from "vue";
 
 class Member {
   constructor(o = {}) {
@@ -247,7 +245,7 @@ class Member {
     }
   }
 
-  /* determine if the member is a youth
+  /* determine if the member is a youth in the month of the asOfDate
    * youth = aged between 15 - 24
    */
   isYouth(asOfDate) {
@@ -262,6 +260,24 @@ class Member {
     );
   }
 
+  /* determine if the member is a youth at asOfDate
+   * youth = aged between 15 - 24
+   */
+  isYouthAsOfDate(asOfDate) {
+    return date.isBetweenDates(
+      date.extractDate(this.d_birth, "YYYY-MM-DD"),
+      date.subtractFromDate(asOfDate, { years: 25 }),
+      date.subtractFromDate(asOfDate, { years: 15 }),
+      {
+        inclusiveFrom: true,
+        inclusiveTo: true,
+      }
+    );
+  }
+
+  /* determine if the member is a youth family in the month of the asOfDate
+   * youth family = a family member of a youth
+   */
   isYouthFamily(asOfDate) {
     let isYouthFamily = false;
     let combinedRelation = [...this.MemberRelation1, ...this.MemberRelation2];
@@ -275,7 +291,38 @@ class Member {
         relatedMember = new Member(relation.RelationMember1);
       }
 
-      if (relatedMember.isYouth(asOfDate) && relatedMember.isActive(asOfDate)) {
+      if (
+        relatedMember.isYouth(asOfDate) &&
+        relatedMember.isActive(asOfDate) &&
+        date.getDateDiff(relation.d_effective, asOfDate) <= 0
+      ) {
+        isYouthFamily = true;
+      }
+    });
+    return isYouthFamily;
+  }
+
+  /* determine if the member is a youth family at asOfDate
+   * youth family = a family member of a youth
+   */
+  isYouthFamilyAsOfDate(asOfDate) {
+    let isYouthFamily = false;
+    let combinedRelation = [...this.MemberRelation1, ...this.MemberRelation2];
+    combinedRelation.forEach((relation) => {
+      let relatedMember = null;
+      if (this.c_mem_id == relation.c_mem_id_1) {
+        // if the member is the first person in the relation
+        relatedMember = new Member(relation.RelationMember2);
+      } else if (this.c_mem_id == relation.c_mem_id_2) {
+        // if the member is the second person in the relation
+        relatedMember = new Member(relation.RelationMember1);
+      }
+
+      if (
+        relatedMember.isYouthAsOfDate(asOfDate) &&
+        relatedMember.isActive(asOfDate) &&
+        date.getDateDiff(relation.d_effective, asOfDate) <= 0
+      ) {
         isYouthFamily = true;
       }
     });
@@ -283,14 +330,17 @@ class Member {
   }
 
   getAge(asOfDate) {
-    if (!this.d_birth || !date.isValid(this.d_birth) || !date.isValid(asOfDate)) return 0;
-    let birth = date.adjustDate(this.d_birth, {year: asOfDate.getFullYear()})
-    let offset = date.getDateDiff(asOfDate, birth, "days") < 0? -1: 0
-    return (date.getDateDiff(
-      asOfDate,
-      date.extractDate(this.d_birth, "YYYY-MM-DD"),
-      "years"
-    ) + offset);
+    if (!this.d_birth || !date.isValid(this.d_birth) || !date.isValid(asOfDate))
+      return 0;
+    let birth = date.adjustDate(this.d_birth, { year: asOfDate.getFullYear() });
+    let offset = date.getDateDiff(asOfDate, birth, "days") < 0 ? -1 : 0;
+    return (
+      date.getDateDiff(
+        asOfDate,
+        date.extractDate(this.d_birth, "YYYY-MM-DD"),
+        "years"
+      ) + offset
+    );
   }
 
   isActive(asOfDate) {

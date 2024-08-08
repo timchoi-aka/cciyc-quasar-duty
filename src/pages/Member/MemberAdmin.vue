@@ -49,7 +49,7 @@ import {
 import { gql } from "graphql-tag";
 import LoadingDialog from "components/LoadingDialog.vue";
 import { ref, computed, watch } from "vue";
-import ageUtil from "src/lib/calculateAge.js";
+import ageUtil from "src/lib/utils.js";
 import { date as qdate } from "quasar";
 import { useStore } from "vuex";
 import { useQuery, useMutation } from "@vue/apollo-composable";

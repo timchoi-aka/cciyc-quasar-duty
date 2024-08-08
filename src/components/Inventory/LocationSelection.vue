@@ -22,7 +22,6 @@
     </q-card>
   </q-dialog>
 
-  <!-- @blur="tmpBuffer.length > 0 ? emit('update:modelValue', tmpBuffer): null" -->
   <q-select
     dense
     filled

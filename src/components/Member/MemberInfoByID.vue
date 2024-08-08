@@ -57,7 +57,7 @@ import { computed } from "vue";
 import { date as qdate } from "quasar";
 import { gql } from "graphql-tag";
 import { useQuery } from "@vue/apollo-composable";
-import ageUtil from "src/lib/calculateAge.js";
+import ageUtil from "src/lib/utils.js";
 
 const props = defineProps({
   modelValue: Object,

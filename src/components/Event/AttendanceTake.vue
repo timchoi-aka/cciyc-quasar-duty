@@ -113,10 +113,11 @@
           size="sm"
           color="amber"
           v-if="app.MemberData.isYouth(eventDate)"
-          label="青年" /><q-chip
+          label="青年" />
+        <q-chip
           color="blue-3"
           size="sm"
-          v-if="app.MemberData.b_mem_type10"
+          v-else-if="app.MemberData.isYouthFamilyAsOfDate(eventDate)"
           label="青年家人"
       /></span>
     </div>
@@ -619,13 +620,9 @@ function save() {
       i_out_center_session: outCenterAttendanceList.value[c_mem_id]
         ? parseInt(outCenterAttendanceList.value[c_mem_id])
         : 0,
-      b_is_youth_family:
-        ApplicantsData.value.find((app) => app.c_mem_id == c_mem_id).MemberData
-          .b_mem_type10 &&
-        ApplicantsData.value.find((app) => app.c_mem_id == c_mem_id).MemberData
-          .b_mem_type10 != ""
-          ? true
-          : false,
+      b_is_youth_family: ApplicantsData.value
+        .find((app) => app.c_mem_id == c_mem_id)
+        .MemberData.isYouthFamilyAsOfDate(eventDate.value),
     });
   });
 

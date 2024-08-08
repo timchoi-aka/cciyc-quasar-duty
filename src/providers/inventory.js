@@ -129,7 +129,7 @@ export function useInventoryProvider(options = {}) {
 
   const GET_ALL_INVENTORY = gql`
     query AllInventory {
-      Inventory(order_by: { ID: asc }) {
+      Inventory {
         f_cost
         d_purchase
         c_name
@@ -437,7 +437,7 @@ export function useInventoryProvider(options = {}) {
       },
     });
 
-  addLocation_Completed((res) => {
+  addLocation_Completed(async (res) => {
     if (res.data) {
       message.value =
         "新增位置 - " +
@@ -449,7 +449,7 @@ export function useInventoryProvider(options = {}) {
     }
   });
 
-  deleteLocation_Completed((res) => {
+  deleteLocation_Completed(async (res) => {
     if (res.data) {
       message.value =
         "刪除位置 - " +
@@ -543,7 +543,7 @@ export function useInventoryProvider(options = {}) {
       },
     });
 
-  UndestroyInventory_Completed((res) => {
+  UndestroyInventory_Completed(async (res) => {
     if (res.data) {
       message.value = "取消報銷資產成功。";
       setTimeout(() => {
@@ -552,7 +552,7 @@ export function useInventoryProvider(options = {}) {
     }
   });
 
-  DestroyInventory_Completed((res) => {
+  DestroyInventory_Completed(async (res) => {
     if (res.data) {
       message.value = "報銷資產成功。";
       setTimeout(() => {
@@ -588,7 +588,7 @@ export function useInventoryProvider(options = {}) {
       },
     });
 
-  DeleteInventory_Completed((res) => {
+  DeleteInventory_Completed(async (res) => {
     if (res.data) {
       message.value = "刪除資產成功。";
       setTimeout(() => {
@@ -629,7 +629,7 @@ export function useInventoryProvider(options = {}) {
       },
     });
 
-  UpsertInventory_Completed((res) => {
+  UpsertInventory_Completed(async (res) => {
     if (res.data) {
       message.value = "新增/修改資產成功。";
       setTimeout(() => {
@@ -641,7 +641,7 @@ export function useInventoryProvider(options = {}) {
   const { onResult: onResultAll, refetch: refetchAll } = useQuery(
     GET_ALL_INVENTORY,
     {
-      enabled: computed(() => ID.value == null),
+      enabled: computed(() => !ID.value),
     }
   );
 

@@ -15,7 +15,7 @@
           lazy-rules
           :rules="[
             (val) => (val && val.length > 0) || '請輸入資產編號',
-            (val) => !inventoryID.includes(val) || '資產編號重複',
+            (val) => !inventoryID?.includes(val) || '資產編號重複',
           ]"
         />
       </div>

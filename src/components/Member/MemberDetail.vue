@@ -788,7 +788,7 @@ import {
   GET_MEM_DETAIL_AND_RELATION_BY_PK,
   GET_RELATION_BY_PK,
 } from "/src/graphQueries/Member/query.js";
-import ageUtil from "src/lib/calculateAge.js";
+import ageUtil from "src/lib/utils.js";
 import { useQuery, useMutation } from "@vue/apollo-composable";
 import MemberRelated from "components/Member/MemberRelated.vue";
 import MemberSelection from "components/Member/MemberSelection.vue";
