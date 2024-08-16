@@ -197,10 +197,12 @@ const prepaidResult = computed(() =>
 const Event = computed(() => EventEvaluation.value?.HTX_Event_by_pk ?? []);
 const ExpenseTotal = computed(() =>
   EvaluationResult.value
-    ? EvaluationResult.value.Event_Evaluation_Account.reduce(
-        (a, v) => a + v.amount,
-        0
-      )
+    ? parseFloat(
+        EvaluationResult.value.Event_Evaluation_Account.reduce(
+          (a, v) => a + v.amount,
+          0
+        )
+      ).toFixed(2)
     : 0
 );
 

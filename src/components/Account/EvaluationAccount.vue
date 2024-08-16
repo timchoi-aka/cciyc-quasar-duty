@@ -4,31 +4,88 @@
 
   <div class="col-12 row justify-center">
     <q-chip class="bg-grey-4" size="lg" square :label="props.type" />
-    <q-btn flat v-if="!edit && (!props.isSubmitted || isCenterIC)" icon="edit" class="bg-white text-primary"
-      @click="startEdit" />
-    <q-btn flat v-if="edit" icon="add" class="bg-white text-primary" @click="addObject" />
-    <q-btn flat v-if="edit" icon="save" class="col-2 bg-white text-positive" @click="save" />
-    <q-btn flat v-if="edit" icon="restart_alt" class="col-2 bg-white text-negative" @click="edit = false" />
+    <q-btn
+      flat
+      v-if="!edit && (!props.isSubmitted || isCenterIC)"
+      icon="edit"
+      class="bg-white text-primary"
+      @click="startEdit"
+    />
+    <q-btn
+      flat
+      v-if="edit"
+      icon="add"
+      class="bg-white text-primary"
+      @click="addObject"
+    />
+    <q-btn
+      flat
+      v-if="edit"
+      icon="save"
+      class="col-2 bg-white text-positive"
+      @click="save"
+    />
+    <q-btn
+      flat
+      v-if="edit"
+      icon="restart_alt"
+      class="col-2 bg-white text-negative"
+      @click="edit = false"
+    />
   </div>
-  <q-list class="col-12 self-start" v-if="!edit && account.length > 0" bordered separator>
+  <q-list
+    class="col-12 self-start"
+    v-if="!edit && account.length > 0"
+    bordered
+    separator
+  >
     <q-item v-for="item in account" clickable>
-      <q-item-section><q-item-label>{{ item.description }}</q-item-label></q-item-section>
-      <q-item-section side class="text-black">HK${{ item.amount.toFixed(2)
-        }}<q-btn v-if="edit" icon="remove" class="bg-negative text-white" /></q-item-section>
+      <q-item-section
+        ><q-item-label>{{ item.description }}</q-item-label></q-item-section
+      >
+      <q-item-section side class="text-black"
+        >HK${{ item.amount.toFixed(2)
+        }}<q-btn v-if="edit" icon="remove" class="bg-negative text-white"
+      /></q-item-section>
       <q-tooltip>
         日期：{{ date.formatDate(item.txn_date, "YYYY年M月D日") }}
       </q-tooltip>
     </q-item>
   </q-list>
-  <q-list v-if="edit && editObject.length > 0" class="col-12 self-start" bordered separator>
+  <q-list
+    v-if="edit && editObject.length > 0"
+    class="col-12 self-start"
+    bordered
+    separator
+  >
     <span v-for="(newPlanIncome, index) in editObject" class="row">
-      <SelectionWithAdd :options="inputOptions" class="col-7" type="text" label="項目名稱"
-        v-model="editObject[index].description" />
-      <q-input hide-hint class="col-3" type="number" label="金額" v-model="editObject[index].amount" />
+      <SelectionWithAdd
+        :options="inputOptions"
+        class="col-7"
+        type="text"
+        label="項目名稱"
+        v-model="editObject[index].description"
+      />
+      <q-input
+        hide-hint
+        class="col-3"
+        type="number"
+        label="金額"
+        v-model="editObject[index].amount"
+      />
       <div class="col-2 row">
-        <span class="text-negative" v-if="removeRecord.includes(editObject[index].account_uuid)">會刪除</span>
-        <q-btn v-if="edit" icon="delete" class="bg-white text-negative" flat
-          @click="removeRecord.push(editObject[index].account_uuid)" />
+        <span
+          class="text-negative"
+          v-if="removeRecord.includes(editObject[index].account_uuid)"
+          >會刪除</span
+        >
+        <q-btn
+          v-if="edit"
+          icon="delete"
+          class="bg-white text-negative"
+          flat
+          @click="removeRecord.push(editObject[index].account_uuid)"
+        />
       </div>
       <div class="col-12">
         <DateComponent v-model="editObject[index].txn_date" />
@@ -36,13 +93,27 @@
     </span>
   </q-list>
   <div class="col-12 text-right q-mt-sm q-px-sm">總數: HK${{ total }}</div>
-  <div class="col-12 text-right q-mt-sm" v-if="props.type == '支出' && props.planeval == '計劃'">
-    <EvaluationAccountPrepaid :isSubmitted="props.isSubmitted" :c_act_code="props.c_act_code"
-      :eval_uuid="props.eval_uuid" :respon="props.respon" />
+  <div
+    class="col-12 text-right q-mt-sm"
+    v-if="props.type == '支出' && props.planeval == '計劃'"
+  >
+    <EvaluationAccountPrepaid
+      :isSubmitted="props.isSubmitted"
+      :c_act_code="props.c_act_code"
+      :eval_uuid="props.eval_uuid"
+      :respon="props.respon"
+    />
   </div>
-  <div class="col-12 text-right q-mt-sm" v-if="props.type == '支出' && props.planeval == '檢討'">
-    <EvaluationAccountRemain :isSubmitted="props.isSubmitted" :c_act_code="props.c_act_code"
-      :eval_uuid="props.eval_uuid" :respon="props.respon" />
+  <div
+    class="col-12 text-right q-mt-sm"
+    v-if="props.type == '支出' && props.planeval == '檢討'"
+  >
+    <EvaluationAccountRemain
+      :isSubmitted="props.isSubmitted"
+      :c_act_code="props.c_act_code"
+      :eval_uuid="props.eval_uuid"
+      :respon="props.respon"
+    />
   </div>
 </template>
 
@@ -111,18 +182,20 @@ const username = computed(() => $store.getters["userModule/getUsername"]);
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"]);
 const account = computed(() =>
   result.value &&
-    result.value.Event_Evaluation_Account &&
-    result.value.Event_Evaluation_Account.length > 0
+  result.value.Event_Evaluation_Account &&
+  result.value.Event_Evaluation_Account.length > 0
     ? result.value.Event_Evaluation_Account.filter(
-      (data) =>
-        data.type.trim() == props.type &&
-        data.planeval.trim() == props.planeval
-    )
+        (data) =>
+          data.type.trim() == props.type &&
+          data.planeval.trim() == props.planeval
+      )
     : []
 );
 
 const total = computed(() =>
-  account.value ? account.value.reduce((a, v) => a + v.amount, 0) : 0
+  account.value
+    ? parseFloat(account.value.reduce((a, v) => a + v.amount, 0)).toFixed(2)
+    : 0
 );
 
 // functions
