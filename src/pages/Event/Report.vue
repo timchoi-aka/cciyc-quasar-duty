@@ -1016,39 +1016,21 @@ const AttendanceData = computed(() => {
     AttendanceReport.value.Attendance.forEach((data) => {
       let i = res.findIndex(
         (x) =>
-          x.c_act_code == data.Attendance_to_Event.c_act_code.trim() &&
+          x.c_act_code?.trim() == data.Attendance_to_Event.c_act_code.trim() &&
           x.d_date == data.d_date
       );
       // if not found, insert new record
       if (i <= -1) {
         res.push({
-          c_act_code: data.Attendance_to_Event.c_act_code
-            ? data.Attendance_to_Event.c_act_code.trim()
-            : "",
-          c_act_name: data.Attendance_to_Event.c_act_name
-            ? data.Attendance_to_Event.c_act_name.trim()
-            : "",
-          c_dest: data.Attendance_to_Event.c_dest
-            ? data.Attendance_to_Event.c_dest.trim()
-            : "",
-          c_nature: data.Attendance_to_Event.c_nature
-            ? data.Attendance_to_Event.c_nature.trim()
-            : "",
-          c_respon: data.Attendance_to_Event.c_respon
-            ? data.Attendance_to_Event.c_respon.trim()
-            : "",
-          c_type: data.Attendance_to_Event.c_type
-            ? data.Attendance_to_Event.c_type.trim()
-            : "",
-          c_status: data.Attendance_to_Event.c_status
-            ? data.Attendance_to_Event.c_status.trim()
-            : "",
-          c_group1: data.Attendance_to_Event.c_group1
-            ? data.Attendance_to_Event.c_group1.trim()
-            : "",
-          c_group2: data.Attendance_to_Event.c_group2
-            ? data.Attendance_to_Event.c_group2.trim()
-            : "",
+          c_act_code: data.Attendance_to_Event.c_act_code?.trim() ?? "",
+          c_act_name: data.Attendance_to_Event.c_act_name?.trim() ?? "",
+          c_dest: data.Attendance_to_Event.c_dest?.trim() ?? "",
+          c_nature: data.Attendance_to_Event.c_nature?.trim() ?? "",
+          c_respon: data.Attendance_to_Event.c_respon?.trim() ?? "",
+          c_type: data.Attendance_to_Event.c_type?.trim() ?? "",
+          c_status: data.Attendance_to_Event.c_status?.trim() ?? "",
+          c_group1: data.Attendance_to_Event.c_group1?.trim() ?? "",
+          c_group2: data.Attendance_to_Event.c_group2?.trim() ?? "",
           d_date: data.d_date,
           d_finish_goal: data.Attendance_to_Event.d_finish_goal,
           i_people_count_in_center: data.i_in_center_session,
@@ -1066,7 +1048,6 @@ const AttendanceData = computed(() => {
         );
       }
     });
-
     AttendanceReport.value.AttendanceNonRegistrant.forEach((data) => {
       let i_people_count_in_center = 0;
       let i_people_count_out_center = 0;
@@ -1081,7 +1062,9 @@ const AttendanceData = computed(() => {
           ? data.i_youth_family_count
           : 0;
       let i = res.findIndex(
-        (x) => x.c_act_code == data.c_act_code.trim() && x.d_date == data.d_date
+        (x) =>
+          x.c_act_code.trim() == data.c_act_code.trim() &&
+          x.d_date == data.d_date
       );
       if (i <= -1) {
         res.push({
@@ -1837,7 +1820,7 @@ const OS2Data = computed(() => {
               d_act: ad.d_date,
               i_number: ad.inSession,
               i_people_count: ad.i_people_count_in_center,
-              c_act_code: ad.c_act_code,
+              c_act_code: ad.c_act_code.trim(),
               c_act_name: ad.c_act_name,
               c_dest: ad.c_dest,
               c_group1: ad.c_group1,
