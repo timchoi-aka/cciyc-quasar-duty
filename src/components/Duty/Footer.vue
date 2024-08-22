@@ -10,11 +10,17 @@
             <span class="q-mx-md">星期六：2PM-6PM</span>
             <span class="q-mx-md">星期日休息</span>
           </div>
-          <div v-else>
+          <div v-else-if="renderDate < new Date('2024-09-01T00:00:00')">
             <span class="q-mx-md">星期一、三：6PM-10PM</span>
             <span class="q-mx-md">星期二、四、五：2PM-6PM</span>
             <span class="q-mx-md">星期六：10AM-10PM</span>
             <span class="q-mx-md">星期日休息</span>
+          </div>
+          <div v-else>
+            <span class="q-mx-md">星期一、三：6PM-10PM</span>
+            <span class="q-mx-md">星期二、四、五：2PM-6PM</span>
+            <span class="q-mx-md">星期六：12PM-8PM</span>
+            <span class="q-mx-md">星期日：2PM-6PM</span>
           </div>
         </th>
       </tr>
@@ -29,9 +35,11 @@
           <span class="q-mx-md">(長)長週</span>
           <span class="q-mx-md">(短)短週</span>
           <span v-if="numberOfHoliday > 0">
-            <q-icon name="report_problem" :size="$q.screen.gt.sm? 'lg': 'sm'" color="negative" />{{
-              numberOfHoliday
-            }}日公眾假期返{{ numberOfWorkingSessions }}節
+            <q-icon
+              name="report_problem"
+              :size="$q.screen.gt.sm ? 'lg' : 'sm'"
+              color="negative"
+            />{{ numberOfHoliday }}日公眾假期返{{ numberOfWorkingSessions }}節
           </span>
         </th>
       </tr>
@@ -43,34 +51,44 @@
 import holiday from "assets/holiday.json";
 import dateUtil from "src/lib/date.js";
 import { useQuasar, date as qdate } from "quasar";
-import { computed } from "vue"
+import { computed } from "vue";
 
 // props
 const props = defineProps({
-  renderDate: Date
-})
+  renderDate: Date,
+});
 
 // variables
 const $q = useQuasar();
 
 // computed
-const columns = computed(() => [...dateUtil.generateTableColumns(props.renderDate)])
-const publicHoliday = computed(() => holiday? holiday.vcalendar[0].vevent.map(({dtstart, summary}) => ({date: dtstart[0], summary: summary})): [])
-
+const columns = computed(() => [
+  ...dateUtil.generateTableColumns(props.renderDate),
+]);
+const publicHoliday = computed(() =>
+  holiday
+    ? holiday.vcalendar[0].vevent.map(({ dtstart, summary }) => ({
+        date: dtstart[0],
+        summary: summary,
+      }))
+    : []
+);
 
 const numberOfHoliday = computed(() => {
   var result = 0;
   if (columns.value) {
-    [...dateUtil.generateTableColumns(props.renderDate, false)].forEach((date) => {
-      let i = publicHoliday.value.findIndex(
-        (element) => element.date == qdate.formatDate(date.name, "YYYYMMDD")
-      );
-      if (i != -1) result++
-    })
-    return result
-  } else return 0
-})
-const numberOfWorkingSessions = computed(() => 11 - 2 * numberOfHoliday.value)
+    [...dateUtil.generateTableColumns(props.renderDate, false)].forEach(
+      (date) => {
+        let i = publicHoliday.value.findIndex(
+          (element) => element.date == qdate.formatDate(date.name, "YYYYMMDD")
+        );
+        if (i != -1) result++;
+      }
+    );
+    return result;
+  } else return 0;
+});
+const numberOfWorkingSessions = computed(() => 11 - 2 * numberOfHoliday.value);
 </script>
 
 <style lang="scss" scoped>
