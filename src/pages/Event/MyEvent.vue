@@ -3,7 +3,6 @@
   <LoadingDialog
     :model-value="
       loadingEventList ||
-      loadingCoreEventList ||
       loadingFav ||
       loadingAwaitApproval ||
       loadingAwaitApprovalPrepaidRecords
@@ -38,7 +37,9 @@
     >
       <q-badge color="red" floating>{{
         CoreEventList.filter(
-          (x) => x.isOutstanding || !x.plan_submit || !x.eval_submit
+          (x) =>
+            (x.c_nature?.startsWith("核心") ?? false) &&
+            (x.isOutstanding || !x.plan_submit || !x.eval_submit)
         ).length
       }}</q-badge>
     </q-tab>
@@ -172,7 +173,7 @@
           :filter="coreFilter"
           :filter-method="coreEventFilter"
           @row-click="showDetail"
-          :rows="CoreEventList"
+          :rows="CoreEventList.filter((x) => x.c_nature?.startsWith('核心'))"
           selection="multiple"
           row-key="c_act_code"
           v-model:selected="selectedRow"
@@ -233,7 +234,9 @@
           :filter="coreFilter"
           :filter-method="coreEventFilter"
           @row-click="showDetail"
-          :rows="StaffCoreEventList"
+          :rows="
+            StaffCoreEventList.filter((x) => x.c_nature?.startsWith('核心'))
+          "
           :pagination="pagination"
           :columns="StaffCoreEventColumns"
         >
@@ -292,6 +295,7 @@ import LoadingDialog from "components/LoadingDialog.vue";
 import { date as qdate, useQuasar } from "quasar";
 import { gql } from "graphql-tag";
 import { useRouter } from "vue-router";
+import { useEventPlanEvalProvider } from "src/providers/eventPlanEval";
 
 // variables
 const router = useRouter();
@@ -328,6 +332,10 @@ const coreEventCondition = ref({
   condition: {
     _and: [{ c_nature: { _gte: "核心" } }, { b_hardcopy: { _neq: true } }],
   },
+});
+
+const { result: CoreEventList } = useEventPlanEvalProvider({
+  c_respon: isCenterIC ? ref(null) : username,
 });
 
 const pagination = ref({
@@ -678,13 +686,7 @@ const {
   onError: eventList_Error,
   loading: loadingEventList,
 } = useQuery(MY_EVENT_SEARCH, searchCondition.value, { pollInterval: 5000 });
-const {
-  onResult: coreEventList,
-  onError: coreEventList_Error,
-  loading: loadingCoreEventList,
-} = useQuery(CORE_EVENT_SEARCH, coreEventCondition.value, {
-  pollInterval: 5000,
-});
+
 const {
   onResult: fav,
   onError: fav_onError,
@@ -730,7 +732,6 @@ const {
 // computed
 const userProfileLogout = () => $store.dispatch("userModule/logout");
 const EventList = ref([]);
-const CoreEventList = ref([]);
 const FavList = ref([]);
 const awaitApprovalTableEntries = ref([]);
 const awaitApprovalPrepaid = ref([]);
@@ -740,92 +741,6 @@ const StaffCoreEventList = computed(() =>
 
 eventList((result) => {
   if (result.data) EventList.value = result.data.HTX_Event;
-});
-
-coreEventList((result) => {
-  if (result.data)
-    CoreEventList.value = result.data.HTX_Event.map((x) => ({
-      b_finish: x.b_finish,
-      c_act_code: x.c_act_code ? x.c_act_code.trim() : "",
-      c_act_name: x.c_act_name ? x.c_act_name.trim() : "",
-      c_act_nameen: x.c_act_nameen ? x.c_act_nameen.trim() : "",
-      c_acc_type: x.c_acc_type ? x.c_acc_type.trim() : "",
-      c_dest: x.c_dest ? x.c_dest.trim() : "",
-      c_nature: x.c_nature ? x.c_nature.trim() : "",
-      c_respon: x.c_respon ? x.c_respon.trim() : "",
-      c_type: x.c_type ? x.c_type.trim() : "",
-      c_status: x.c_status ? x.c_status.trim() : "",
-      c_group1: x.c_group1 ? x.c_group1.trim() : "",
-      c_group2: x.c_group2 ? x.c_group2.trim() : "",
-      c_worker: x.c_worker ? x.c_worker.trim() : "",
-      c_worker2: x.c_worker2 ? x.c_worker2.trim() : "",
-      d_date_from: x.d_date_from
-        ? qdate.isValid(x.d_date_from)
-          ? qdate.formatDate(x.d_date_from, "YYYY-MM-DD")
-          : qdate.formatDate(
-              dateUtil.parseDate(x.d_date_from, "DD/M/YYYY"),
-              "YYYY-MM-DD"
-            )
-        : "",
-      d_date_to: x.d_date_to
-        ? qdate.isValid(x.d_date_to)
-          ? qdate.formatDate(x.d_date_to, "YYYY-MM-DD")
-          : qdate.formatDate(
-              dateUtil.parseDate(x.d_date_to, "DD/M/YYYY"),
-              "YYYY-MM-DD"
-            )
-        : "",
-      d_finish_goal: x.d_finish_goal
-        ? qdate.isValid(x.d_finish_goal)
-          ? qdate.formatDate(x.d_finish_goal, "YYYY-MM-DD")
-          : qdate.formatDate(
-              dateUtil.parseDate(x.d_finish_goal, "DD/M/YYYY"),
-              "YYYY-MM-DD"
-            )
-        : "",
-      plan_submit:
-        x.Event_to_Evaluation &&
-        x.Event_to_Evaluation[0] &&
-        x.Event_to_Evaluation[0].submit_plan_date
-          ? true
-          : false,
-      eval_submit:
-        x.Event_to_Evaluation &&
-        x.Event_to_Evaluation[0] &&
-        x.Event_to_Evaluation[0].submit_eval_date
-          ? true
-          : false,
-      isRejected:
-        (x.Event_to_Evaluation &&
-          x.Event_to_Evaluation[0] &&
-          !x.Event_to_Evaluation[0].submit_plan_date &&
-          x.Event_to_Evaluation &&
-          x.Event_to_Evaluation[0] &&
-          x.Event_to_Evaluation[0].ic_plan_date) ||
-        (x.Event_to_Evaluation &&
-          x.Event_to_Evaluation[0] &&
-          !x.Event_to_Evaluation[0].submit_eval_date &&
-          x.Event_to_Evaluation &&
-          x.Event_to_Evaluation[0] &&
-          x.Event_to_Evaluation[0].ic_eval_date)
-          ? true
-          : false,
-      isOutstanding:
-        x.Event_to_Evaluation.length == 0 ||
-        (x.Event_to_Evaluation &&
-          x.Event_to_Evaluation[0] &&
-          !x.Event_to_Evaluation[0].submit_plan_date) ||
-        (x.d_date_to &&
-          qdate.getDateDiff(
-            qdate.extractDate(x.d_date_to.trim(), "D/M/YYYY"),
-            new Date()
-          ) < 0 &&
-          x.Event_to_Evaluation &&
-          x.Event_to_Evaluation[0] &&
-          !x.Event_to_Evaluation[0].submit_eval_date)
-          ? true
-          : false,
-    }));
 });
 
 fav((result) => {
@@ -922,10 +837,6 @@ markHardCopyMutation_Completed((result) => {
 });
 
 eventList_Error((error) => {
-  notifyClientError(error);
-});
-
-coreEventList_Error((error) => {
   notifyClientError(error);
 });
 

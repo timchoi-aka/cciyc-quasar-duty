@@ -84,12 +84,7 @@
     <q-route-tab to="/event/summer-event" icon="public" label="活動查詢" />
     <q-route-tab to="/event/batch-apply" icon="add" label="活動報名" />
     <q-route-tab to="/event/add" icon="public" label="新增活動" />
-    <q-route-tab
-      to="/event/unplan"
-      icon="public"
-      label="待計劃"
-      class="badge-container"
-    >
+    <q-route-tab to="/event/unplan" icon="public" label="待計劃">
       <div class="column items-center q-ml-sm">
         <q-badge color="yellow" text-color="black">
           {{ unplan_count.filter((x) => !x.plan_submit).length }}
@@ -133,7 +128,7 @@
                   new Date(),
                   date.extractDate(x.d_date_to, "YYYY-MM-DD"),
                   "days"
-                ) >= 14
+                ) >= 21
             ).length
           }}
         </q-badge>
@@ -219,19 +214,3 @@ const { result: unplan_count } = useEventPlanEvalProvider({
   c_respon: isCenterIC.value ? ref(null) : username,
 });
 </script>
-
-<style lang="sass" scoped>
-.badge-container
-  position: relative
-
-
-.top-right
-  position: absolute
-  top: 0
-  right: 0
-
-.bottom-right
-  position: absolute
-  bottom: 0
-  right: 0
-</style>
