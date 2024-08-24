@@ -256,6 +256,16 @@ const routes = [
         meta: { requiresAuth: true },
       },
       {
+        path: "unplan",
+        component: () => import("src/pages/Event/EventUnplan.vue"),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: "uneval",
+        component: () => import("src/pages/Event/EventUneval.vue"),
+        meta: { requiresAuth: true },
+      },
+      {
         path: "report",
         component: () => import("src/pages/Event/Report.vue"),
         meta: { requiresAuth: true },

@@ -1,5 +1,13 @@
-import { date as qdate } from 'quasar'
+import { date as qdate } from "quasar";
 
+function parseDate(dateString) {
+  // Split the input string by '/'
+  const [day, month, year] = dateString.split("/").map(Number);
+
+  // JavaScript Date constructor accepts (year, monthIndex, day)
+  // monthIndex is 0-based, so we subtract 1 from the month
+  return new Date(year, month - 1, day);
+}
 function daysOfWeek(date) {
   let week = ["日", "一", "二", "三", "四", "五", "六"];
   let d = new Date(Date.parse(date));
@@ -12,20 +20,23 @@ function mergeDateSlot(date, slot) {
 }
 
 function splitDateSlot(dateslot) {
-  let s = new String(dateslot)
+  let s = new String(dateslot);
   return s.split("|");
 }
 
 function tConvert(time) {
   // Check correct time format and split into components
-  time = time.toString ().match (/^([01]\d|2[0-3])(:)([0-5]\d)(:[0-5]\d)?$/) || [time];
-  
-  if (time.length > 1) { // If time format correct
-    time = time.slice (1);  // Remove full string match value
-    time[5] = +time[0] < 12 ? ' AM' : ' PM'; // Set AM/PM
+  time = time.toString().match(/^([01]\d|2[0-3])(:)([0-5]\d)(:[0-5]\d)?$/) || [
+    time,
+  ];
+
+  if (time.length > 1) {
+    // If time format correct
+    time = time.slice(1); // Remove full string match value
+    time[5] = +time[0] < 12 ? " AM" : " PM"; // Set AM/PM
     time[0] = +time[0] % 12 || 12; // Adjust hours
   }
-  return time.join (''); // return adjusted time or original string
+  return time.join(""); // return adjusted time or original string
 }
 
 /*
@@ -58,14 +69,14 @@ function rConvert (time) {
 
 function rConvert(time) {
   const timeDate = new Date(`01/01/2021 ${time}`);
-  return timeDate.toLocaleTimeString('en-GB', {hour12: false});
+  return timeDate.toLocaleTimeString("en-GB", { hour12: false });
 }
 
 function generateTableColumns(renderDate, withSlot = true) {
   // build column headers
   // find offset to sunday
   let columns = [];
-  let d = new Date(renderDate)
+  let d = new Date(renderDate);
 
   var diff = 0 - d.getDay();
 
@@ -100,20 +111,20 @@ function generateTableColumns(renderDate, withSlot = true) {
       });
     }
   }
-  return columns
+  return columns;
 }
 
 function getFY(date) {
   if (date.getMonth() >= 3) {
     return {
       periodStart: new Date(date.getFullYear(), 3, 1),
-      periodEnd: new Date(date.getFullYear()+1, 2, 31)
-    }
+      periodEnd: new Date(date.getFullYear() + 1, 2, 31),
+    };
   } else {
     return {
       periodStart: new Date(date.getFullYear() - 1, 3, 1),
-      periodEnd: new Date(date.getFullYear(), 2, 31)
-    }
+      periodEnd: new Date(date.getFullYear(), 2, 31),
+    };
   }
 }
 
@@ -124,5 +135,6 @@ export default {
   tConvert,
   generateTableColumns,
   getFY,
-  rConvert
-}
+  rConvert,
+  parseDate,
+};

@@ -195,6 +195,12 @@ export /* async */ function getClientOptions(/* {app, router, ...} */ options) {
                   return [...incoming];
                 },
               },
+              HTX_Event: {
+                keyArgs: ["c_act_code"],
+                merge(existing = [], incoming) {
+                  return [...incoming];
+                },
+              },
             },
           },
         },

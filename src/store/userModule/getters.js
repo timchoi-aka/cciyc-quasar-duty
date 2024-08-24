@@ -45,7 +45,10 @@ export function getUserManagement(state) {
 }
 
 export function getDateOfExit(state) {
-  if (Object.keys(state.userProfile).length && state.userProfile.dateOfExit != undefined) {
+  if (
+    Object.keys(state.userProfile).length &&
+    state.userProfile.dateOfExit != undefined
+  ) {
     return state.userProfile.dateOfExit;
   } else {
     return null;
@@ -136,7 +139,7 @@ export function getEventApprove(state) {
 
 export function getDefaultSchedule(state) {
   if (Object.keys(state.userProfile).length) {
-    return state.userProfile.defaultSchedule
+    return state.userProfile.defaultSchedule;
   } else {
     return null;
   }
@@ -144,7 +147,7 @@ export function getDefaultSchedule(state) {
 
 export function getLeaveManage(state) {
   if (Object.keys(state.userProfile).length) {
-    return state.userProfile.privilege.leaveManage
+    return state.userProfile.privilege.leaveManage;
   } else {
     return null;
   }
@@ -152,7 +155,7 @@ export function getLeaveManage(state) {
 
 export function getLeaveApprove(state) {
   if (Object.keys(state.userProfile).length) {
-    return state.userProfile.privilege.leaveApprove
+    return state.userProfile.privilege.leaveApprove;
   } else {
     return null;
   }
@@ -160,7 +163,7 @@ export function getLeaveApprove(state) {
 
 export function getTmp(state) {
   if (Object.keys(state.userProfile).length) {
-    return state.userProfile.privilege.tmp
+    return state.userProfile.privilege.tmp;
   } else {
     return null;
   }
@@ -168,7 +171,7 @@ export function getTmp(state) {
 
 export function getInventoryManagement(state) {
   if (Object.keys(state.userProfile).length) {
-    return state.userProfile.privilege.inventoryManagement
+    return state.userProfile.privilege.inventoryManagement;
   } else {
     return null;
   }
@@ -176,7 +179,7 @@ export function getInventoryManagement(state) {
 
 export function getALBalance(state) {
   if (Object.keys(state.userProfile).length) {
-    return state.userProfile.balance.al
+    return state.userProfile.balance.al;
   } else {
     return null;
   }
@@ -184,7 +187,7 @@ export function getALBalance(state) {
 
 export function getOTBalance(state) {
   if (Object.keys(state.userProfile).length) {
-    return state.userProfile.balance.ot
+    return state.userProfile.balance.ot;
   } else {
     return null;
   }
@@ -192,7 +195,7 @@ export function getOTBalance(state) {
 
 export function getSALBalance(state) {
   if (Object.keys(state.userProfile).length) {
-    return state.userProfile.balance.sal
+    return state.userProfile.balance.sal;
   } else {
     return null;
   }
@@ -200,7 +203,7 @@ export function getSALBalance(state) {
 
 export function getSAL(state) {
   if (Object.keys(state.userProfile).length) {
-    return state.userProfile.privilege.sal
+    return state.userProfile.privilege.sal;
   } else {
     return null;
   }
@@ -208,7 +211,7 @@ export function getSAL(state) {
 
 export function getUAT(state) {
   if (Object.keys(state.userProfile).length) {
-    return state.userProfile.privilege.uat
+    return state.userProfile.privilege.uat;
   } else {
     return null;
   }
@@ -216,7 +219,7 @@ export function getUAT(state) {
 
 export function getProbation(state) {
   if (Object.keys(state.userProfile).length) {
-    return state.userProfile.privilege.probation ? true : false
+    return state.userProfile.privilege.probation ? true : false;
   } else {
     return null;
   }
@@ -238,3 +241,10 @@ export function isLogin(state) {
   }
 }
 
+export function getAuth(state) {
+  if (Object.keys(state.auth).length) {
+    return state.auth;
+  } else {
+    return null;
+  }
+}
