@@ -12,13 +12,13 @@
           </div>
           <div v-else-if="renderDate < new Date('2024-09-01T00:00:00')">
             <span class="q-mx-md">星期一、三：6PM-10PM</span>
-            <span class="q-mx-md">星期二、四、五：2PM-6PM</span>
+            <span class="q-mx-md">星期二、四、五：2PM-10PM</span>
             <span class="q-mx-md">星期六：10AM-10PM</span>
             <span class="q-mx-md">星期日休息</span>
           </div>
           <div v-else>
             <span class="q-mx-md">星期一、三：6PM-10PM</span>
-            <span class="q-mx-md">星期二、四、五：2PM-6PM</span>
+            <span class="q-mx-md">星期二、四、五：2PM-10PM</span>
             <span class="q-mx-md">星期六：12PM-8PM</span>
             <span class="q-mx-md">星期日：2PM-6PM</span>
           </div>
