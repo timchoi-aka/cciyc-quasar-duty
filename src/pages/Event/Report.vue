@@ -522,18 +522,27 @@
             OS5Data.filter(
               (x) =>
                 x.c_type &&
-                (x.c_type.trim() == "小組" || x.c_type.trim() == "活動")
+                (x.c_type.trim() == "小組" || x.c_type.trim() == "活動") &&
+                x.c_nature?.startsWith("核心")
             ).length
           }}
           <div>
             (No. of Groups:
             {{
-              OS5Data.filter((x) => x.c_type && x.c_type.trim() == "小組")
-                .length
+              OS5Data.filter(
+                (x) =>
+                  x.c_type &&
+                  x.c_type.trim() == "小組" &&
+                  x.c_nature?.startsWith("核心")
+              ).length
             }}, No. of Activities:
             {{
-              OS5Data.filter((x) => x.c_type && x.c_type.trim() == "活動")
-                .length
+              OS5Data.filter(
+                (x) =>
+                  x.c_type &&
+                  x.c_type.trim() == "活動" &&
+                  x.c_nature?.startsWith("核心")
+              ).length
             }}, No. of Cases: 0)
           </div>
         </li>
@@ -545,7 +554,8 @@
               (x) =>
                 x.c_status.trim() == "完成達標" &&
                 x.c_type &&
-                (x.c_type.trim() == "小組" || x.c_type.trim() == "活動")
+                (x.c_type.trim() == "小組" || x.c_type.trim() == "活動") &&
+                x.c_nature?.startsWith("核心")
             ).length
           }}
           <div>
@@ -556,7 +566,8 @@
                   x.c_type &&
                   x.c_type.trim() == "小組" &&
                   x.c_status &&
-                  x.c_status.trim() == "完成達標"
+                  x.c_status.trim() == "完成達標" &&
+                  x.c_nature?.startsWith("核心")
               ).length
             }}, No. of Activities:
             {{
@@ -647,7 +658,14 @@
         dense
         flat
         title="OS5 - 小組"
-        :rows="OS5Data.filter((x) => x.c_type && x.c_type.trim() == '小組')"
+        :rows="
+          OS5Data.filter(
+            (x) =>
+              x.c_type &&
+              x.c_type.trim() == '小組' &&
+              x.c_nature?.startsWith('核心')
+          )
+        "
         :columns="os5Columns"
         :pagination="defaultPagination"
         color="primary"
@@ -666,7 +684,12 @@
             no-caps
             @click="
               exportExcel(
-                OS5Data.filter((x) => x.c_type && x.c_type.trim() == '小組'),
+                OS5Data.filter(
+                  (x) =>
+                    x.c_type &&
+                    x.c_type.trim() == '小組' &&
+                    x.c_nature?.startsWith('核心')
+                ),
                 os5Columns,
                 'OS5小組_' +
                   qdate.formatDate(reportStartDate, 'YYYY-MM') +
@@ -687,8 +710,12 @@
             >
               <div v-if="index == props.cols.length">
                 小組總數：{{
-                  OS5Data.filter((x) => x.c_type && x.c_type.trim() == "小組")
-                    .length
+                  OS5Data.filter(
+                    (x) =>
+                      x.c_type &&
+                      x.c_type.trim() == "小組" &&
+                      x.c_nature?.startsWith("核心")
+                  ).length
                 }}
               </div>
             </q-td>
@@ -1947,23 +1974,23 @@ const OS5Data = computed(() => {
   if (os5result.value) {
     os5result.value.HTX_Event.forEach((x) => {
       if (
-        os5status.includes(x.c_status.trim()) &&
+        os5status.includes(x.c_status?.trim()) &&
         qdate.getDateDiff(x.d_finish_goal, reportEndDate.value) <= 0 &&
         (!staffSearchFilter.value ||
           (staffSearchFilter.value &&
             staffSearchFilter.value
               .map((x) => x.label)
-              .includes(x.c_respon.trim())) ||
+              .includes(x.c_respon?.trim())) ||
           (staffSearchFilter.value &&
             staffSearchFilter.value.map((x) => x.label)) == "全部")
       ) {
         res.push({
-          c_act_code: x.c_act_code ? x.c_act_code.trim() : "",
-          c_act_name: x.c_act_name ? x.c_act_name.trim() : "",
-          c_nature: x.c_nature ? x.c_nature.trim() : "",
-          c_respon: x.c_respon ? x.c_respon.trim() : "",
-          c_type: x.c_type ? x.c_type.trim() : "",
-          c_status: x.c_status ? x.c_status : "",
+          c_act_code: x.c_act_code?.trim() ?? "",
+          c_act_name: x.c_act_name?.trim() ?? "",
+          c_nature: x.c_nature?.trim() ?? "",
+          c_respon: x.c_respon?.trim() ?? "",
+          c_type: x.c_type?.trim() ?? "",
+          c_status: x.c_status?.trim() ?? "",
           d_finish_goal: x.d_finish_goal,
         });
       }

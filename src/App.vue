@@ -2,7 +2,7 @@
   <q-layout id="q-app" view="hHh lpR lFf">
     <!-- loading dialog -->
     <LoadingDialog v-model="loading" message="處理中" />
-
+    <AlertDialog />
     <q-header elevated class="bg-primary text-white" height-hint="98">
       <q-dialog v-model="bugReportModal">
         <q-card>
@@ -245,6 +245,7 @@
 <script setup>
 import EssentialLink from "components/EssentialLink.vue";
 import NotificationBell from "components/Basic/NotificationBell.vue";
+import AlertDialog from "components/Basic/AlertDialog.vue";
 // import MenuBar from "components/MenuBar.vue";
 import { ref, computed, provide, onMounted, defineAsyncComponent } from "vue";
 import { useStore } from "vuex";

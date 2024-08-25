@@ -335,7 +335,8 @@ const coreEventCondition = ref({
 });
 
 const { result: CoreEventList } = useEventPlanEvalProvider({
-  c_respon: isCenterIC ? ref(null) : username,
+  c_respon: username,
+  isCenterIC: isCenterIC,
 });
 
 const pagination = ref({
@@ -538,6 +539,23 @@ const CoreEventColumns = ref([
     style: "border-top: 1px solid; text-align: center",
     headerStyle: "text-align: center;",
     headerClasses: "bg-grey-2",
+  },
+  {
+    name: "c_status",
+    label: "狀況",
+    field: "c_status",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "d_finish_goal",
+    label: "完成日期",
+    field: "d_finish_goal",
+    style: "border-top: 1px solid; text-align: center",
+    headerStyle: "text-align: center;",
+    headerClasses: "bg-grey-2",
+    format: (val) => qdate.formatDate(val, "YYYY年M月D日"),
   },
 ]);
 

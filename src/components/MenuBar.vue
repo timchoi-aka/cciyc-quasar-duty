@@ -87,7 +87,18 @@
     <q-route-tab to="/event/unplan" icon="public" label="待計劃">
       <div class="column items-center q-ml-sm">
         <q-badge color="yellow" text-color="black">
-          {{ unplan_count.filter((x) => !x.plan_submit).length }}
+          {{
+            unplan_count.filter((x) => !x.plan_submit).length -
+            unplan_count.filter(
+              (x) =>
+                !x.plan_submit &&
+                date.getDateDiff(
+                  new Date(),
+                  date.extractDate(x.d_date_from, "YYYY-MM-DD"),
+                  "days"
+                ) >= PLAN_DEADLINE
+            ).length
+          }}
         </q-badge>
         <q-badge color="red" text-color="white">
           {{
@@ -116,6 +127,15 @@
                   date.extractDate(x.d_date_to, "YYYY-MM-DD"),
                   "days"
                 ) >= 0
+            ).length -
+            unplan_count.filter(
+              (x) =>
+                !x.eval_submit &&
+                date.getDateDiff(
+                  new Date(),
+                  date.extractDate(x.d_date_to, "YYYY-MM-DD"),
+                  "days"
+                ) >= 21
             ).length
           }}
         </q-badge>
@@ -190,11 +210,12 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch, inject } from "vue";
 import { useStore } from "vuex";
 import { useEventPlanEvalProvider } from "src/providers/eventPlanEval";
 import { date } from "quasar";
 
+const bus = inject("bus");
 const $store = useStore();
 const PLAN_DEADLINE = -7; // deadline for plan submission is 7 days before event start
 // computed
@@ -211,6 +232,38 @@ const module = computed(() => $store.getters["userModule/getModule"]);
 const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"]);
 
 const { result: unplan_count } = useEventPlanEvalProvider({
-  c_respon: isCenterIC.value ? ref(null) : username,
+  c_respon: username,
+  isCenterIC: isCenterIC,
+});
+
+watch(unplan_count, (val) => {
+  if (!isCenterIC.value) {
+    let unplan_data = val.filter(
+      (x) =>
+        !x.plan_submit &&
+        date.getDateDiff(
+          new Date(),
+          date.extractDate(x.d_date_from, "YYYY-MM-DD"),
+          "days"
+        ) >= PLAN_DEADLINE
+    );
+
+    let uneval_data = val.filter(
+      (x) =>
+        !x.eval_submit &&
+        date.getDateDiff(
+          new Date(),
+          date.extractDate(x.d_date_to, "YYYY-MM-DD"),
+          "days"
+        ) >= 21
+    );
+    if (unplan_data.length > 0) {
+      bus.emit("pendingPlan", unplan_data);
+    }
+
+    if (uneval_data.length > 0) {
+      bus.emit("pendingEval", uneval_data);
+    }
+  }
 });
 </script>

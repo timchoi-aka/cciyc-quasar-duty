@@ -63,7 +63,8 @@ const isCenterIC = computed(() => $store.getters["userModule/getCenterIC"]);
 const selectedRow = ref([]);
 
 const { result: CoreEventList } = useEventPlanEvalProvider({
-  c_respon: isCenterIC ? ref(null) : username,
+  c_respon: username,
+  isCenterIC: isCenterIC,
 });
 
 const pagination = ref({
@@ -94,6 +95,14 @@ const CoreEventColumns = ref([
     name: "c_nature",
     label: "性質",
     field: "c_nature",
+    style: "border-top: 1px solid; text-align: center; width: 5%;",
+    headerStyle: "text-align: center; width: 5%;",
+    headerClasses: "bg-grey-2",
+  },
+  {
+    name: "c_status",
+    label: "狀況",
+    field: "c_status",
     style: "border-top: 1px solid; text-align: center; width: 5%;",
     headerStyle: "text-align: center; width: 5%;",
     headerClasses: "bg-grey-2",

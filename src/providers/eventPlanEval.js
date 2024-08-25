@@ -9,7 +9,7 @@ import dateUtil from "src/lib/date";
 export function useEventPlanEvalProvider(options = {}) {
   // Destructure parameters from options
 
-  const { c_respon = ref() } = options;
+  const { c_respon = ref(), isCenterIC = ref(false) } = options;
 
   // Ref to keep track of the number of pending async operations
   const awaitNumber = ref(0);
@@ -61,7 +61,7 @@ export function useEventPlanEvalProvider(options = {}) {
   `;
 
   const where = computed(() =>
-    c_respon.value
+    !isCenterIC.value
       ? {
           _and: [
             { c_respon: { _eq: c_respon.value } },
@@ -94,28 +94,22 @@ export function useEventPlanEvalProvider(options = {}) {
         c_worker: x.c_worker ? x.c_worker.trim() : "",
         c_worker2: x.c_worker2 ? x.c_worker2.trim() : "",
         d_date_from: x.d_date_from
-          ? date.isValid(x.d_date_from)
-            ? date.formatDate(x.d_date_from, "YYYY-MM-DD")
-            : date.formatDate(
-                dateUtil.parseDate(x.d_date_from, "DD/M/YYYY"),
-                "YYYY-MM-DD"
-              )
+          ? date.formatDate(
+              date.extractDate(x.d_date_from.trim(), "D/M/YYYY"),
+              "YYYY-MM-DD"
+            )
           : "",
         d_date_to: x.d_date_to
-          ? date.isValid(x.d_date_to)
-            ? date.formatDate(x.d_date_to, "YYYY-MM-DD")
-            : date.formatDate(
-                dateUtil.parseDate(x.d_date_to, "DD/M/YYYY"),
-                "YYYY-MM-DD"
-              )
+          ? date.formatDate(
+              date.extractDate(x.d_date_to.trim(), "D/M/YYYY"),
+              "YYYY-MM-DD"
+            )
           : "",
         d_finish_goal: x.d_finish_goal
-          ? date.isValid(x.d_finish_goal)
-            ? date.formatDate(x.d_finish_goal, "YYYY-MM-DD")
-            : date.formatDate(
-                dateUtil.parseDate(x.d_finish_goal, "DD/M/YYYY"),
-                "YYYY-MM-DD"
-              )
+          ? date.formatDate(
+              date.extractDate(x.d_finish_goal.trim(), "D/M/YYYY"),
+              "YYYY-MM-DD"
+            )
           : "",
         plan_submit:
           x.Event_to_Evaluation &&
