@@ -8,11 +8,23 @@
         indicator-color="blue"
         align="justify"
       >
-        <q-route-tab to="/overtime/ot-view" icon="celebration" label="超時結餘" />
-        <q-route-tab to="/overtime/ot-apply" icon="edit_calendar" label="申請超時補假">
+        <q-route-tab
+          to="/overtime/ot-view"
+          icon="celebration"
+          label="超時結餘"
+        />
+        <q-route-tab
+          to="/overtime/ot-apply"
+          icon="edit_calendar"
+          label="申請超時補假"
+        >
           <q-badge color="red" floating>{{ otBalance }}</q-badge>
         </q-route-tab>
-        <q-route-tab to="/overtime/ot-pending" icon="hourglass_empty" label="待審批">
+        <q-route-tab
+          to="/overtime/ot-pending"
+          icon="hourglass_empty"
+          label="待審批"
+        >
           <q-badge color="red" floating>{{ pendingCount }}</q-badge>
         </q-route-tab>
         <q-route-tab
@@ -35,57 +47,71 @@ import { useStore } from "vuex";
 import { OTCollection, FireDB } from "boot/firebase";
 import { ref, computed, onUnmounted } from "vue";
 import { onSnapshot, doc, where, query, getDoc } from "firebase/firestore";
+import { is } from "quasar";
 
 onUnmounted(() => {
-  OTListener.value()
-  dashboardListener.value()
-  OTBalanceListener.value()
-})
-    
+  OTListener.value();
+  dashboardListener.value();
+  OTBalanceListener.value();
+});
+
 // variables
 const $store = useStore();
-const pendingOTApprovalCount = ref(0)
-const pendingCount = ref(0)
+const pendingOTApprovalCount = ref(0);
+const pendingCount = ref(0);
 
 // computed
-const uid = computed(() => $store.getters["userModule/getUID"])
-const isLeaveApprove = computed(() => $store.getters["userModule/getLeaveApprove"])
+const uid = computed(() => $store.getters["userModule/getUID"]);
+const isLeaveApprove = computed(
+  () => $store.getters["userModule/getLeaveApprove"]
+);
 //const otBalance = computed(() => $store.getters["userModule/getOTBalance"])
-const otBalance = computed(() => carryOver.value + ApprovedOT.value.reduce((a,v) => a + v.hours, 0))
-const OTListener = ref()
-const OTBalanceListener = ref()
-const dashboardListener = ref()
-const ApprovedOT = ref([])
-const carryOver = ref(0)
+const otBalance = computed(
+  () =>
+    carryOver.value +
+    ApprovedOT.value.reduce((a, v) => a + parseFloat(v.hours), 0)
+);
+const OTListener = ref();
+const OTBalanceListener = ref();
+const dashboardListener = ref();
+const ApprovedOT = ref([]);
+const carryOver = ref(0);
 
 getDoc(doc(FireDB, "dashboard", "otConfig")).then((dashboardDoc) => {
-  carryOver.value = dashboardDoc.data()[uid.value] == "undefined" ? 0 : dashboardDoc.data()[uid.value];
-})
+  carryOver.value =
+    dashboardDoc.data()[uid.value] == "undefined"
+      ? 0
+      : dashboardDoc.data()[uid.value];
+});
 
-const ApprovedOTQuery = query(OTCollection, 
+const ApprovedOTQuery = query(
+  OTCollection,
   where("uid", "==", uid.value),
   where("status", "==", "批准")
-)
+);
 
-const OTQuery = query(OTCollection, 
+const OTQuery = query(
+  OTCollection,
   where("uid", "==", uid.value),
   where("status", "==", "未批")
-)
+);
 
 OTBalanceListener.value = onSnapshot(ApprovedOTQuery, (snapshot) => {
   snapshot.forEach((doc) => {
-    ApprovedOT.value.push(doc.data())
-  })
-})
+    ApprovedOT.value.push(doc.data());
+  });
+});
 
 OTListener.value = onSnapshot(OTQuery, (snapshot) => {
   snapshot.docChanges().forEach((change) => {
     pendingCount.value = Object.keys(snapshot.docs).length;
-  })
-})
+  });
+});
 
-dashboardListener.value = onSnapshot(doc(FireDB, "dashboard", "notification"), (snapshot) => {
-  pendingOTApprovalCount.value = snapshot.data().ot_waitingForApproval;
-})
+dashboardListener.value = onSnapshot(
+  doc(FireDB, "dashboard", "notification"),
+  (snapshot) => {
+    pendingOTApprovalCount.value = snapshot.data().ot_waitingForApproval;
+  }
+);
 </script>
-

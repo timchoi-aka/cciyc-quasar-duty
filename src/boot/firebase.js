@@ -16,7 +16,7 @@ import {
 import { getFunctions, connectFunctionsEmulator } from "firebase/functions";
 //import { initializeAppCheck, ReCaptchaEnterpriseProvider } from 'firebase/app-check';
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
-const firebaseConfig = JSON.parse(process.env.FIREBASE_CONFIG)
+const firebaseConfig = JSON.parse(process.env.FIREBASE_CONFIG);
 
 const app = initializeApp(firebaseConfig);
 const messaging = getMessaging(app);
