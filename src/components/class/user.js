@@ -101,7 +101,7 @@ class User {
       ];
     }
 
-    this.enable = o.enable ? o.enable : true;
+    this.enable = o.hasOwnProperty("enable") ? o.enable : true;
     this.name = o.name ? o.name : "";
     this.order = o.order ? o.order : 0;
     this.privilege = o.privilege
@@ -247,7 +247,7 @@ class User {
       "user-toggleEnable"
     );
     return serverFunction({ uid: this.uid }).then((result) => {
-      this.enable = !this.enable;
+      this.enable = result?.data ?? this.enable;
       return result;
     });
   }
