@@ -1,7 +1,7 @@
 <template>
   <div class="q-pa-sm">
     <!-- loading dialog -->
-    <LoadingDialog v-model="loading" message="儲存中"/>
+    <LoadingDialog v-model="loading" message="儲存中" />
 
     <!-- add user dialog -->
     <q-dialog v-model="addDialog">
@@ -22,7 +22,20 @@
             icon="add"
             label="新增"
             :disable="Object.keys(newStaff).length < 2"
-            @click="addStaff(new User({name: newStaff.name, employment: [{ dateOfEntry: Timestamp.fromMillis(Date.parse(newStaff.dateOfEntry, 'YYYY-MM-DD'))}]}))"
+            @click="
+              addStaff(
+                new User({
+                  name: newStaff.name,
+                  employment: [
+                    {
+                      dateOfEntry: Timestamp.fromMillis(
+                        Date.parse(newStaff.dateOfEntry, 'YYYY-MM-DD')
+                      ),
+                    },
+                  ],
+                })
+              )
+            "
           />
         </q-card-actions>
       </q-card>
@@ -40,7 +53,9 @@
           </div>
         </q-card-section>
         <q-card-section>
-          <div class="text-h6 text-red">注意：員工的所有編更記錄也會一併刪除！</div>
+          <div class="text-h6 text-red">
+            注意：員工的所有編更記錄也會一併刪除！
+          </div>
         </q-card-section>
         <q-card-actions align="center">
           <q-btn
@@ -97,7 +112,9 @@
       <template v-slot:item="props">
         <div class="q-pa-sm col-xs-12 col-sm-6 col-md-4 flex">
           <q-card class="q-pa-none">
-            <q-card-section class="bg-blue-1 q-mb-md row justify-around items-center">
+            <q-card-section
+              class="bg-blue-1 q-mb-md row justify-around items-center"
+            >
               <div class="col-sm-5 text-body1">{{ props.row.name }}</div>
               <q-space />
               <div class="col-sm-6 q-mx-sm text-body1">
@@ -143,19 +160,36 @@
                   />
                   <q-btn icon="event" round color="primary" class="q-mx-xs">
                     <q-popup-proxy
-                    @before-show="proxyDate = props.row.getDateOfEntry()? qdate.formatDate(props.row.getDateOfEntry(), 'YYYY-MM-DD'): ''"
+                      @before-show="
+                        proxyDate = props.row.getDateOfEntry()
+                          ? qdate.formatDate(
+                              props.row.getDateOfEntry(),
+                              'YYYY-MM-DD'
+                            )
+                          : ''
+                      "
                       cover
                       transition-show="scale"
                       transition-hide="scale"
                     >
                       <q-date v-model="proxyDate">
                         <div class="row items-center justify-end q-gutter-sm">
-                          <q-btn label="取消" color="primary" flat v-close-popup />
+                          <q-btn
+                            label="取消"
+                            color="primary"
+                            flat
+                            v-close-popup
+                          />
                           <q-btn
                             label="確定"
                             color="primary"
                             flat
-                            @click="props.row.setDateOfEntry(0, Date.parse(proxyDate, 'YYYY-MM-DD'))"
+                            @click="
+                              props.row.setDateOfEntry(
+                                0,
+                                Date.parse(proxyDate, 'YYYY-MM-DD')
+                              )
+                            "
                             v-close-popup
                           />
                         </div>
@@ -180,7 +214,12 @@
                     >
                       <q-date v-model="proxyDate">
                         <div class="row items-center justify-end q-gutter-sm">
-                          <q-btn label="取消" color="primary" flat v-close-popup />
+                          <q-btn
+                            label="取消"
+                            color="primary"
+                            flat
+                            v-close-popup
+                          />
                           <q-btn
                             label="確定"
                             color="primary"
@@ -254,7 +293,11 @@
           />
           <q-btn icon="event" round color="primary" class="q-mx-xs">
             <q-popup-proxy
-              @before-show="proxyDate = props.row.getDateOfEntry()? qdate.formatDate(props.row.getDateOfEntry(), 'YYYY-MM-DD'): ''"
+              @before-show="
+                proxyDate = props.row.getDateOfEntry()
+                  ? qdate.formatDate(props.row.getDateOfEntry(), 'YYYY-MM-DD')
+                  : ''
+              "
               cover
               transition-show="scale"
               transition-hide="scale"
@@ -281,14 +324,18 @@
         <q-td :props="props">
           <span
             v-html="
-             props.row.getDateOfExit()
+              props.row.getDateOfExit()
                 ? qdate.formatDate(props.row.getDateOfExit(), 'YYYY-MM-DD')
                 : ''
             "
           />
           <q-btn icon="event" round color="primary" class="q-mx-xs">
             <q-popup-proxy
-            @before-show="proxyDate = props.row.getDateOfExit()? qdate.formatDate(props.row.getDateOfExit(), 'YYYY-MM-DD'): ''"
+              @before-show="
+                proxyDate = props.row.getDateOfExit()
+                  ? qdate.formatDate(props.row.getDateOfExit(), 'YYYY-MM-DD')
+                  : ''
+              "
               cover
               transition-show="scale"
               transition-hide="scale"
@@ -315,23 +362,23 @@
 
 <script setup>
 import { date as qdate } from "quasar";
-import LoadingDialog from "components/LoadingDialog.vue"
-import { ref, onMounted } from "vue"
+import LoadingDialog from "components/LoadingDialog.vue";
+import { ref, onMounted } from "vue";
 import { Timestamp } from "firebase/firestore";
 import User from "components/class/user";
 
-const selectedRow = ref([])
-const proxyDate = ref()
-const addDialog = ref(false)
-const deleteDialog = ref(false)
-const loading = ref(0)
-const newStaff = ref({})
+const selectedRow = ref([]);
+const proxyDate = ref();
+const addDialog = ref(false);
+const deleteDialog = ref(false);
+const loading = ref(0);
+const newStaff = ref({});
 
-const users = ref([])
+const users = ref([]);
 const pagination = ref({
   sortBy: "order",
   rowsPerPage: 0,
-})
+});
 
 const tableFields = ref([
   {
@@ -372,26 +419,30 @@ const tableFields = ref([
     headerStyle: "font-size: 1.5vw; text-align: center;",
     style: "font-size: 1.2vw; text-align: center;",
   },
-])
+]);
 
 // function v2
 async function setDateOfEntry(user, proxyDate) {
-  loading.value++
+  loading.value++;
   return new Promise((resolve, reject) => {
-    user.setDateOfEntry(0, Date.parse(proxyDate, 'YYYY-MM-DD')).then((result) => {
-      loading.value--
-      resolve(result)
-    })
+    user
+      .setDateOfEntry(0, Date.parse(proxyDate, "YYYY-MM-DD"))
+      .then((result) => {
+        loading.value--;
+        resolve(result);
+      });
   });
 }
 
 async function setDateOfExit(user, proxyDate) {
-  loading.value++
+  loading.value++;
   return new Promise((resolve, reject) => {
-    user.setDateOfExit(0, Date.parse(proxyDate, 'YYYY-MM-DD')).then((result) => {
-      loading.value--
-      resolve(result)
-    })
+    user
+      .setDateOfExit(0, Date.parse(proxyDate, "YYYY-MM-DD"))
+      .then((result) => {
+        loading.value--;
+        resolve(result);
+      });
   });
 }
 
@@ -400,25 +451,31 @@ async function deleteStaff(userList) {
   return new Promise((resolve, reject) => {
     userList.forEach((user) => {
       user.delete().then((result) => {
-        users.value.splice(users.value.findIndex(u => u.uid === user.uid), 1)
-        selectedRow.value.splice(selectedRow.value.findIndex(u => u.uid === user.uid), 1)
-        loading.value--
-      })
-    })
-    resolve()
-  })
+        users.value.splice(
+          users.value.findIndex((u) => u.uid === user.uid),
+          1
+        );
+        selectedRow.value.splice(
+          selectedRow.value.findIndex((u) => u.uid === user.uid),
+          1
+        );
+        loading.value--;
+      });
+    });
+    resolve();
+  });
 }
 
 async function addStaff(user) {
   loading.value++;
   return new Promise((resolve, reject) => {
     user.add().then((result) => {
-      let u = new User(result.data)
-      users.value.push(new User(result.data))
-      loading.value--
-      resolve(result)
-    })
-  })
+      let u = new User(result.data);
+      users.value.push(new User(result.data));
+      loading.value--;
+      resolve(result);
+    });
+  });
 }
 
 async function changeOrder(user, dir) {
@@ -426,17 +483,19 @@ async function changeOrder(user, dir) {
   return new Promise((resolve, reject) => {
     user.setOrder(dir).then((result) => {
       if (result.data.uid1) {
-        users.value[users.value.findIndex((value) => value.uid == result.data.uid1)].order =
-          result.data.order1;
+        users.value[
+          users.value.findIndex((value) => value.uid == result.data.uid1)
+        ].order = result.data.order1;
       }
 
       if (result.data.uid2) {
-        users.value[users.value.findIndex((value) => value.uid == result.data.uid2)].order =
-          result.data.order2;
+        users.value[
+          users.value.findIndex((value) => value.uid == result.data.uid2)
+        ].order = result.data.order2;
       }
       loading.value--;
-      resolve(result)
-    })
+      resolve(result);
+    });
   });
 }
 
@@ -446,14 +505,11 @@ async function toggleEnable(user) {
     user.toggleEnable().then((result) => {
       loading.value--;
       resolve(result);
-    })
+    });
   });
 }
 
-
 onMounted(async () => {
   users.value = await User.loadTempUsers();
-})
+});
 </script>
-
-

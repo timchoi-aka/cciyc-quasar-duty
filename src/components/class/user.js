@@ -55,10 +55,29 @@ class User {
     if (o.employment) {
       o.employment.forEach((e) => {
         let dateOfEntry, dateOfExit;
-
-        if (e.dateOfEntry instanceof Timestamp) {
+        if (
+          e.dateOfEntry.seconds !== undefined &&
+          e.dateOfEntry.nanoseconds !== undefined
+        ) {
           dateOfEntry = e.dateOfEntry;
-          dateOfExit = e.dateOfExit instanceof Timestamp ? e.dateOfExit : null;
+          dateOfExit =
+            e.dateOfExit?.seconds !== undefined &&
+            e.dateOfExit?.nanoseconds !== undefined
+              ? e.dateOfExit
+              : null;
+        } else if (
+          e.dateOfEntry._seconds !== undefined &&
+          e.dateOfEntry._nanoseconds !== undefined
+        ) {
+          dateOfEntry = Timestamp.fromMillis(
+            e.dateOfEntry._seconds * 1000 + e.dateOfEntry._nanoseconds / 1000000
+          );
+          dateOfExit = e.dateOfExit
+            ? Timestamp.fromMillis(
+                e.dateOfExit._seconds * 1000 +
+                  e.dateOfExit._nanoseconds / 1000000
+              )
+            : null;
         } else {
           dateOfEntry = e.dateOfEntry
             ? Timestamp.fromDate(e.dateOfEntry)
